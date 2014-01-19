@@ -1,0 +1,682 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: eksploracja danych | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/eksploracja-danych/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[NLP] Stemming i lematyzacja]]></title>
+    <link href="http://Horusiath.github.io/blog/2012/08/24/nlp-stemming-i-lematyzacja/"/>
+    <updated>2012-08-24T08:17:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2012/08/24/nlp-stemming-i-lematyzacja</id>
+    <content type="html"><![CDATA[<p>Zagłębiając się coraz dalej w NLP (<em>ang. Natural Language Processing</em>) &ndash; dziedzinę znaną również jako przetwarzanie języka naturalnego &ndash; natrafiłem na dość powszechny problem, którego rozwiązaniem pragnę się podzielić w tym artykule. Zacznijmy jednak od ogólnego przedstawienia problemu: załóżmy, że w życiu każdego programisty zdarzają się chwilę, w których musi on stworzyć aplikację zdolną poradzić sobie z analizą standardowego tekstu tzn. takiego, który domyślnie nie był sformatowany w sposób umożliwiający zastosowanie prostych wzorców w celu wyciągnięcia rzeczowych informacji. O ile dla większości ludzi zadanie to powinno być banalne, gdyż wystarczy nam zwykłe czytanie tekstu ze zrozumieniem, o tyle istniejące programy komputerowe mają niezwykłe problemy z jego rozwiązaniem. To właśnie tutaj z pomocą przychodzą pojęcia takie jak lematyzacja i stemming.</p>
+
+<p><strong>Stemming </strong>&ndash; bazując na definicji z angielskiej wikipedii jest to proces polegający na wydobyciu z wybranego wyrazu tzw. rdzenia, a więc tej jego części, która jest odporna na odmiany przez przyimki, rodzaje itp.</p>
+
+<p><strong>Lematyzacja </strong>&ndash; pojęcie to jest bardzo podobne do powyższego, a oznacza sprowadzenie grupy wyrazów stanowiących odmianę danego zwrotu do wspólnej postaci, umożliwiającej traktowanie ich wszystkich jako te samo słowo.</p>
+
+<p>Ponieważ problem ten jest dość stary i dobrze znany, w ciągu ostatnich dziesięcioleci powstało kilka znanych algorytmów służących jego rozwiązaniu. Dwa z najbardziej znanych to algorytm Portera (1979 r.) oraz algorytm Lancaster (1990 r.). Celem moich rozważań będzie zaimplementowanie drugiego z nich.</p>
+
+<p>Główne działanie algorytmu opiera się na słowniku zawierającym definicje par {zakończenie &ndash; podmieniany ciąg znaków} modyfikowanych wyrazów. Ponieważ słownik taki jest ciężki w skonstruowaniu postanowiłem dodać gotową listę definicji dla języka angielskiego zaczerpniętą z kodu źródłowego biblioteki NLTK (Natural Language Toolkit) napisanej w Pythonie. Listę tą znaleźć można na końcu tego artykułu.</p>
+
+<p>Warto zwrócić uwagę na format zapisu definicji. Są one opisane w postaci pojedynczego słowa. Podciągi występujących w nim znaków stanowią kolejno:</p>
+
+<ol>
+<li>Odwrócony zapis końcówki słowa (obowiązkowy) &ndash; umożliwia określenie, czy dana reguła powinna być stosowana dla modyfikowanego wyrazu.</li>
+<li>Znacznik nienaruszalności (opcjonalny, symbol: &lsquo;<strong>*&rsquo;</strong>) &ndash; oznacza to, że reguła powinna być zastosowana tylko wtedy, kiedy słowo nie zostało zmienione przez jakiekolwiek poprzednie reguły.</li>
+<li>Liczba usuwanych znaków (obowiązkowa) &ndash; określa, ile liter z końca wyrazu powinno zostać usunięte podczas modyfikacji.</li>
+<li>Podstawiany ciąg znaków (opcjonalny) &ndash; nowa końcówka doklejana do słowa po usunięciu poprzedniej.</li>
+<li>Flaga kontynuacji (obowiązkowa, symbol: &lsquo;<strong>></strong>&rsquo; [true] lub &lsquo;<strong>.</strong>&rsquo; [false]) &ndash; określa czy po zastosowaniu tej reguły do wyrazu dopuszczalne są jakiekolwiek dalsze modyfikacje.</li>
+</ol>
+
+
+<p>Aby ułatwić sobie pracę, stwórzmy strukturę przechowującą informację o tak zdefiniownej regule (w mojej implementacji nazwałem ją <strong><em>StemRule</em></strong>). Kolejne punkty opisanej powyżej definicji reprezentowane będą przez następujące pola/właściwości: 1 &ndash; <em>WordEnd </em>(string), 2 &ndash; <em>Intact </em>(bool), 3 &ndash; <em>RemoveTotal </em>(int), 4 &ndash; <em>AppendString </em>(string), 5 &ndash; <em>IsContinous </em>(bool).</p>
+
+<p>Parsowanie, realizowane w konstruktorze klasy, opiera się o wyciągnięcie odpowiednich grup przy pomocy wyrażeń regularnych a następnie wstawieniu ich wartości do odpowiadających pól.
+``` c#
+public StemRule(string rule){</p>
+
+<pre><code>var RuleValdiator = new Regex(@"^([a-z]+)(\*?)(\d)([a-z]*)([&gt;\.]?)$");
+var match = RuleValdiator.Match(rule);
+if (!match.Success)
+    throw new ArgumentException("Provided rule could not be parsed", rule);
+
+var chars = match.Groups[1].Value.ToCharArray();
+Array.Reverse(chars);
+WordEnd = new string(chars);
+Intact = !string.IsNullOrEmpty(match.Groups[2].Value);
+RemoveTotal = int.Parse(match.Groups[3].Value);
+AppendString = match.Groups[4].Value;
+IsContinous = (match.Groups[5].Value != ".") || (match.Groups[5].Value == "&gt;");
+</code></pre>
+
+<p>}
+```
+Dysponując tak przygotowanymi regułami możemy przejść do konstrukcji właściwego stemmera. Aby szybciej wydobywać odpowiednie reguły dla danego słowa, umieścimy je w czymś w rodzaju hashmapy, gdzie hashem będzie ostatnia litera końcówki wyszukiwanego słowa, zaś &ldquo;koszyk&rdquo; będzie stanowił listę obiektów <code>StemRule</code> ze stosownymi końcówkami.</p>
+
+<p>Ostatecznie tworzenie słownika wyglądać będzie następująco:
+``` c#
+Dictionary&lt;char, List<StemRule>> ParseRules(string[] rules)
+{</p>
+
+<pre><code>var dictionary = new Dictionary&lt;char, List&lt;StemRule&gt;&gt;();
+for (int i = 0; i &lt; rules.Length; i++)
+{
+    var rule = rules[i];
+    var firstLetter = rule[0];
+    if(dictionary.ContainsKey(firstLetter))
+        dictionary[firstLetter].Add(new StemRule(rule));
+    else
+        dictionary.Add(firstLetter,
+            new List&lt;StemRule&gt;(new[] { new StemRule(rule) }));
+}
+return dictionary;
+</code></pre>
+
+<p>}
+```
+Przetwarzaniem zajmować się będzie metoda Stem. Kolejność akcji wykonywanych przez algorytm wyglądać będzie następująco:</p>
+
+<ol>
+<li>Sprowadzamy wszystkie słowa do zapisu lower case.</li>
+<li>W głównej pętli:
+
+<ol>
+<li>Znajdujemy pozycję ostatniej litery w słowie i sprawdzamy czy jest ona jednym z kluczy w naszym słowniku reguł. Jeżeli nie, kończymy pracę algorytmu.</li>
+<li>Pobieramy &ldquo;kubełek&rdquo; z regułami ze słownika na podstawie klucza (ostatniej litery).</li>
+<li>W pętli wewnętrznej dla każdego kubełka:
+
+<ol>
+<li>Sprawdzamy, czy końcówka zapisana w regule znajduje się na końcu modyfikowanego słowa. Jeżeli nie, przechodzimy do kolejnej reguły.</li>
+<li>Sprawdzamy czy reguła miała ustawioną flagę nienaruszalności: jeżeli tak, sprawdzamy czy słowo przez nas przetwarzane nie zostało zmienione przez poprzednie reguły. Jeżeli zostało, pomijamy działanie tej reguły.</li>
+<li>Modyfikujemy słowo na podstawie danych z reguły.</li>
+<li>Oznaczamy słowo jako zmodyfikowane.</li>
+<li>Dodatkowo jeżeli reguła miała ustawioną flagę kontynuacji, wychodzimy z wewnętrznej pętli i kontynuujemy działanie algorytmu.</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+
+
+<p>Implementacja algorytmu może wyglądać następująco:
+``` c#
+public string Stem(string token)
+{</p>
+
+<pre><code>var lowered = token.ToLower();
+var proceed = true;
+
+while (proceed)
+{
+    // find position of last alphabetic letter in stemmed word
+    var lastLetterPosition = LastLetterPosition(lowered);
+    var original = lowered = lowered.Substring(0, lastLetterPosition + 1);
+    // stemm the word only when it has last letter and it's matching to any stemm rule
+    if (lastLetterPosition &lt; 0
+        || !_ruleDictionary.ContainsKey(lowered[lastLetterPosition]))
+    {
+        proceed = false;
+    }
+    else
+    {
+        var applied = false;
+        foreach (var rule in _ruleDictionary[lowered[lastLetterPosition]])
+        {
+            // proceed if word ends with matched rule's endingString
+            if (lowered.EndsWith(rule.WordEnd) 
+                &amp;&amp; IsStemmingAcceptable(lowered, rule.RemoveTotal))
+            {
+                if (!rule.Intact || lowered == original)
+                {
+                    lowered = ApplyRule(lowered, rule);
+                    applied = true;
+                    if (!rule.IsContinous) proceed = false;
+
+                    break;
+                }
+            }
+        }
+        // if no more rules apply, stop stemming
+        if (!applied) proceed = false;
+    }
+}
+return lowered;
+</code></pre>
+
+<p>}
+```
+Na koniec zestaw kilku metod wykorzystywanych przez powyższą implementację:</p>
+
+<p>Pobieranie pozycji ostatniej litery w ciągu:
+``` c#
+private static int LastLetterPosition(string word)
+{</p>
+
+<pre><code>for (int i = word.Length - 1; i &gt;= 0; i--)
+    if (char.IsLetter(word[i]))
+        return i;
+return -1;
+</code></pre>
+
+<p>}
+<code>
+Sprawdzenie, czy słowo może zostać poddane przetwarzaniu - metoda ta jest potrzebna od kiedy nie możemy przetwarzać słów jednosylabowych, niezależnie od podanych wcześniej reguł (przykład: bez tego warunku reguła usuwająca końcówkę _-ing_ sprawiłaby, że wyrazy takie jak _sing _stałyby się całkowicie nieczytelne):
+</code> c#
+private static bool IsStemmingAcceptable(string word, int removeTotal)
+{</p>
+
+<pre><code>const string vowels = "aeiouy";
+// if word start with a vowel, it have to be at least 2 letters long
+// else it have to be at least 3 letters and contains at least one vowel
+return vowels.Contains(word[0])
+           ? word.Length - removeTotal &gt;= 2
+           : word.Length - removeTotal &gt;= 3 
+             &amp;&amp; (vowels.Contains(word[1]) || vowels.Contains(word[2]));
+</code></pre>
+
+<p>}
+<code>
+Aplikowanie danej reguły do słowa - dość prosta sprawa, usuwamy z końca słowa liczbę znaków podanych w regule oraz podstawiamy ewentualną końcówkę, jeżeli została ona zdefiniowana w regule:
+</code> c#
+private static string ApplyRule(string word, StemRule rule)
+{</p>
+
+<pre><code>return string.Concat(
+    word.Substring(0, word.Length - rule.RemoveTotal), 
+    rule.AppendString ?? string.Empty);
+</code></pre>
+
+<p>}
+<code>
+&lt;details&gt;&lt;summary&gt;Lista definicji&lt;/summary&gt;
+</code>
+&ldquo;ai<em>2.&rdquo;,     // -ia > &ndash; if intact
+&ldquo;a</em>1.&rdquo;,      // -a > &ndash; if intact
+&ldquo;bb1.&rdquo;,      // -bb > -b
+&ldquo;city3s.&rdquo;,   // -ytic > -ys
+&ldquo;ci2>&rdquo;,      // -ic > &ndash;
+&ldquo;cn1t>&rdquo;,     // -nc > -nt
+&ldquo;dd1.&rdquo;,      // -dd > -d
+&ldquo;dei3y>&rdquo;,    // -ied > -y
+&ldquo;deec2ss.&rdquo;,  // -ceed >&ldquo;, -cess
+"dee1.&rdquo;,     // -eed > -ee
+&ldquo;de2>&rdquo;,      // -ed > &ndash;
+&ldquo;dooh4>&rdquo;,    // -hood > &ndash;
+&ldquo;e1>&rdquo;,       // -e > &ndash;
+&ldquo;feil1v.&rdquo;,   // -lief > -liev
+&ldquo;fi2>&rdquo;,      // -if > &ndash;
+&ldquo;gni3>&rdquo;,     // -ing > &ndash;
+&ldquo;gai3y.&rdquo;,    // -iag > -y
+&ldquo;ga2>&rdquo;,      // -ag > &ndash;
+&ldquo;gg1.&rdquo;,      // -gg > -g
+&ldquo;ht<em>2.&rdquo;,     // -th > &ndash;   if intact
+&ldquo;hsiug5ct.&rdquo;, // -guish > -ct
+&ldquo;hsi3>&rdquo;,     // -ish > &ndash;
+&ldquo;i</em>1.&rdquo;,      // -i > &ndash;  if intact
+&ldquo;i1y>&rdquo;,      // -i > -y
+&ldquo;ji1d.&rdquo;,     // -ij > -id   &mdash;  see nois4j> &amp; vis3j>
+&ldquo;juf1s.&rdquo;,    // -fuj > -fus
+&ldquo;ju1d.&rdquo;,     // -uj > -ud
+&ldquo;jo1d.&rdquo;,     // -oj > -od
+&ldquo;jeh1r.&rdquo;,    // -hej > -her
+&ldquo;jrev1t.&rdquo;,   // -verj > -vert
+&ldquo;jsim2t.&rdquo;,   // -misj > -mit
+&ldquo;jn1d.&rdquo;,     // -nj > -nd
+&ldquo;j1s.&rdquo;,      // -j > -s
+&ldquo;lbaifi6.&rdquo;,  // -ifiabl > &ndash;
+&ldquo;lbai4y.&rdquo;,   // -iabl > -y
+&ldquo;lba3>&rdquo;,     // -abl > &ndash;
+&ldquo;lbi3.&rdquo;,     // -ibl > &ndash;
+&ldquo;lib2l>&rdquo;,    // -bil > -bl
+&ldquo;lc1.&rdquo;,      // -cl > c
+&ldquo;lufi4y.&rdquo;,   // -iful > -y
+&ldquo;luf3>&rdquo;,     // -ful > &ndash;
+&ldquo;lu2.&rdquo;,      // -ul > &ndash;
+&ldquo;lai3>&rdquo;,     // -ial > &ndash;
+&ldquo;lau3>&rdquo;,     // -ual > &ndash;
+&ldquo;la2>&rdquo;,      // -al > &ndash;
+&ldquo;ll1.&rdquo;,      // -ll > -l
+&ldquo;mui3.&rdquo;,     // -ium > &ndash;
+&ldquo;mu<em>2.&rdquo;,     // -um > &ndash;   if intact
+&ldquo;msi3>&rdquo;,     // -ism > &ndash;
+&ldquo;mm1.&rdquo;,      // -mm > -m
+&ldquo;nois4j>&rdquo;,   // -sion > -j
+&ldquo;noix4ct.&rdquo;,  // -xion > -ct
+&ldquo;noi3>&rdquo;,     // -ion > &ndash;
+&ldquo;nai3>&rdquo;,     // -ian > &ndash;
+&ldquo;na2>&rdquo;,      // -an > &ndash;
+&ldquo;nee0.&rdquo;,     // protect  -een
+&ldquo;ne2>&rdquo;,      // -en > &ndash;
+&ldquo;nn1.&rdquo;,      // -nn > -n
+&ldquo;pihs4>&rdquo;,    // -ship > &ndash;
+&ldquo;pp1.&rdquo;,      // -pp > -p
+&ldquo;re2>&rdquo;,      // -er > &ndash;
+&ldquo;rae0.&rdquo;,     // protect  -ear
+&ldquo;ra2.&rdquo;,      // -ar > &ndash;
+&ldquo;ro2>&rdquo;,      // -or > &ndash;
+&ldquo;ru2>&rdquo;,      // -ur > &ndash;
+&ldquo;rr1.&rdquo;,      // -rr > -r
+&ldquo;rt1>&rdquo;,      // -tr > -t
+&ldquo;rei3y>&rdquo;,    // -ier > -y
+&ldquo;sei3y>&rdquo;,    // -ies > -y
+&ldquo;sis2.&rdquo;,     // -sis > -s
+&ldquo;si2>&rdquo;,      // -is > &ndash;
+&ldquo;ssen4>&rdquo;,    // -ness > &ndash;
+&ldquo;ss0.&rdquo;,      // protect  -ss
+&ldquo;suo3>&rdquo;,     // -ous > &ndash;
+&ldquo;su</em>2.&rdquo;,     // -us > &ndash;   if intact
+&ldquo;s*1>&rdquo;,      // -s > &ndash;  if intact
+&ldquo;s0.&rdquo;,       // -s > -s
+&ldquo;tacilp4y.&rdquo;, // -plicat > -ply
+&ldquo;ta2>&rdquo;,      // -at > &ndash;
+&ldquo;tnem4>&rdquo;,    // -ment > &ndash;
+&ldquo;tne3>&rdquo;,     // -ent > &ndash;
+&ldquo;tna3>&rdquo;,     // -ant > &ndash;
+&ldquo;tpir2b.&rdquo;,   // -ript > -rib
+&ldquo;tpro2b.&rdquo;,   // -orpt > -orb
+&ldquo;tcud1.&rdquo;,    // -duct > -duc
+&ldquo;tpmus2.&rdquo;,   // -sumpt > -sum
+&ldquo;tpec2iv.&rdquo;,  // -cept > -ceiv
+&ldquo;tulo2v.&rdquo;,   // -olut > -olv
+&ldquo;tsis0.&rdquo;,    // protect  -sist
+&ldquo;tsi3>&rdquo;,     // -ist > &ndash;
+&ldquo;tt1.&rdquo;,      // -tt > -t
+&ldquo;uqi3.&rdquo;,     // -iqu > &ndash;
+&ldquo;ugo1.&rdquo;,     // -ogu > -og
+&ldquo;vis3j>&rdquo;,    // -siv > -j
+&ldquo;vie0.&rdquo;,     // protect  -eiv
+&ldquo;vi2>&rdquo;,      // -iv > &ndash;
+&ldquo;ylb1>&rdquo;,     // -bly > -bl
+&ldquo;yli3y>&rdquo;,    // -ily > -y
+&ldquo;ylp0.&rdquo;,     // protect  -ply
+&ldquo;yl2>&rdquo;,      // -ly > &ndash;
+&ldquo;ygo1.&rdquo;,     // -ogy > -og
+&ldquo;yhp1.&rdquo;,     // -phy > -ph
+&ldquo;ymo1.&rdquo;,     // -omy > -om
+&ldquo;ypo1.&rdquo;,     // -opy > -op
+&ldquo;yti3>&rdquo;,     // -ity > &ndash;
+&ldquo;yte3>&rdquo;,     // -ety > &ndash;
+&ldquo;ytl2.&rdquo;,     // -lty > -l
+&ldquo;yrtsi5.&rdquo;,   // -istry > &ndash;
+&ldquo;yra3>&rdquo;,     // -ary > &ndash;
+&ldquo;yro3>&rdquo;,     // -ory > &ndash;
+&ldquo;yfi3.&rdquo;,     // -ify > &ndash;
+&ldquo;ycn2t>&rdquo;,    // -ncy > -nt
+&ldquo;yca3>&rdquo;,     // -acy > &ndash;
+&ldquo;zi2>&rdquo;,      // -iz > &ndash;
+&ldquo;zy1s.&rdquo;      // -yz > -ys
+```
+</details></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[C#] Prosta implementacja silnika do wyszukiwania pełnotekstowego]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/09/19/c-prosta-implementacja-silnika-do/"/>
+    <updated>2011-09-19T18:21:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/09/19/c-prosta-implementacja-silnika-do</id>
+    <content type="html"><![CDATA[<p>W dzisiejszym poście postaram się przedstawić jedno z możliwych rozwiązań problemu, jakim jest konieczność odnajdywania plików zawierających w sobie pewne poszukiwane przez nas frazy. Mowa tu oczywiście o problemach związanych z implementacją wyszukiwarki pełnotekstowej. Poniżej przedstawię sposób na jedną z prostszych jej implementacji.</p>
+
+<h2>Wstęp</h2>
+
+<p>Na wstępie warto zwrócić uwagę na podstawowy ciąg czynności, które powinny wystąpić, aby dany plik został zaindeksowany oraz aby późniejsze wyszukiwanie przebiegało szybciej i bardziej dokładnie. Na główne kroki składają się:</p>
+
+<ul>
+<li>Przetworzenie zawartości pliku &ndash; pierwszym krokiem jest zamiana tekstu na postać bardziej sformalizowaną (tzw. termy). W tym momencie następują czynności takie jak:
+
+<ul>
+<li>usunięcie znaków interpunkcyjnych i znaczników</li>
+<li>usunięcie zbędnych słów (np. przyimków)</li>
+<li>zamiana wielkich liter na małe</li>
+<li>usunięcie niepotrzebnych końcówek w odmianach słów</li>
+</ul>
+</li>
+<li>Zamiana sformatowanego tekstu na wektor &ndash; wektory są dobrą metodą reprezentacji słów w danym tekście. Kilka z najpopularniejszych sposobów zapisywania danych w wektorach:
+
+<ul>
+<li><strong>Binarny </strong>&ndash; w tym wypadku wektor zapisuje wartość binarną (prawda/fałsz) dla każdego opisywanego słowa. Słowa występujące w tekście są oznaczane jako prawda. Pozostałe nie występujące w pliku (lecz wciąż mające swoje miejsce w wektorze) oznaczone są jako fałsz. Wady:
+
+<ul>
+<li>mała dokładność informacji (wiemy wyłącznie o tym, czy dane słowo występuje w tekście)
+Zalety:</li>
+<li>szybka możliwość weryfikacji występowania danego słowa w tekście</li>
+<li>taki sposób zapisu zajmuje najmniej miejsca w pamięci</li>
+</ul>
+</li>
+<li><strong>&ldquo;Bag-of-words&rdquo;</strong> &ndash; taki sposób reprezentacji dokumentu (w swojej podstawowej wersji) zlicza ilość (częstotliwość) wystąpień danego słowa w tekście. Zamiast oznaczania słowa w postaci bitu określamy go przez liczbę wyrażającą jego liczność.Wady:
+
+<ul>
+<li>Wymaga zdecydowanie większej ilości pamięci niż zapis binarny przy takiej samej ilości zaindeksowanych dokumentów.
+Zalety:</li>
+<li>Pozwala wydobyć więcej informacji o dokumencie.</li>
+<li>Umożliwia tworzenie podstawowego rankingu najlepiej pasujących dokumentów.</li>
+</ul>
+</li>
+<li><strong>Pozycyjny </strong>&ndash; w takiej postaci zapisujemy nie tylko ilość wystąpień danego termu w dokumencie, ale również zapisujemy pozycje, w których dane termy zostały znalezione.Wady:
+
+<ul>
+<li>Wymaga największej ilości pamięci dla pojedynczego wektora.</li>
+<li>Generowanie odpowiedzi na zapytanie dotyczące wyszukiwania może być czasochłonne.
+Zalety:</li>
+<li>Jest to najbardziej kompletny zapis, zwrócone wyniki mają największą dokładność.</li>
+<li>Na podstawie danych zawartych w wektorze możliwe jest częściowe lub kompletne odtworzenie dokumentu.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Zapisanie wektora &ndash; wymagana tutaj jest struktura danych umożliwiająca szybki dostęp oraz będąca w stanie przechowywać duże ilości informacji (np. rozproszone struktury danych oparte o tablice haszujące lub skompresowane drzewa TRIE).</li>
+</ul>
+
+
+<p>Na potrzeby naszej implementacji postanowiłem przyjąć następujące założenia:</p>
+
+<ol>
+<li>Nie przywiązujemy większej uwagi do aspektów optymalizacji &ndash; chodzi tutaj o możliwie maksymalną prostotę wykonanego rozwiązania.</li>
+<li>Skupiamy się na strukturach danych istniejących w bibliotece postawowej.</li>
+<li>Reprezentacja binarna &ndash; powody: możliwość prostej i szybkiej implementacji.</li>
+<li>Operujemy na z góry ustalonej (maksymalnej) liczbie słów.</li>
+</ol>
+
+
+<h2>Implementacja</h2>
+
+<p>Do pierwszej części zadania stworzymy prostą listę przechowującą implementacje interfejsu <em>IFilter</em> (będzie on reprezentować pojedyńczą operację służącą przekształceniu tekstu-termu w kolejny tekst-term). Przetwarzanie tekstu będzie polegało na przekazaniu wyniku działania jednego filtru do następnego. Na nasze potrzeby interfejs będzie implementował tylko 1 metodę: <code>string Apply(string text);</code>. Kilka najprostszych filtrów to:</p>
+
+<ol>
+<li>Filtr redukujący wszystkie wielkie litery w tekście &ndash; tutaj wystarczy na parametrze wywołać metodę <em>ToLower()</em>.</li>
+<li>Filtr usuwający znaki interpunkcyjne z tekstu</li>
+<li>Znaki przeznaczone do usunięcia zostaną zapisane wewnątrz właściwości StopChars (może to być dowolny typ wyliczeniowy <em>char </em>&ndash; taki wymóg spełniają również zwykłe stringi).</li>
+<li>Przykładowa implementacja metody Apply:
+<code>c#
+public string Apply(string text)
+{
+ var result = text;
+ foreach (var c in StopChars)
+     result = result.Replace(c.ToString(),
+                        string.Empty);
+ return result;
+}
+</code></li>
+<li>Filtr usuwający zbędne wyrazy:
+
+<ul>
+<li>Wyrazy przeznaczone do usunięcia będą znajdowały się wewnątrz właściwości StopWords (tutaj dowolny typ implementujący <code>IEnumerable<string></code>).</li>
+<li>Przykładowa implementacja metody Apply:
+<code>c#
+public string Apply(string text)
+{
+var result = text
+  .Split(new[] {" "},
+  StringSplitOptions.RemoveEmptyEntries)
+  .ToList();
+foreach (var word in StopWords)
+  for (int i = 0; i &lt; result.Count; i++)
+      if (result[i] == word)
+          result[i] = string.Empty;
+return string.Join(" ", result);
+}
+</code>
+Dla ułatwienia operację filtrowania wydzielimy do osobnej metody. Będzie ona używana zarówno podczas indeksowania plików, jak i ich wyszukiwania. Przykładowa implementacja:
+``` c#
+public IList<IFilter> Filters { get; set; }</li>
+</ul>
+</li>
+</ol>
+
+
+<p>private string Filter(string txt)
+{</p>
+
+<pre><code>var result = txt;
+foreach (var filter in Filters)
+    result = filter.Apply(result);
+return result;
+</code></pre>
+
+<p>}
+<code>
+W dalszej kolejności będziemy potrzebowali metody, która pozwoli nam zamienić tak przetworzony tekst na wektor bitowy. W tym celu utworzymy dwie pomocnicze właściwości:
+</code> c#
+public IDictionary&lt;string, BitArray> Indexer { get; set; }
+public List<string> Words { get; set; }
+<code>
+Zadaniem Indexera będzie gromadzenie par nazwa_pliku - wektor_pliku. Z kolei właściwość _Words_ pozwoli nam przechować numery indeksów, pod którymi znalezione mogą być konkretne słowa. Sama metoda służąca zamianie tekstu na odpowiadający mu wektor może wyglądać następująco:
+</code> c#
+private BitArray CreateVector(string filtered)
+{</p>
+
+<pre><code>var vector = new BitArray(MAX_SIZE, false);
+var splits = filtered.Split(new[] {" "},
+    StringSplitOptions.RemoveEmptyEntries);
+foreach (var s in splits)
+{
+    if(!Words.Contains(s))
+        Words.Add(s);
+    vector[Words.IndexOf(s)] = true;
+}
+return vector;
+</code></pre>
+
+<p>}
+```
+W tym przypadku MAX_SIZE jest zwyczajną stałą typu<em> int</em> określającą maksymalną liczbę obsługiwanych przez nas słów. Całość wygląda następująco:</p>
+
+<ol>
+<li>Dzielimy przekazany tekst na słowa.</li>
+<li>Dla każdego słowa sprawdzamy, czy został mu nadany odpowiedni indeks w liście <em>Words</em>. Jeżeli nie, dodajemy go do listy. Ponieważ nowe elementy dodawane są na koniec listy, nie musimy się obawiać zmiany pozycji dotychczas zaindeksowanych słów.&lt;</li>
+<li>Na koniec ustawiamy bit wystąpienia słowa na pozycji wskazanej przez słowa zaindeskowane w kroku 2.</li>
+</ol>
+
+
+<p>Cały cykl dodawania pliku do indeksu jest bardzo krótki i wygląda następująco:
+``` c#
+public void AddToIndexer(string filename, string content)
+{</p>
+
+<pre><code>var filtered = Filter(content);
+var vector = CreateVector(filtered);
+Indexer.Add(filename, vector);
+</code></pre>
+
+<p>}
+<code>
+Ostatnią rzeczą, bez której nasza praca nie miałaby sensu, jest implementacja metody odpowiedzialnej za wyszukiwanie zaindeksowanych plików wg. występujących w nich słów-termów. Poniższy kod odpowiada za znalezienie plików, w których występują wszystkie słowa kluczowe przekazane jako parametr (a więc będący odpowiednikiem logicznego AND):
+</code> c#
+public IEnumerable<string> FindAnd(string text)
+{</p>
+
+<pre><code>var splits = Filter(text).Split(new[] {" "},
+    StringSplitOptions.RemoveEmptyEntries);
+IEnumerable&lt;KeyValuePair&lt;string, BitArray&gt;&gt; result =
+    new KeyValuePair&lt;string, BitArray&gt;[0];
+var flag = false;
+foreach (var split in splits)
+{
+    var i = Words.IndexOf(split);
+    if (i == -1 || i &gt;= MAX_SIZE) continue;
+    if (!flag)
+    {
+        flag = true;
+        result = from pair in Indexer
+                 where pair.Value[i]
+                 select pair;
+    }
+    else
+        result = from pair in result 
+                 where pair.Value[i]
+                 select pair;
+}
+return from pair in result select pair.Key;
+</code></pre>
+
+<p>}
+```
+Słowem wyjaśnienia:</p>
+
+<ol>
+<li>Na starcie przepuszczamy poszukiwany ciąg znaków przez nasze filtry, aby zamienić je na ich odpowiedniki w termach. Kolejnym krokiem jest ich podział na pojedyńcze słowa.</li>
+<li>Dla każdego z poszukiwanych słów przechodzimy przez następujące kroki:
+
+<ul>
+<li>Sprawdzamy czy dane słowo zostało zaindeksowane (a więc czy możliwe jest jego znalezienie) &ndash; jeżeli nie przechodzimy do następnego cyklu pętli.</li>
+<li>W przypadku, gdy dane słowo jest pierwszym, wg. którego przeszukujemy nasz indeks, celem przeszukiwań jest zmienna Indexer zawierająca pełną pulę dostępnych wyników. W innym przypadku (pętla wykonuje się dla kolejnych słów), dziedzina poszukiwań obejmuje tylko wyniki zdobyte w poprzedzającym cyklu.</li>
+<li>Na koniec pozbywamy się niepotrzebnych już informacji o wektorach zwracając same nazwy plików.</li>
+</ul>
+</li>
+</ol>
+
+
+<p>Nie będę się zajmował tutaj wprowadzaniem odpowiednika logicznego OR (a więc metody wyszukującej pliki, w których pojawiło się co najmniej jedno z poszukiwanych słów), ponieważ jest to operacja prostsza &ndash; dzięki użyciu linku wystarczy złączyć wyniki dla każdego z pojedyńczych słów, a następnie usunąć powtarzające się wyniki (np. za pomocą metody <em>Distinct()</em>).</div></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Przeszukiwanie sieci i indeksowanie stron internetowych]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie/"/>
+    <updated>2011-04-29T19:32:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie</id>
+    <content type="html"><![CDATA[<p>Ostatnimi czasy postanowiłem stworzyć prostą aplikację, której zadaniem byłoby przeszukiwanie wszerz stron internetowych. Temat zacznę od omówienia mojego spojżenia na problem:</p>
+
+<ol>
+<li>Jeżeli weźmiemy pod uwagę, że sieć można reprezentować pod postacią grafu skierowanego, mamy do dyspozycji bardzo proste rozwiązanie w postaci algorytmu BFS. Każdy nowo zaakceptowany link będzie dorzucany do wspólnej kolejki i każdorazowo z niej zdejmowany, kiedy przyjdzie pora na przetworzenie strony pod wybranym linkiem.</li>
+<li>Aby uniknąć zakleszczenia, dodatkowo poza kolejką umieszczamy link w liście &ndash; w ten sposób zaindeksujemy wszystkie odwiedzone strony i będziemy mogli sprawdzić, czy dana strona nie została już poprzednio odwiedzona.</li>
+<li>Na sam koniec, aby ograniczyć przestrzeń przeszukiwać ustalimy adres url domeny, do której przeszukiwań będziemy się ograniczać.</li>
+</ol>
+
+
+<p>Podstawowa konstrukcja naszej klasy będzie zatem wyglądać następująco:
+``` c#
+class Crawler
+{</p>
+
+<pre><code>private const string http = "http://";
+public static List&lt;string&gt; Sites { set; get; }
+public string Url { set; get; }
+
+private Queue&lt;string&gt; queue = new Queue&lt;string&gt;();
+Regex anchor = new Regex("&lt;a href=\".*\"");
+private int id = 0;
+
+public Crawler(string domain)
+{
+    Url = domain;
+    Sites = new List&lt;string&gt;();
+}
+</code></pre>
+
+<p>}
+```
+Chwila na wyjaśnienie:</p>
+
+<ul>
+<li>ustawiłem słowo <strong>http</strong> w postaci stałej, aby łatwiej się później nim posługiwać.</li>
+<li><strong>anchor</strong> stanowi wyrażenie regularne, po którym będziemy wykrywać wszystkie znaczniki <code>a</code> z atrybutem <code>href</code>, które zawierają linki do innych stron.</li>
+<li><strong>id</strong> to nic innego jak licznik stron</li>
+</ul>
+
+
+<p>Teraz należy wyposażyć naszą klasę w możliwość przeglądania stron. W tym celu wewnątrz niej implementujemy następującą metodę:
+``` c#
+public void Start(string url)
+{</p>
+
+<pre><code> queue.Enqueue(url);
+ WebClient client = new WebClient();
+ do
+ {
+    var link = queue.Dequeue();
+    try {
+            using (var reader = new StreamReader(client.OpenRead(link))) {
+                SearchLinks(reader.ReadToEnd());
+            }
+    }
+    catch (WebException exc)
+    {
+        Console.WriteLine("\tError on site {0} : {1}", link, exc.Message);
+    }
+ } while (queue.Count != 0);
+</code></pre>
+
+<p>}
+```
+Parametrem metody jest korzeń &ndash; strona startowa, z której rozpoczynamy przeszukiwanie sieci. Do samego pobierania stron wykorzystujemy obiekt <em>WebClient</em>. Przeszukiwanie kolejnych stron będzie odbywać się tak długo, jak długo pozostaje coś do przeszukania (kolejka nie jest pusta). Sam mechanizm wyszukiwania linków ukryty jest pod metodą <em>SearchLinks</em> do której przejdę za chwilę. Przedtem jednak musimy się upewnić, że nasza pętla będzie odporna na występowanie błędów podczas odczytywania stron, jak choćby <em>Error 404</em>, któy może spowodować, że nasz WebClient wyrzuci wyjątek w trakcie próby otworzenia strumienia do strony.</p>
+
+<p>Przejdźmy teraz do implementacji kolejnej metody:
+``` c#
+void SearchLinks(string result) {</p>
+
+<pre><code> var matches = anchor.Matches(result);
+
+ foreach (var match in matches)
+ {
+    var r = match.ToString();
+    var site = GetAddress(Url, r);
+    if (!Sites.Contains(site) &amp;&amp; !string.IsNullOrEmpty(site))
+    {
+        Console.WriteLine("{0}. Found: {1}", ++id, site);
+        Sites.Add(site);
+        queue.Enqueue(site);
+    }
+ }
+</code></pre>
+
+<p>}
+```
+W tym kroku pobieramy w parametrze całą zawartość strony w postaci tekstu. Następnie sprawdzamy dopasowania naszego wyrażenia regularnego metodą Matches. Zwraca ona kolekcję obiektów określających wykryte dopasowania. Następnie dla każdego z dopasowań wyciągamy z niego link do kolejnej strony metodą <strong>GetAddress</strong> (implementacja poniżej).</p>
+
+<p>Końcowym krokiem właściwego algorytmu jest sprawdzenie, czy faktycznie uzyskano jakiś link oraz czy nie został on już wcześniej przeszukany &ndash; jeżeli te warunki zostały spełnione dokonujemy odpowiedniego wpisu, uaktualniamy listę odkrytych stron i dodajemy ją do kolejki stron wymagających przeszukania.</p>
+
+<p>Ostatnim problemem jest wydobycie adresu url z odkrytego wzorca. Oto moje rozwiązanie tego problemu:
+``` c#
+private string GetAddress(string url, string r) {</p>
+
+<pre><code>string result = string.Empty;
+var splits = r.Split(new[] {"\""}, StringSplitOptions.RemoveEmptyEntries);
+for (int i = 1; i &lt; splits.Length; i++)
+{
+    var ishttp = splits[i].Contains(http);
+    if ( splits[i].Contains(".html") || ishttp)
+    {
+        if(ishttp &amp;&amp; splits[i].Contains(url))
+        {
+            result += splits[i];
+        }
+        else if(!ishttp)
+        {
+            result += http + url + splits[i];
+        }
+        break;
+    }
+}
+return result;
+</code></pre>
+
+<p>}
+```
+Wykryte wyrażenie rozdzielamy na stringi poprzez znak &ldquo; . Jest to wymagane ponieważ dopasowany wzorzec będzie zawierać nie tylko adres strony, ale również sam atrybut a href (w przypadku podanego przeze mnie wyrażenia będzie to zawsze pierwszy element tablicy powstałej w wyniku pocięcia wzorca) i inne atrybuty (style itd&hellip;). Następnie sprawdzamy czy dany łańcuch znaków zawiera podciąg <em>"<a href="http://">http://</a>&rdquo;</em> &ndash; będzie to przez nas wykorzystane więcej niż raz, zapisałem więc ten wynik w osobnej zmiennej <em>ishttp</em>.</p>
+
+<p>Dalsze rozdzielenie wynika z dwóch możliwych zachowań:
+&ndash; wykryty adres jest absolutny &ndash; zawiera więc zarówno ciąg http jak i nazwę domeny, w której się poruszamy. Warto tutaj zaznaczyć, że ten algorytm wykrywa również strony zapisane w postaci <em><a href="http://xxx.nazwa_domeny.xxx_,">http://xxx.nazwa_domeny.xxx_,</a> gdzie </em>xxx_ są dowolnymi ciągami znaków.
+&ndash; adres wskazuje na ścieżkę względną &ndash; w tym przypadku konstruujemy pełny adres strony, kończąc go znalezionym adresem.</p>
+
+<p>Tak stworzona klasa jest w stanie indeksować wszystkie strony .html (można je zmodyfikować, aby sprawdzało również linki o innych rozszerzeniach) w podanej domenie bez ryzyka wejścia w nieskończoną pętlę.</p>
+
+<p>Przykładowe wywołanie rozwiązania:
+<code>c#
+Crawler crawler = new Crawler("pb.edu.pl");
+crawler.Start("http://wi.pb.edu.pl/");
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

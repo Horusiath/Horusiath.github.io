@@ -1,0 +1,632 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: programowanie | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/programowanie/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[O pomyłkach i wnioskach z pracy w ASP.NET MVC]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
+    <updated>2013-10-20T09:49:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
+    <content type="html"><![CDATA[<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
+
+<p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
+
+<h2>Twoja encja ≠ Twój model</h2>
+
+<p>Zasadniczym błędem (lub raczej skrótem myślowym) jest założenie, że każda klasa mapowana przez ORM na tabele może służyć jako model przekazywany bezpośrednio do widoku. Nie znaczy to, że jest to nie możliwe, jednak opcja ta jest z reguły nadużywana. Wynika to poniekąd ze stylu programowania wyuczonego z tutoriali z cyklu &ldquo;wyklep CRUDa w 5 min.&rdquo;. Piękne i proste, jednak nie mające wiele wspólnego z problemami dnia codziennego. Z drugiej strony jest to wina samego lenistwa programistów oraz przeświadczenia, że faza projektowania z rozpiską architektury chociażby na kartce papieru jest tylko dla kobiet i leszczy ;)</p>
+
+<p>Pytanie brzmi: kiedy należałoby porzucić modelowanie z encji na rzecz dedykowanych klas POCO? Prawda jest taka, że zależy to od przypadku i wymaga odrobiny doświadczenia.</p>
+
+<ul>
+<li>Jedną z podpowiedzi może być poziom zagłębienia zależności. Im jest on głębszy, tym bardziej wykorzystywana przez nas klasa odbiega strukturą od modelu wymaganego przez widok. Przykładowo już 2 poziom zagłębienia np. <code>Model.Products.SelectMany(p => p.Orders)</code> może świadczyć o tym, że dana encja nie jest właściwym kandydatem i powinna zostać zmapowana na dedykowaną do tego celu klasę.</li>
+<li>Innym przykładem może być sytuacja, w której nasz model wykazuje pewien związek z regułami biznesowymi. Przykładowo częstym sposobem reprezentacji okresu czasu powiązanego z danym obiektem jest dodanie do modelu dwóch pól określających granice czasowe. W tym momencie pojawia się jednak pewien dysonans między definicją biznesową (okres czasu jest pojedynczym obiektem) a rzeczywistą implementacją (okres czasu to dwa generyczne pola dat). Jeżeli logika biznesowa silnie bazuje na danej definicji np. przedział czasowy często pojawia się w kontekście wykonywanych operacji, wtedy możliwe, że lepiej byłoby wyodrębnić ją do osobnej klasy.</li>
+<li>Jak powszechnie wiadomo, we współczesnym świecie aplikacji WWW wymagania klientów są jednymi z najbardziej zmiennych elementów systemu. Możliwość oddzielenia modeli od encji wspiera ten trend, ponieważ o ile encje są powiązane ze schematem bazy danych (przez co są znacznie mniej podatne na zmiany ze względu na konieczność utrzymania spójności z istniejącymi danymi), o tyle modele wykorzystywane przez nas w aplikacji mogą być swobodnie modelowane do naszych potrzeb.</li>
+</ul>
+
+
+<h2>Twój ViewData = Twój Model</h2>
+
+<p>W przypadku niektórych frameworków model jest zdefiniowany w sposób jasny i jednoznaczny. W przypadku ASP.NET MVC nie jest jednak tak łatwo, ponieważ otrzymujemy tutaj więcej niż jeden sposób dostarczenia danych do widoku. Mowa tu oczywiście o ViewData. Wg. mnie obiekt ten, jakkolwiek przydatny, jest podstawowym złamaniem wzorca MVC w ASP.NET MVC. Dlaczego? Ponieważ &nbsp;prawda wygląda tak, że niezależnie od zdefiniowanych przez ciebie klas, prawdziwy model ma zawsze tylko jeden typ: <a href="http://msdn.microsoft.com/en-us/library/system.web.mvc.viewdatadictionary(v=vs.108">ViewDataDictionary</a>.aspx).</p>
+
+<p>Czy to źle? Niekoniecznie, zależy od przyjętego podejścia. Co z tego wynika? W przypadku modeli zwracanych przez formularze zazwyczaj przyjmuje się, że generyczny model powinien zawierać tylko te dane, które zostały wprowadzone przez użytkownika. Tzn. że informacje takie jak opcja wybrana przez użytkownika z listy powinna być częścią modelu podczas gdy sama lista dostępnych opcji powinna być przekazywana za pośrednictwem ViewBag/ViewData. Naturalnie w przypadku, gdy parsujemy model do postaci JSON przekazywanej do klienta, ta zasada nie dotyczy.</p>
+
+<h2>Nic nie znaczące Error Messages</h2>
+
+<p>Jednymi ze gorszych chwil w życiu programisty, są sytuacje, kiedy trzeba obsłużyć zgłoszenie o błędzie w aplikacji. Zdarza się, że zaglądamy wtedy do logów (o ile taką informację zalogowaliśmy ;) ), aby odnaleźć jakieś przydatne informacje, które pozwolą nam zidentyfikować naturę problemu. Jakże wielkie jest rozczarowanie, gdy jedynym hintem jaki wtedy otrzymujemy jest: <code>Object reference not set to an instance of an object.</code> Bardzo rzeczowa i jednoznaczna informacja wśród kilkuset linii kodu wymagających zbadania.</p>
+
+<p>Innym ciężkim przypadkiem jest logowanie niewystarczającej ilości informacji. Przykład (blok try-catch jest czysto poglądowy):
+``` c#
+try
+{</p>
+
+<pre><code>...
+var product = productRepository.GetById(id);
+if(product.Status != ProductStatus.Finished)
+    throw new InvalidStatusException("Provided product has invalid status");
+...
+</code></pre>
+
+<p>} catch(Exception e) {</p>
+
+<pre><code>    logger.Log(e.Message);
+</code></pre>
+
+<p>}
+```
+Co jest złego w tym przypadku? Wyobraźmy sobie, że dostajemy zgłoszenienie, o błędzie a w logach jedyną informacją jest: <code>Provided product has invalid status</code>. Czy wiemy o jakim statusie mowa? Czy wiemy o jaki produkt chodzi? Nie mamy żadnych informacji pozwalających zidentyfikować dany przypadek, mimo że wszystko co potrzebne mamy 2 linijki wyżej w kodzie źródłowym naszej aplikacji.</p>
+
+<p>Stąd mój apel: nie bądź leniwcem, minuta pracy teraz pozwoli ci zaoszczędzić godziny problemów później.</p>
+
+<h2>Too thin controllers, too fat services</h2>
+
+<p><em>Fat models, thin controllers</em> jest zwrotem często używanym w świecie MVC. Często jednak wynikiem utrzymania tej reguły jest zjawisko, które sam określam jako papierowe kontrolery. Weźmy na przykład następującą akcję MVC:
+``` c#
+[HttpPost]
+public void ToggleUserBan(bool activate)
+{</p>
+
+<pre><code>this.userService.ToggleUserBan(activate);
+</code></pre>
+
+<p>}
+<code>
+Na czym polega błąd? Prawdopodobnie metoda ToggleUserBan w serwisie jest przypadkiem zbyt szczegółowym. Daje to podstawy do przypuszczenia, że architektura aplikacji w którymś momencie się posypała. Zajrzyjmy więc do naszego hipotetycznego IUserService:
+</code> c#
+interface IUserService {</p>
+
+<pre><code>void ToggleUserBan(bool flag);
+IEnumerable&lt;User&gt; GetAllUsers();
+IEnumerable&lt;User&gt; GetActiveUsers();
+IEnumerable&lt;User&gt; GetBannedUsers();
+// ...kolejne 70 metod
+</code></pre>
+
+<p>}
+```
+Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do czynienia to nic innego, jak zwykłe zamiatanie brudu pod dywan. Pseudorozwiązanie polegające na przeniesieniu proceduralnego makaronu w miejsce, w które rzadziej się zagląda. Jest to częsty rezultat braku rewizji kodu i testów jednostkowych, oraz samowoli programistów.</p>
+
+<h2>Garść innych porad</h2>
+
+<ul>
+<li>unikaj static classes &ndash; utrudniają one modularyzację systemu i wprowadzają twarde powiązania, z których bardzo ciężko jest potem zrezygnować. Extension methods są w zasadzie jedynym zastosowaniem dla statycznych klas, dla jakich sam znajduję użytek.</li>
+<li>unikaj partial classes &ndash; dopuszczalne tylko w wypadku, gdy rozszerzasz klasę generowaną przez zewnętrzne narzędzia (co swoją drogą samo w sobie jest złym pomysłem ale o tym może kiedy indziej ;) )</li>
+<li>w przypadku zmiennych używaj nazw, które pozwalają określić ich typ i przeznaczenie &ndash; różnego rodzaju skróty oszczędzają dosłownie kilka sekund podczas pisania tylko po to, aby w przyszłości przedłużyć rozszyfrowywanie kodu przez kogoś innego o kilka minut. Pamiętaj, że w życiu programisty kod czyta się częściej niż pisze.</li>
+<li>podczas zwracania kolekcji zwracaj najmniejszy interface, który umożliwia wykonanie zadania &ndash; nie ma sensu wymagać aby argument był listą, jeżeli jedynym wykonywanym na nim działaniem jest foreach</li>
+<li>jeżeli zwracasz string lub kolekcje nigdy nie zwracaj nulli &ndash; zawsze używaj string.Empty lub Enumerable.Empty&lt;></li>
+<li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ServiceStack - alternatywa dla ASP.NET]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/"/>
+    <updated>2013-08-10T20:14:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet</id>
+    <content type="html"><![CDATA[<p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
+
+<ul>
+<li><a href="http://www.servicestack.net/">ServiceStack</a> &ndash; najbardziej znana alternatywa, o której opowiem więcej w dalszej części posta.</li>
+<li><a href="http://nancyfx.org/">Nancy</a>&ndash; drugi obok ServiceStack, najbardziej znany framework, czerpiący inspirację ze znanego frameworka Sinatra, napisanego w Rubym.</li>
+<li><a href="https://github.com/openrasta/openrasta/wiki/Why-Choose-OpenRasta">OpenRasta</a>&ndash; biblioteka stworzona z myślą o tworzeniu API opartego o zasoby.</li>
+<li><a href="http://amirrajan.net/Oak/">Oak</a> &ndash; framework mocno zainspirowany dynamiką bibliotek Ruby.</li>
+<li><a href="http://blog.markrendle.net/2012/06/01/simple-web/">Simple.Web</a> &ndash; micro framework twórcy znanego micro ORMa Simple.Data, który umieszczam również w ramach ciekawostki.</li>
+</ul>
+
+
+<p>Sądzę, że dość niewiele osób słyszało te nazwy (zwłaszcza ostatnie dwie). Ja jednak postanowiłem opowiedzieć i zachęcić do najpopularniejszego z tych rozwiązań, czyli ServiceStack.</p>
+
+<p>Co takiego otrzymujemy, decydując się na jego wykorzystanie?:</p>
+
+<ul>
+<li>Cały zestaw <em>extension methods</em> do wbudowanych typów .NET, przyspieszających pracę programistów.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Auto-mapping">Mechanizm mapowania obiektów</a> &ndash; podobny do AutoMappera, choć prostszy i bardziej ubogi.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Built-in-profiling">Profiler</a> wbudowany w środowisko.</li>
+<li><a href="http://fluentvalidation.codeplex.com/wikipage?title=CreatingAValidator">Zaawansowany mechanizm walidacji</a>, umożliwiający m.in. warunkową walidację poszczególnych pól.</li>
+<li>Mechanizm <a href="https://github.com/ServiceStack/ServiceStack/wiki/Authentication-and-authorization">autentykacji</a> i zarządzania dostępem oparty o role i uprawnienia z możliwością logowania poprzez OpenID.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/The-IoC-container">Kontener IoC</a> &ndash; również z możliwością podpięcia własnego.</li>
+<li>Minimalistyczny framework ORM (<a href="https://github.com/ServiceStack/ServiceStack.OrmLite">OrmLite</a>) &ndash; umożliwia on podłączenie do najpopularniejszych relacyjnych, baz danych. Naturalnie on również może być zastąpiony bardziej kompleksowym rozwiązaniem.</li>
+<li>Wiązania do rózniej maści usług logowania (np. NLog, Elmah, Log4Net, EventLog, Enterprise Lib.) i cache'owania (np. domyślny InMemory, Memcached, Redis, Azure lub Amazon Web Services).</li>
+<li>Bundlera plików JavaScript, CSS, LESS, SASS i CoffeeScript &ndash; chociaż trzeba przyznać, że jest to dość wyboista droga.</li>
+<li>Mechanizm do kolejkowania wiadomości &ndash; obecnie tylko za pośrednictwem Redisa. Trwają prace nad wprowadzeniem bindingów do ZeroMQ, RabbitMQ, Azure Service Bus oraz Amazon SQS.</li>
+<li>Gotowe SDK do aplikacji klienckich pod C#, Silverlight, JavaScript oraz Dart.</li>
+</ul>
+
+
+<p>Ale mówiąc o jego najbardziej kompleksowych zaletach:</p>
+
+<h2>Web services &amp; Content Negotiation</h2>
+
+<p>Jest to &ndash; moim zdaniem &ndash; najciekawsza cecha Service Stack. Tworząc dotychczasowe usługi sieciowe z wykorzystaniem standardowych bibliotek .NET musieliśmy uzależniać technologię, jaką zamierzaliśmy wykorzystać od formatu danych, jakiego się spodziewaliśmy. A więc tworząc serwisy wykorzystujące SOAP lub XML tworzyliśmy dla nich specjalne usługi w WCFie. Jeżeli chcielibyśmy, aby zwracały one dane w postaci JSON, prawdopodobnie większość z nas wykorzystałaby najnowsze podejście w postaci ASP.NET Web API, dla pozostałych formatów ASP.NET.</p>
+
+<p>Problemem takiego podejścia jest fakt, że za każdym z tych rozwiązań stoi osobna technologia, która nie jest kompatybilna z pozostałymi. Niezależnie od tego, co wybierzemy, nigdy nie otrzymamy kompletnego rozwiązania.</p>
+
+<p>Jak wygląda to w przypadku ServiceStack? To proste. Każdy z modułów naszej aplikacji może być zamknięty w ramach klas dziedziczących po wspólnej klasie <code>Service</code>(jednak wbrew pozorom nie mamy tu do czynienia z wzorcem MVC) &ndash; lub w razie potrzeby, którejś z jej klas bazowych bądź interfejsu <code>IService</code>. Każda metoda obsługująca żądanie pobiera w parametrze obiekt POCO (Plain Old Class Object) i zwraca inny obiekt POCO. Dopiero na poziomie frameworka rozwiązywany jest problem serializacji danego obiektu do końcowego formatu, który może być wnioskowany na podstawie nagłówka HTTP, zawartości URL bądź dowolnego innego warunku, jaki zdefiniujemy podczas konfiguracji. Rozwiązanie to znane jest jako <em>Content Negotiation</em>. Dzięki temu jedna klasa może pełnić rolę kontrolera ASP.NET, WebAPI i serwisu WCF w tym samym czasie!</p>
+
+<p>Domyślnie dysponujemy wbudowanymi serializatorami dla formatów: SOAP (1.1 oraz 1.2), XML, JSON, CSV i JSV. Dodatkowo w sieci można pobrać pluginy rozszerzające tą listę o niemal wszystkie formatery dostępne w świecie .NET, w tym też binarne. Jedna linijka kodu w konfiguracji nieraz wystarcza, aby wprowadzić dany format do naszej aplikacji. Warto zauważyć, że ta sama zasada panuje w przypadku dynamicznie generowanych stron HTML &ndash; po doinstalowaniu pluginu możemy generować strony w oparciu o składnię Razora oraz Markdown.</p>
+
+<h2>Wydajność</h2>
+
+<p>Twórcy ServiceStack zwracają szczególną uwagę na szybkość swojej platformy, w myśl powiedzenia: <i>&ldquo;We care about two things: speed and quality. And the quality we care about is speed&rdquo;</i>. Nie powinno więc dziwić, że większości wypadków framework ten przewyższa ASP.NET i WCF w kwestiach wydajnościowych. Wynika to z prostego faktu. Mamy tu do czynienia z inicjatywą open source, a w przedsięwzięciach tego typu dużą rolę odgrywa prostota. Nie ma tutaj miejsca na platformy typu Enterprise, z setkami warstw abstrakcji, pełnymi potworków typu <a href="http://ws.apache.org/xmlrpc/apidocs/org/apache/xmlrpc/server/RequestProcessorFactoryFactory.RequestSpecificProcessorFactoryFactory.html">RequestSpecificProcessorFactoryFactory</a>(tak, jest to wyraz mojego &ldquo;hejtu&rdquo; względem podejścia projektowego w Javie, ale fakt faktem problem ten dotyka również .NETu ;) ).</p>
+
+<p>Konkretne porównania i benchmarki można znaleźć <a href="https://github.com/ServiceStack/ServiceStack/wiki/Real-world-performance">tutaj</a>. I jak widać, nie chodzi tu o jakiś pomijalny zysk rzędu kilkunastu procent.</p>
+
+<h2>Testowalność</h2>
+
+<p>ServiceStack jest frameworkiem z natury bardzo zmodularyzowanym, umożliwiającym wymianę poszczególnych komponentów. To z kolei czyni go naturalnym kandydatem do wprowadzenia testów jednostkowych.</p>
+
+<p>Innym atutem jest podejście wymiany danych opartych na komunikatach (message-based design), które w wypadku ServiceStack są zwykłymi klasami POCO. Dzięki temu testując poszczególne moduły/usługi nie musimy przetwarzać wbudowanych we framework obiektów żądań i odpowiedzi. Zamiast tego mamy do czynienia ze standardowym zbiorem klas, zdefiniowanych przez nas samych, które z zewnątrz nie zdradzają zależności od używanego przez nas frameworka. Ponad to architektura sprawia, że najwygodniejszym podejściem jest budowa dużej ilości serwisów z małą ilością metod, co dodatkowo ułatwia zachowanie ziarnistości systemu.</p>
+
+<h2>Wieloplatformowość</h2>
+
+<p>Ostatnią wartą odnotowania cechą pozostaje fakt, że wybierając SS otrzymujemy w pełni funkcjonalny framework działający zarówno pod Windowsem jak i platformami linuxowymi. Wiem, że pod ASP również można programować w sposób pozwalający na postawienie aplikacji na Linuxie, ale jest to rozwiązanie niekompletne. Przykładowo, ServiceStack jest obecnie jedyną opcją pozwalającą na uruchomienie usług SOAP pod Mono.</p>
+
+<p>Nie oznacza to jednak, że decydując się na SS, musimy rezygnować z naszej dotychczasowej aplikacji napisanej w ASP.NET. Równie dobrze możemy uruchomić hosta ServiceStack wewnątrz Global.asax i używać go np. tylko jako zamiennika warstwy nośnej dla usług WCF.</p>
+
+<p>Całość doskonale wpisuje się w naturę technologii webowych, ich otwartość i multiplatformowość. Dodatkowo umożliwia ona optymalizację kosztów (hosting linuxowy jest średnio 5-krotnie tańszy niż porównywalny windowsowy) i otwiera nowe możliwości na rynku, który w przypadku .NET w ogromnej części składa się z aplikacji biznesowych.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Garść pro tipów przydatnych podczas tworzenia aplikacji]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
+    <updated>2013-06-26T22:49:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
+    <content type="html"><![CDATA[<p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
+
+<p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
+
+<h2>1. &ldquo;Jesteśmy jedną rodziną, mamy wspólne korzenie&rdquo;</h2>
+
+<p>Naturalną cechą aplikacji webowych rozwijanych w ramach środowiska .NET jest ich podział na wiele różnych projektów. Nie jest to wymóg, jednakże z reguły zdecydowanie pomaga w organizacji oraz w trakcie późniejszego wdrażania rozwiązań. To co jednak uznałem za warte przypomnienia to wzajemne powiązania pomiędzy projektami. Mówiąc zaś dokładniej, przydatność stworzenia wspólnej biblioteki-korzenia, dowiązywanej przez wszystkie pozostałe projekty w aplikacji.</p>
+
+<p>Ma to kilka prostych przyczyn. Po pierwsze zdaża się, że musimy zaimplementować pewną funkcjonalność w kilku bibliotekach, będących na podobnym poziomie zależności, których jednak nie możemy powiązać ze sobą np. ze względu na rekurencyjne zapętlenie zależności &ndash; tutaj wspólny &ldquo;korzeń&rdquo; okazuje się nieoceniony. Po drugie, w trakcie pracy z aplikacją nieraz powstaje chęć stworzenia własnego DSLa bądź zestawu rozszerzeń upraszczających pracę z daną platformą bądź językiem. Ileż to razy rodziła się ochota na dodanie <em>extension method</em>, której brakuje nam w istniejących już klasach .NET? Tutaj również możliwość współdzielenia tego typu funkcjonalności jest bardzo przydatna.</p>
+
+<p>Idea wspólnego &ldquo;korzenia&rdquo; przydaje się również kiedy mowa o klasach wyjątków. Dobrą praktyką w trakcie definiowania aplikacji jest wywoływanie własnych wyjątków, które mogą informować nie tylko o błędach w operacjach logicznych systemu, lecz również logice biznesowej jako takiej. Moim zdaniem wszystkie takie <em>customowe</em> wyjątki powinny mieć wspólną klasę bazową. Dzięki temu w późniejszych fragmentach aplikacji będziemy mogli bez problemu wychwytywać te z nich, które stworzyliśmy sami na potrzeby naszego systemu i odpowiednio na nie reagować &ndash; przekształać do postaci czytelnej dla końcowego użytkownika, logować itp.</p>
+
+<h2>2. Atomic frontend design</h2>
+
+<p>Atomic design to koncepcja projektowania elementów HTML w sposób uporządkowany na bazie kompozytów. Nieraz w życiu codziennym zdarza się nam określać komponenty strony w dość ogólny sposób, pozostawiając szczegóły implementacji na &ldquo;doprecyzowanie później&rdquo; ;) W rezultacie kończymy w morzu (lub raczej szambie) znaczników o mgliście oznaczonych brzegach. Ponieważ HTML na stronach może mieć bardzo rozrośniętą postać, którą jako programiści też będziemy musieli utrzymywać, warto zadbać też o ten aspekt aplikacji.</p>
+
+<p>Idea atomic designu skupia się własnie na wiązaniu elementów HTML w kompozyty, które z kolei są łączone ze sobą dalej w kolejne, bardziej abstrakcyjne struktury. Więcej szczegółów na ten temat możecie dowiedzieć się <a href="http://bradfrostweb.com/blog/post/atomic-web-design/">tutaj</a>. W praktyce warto poznać to podejście już teraz &ndash; w obecnej chwili widać wyłaniający się coraz mocniej trend, który w przyszłości może poskutować nowym standardem umożliwiającym definiowanie własnych znaczników HTML, mających bezpośrednie wsparcie ze strony silnika renderującego.</p>
+
+<p>Chcąc wspomóc developerów i przygotować współczesne aplikacje webowe do nadchodzących standardów, inżynierowie Google'a stworzyli projekt <a href="http://www.polymer-project.org/">polymer</a> (czerpiący m.in. z koncepcji atomic designu), którego zadaniem jest zbudować odpowiednią platformę abstrakcji z istniejących już rozwiązań: HTML, Javascriptu oraz CSS. Zgodnie z ich przewidywaniami wraz z rozwojem przeglądarek funkcje oferowane przez tą bibliotekę mają w przyszłości zostać zastąpione specjalizowanymi, natywnymi odpowiednikami, zaś zadaniem polymeru jest umożliwić obecnym aplikacjom kompatybilność z dopiero powstającymi technologiami. Ciekawostka: mimo, że AngularJS stanowi oddzielny projekt, zapowiedziano już że w kolejnych wersjach będzie on coraz bardziej integrowany z polymerem.</p>
+
+<h2>3. Stwórz własną platformę abstrakcji&hellip;</h2>
+
+<p>Kolejna kwestia wynika z prostej tendencji uzależniania logiki aplikacji od wykorzystywanych bibliotek. W praktyce skutkuje to twardym związaniem naszego systemu z konkretnymi rozwiązaniami &ndash; które w przyszłości mogą stracić wsparcie, okazać się przestarzałe lub niewystarczające do naszych potrzeb. Taka monolityczna budowa nie jest przychylna zmianom, a jak powszechnie wiadomo klienci lubią wpadać na nowe pomysłu i zmieniać swoje zdanie.</p>
+
+<p>Stąd też idealnym rozwiązaniem jest stworzenie klasycznej płaszczyzny abstrakcji, całkowicie izolującej naszą logikę biznesową, która stanowi jądro każdej aplikacji biznesowej, od zewnętrznych platform, realizowanych pośrednio jako obiekty proxy/adaptery. Piszę idealnym, w praktyce jednak rzadko takie rozwiązanie okazuje się w 100% możliwe. Warto jednak poświęcić mu trochę uwagi &ndash; również z perspektywy modularyzacji i możliwości testowania.</p>
+
+<h2>4. &hellip; ale nie przeginaj z warstwami</h2>
+
+<p>Pamiętaj, że każda dodatkowa wartwa abstrakcji z jednej strony umożliwia ci podzielenie problemu na prostsze, bardziej ogólne definicje (a ludzie z natury lubią pojmować świat ogólnikowo), z drugiej strony jednak stanowi jednocześnie kolejną barierę w optymalizacji.</p>
+
+<p>To co warto przypomnieć, to fakt, że tworzenie aplikacji to proces, w którym wymagania zmieniają się w czasie. Produkcja oprogramowania nie jest jednym z konkursów algorytmicznych, gdzie wszelkie bariery i wartości graniczne są niezmienne i podane z góry. To co dziś świetnie się sprawdza, jutro może okazać się niewystarczające.</p>
+
+<p>Ważnym czynnikiem jest odpowiednie zdefiniowanie problemu i dobór właściwych wzorców i rozwiązań. Jako programiści nieraz generalizujemy pewne problemy tak, aby dało się je rozwiązać przy pomocy istniejących technologii, kosztem rzeczywistej złożoności całego systemu. Dla zainteresowanych proponuję obejżeć <a href="http://www.infoq.com/presentations/8-lines-code-refactoring">wykład</a> Grega Younga na ten temat.</p>
+
+<p>Wielowarstwowe aplikacje stanowią pewien problem, kiedy przychodzi do optymalizacji. Nie oznacza to jednak, że budowa z podziałem na warstwy jest zła. Jest wygodna z punktu widzenia programisty i projektowania koncepcji rozwiązań dla problemów postawionych przed systemem. Z drugiej strony jednak każda aplikacja posiada pewne punkty zapalne &ndash; wymagające dużej wydajności &ndash; które będą wymagać niestandardowego trakowania, w tym też odejścia od wcześniej przyjętych koncepcji i zwrotu w stronę rozwiązań bardziej nisko poziomowych. Dobrze, aby aplikacja umożliwiała pewien sposób na osiągnięcie tego celu bez zaburzania reszty konstrukcji.</p>
+
+<p>Jednym z możliwych kompromisów jest wielopoziomowy caching. Zamiast przebijać sie przez kolejne płaszczyzny abstrakcji w celu możliwości operowania na bardziej niskopoziomowych mechanizmach, cache'ujemy uzykiwane wartości na poszczególnych warstwach. Wielopoziomowy cache umożliwia też przyrostowe skalowanie wydajności w zależności od potrzeb.</p>
+
+<h2>5. Kradnij&hellip;</h2>
+
+<p>&hellip; moc obliczeniową maszyn klienta. Jest to bardzo dobre podejście, ponieważ wykonywanie części logiki po stronie przeglądarki nie dość, że odciąża serwery, za które musimy płacić, to dodatkowo stanowi rozwiązanie o wiele bardziej skalowalne, ponieważ ogólna ilość dostępnej mocy obliczeniowej rośnie wraz z liczbą maszyn wysyłających żądania na serwer. Stąd też część obliczeń, takich jak renderowanie dynamicznego HTMLa, czy preprocesowanie modelu danych od razu do postaci przystępnej do obliczeń po stronie serwera, można wykonywać bezpośrednio w przeglądarce.</p>
+
+<h2>6. Oszukuj</h2>
+
+<p>Co mam przez to na myśli? Po pierwsze powtarzam: cache'uj dane. W świecie aplikacji na platformie .NET często jest to opcja marginalizowana. W wielu przypadkach dopuszczalne jest, aby użytkownik zobaczył <em>przybliżone</em> dane. A co jeżeli nie są one aktualne? <em>Keep calm and oj tam oj tam</em> ;)</p>
+
+<p>Problem, z którym się też spotkałem, to stosowanie <em>prymitywych</em> cache'ów w miejscach, w których ciężko określić górną granicę przyrostu danych. Tak, zwykły .NETowy słownik może wystarczy w twoim środowisku developerskim, ale w momencie, gdy za rok dane pompowane do niego na produkcji będą liczone w setkach tysięcy (lub więcej) obiektów, wszyscy na własne oczy zobaczą, że wyprodukowałeś trabanta w cenie porsche. Technologie sprawdzone na polu walki, takie jak Memcache i Redis są tutaj, gotowe cię wesprzeć. Korzystaj z tej możliwości.</p>
+
+<p>Po drugie pamiętaj o złotej zasadzie &ndash; czego user nie dotknie, tego sercu nie żal. Przykład-anegdota: swego czasu aplikacje na urządzenia Apple były podawane jako wzór szybko uruchamiających się programów. Aplikacja, która na innych systemach uruchamiała się w kilka sekund, na iPhone była gotowa w ułamku tego czasu. Na czym polegał sekret? Otóż w rzeczywistości to, co widział użytkownik, było w rzeczywistości zrzutem ekranu z działającej aplikacji, bez jakichkolwiek możliwości interakcji. Dzięki temu użytkownik miał wrażenie, że aplikacja uruchamia się niemal natychmiast. W rzeczywistości, zanim wykonał on jakąkolwiek akcję w UI, mijało parę sekund, w trakcie których program miał czas, aby się załadować i podstawić pod &ldquo;zaślepkę&rdquo; faktyczny interfejs użytkownika.</p>
+
+<p>Liczę na to, że lektura ta okazała się ciekawa i być może uda mi się w przyszłości opisać dalsze koncepty i przemyślenia.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Knockout.js - spostrzeżenia]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
+    <updated>2013-03-09T12:25:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia</id>
+    <content type="html"><![CDATA[<p>Ponieważ z <a href="http://knockoutjs.com/">knockout.js</a> mam do czynienia od dłuższego czasu (dokładnie od wersji 1.0 ;) ), postanowiłem podzielić się moimi spostrzeżeniami ze tymi, którzy chcą wykorzystać ten framework w swojej pracy, jak również osobami które już go stosują oraz generalnie wszystkim zainteresowanym w pisaniu ustrukturyzowanych skryptów JS. Ale zacznijmy od początku.</p>
+
+<h2>Czym jest Knockout.js?</h2>
+
+<p>Jest to rozbudowany, javascriptowy framework MVVM umożliwiający tworzenie bogatych aplikacji internetowych. W przeciwieństwie do tradycyjnego podejścia tzn. bindowania ASP'owych modeli &ndash; po stronie serwera &ndash; za pośrednictwem tagów <code><input></code> osadzonych w formularzach HTML, umożliwia on nam odwzorowanie na identyczny obiekt JSON po stronie klienta. Pozwala też na dual-binding tego modelu z fragmentami strony wyświetlanej użytkownikowi. Oznacza to, że każda zmiana wykonana na zbindowanym tagu htmlowym spowoduje natychmiastowe zaktualizowanie modelu zachowanego w przeglądarce i vice versa &ndash; każda zmiana pola należącego do obiektu spowoduje update na powiązanych fragmentach strony. Wszystko to w czasie rzeczywistym, w deklaratywny sposób.</p>
+
+<p>Tyle w kwestii definicji dla ludzi nie zaznajomionych z tym podejściem. Osoby lepiej zorientowane w zagadnieniach frontendowych aplikacji WWW zapewne znają już tą bibliotekę podobnie jak alternatywy wykorzystywane w tym środowisku. Poniżej postaram się przedstawić parę własnych przemyśleń na temat tej biblioteki, zaczynając od tych związanych z sytuacjami, w których warto jej użyć, a kiedy lepiej sobie darować.</p>
+
+<p>Przypadki, kiedy powinniśmy się wstrzymać z użyciem Knockout.js:</p>
+
+<ul>
+<li>Single Page Applications &ndash; wiem, że Microsoft promuje tą bibliotekę jako własnego kandydata do roli frameworka SPA. Prawda jest jednak bolesna &ndash; Knockout nie posiada wbudowanych mechanizmów niezbędnych do tego typu zadań. Mowa tu przede wszystkim o mechanizmie routingu/nawigacji pomiędzy widokami oraz komunikacji z serwerem/metodach do zapisywania i synchronizacji danych. Nie znaczy to oczywiście, że budowa takich rozwiązań jest niemożliwa. Uważam po prostu, że w takich przypadkach lepiej skorzystać z innych bibliotek, lepiej przystosowanych do takich zadań np. <a href="http://angularjs.org/">AngularJS</a>.</li>
+<li>Standardowe widoki CRUD &ndash; jeżeli planujesz budowę standardowych ekranów, które nie muszą zachowywać skomplikowanych zależności pomiędzy obiektami-modelami, lub twoje widoki mapują się z tabelami w bazie w relacjach 1 do 1, wtedy powiedzmy sobie jasno &ndash; Knockout jest tobie nie potrzebny. Nie wytaczaj działa na komara.</li>
+<li>Szablony po stronie klienta &ndash; o ile mechanizm deklaratywnych zależności umożliwia wykorzystanie Knockouta do takich zastosowań, to w praktyce dodatkowy narzut związany z jego użyciem jest niewspółmierny do korzyści. Jeżeli nie potrzebujesz niczego ponad mechanizm szablonowania, proponuję zajrzeć na <a href="http://garann.github.com/template-chooser/">http://garann.github.com/template-chooser/</a>&ndash; ta strona pomoże ci ustalić bibliotekę właściwą do twoich potrzeb.</li>
+</ul>
+
+
+<p>Kiedy Knockout może ci się przydać:</p>
+
+<ul>
+<li>Prezentacja danych w modelu <a href="http://martinfowler.com/bliki/CQRS.html">CQRS</a> &ndash; a więc kiedy wymagania sprawiają, że prosty CRUD z jQuery do ustawiania widoczności elementów to za mało. Jeżeli musisz na jednej stronie przedstawić skomplikowane relacje pomiędzy obiektami-modelami, o wiele łatwiej będzie, jeżeli zachowasz te zależności po stronie klienta.</li>
+<li>Semi-SPA &ndash; czasami zdarza się, że aplikacja składa się z wielu prostych ekranów konfiguracyjnych, umożliwiających definiowanie różnych ustawień, oraz pojedynczych bogatych stron, które zawierają skomplikowane mechanizmy wyświetlania i manipulowania danymi. W takich przypadkach Knockout sprawdza się doskonale, ponieważ upraszcza sterowanie logiką takich widoków, zaś one same nie wymagają stosowania mechanizmów, których ta biblioteka nie zapewnia (a których część opisałem wyżej).</li>
+</ul>
+
+
+<p>Mam przyjemność wykorzystywać ten framework również na codzień w pracy od dłuższego czasu. Dzięki temu udało mi się wykonać kilka mniej lub bardziej oczywistych spostrzeżeń na temat błędów popełnianych przez programistów (w tym mnie ;) ) pracujących z Knockoutem oraz wzrocem MV* w przeglądarce, jak również rad których mógłbym udzielić osobom które zaczynają z nim swoją zabawę. Oto niektóre z nich.</p>
+
+<h2>Myśl kategoriami aplikacji</h2>
+
+<p>Jest to chyba najtrudniejsza lekcja. Nieraz logika wykonywana po stronie klienta sięga setek &ndash; czasami tysięcy &ndash; linii kodu, który dodatkowo może zachowywać się różnie w zależności od tego, na jakiej przeglądarce go odpalimy. Utrzymanie całości jest trudne (nieodzowne jest tu credo: <em>it&rsquo;s fucking javascript</em>;) ), stąd też musisz nauczyć się nadawać takim skryptom odpowiednią strukturę. Bardzo przydaje się tutaj wiedza z zakresu budowy aplikacji desktopowych opartych o MVVM &ndash; Knockout ma z tym podejściem wiele wspólnego.</p>
+
+<p>Podobnie jak w przypadku Single Page Applications oraz innych aplikacji opartych o MVVM powinieneś z góry zastanowić się nad rozwiązaniem kilku kwestii. Na &ldquo;lżejszych&rdquo; stronach mogą one pozostać dość rozmyte, lecz wraz ze wzrostem bazy twojego kodu powinny one ulegać coraz wyraźniejszej separacji i wyspecjalizowaniu.</p>
+
+<h2>Sposób komunikacji z serwerem</h2>
+
+<p>Musisz określić, w jaki sposób twoja aplikacja będzie się komunikować z serwerem. Czy będzie to standardowy jQuery ajax, może coś bardziej zaawansowanego (np. <a href="http://amplifyjs.com/">Amplify.js</a>), a może warunki pozwalają na organizację połączenia po WebSockets. Niezależnie od tego co wybierzesz, warto zastosować kilka dobrych praktyk.</p>
+
+<p>Po pierwsze nie zaszywaj kodu wywołań do serwera w sposób nierozerwalny. Przekaż obiekt służący do komunikacji z serwerem jako parametr do konstruktora ViewModelu, który takiej komunikacji wymaga. Nawet prosta konstrukcja typu
+``` js
+var ViewModel = function(ajax){</p>
+
+<pre><code>var ajaxHandler = ajax;
+</code></pre>
+
+<p>};</p>
+
+<p>var vm = new ViewModel($.ajax);
+```
+sprawia, że w razie potrzeby będziesz mógł mniej boleśnie wymienić ten obiekt na inny.</p>
+
+<p>Kolejnym krokiem jest opakowanie używanej biblioteki w obiekt-adapter &ndash; w ten sposób unikniesz trwałego wiązania aplikacji z jednym frameworkiem. Będziesz miał dowolność wyboru oraz prostego rozszerzenia używanego rozwiązania o metody/wzorce, których faktycznie potrzebujesz. Bardzo ważnym elementem tego podejścia jest również możliwość trwałego opakowania wywołań do konkretnych adresów w bardziej przejrzyste i czytelne (oraz łatwiejsze w przyszłym rozwoju) metody. Sądzę, że takie wywołanie:
+<code>js
+resource.save(this.Person);  // 0 twardych zależności
+</code>
+jest prostsze z punktu widzenia przyszłego rozwoju i prostoty debugowania kodu niż:
+<code>js
+$.post("/some/url", {model:ko.toJSON(this.Person)}); // 2 twarde zależności: jQuery, knockout
+</code>
+Wraz ze wzrostem wymagań dobrą opcją jest dodanie do takiej komunikacji bardziej rozwiniętych wzorców typu Publish/Subscribe, które ułatwią pracę z kodem w przyszłości.</p>
+
+<h2>Cykl życia strony i obiektów</h2>
+
+<p>Jest to dobra praktyka, ponieważ mechanizm ten jest w Knockoutcie dość ubogi. Warto jest przemyśleć, jakie typy zdarzeń mogą okazać się przydatne w trakcie pracy ze stroną. Czasem możesz potrzebować podpiąć się z własnymi funkcjami w konkretnych momentach życia strony, np. tuż przed/po wywołaniu polecenia bindowania danych (<code>ko.applyBindings</code>), czy też w momencie dołączenia nowej właściwości itp. Dobrą praktyką jest też zdefiniowanie funkcji-inicjalizatora dla całego mechanizmu Knockouta oraz funkcji, w której możesz opisać całą potrzebną konfigurację w jednym miejscu.</p>
+
+<h2>View modele &ndash; portlety i kontener aplikacji</h2>
+
+<p>Dobrą radą na początek jest przygotowanie pojedyńczego ViewModelu, który nie służy zasadniczo samemu przechowywaniu obserwowanych właściwości, lecz pełni rolę kontenera lub głównego obiektu aplikacji. Dlaczego? Po pierwsze Knockout zasadniczo nie umożliwia generowania wielu VMów-korzeni dla pojedyńczej strony HTML. Po drugie, działa tutaj analogia do MVVM w aplikacjach desktopowych. Pojedyńczy widok &ndash; stronę prezentowaną użytkownikowi &ndash; z reguły da się podzielić na szereg niezależnych fragmentów (portletów), z których każdy jest zarządzany przez inny ViewModel. Zapewnia to właściwą separację bardziej złożonego problemu, co znacznie ułatwia ogarnięcie całej logiki znajdującej się na stronie.</p>
+
+<p>Moja rada &ndash; nawet kiedy nie planujesz nadzwyczaj bogatej logiki na stronie, stwórz co najmniej jeden view model pełniący rolę rdzenia. W nim zdefiniuj pozostałe view modele, które będą służyły do bindowania właściwych danych. Żadna obserwowalna wartość wysyłana na serwer nie powinna być bezpośrednio powiązana z korzeniem. Nie kosztuje to wiele pracy, a w stuacji, kiedy twoja strona w przyszłości będzie ewoluować i rozrastać się o kolejne podwidoki/portlety, dodanie kolejnych VMów nie będzie stanowić problemu.</p>
+
+<h2>Utrzymaj separację Widoków od ViewModelu</h2>
+
+<p>Częstym błędem popełnianym na początku przez programistów zaczynających swoją przygodę z Knockoutem, jest wykonywanie operacji na drzewie DOM wewnątrz logiki ViewModeli. Jest to poważny błąd. Zastanów się: czy tworząc akcję kontrolera używasz jej do generowania HTMLa, który potem osadzasz na stronie?</p>
+
+<p>Modele MVVM i MVC nie bez powodu zapewniają separację pomiędzy widokami, a pozostałymi elementami aplikacji. W przypadku Knockout.js rolę widoku stanowi bezpośrednio strona HTML wzbogacona o atrybuty <strong>data-bind</strong>, wewnątrz których definiujemy pożądane wiązania. Jeżeli z kolei czujesz, że dostępne bindingi nie spełniają twoich potrzeb, pamiętaj że zawsze możesz zdefiniować własne.</p>
+
+<h2>Luźne zależności pomiędzy modułami w aplikacji</h2>
+
+<p>Pamiętaj, że zmodularyzowane aplikacje są łatwiejsze zarówno w utrzymywaniu jak i późniejszym rozwoju. Łatwiej jest także je debugować i testować. Z punktu widzenia programisty Javascript wzorzec Dependency Injection ma jeszcze jedną zaletę. Ponieważ unikasz w ten sposób odwoływania się do funkcji globalnych umieszczonych w wyższych partiach scope chain (więcej dowiesz się <a href="http://www.slideshare.net/nzakas/speed-up-your-javascript">tutaj</a>), twoja aplikacja staje się odrobinę szybsza.</p>
+
+<p>Unikaj wywoływania w kodzie swoich funkcji/metod różnego typu obiektów globalnych takich jak window, document, czy też obiektów-modułów do innych bibliotek np. jQuery. Zamiast tego przekazuj je jako paramtery do obiektów, które je wykorzystują.</p>
+
+<p>Innym &ndash; na pewno wartościowym &ndash; wsparciem, które może przydać się osobom nie przywykłym do pułapek języków dynamicznie typowanych, są języki kompilowane do Javascriptu, takie jak <a href="http://www.typescriptlang.org/" title="">TypeScript</a> czy <a href="http://www.dartlang.org/">Dart</a>.</p>
+
+<h2>Testy</h2>
+
+<p>Testy jednostkowe są przydatne w każdej większej aplikacji i logika po stronie klienta nie stanowi tutaj wyjątku. Im dalej rozwijasz swoją aplikację i im więcej operacji wykonywanych jest w przeglądarce użytkownika, tym bardziej prawdopodobne, że trafisz na moment w którym testy jednostkowe staną się nieocenione.</p>
+
+<p>W tym celu należy przedtem zapewnić &ldquo;testowalność&rdquo; swojego kodu. Wskazówki opisane przeze mnie powyżej (zwłaszcza te dotyczące modularyzacji i luźnych powiązań) dotyczą również tego zagadnienia. Mimo że Knockout nie zapewnia wbudowanych klas ułatwiających testowanie (AngularJS jest pomocny również pod tym względem), nie jest to dużym problemem, ponieważ Javascript jest językiem bardzo elastycznym i rozszerzalnym, zatem pisanie mocków nie stanowi tutaj problemu.</p>
+
+<p>Co do wyboru frameworka testowego jest to kwestia własnych preferencji. Jedni wybiorą polecany przez M$ <a href="http://qunitjs.com/">QUnit</a> wspierający programowanie TDD. Dla programistów .Net jest to tradycyjna dobrze znana ścieżka. Inni (w tym ja ;) ) wolą metodykę BDD i czytelność, jaką oferują biblioteki takie jak <a href="http://pivotal.github.com/jasmine/">Jasmine</a>. Dlaczego preferuję właśnie to drugie podejście? Dlatego że łatwiej definiować testy w kategoriach konkretnych zachowań, jakich oczekujemy po działaniu naszego kodu, niż operacji, które nie zawsze muszą jasno definiować to, co faktycznie chcemy osiągnąć.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Javascript a wzorce projektowe]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe/"/>
+    <updated>2013-02-23T19:01:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe</id>
+    <content type="html"><![CDATA[<p>Założę się, że wiele osób czytając ten tytuł puknie się w głowę. I owszem w wielu sytuacjach wzorce nie są niezbędne do tworzenia przejrzystych i dobrze rozwijalnych skryptów. Do czasu. Dokładnie do momentu gdy nasz skrypt zaczyna mieć więcej niż kilkadziesiąt linijek.</p>
+
+<p>W zależności od języka programowania, pisany przez nas kod może mieć mniejszą lub większą przejrzystość. Niektóre języki takie jak Haskel, są z natury bardzo klarowne i skupiają się na istocie rzeczy. Inne, jak właśnie Javascript, dają programiście olbrzymie możliwość zrobienia czegoś na pierdyliard sposobów, co nie oznacza, że każdy sposób jest poprawny. Jakby tego było mało, javascriptowe JITy są wstanie przełknąć nawet bardzo niezdarny kod. Dlatego właśnie dyscyplina samego programisty oraz stosowanie wzorców jest tym bardziej istotne.</p>
+
+<p>O tradycyjnych wzorcach &ndash; strategiach, obserwatorach etc. &ndash; napisano całą masę artykułów. Dlatego też poniżej postaram się przedstawić kilka mniej znanych, skupiając się szczególnie na tych, które są istotne z punktu widzenia JS, przez wzgląd na możliwości jakie daje oraz brakujących konstrukcji dostępnych w innych językach, których tutaj brakuje &ndash; w gruncie rzeczy czym są wzorce projektowe, jeżeli nie powszechnymi sposobami na obejście braków odpowiednich konstruktów w danym języku programowania?</p>
+
+<h2>Funkcje natychmiastowe</h2>
+
+<p>Mechanizm funkcji natychmiastowych (<strong>immediate functions</strong>) jest jedną z podstawowych sztuczek językowych wykorzystywanych w Javascriptcie. Ponieważ wiedza ta stanowi fundament innych wzorców, przedstawię go poniżej.
+``` js
+var immediateValue = (function(){</p>
+
+<pre><code>// wykonujemy jakąś operację i zwracamy wartosć
+    return x;
+})();
+
+// określamy zewnętrzne obiekty, które wywołujemy wewnątrz funkcji
+var module = (function(window, document){
+// wykonujemy jakąś operację
+return module;
+</code></pre>
+
+<p>})(window, document);
+```
+Jak widzimy całość polega na jednoczesnym zdefiniowaniu funkcji i jej wykonaniu. Jakie są zalety tego podejścia?:</p>
+
+<ul>
+<li>Możemy w ten sposób budować moduły &ndash; ponieważ zawartość funkcji powoduje stworzenie nowego zakresu (scope &ndash; chociaż z tym ze względów wydajnościowych nie należy przeginać), wszystkie zmienne lokalne użyte w funkcji-module nie są widoczne spoza niej, dopóki programista jawnie nie określi inaczej.</li>
+<li>Przekazując parametry do takiej funkcji możemy jawnie określić zależności pomiędzy operacjami/obiektami używanymi wewnątrz funkcji ze światem zewnętrznym.</li>
+</ul>
+
+
+<h2>Modularyzacja</h2>
+
+<p>Jest to dość często poruszany problem (sam nieraz o nim wspominałem), ponieważ JS jako tako sam nie umożliwia definiowania pakietów ani przestrzeni nazw. Stąd też pierwszym zaprezentowanym przeze mnie wzorcem będzie <strong>namespace</strong>. Ponieważ przykładowy kod umieściłem i opisałem w jednym z poprzednich <a href="http://horusiath.blogspot.com/2012/09/javascript-porady-i-uwagi.html">postów</a>, gwoli przypomnienia umieszczę tutaj przykładowy kod takiego rozwiązania.
+``` js
+window.namespace = function (path, root) {</p>
+
+<pre><code>var parent = root || window;
+var modules = path.split(".");
+for (var i = 0; i &lt; modules.length; i++) {
+    var module = modules[i];
+    parent[module] = (parent[module] || {});
+    parent = parent[module];
+}
+return parent;
+</code></pre>
+
+<p>};
+```</p>
+
+<h2>Cache'owanie funkcji</h2>
+
+<p>Ze względu na silniki starszych przeglądarek i chęć ograniczenia skomplikowanych operacji wiele bibliotek oferuje mniej lub bardziej wyrafinowane mechanizmy służące cache'owaniu danych. Javascript przychodzi tutaj z pomocą, pozwalając na zastosowanie tej techniki niemal dla dowolnej funkcji. Mowa tutaj o wzorcu <strong>memoization</strong>. Wykorzystuje on dwa podstawowe fakty dotyczące tego języka:</p>
+
+<ol>
+<li>Każda funkcja jest jednocześnie pełnoprawnym obiektem.</li>
+<li>Każdy obiekt może pełnić funkcje słownika &ndash; a co za tym idzie można wykorzystać go do dynamicznego przydzielania nowych właściwości i hashy.</li>
+</ol>
+
+
+<p>Poniższy kod przedstawia najprostszą implementację tego zachowania:
+``` js
+var memoizedFunction = (function(){</p>
+
+<pre><code>// parametr {value} stanowi jednocześnie klucz w naszym cache'u
+function fn(value){
+    // sprawdzmy, czy parametr został wcześniej zapamiętany
+    if(fn._cache[value]){
+        return fn._cache[value];
+    }else{
+        // zapamiętywanie wywołania funkcji
+        var result = doSomething(value); 
+        fn._cache[value] = result;
+        return result;
+    }
+}
+fn._cache = {};
+return fn;
+</code></pre>
+
+<p>})();
+```
+Należy zwrócić uwagę na fakt, że parametr przekazywany do funkcji w tej implementacji stanowi jednocześnie wartość cache'owanego klucza, a sam wzorzec musi implementować funkcje deteministyczne (tzn. takie które dla tego samego parametru wejściowego zwracają zawsze tą samą wartość/wykonują tę samą operacje). Stąd też dobrze, jeżeli maksymalna możliwa liczba przekazywanych parametrów jest znana &ndash; w sytuacjach skrajnych mogłoby dojść do tego, że cache zacząłby zajmować ogromną ilość pamięci. W takim wypadku trzeba dodatkowo zaimplementować dodatkowo mechanizm odśmiecania lub okresowego czyszczenia cache'u.</p>
+
+<p>Prawidłowe działanie funkcji w dużej mierze zależy od typu przekazywanego parametru &ndash; ze względu na to, że Javascript bywa dość nieprzewidywalny, najlepiej jest trzymać się typów prostych: String, Number, Boolean. W praktyce jednak wszystko to jednak zależy od twojej znajomości tricków i pułapek tego języka.</p>
+
+<p>Gdzie przydaje się powyższy wzorzec? Kilka przykładów:</p>
+
+<ul>
+<li>W wywołaniach do serwera np. jeżeli dla podanego adresu URL zwracana wartość jest stała, możemy użyć go w postaci klucza i zapamiętać zwracaną wartość. W ten sposób zmniejszymy czas i ilość requestów na serwer potrzebnych do skończenia danej operacji.</li>
+<li>Inne funkcje o stałych kluczach, ale jednocześnie wykonujące złożone obliczenia np. w mechanizmach bindowania danych do modelu DOM przeglądarki.</li>
+</ul>
+
+
+<h2>Dependency Injection</h2>
+
+<p>Pojęcie to jest ostatnio dość często używane, również ze względu na rosnącą popularność frameworków MVC. W Javascriptcie zostało ono użyte po raz pierwszy w dużej skali wraz z nadejściem <a href="http://angularjs.org/">AngularJS</a>. Jednakże, jeżeli chcielibyśmy, możemy zaimplementować kontener <strong>Inversion of Control</strong> dla własnych potrzeb.</p>
+
+<p>W pierwszej kolejności zdefiniujmy kontener IoC.
+``` js
+// kontener IoC
+var DependencyResolver = function(){</p>
+
+<pre><code>var self = this,
+// regex użyty do wyciągania nazw zależności z konstruktora
+ARG_REGEX = /^function\s*[^\(]*\(\s*([^\)]*)\)/m,
+dependencies = {};
+
+// funkcja rejestrująca typ w kontenerze
+this.register = function(key, type){
+    dependencies[key] = type;
+};
+
+// zwraca instancję obiektu identyfikowanego po podanym kluczu 
+this.resolve = function(key){ ... };
+
+// rozwiązujemy podane zależności podane w postaci listy kluczy
+// dla dependency resolvera do postaci tablicy gotowych obiektów
+function resolveDependencies(args){ ... };
+</code></pre>
+
+<p>};
+```
+&ldquo;Klasa&rdquo; ta udostępnia dwie metody:</p>
+
+<ul>
+<li><code>register(key, type)</code> &ndash; rejestruje podaną wartość/funkcję konstruktora pod podanym kluczem.</li>
+<li><code>resolve(key)</code> &ndash; tworzy typ zgodnie z zarejestrowaną wcześniej nazwą.</li>
+</ul>
+
+
+<p>Niestety javascript nie przechowuje informacji na temat typów parametrów pobieranych przez funkcję. Stąd też twórcy AngularJS postanowili zbudować następującą konwencję &ndash; w momencie, gdy przy próbie utworzenia obiektu pojawiaja się problem z określeniem typu argumentów przekazywanych do konstruktora, przyjmuje się, że nazwy parametrów są kluczami dla wartosci zarejestrowanych w kontenerze IoC. Jak to wygląda w praktyce? Ilustruje to następujący kod:
+``` js
+// budujemy kontener
+var resolver = new DependencyResolver();
+resolver.register(&lsquo;valueA&rsquo;, 1); // rejestrujemy 1 dla klucza &lsquo;valueA&rsquo;
+resolver.register(&lsquo;valueB&rsquo;, MyClass1); // rejestrujemy &ldquo;klasę&rdquo; dla klucza &lsquo;valueB&rsquo;</p>
+
+<p>// tworzymy nową &ldquo;klasę&rdquo; i rejestrujemy ją jako &lsquo;valueC&rsquo;
+var MyClass2 = function(valueA, valueB) {</p>
+
+<pre><code>// kontener wygeneruje opowiednie wartosci sugerując się nazwami parametrów
+</code></pre>
+
+<p>}
+resolver.register(&lsquo;valueC&rsquo;, MyClass2);</p>
+
+<p>// tworzymy obiekt
+resolver.resolve(&lsquo;valueC&rsquo;); // profit ;)
+<code>
+Ciało metody resolve przedstawia się w takim wypadku następująco:
+</code> js
+this.resolve = function(key){</p>
+
+<pre><code>var type = dependencies[key];
+
+// jeżeli zarejestrowany typ jest funkcją/konstruktorem
+// musimy rozwiązać listę parametrów podanych do dokonstruktora
+if(typeof type === 'function'){
+
+    // wyciągamy listę wartości przyjmowanych przez konstruktor
+    var args = ARG_REGEX.exec(type.toString())[1].split(',');
+    // zamieniamy je na właściwe obiekty
+    var resolvedArgs = resolveDependencies(args);
+
+    // tworzymy nową instancję danego typu
+    var instance = new type();
+    type.prototype.constructor.apply(instance, resolvedArgs);
+    return instance;
+} else {
+    // jeżeli typ jest typem prostym wystarczy go zwrócić
+    return type;
+}
+</code></pre>
+
+<p>};
+<code>
+Natomiast brakujące ciało metody resolveDependencies:
+</code> js
+function resolveDependencies(args){</p>
+
+<pre><code>var resolvedArgs = [];
+for(var i=0; i &lt; args.length; i++){
+    var dependency = args[i].trim();
+    if(dependency !== ''){
+        var resolved = self.resolve(dependency);
+        resolvedArgs.push(resolved);
+    }
+}
+return resolvedArgs;
+</code></pre>
+
+<p>};
+<code>
+Oczywiście powyższy kod nie określa kwestii czasu życia obiektu, którą kontenery IoC przeważnie rozwiązują. Jednakże jaki problem tkwi w powyższym rozwiązaniu? Otóż w momencie minimalizacji danego skryptu cała nasza wiedza o nazewnictwie parametrów funkcji znika (zostają one zastąpione krótkimi - z reguły jednoliterowymi aliasami). Niestety ale nie da się tego rozwiązać w elegancki sposób. W przypadku AngularJS zdefiniowana została specjalna właściwość $inject, którą dodajemy własnoręcznie do danej klasy, a która definiuje tablicę kluczy-parametrów, dzięki którym możliwe jest rozwiązanie zależności przez kontener. W takim wypadku w powyższej implementacji wystarczy dodać drobne usprawnienie:
+</code> js
+this.resolve = function(key){</p>
+
+<pre><code>...
+var args = type.$inject || ARG_REGEX.exec(type.toString())[1].split(',');
+...
+</code></pre>
+
+<p>}
+<code>
+, natomiast, w samej zdefiniowanej klasie:
+</code> js
+var MyClass = function(valueA, valueB){ &hellip; }
+MyClass.$inject = [&lsquo;valueA&rsquo;, &lsquo;valueB&rsquo;];
+```
+Dlaczego ten mechanizm się przydaje? Odpowiedź jest dokładnie taka sama jak w przypadku DI po stronie serwera: modularyzacja projektu, spójny sposób i kontrola nad konstrukcją obiektów. Całość jest wprost nieoceniona, kiedy po stronie klienta wykonywany jest bardziej zaawansowany wycinek logiki. A do tego te wsparcie dla testów jednostkowych.</p>
+
+<p>P.S.: Jestem zdania, że w każdym projekcie z większą ilością Javascriptu testy jednostkowe są nieocenione. Po pierwsze w tym języku wyjątkowo łatwo o błędy i niezdarny kod, a TDD oraz BDD rozwiązują oba te problemy. Po drugie jesteśmy po stronie klienta. Chcesz sprawdzić czy logika do kontrolek User Interface i wyświetlanie strony działa prawidłowo? Gratulacje &ndash; jesteś po właściwej stronie kabla.</p>
+
+<h2>Dziedziczenie</h2>
+
+<p>Pomimo, że Javascript jest językiem obiektowym, nie definiuje jednak mechanizmu dziedziczenia w sposób znany nam z innych języków. Na szczęście jego możliwości pozwalają nam na wykonanie takiego mechanizmu w postaci wzorca <strong>extend</strong> (<em>powered by CoffeScript ;)</em> ).
+``` js
+var extend = function(childPrototype, superPrototype){</p>
+
+<pre><code>// dziedziczenie składowych
+for(var property in superPrototype){ 
+    // iterujemy po wszystkich składowych rodzica
+    if(superPrototype.hasOwnProperty(property)){
+        childPrototype[property] = superPrototype[property]
+    }
+}
+
+// dziedziczenie konstruktora
+function ctor(){
+    this.constructor = childPrototype;
+}
+ctor.prototype = superPrototype.prototype;
+childPrototype.prototype = new ctor();
+
+// definiujemy dostęp do "klasy bazowej"
+childPrototype.__super__ = superPrototype.prototype;
+return childPrototype;
+</code></pre>
+
+<p>};
+<code>
+Niestety, jeżeli chcemy mieć dostęp do "wirtualizacji" metod w klasach pochodnych, musimy to wykonywać w dość krzywy sposób. Przykład poniżej.
+</code> js
+// klasa bazowa
+var Parent = (function(){</p>
+
+<pre><code>function Parent(firstName){
+    this.firstName = firstName;
+}
+// definiujemy "wirtualną" metodę
+Parent.prototype.show = function(){
+    return "Base: "+this.firstName;
+};
+return Parent;
+</code></pre>
+
+<p>})();</p>
+
+<p>// klasa pochodna
+var Child = (function(BaseType){</p>
+
+<pre><code>extend(Child, BaseType); // określamy warunki dziedziczenia
+
+function Child(firstName, lastName){
+    // wywołujemy konstruktor z klasy bazowej
+    Child.__super__.constructor.call(this, firstName);
+    this.lastName = lastName;
+}
+// "nadpisujemy" metodę z klasy bazowej
+Child.prototype.show = function(){
+    // wewnątrz nadpisanej metody wywołujemy jej bazową postać
+    var baseMessage = Child.__super__.show.call(this);
+    return "Inherited: "+this.lastName + " with " + baseMessage; 
+};
+return Child;
+</code></pre>
+
+<p>})(Parent); // przekazujemy klasę bazową mechanizmem funkcji natychmiastowej
+```
+Jak widać, nie jest to technika przejrzysta, głównie ze względu na obejścia, jakie trzeba wykonać, aby uzyskać dostęp do wywołań metod nadpisywanych z klas bazowych.</p>
+
+<p>Kiedy jest to przydatne? Szczerze umieściłem to jako ciekawostkę, ponieważ o ile o korzyściach dziedziczenia i wirtualizacji wie chyba każdy, kto miał do czynienia z programowaniem obiektowym, to forma, w jakiej jest to podane w Javascriptcie może okazać się ciężka do przełknięcia. Z tego powodu polecam tutaj języki kompilowane do Javascriptu np. CoffeeScript lub TypeScript, które rozwiązują ten problem za nas.</p>
+]]></content>
+  </entry>
+  
+</feed>

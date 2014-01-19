@@ -1,0 +1,723 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: javascript | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/javascript/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Knockout.js - spostrzeżenia]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
+    <updated>2013-03-09T12:25:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia</id>
+    <content type="html"><![CDATA[<p>Ponieważ z <a href="http://knockoutjs.com/">knockout.js</a> mam do czynienia od dłuższego czasu (dokładnie od wersji 1.0 ;) ), postanowiłem podzielić się moimi spostrzeżeniami ze tymi, którzy chcą wykorzystać ten framework w swojej pracy, jak również osobami które już go stosują oraz generalnie wszystkim zainteresowanym w pisaniu ustrukturyzowanych skryptów JS. Ale zacznijmy od początku.</p>
+
+<h2>Czym jest Knockout.js?</h2>
+
+<p>Jest to rozbudowany, javascriptowy framework MVVM umożliwiający tworzenie bogatych aplikacji internetowych. W przeciwieństwie do tradycyjnego podejścia tzn. bindowania ASP'owych modeli &ndash; po stronie serwera &ndash; za pośrednictwem tagów <code><input></code> osadzonych w formularzach HTML, umożliwia on nam odwzorowanie na identyczny obiekt JSON po stronie klienta. Pozwala też na dual-binding tego modelu z fragmentami strony wyświetlanej użytkownikowi. Oznacza to, że każda zmiana wykonana na zbindowanym tagu htmlowym spowoduje natychmiastowe zaktualizowanie modelu zachowanego w przeglądarce i vice versa &ndash; każda zmiana pola należącego do obiektu spowoduje update na powiązanych fragmentach strony. Wszystko to w czasie rzeczywistym, w deklaratywny sposób.</p>
+
+<p>Tyle w kwestii definicji dla ludzi nie zaznajomionych z tym podejściem. Osoby lepiej zorientowane w zagadnieniach frontendowych aplikacji WWW zapewne znają już tą bibliotekę podobnie jak alternatywy wykorzystywane w tym środowisku. Poniżej postaram się przedstawić parę własnych przemyśleń na temat tej biblioteki, zaczynając od tych związanych z sytuacjami, w których warto jej użyć, a kiedy lepiej sobie darować.</p>
+
+<p>Przypadki, kiedy powinniśmy się wstrzymać z użyciem Knockout.js:</p>
+
+<ul>
+<li>Single Page Applications &ndash; wiem, że Microsoft promuje tą bibliotekę jako własnego kandydata do roli frameworka SPA. Prawda jest jednak bolesna &ndash; Knockout nie posiada wbudowanych mechanizmów niezbędnych do tego typu zadań. Mowa tu przede wszystkim o mechanizmie routingu/nawigacji pomiędzy widokami oraz komunikacji z serwerem/metodach do zapisywania i synchronizacji danych. Nie znaczy to oczywiście, że budowa takich rozwiązań jest niemożliwa. Uważam po prostu, że w takich przypadkach lepiej skorzystać z innych bibliotek, lepiej przystosowanych do takich zadań np. <a href="http://angularjs.org/">AngularJS</a>.</li>
+<li>Standardowe widoki CRUD &ndash; jeżeli planujesz budowę standardowych ekranów, które nie muszą zachowywać skomplikowanych zależności pomiędzy obiektami-modelami, lub twoje widoki mapują się z tabelami w bazie w relacjach 1 do 1, wtedy powiedzmy sobie jasno &ndash; Knockout jest tobie nie potrzebny. Nie wytaczaj działa na komara.</li>
+<li>Szablony po stronie klienta &ndash; o ile mechanizm deklaratywnych zależności umożliwia wykorzystanie Knockouta do takich zastosowań, to w praktyce dodatkowy narzut związany z jego użyciem jest niewspółmierny do korzyści. Jeżeli nie potrzebujesz niczego ponad mechanizm szablonowania, proponuję zajrzeć na <a href="http://garann.github.com/template-chooser/">http://garann.github.com/template-chooser/</a>&ndash; ta strona pomoże ci ustalić bibliotekę właściwą do twoich potrzeb.</li>
+</ul>
+
+
+<p>Kiedy Knockout może ci się przydać:</p>
+
+<ul>
+<li>Prezentacja danych w modelu <a href="http://martinfowler.com/bliki/CQRS.html">CQRS</a> &ndash; a więc kiedy wymagania sprawiają, że prosty CRUD z jQuery do ustawiania widoczności elementów to za mało. Jeżeli musisz na jednej stronie przedstawić skomplikowane relacje pomiędzy obiektami-modelami, o wiele łatwiej będzie, jeżeli zachowasz te zależności po stronie klienta.</li>
+<li>Semi-SPA &ndash; czasami zdarza się, że aplikacja składa się z wielu prostych ekranów konfiguracyjnych, umożliwiających definiowanie różnych ustawień, oraz pojedynczych bogatych stron, które zawierają skomplikowane mechanizmy wyświetlania i manipulowania danymi. W takich przypadkach Knockout sprawdza się doskonale, ponieważ upraszcza sterowanie logiką takich widoków, zaś one same nie wymagają stosowania mechanizmów, których ta biblioteka nie zapewnia (a których część opisałem wyżej).</li>
+</ul>
+
+
+<p>Mam przyjemność wykorzystywać ten framework również na codzień w pracy od dłuższego czasu. Dzięki temu udało mi się wykonać kilka mniej lub bardziej oczywistych spostrzeżeń na temat błędów popełnianych przez programistów (w tym mnie ;) ) pracujących z Knockoutem oraz wzrocem MV* w przeglądarce, jak również rad których mógłbym udzielić osobom które zaczynają z nim swoją zabawę. Oto niektóre z nich.</p>
+
+<h2>Myśl kategoriami aplikacji</h2>
+
+<p>Jest to chyba najtrudniejsza lekcja. Nieraz logika wykonywana po stronie klienta sięga setek &ndash; czasami tysięcy &ndash; linii kodu, który dodatkowo może zachowywać się różnie w zależności od tego, na jakiej przeglądarce go odpalimy. Utrzymanie całości jest trudne (nieodzowne jest tu credo: <em>it&rsquo;s fucking javascript</em>;) ), stąd też musisz nauczyć się nadawać takim skryptom odpowiednią strukturę. Bardzo przydaje się tutaj wiedza z zakresu budowy aplikacji desktopowych opartych o MVVM &ndash; Knockout ma z tym podejściem wiele wspólnego.</p>
+
+<p>Podobnie jak w przypadku Single Page Applications oraz innych aplikacji opartych o MVVM powinieneś z góry zastanowić się nad rozwiązaniem kilku kwestii. Na &ldquo;lżejszych&rdquo; stronach mogą one pozostać dość rozmyte, lecz wraz ze wzrostem bazy twojego kodu powinny one ulegać coraz wyraźniejszej separacji i wyspecjalizowaniu.</p>
+
+<h2>Sposób komunikacji z serwerem</h2>
+
+<p>Musisz określić, w jaki sposób twoja aplikacja będzie się komunikować z serwerem. Czy będzie to standardowy jQuery ajax, może coś bardziej zaawansowanego (np. <a href="http://amplifyjs.com/">Amplify.js</a>), a może warunki pozwalają na organizację połączenia po WebSockets. Niezależnie od tego co wybierzesz, warto zastosować kilka dobrych praktyk.</p>
+
+<p>Po pierwsze nie zaszywaj kodu wywołań do serwera w sposób nierozerwalny. Przekaż obiekt służący do komunikacji z serwerem jako parametr do konstruktora ViewModelu, który takiej komunikacji wymaga. Nawet prosta konstrukcja typu
+``` js
+var ViewModel = function(ajax){</p>
+
+<pre><code>var ajaxHandler = ajax;
+</code></pre>
+
+<p>};</p>
+
+<p>var vm = new ViewModel($.ajax);
+```
+sprawia, że w razie potrzeby będziesz mógł mniej boleśnie wymienić ten obiekt na inny.</p>
+
+<p>Kolejnym krokiem jest opakowanie używanej biblioteki w obiekt-adapter &ndash; w ten sposób unikniesz trwałego wiązania aplikacji z jednym frameworkiem. Będziesz miał dowolność wyboru oraz prostego rozszerzenia używanego rozwiązania o metody/wzorce, których faktycznie potrzebujesz. Bardzo ważnym elementem tego podejścia jest również możliwość trwałego opakowania wywołań do konkretnych adresów w bardziej przejrzyste i czytelne (oraz łatwiejsze w przyszłym rozwoju) metody. Sądzę, że takie wywołanie:
+<code>js
+resource.save(this.Person);  // 0 twardych zależności
+</code>
+jest prostsze z punktu widzenia przyszłego rozwoju i prostoty debugowania kodu niż:
+<code>js
+$.post("/some/url", {model:ko.toJSON(this.Person)}); // 2 twarde zależności: jQuery, knockout
+</code>
+Wraz ze wzrostem wymagań dobrą opcją jest dodanie do takiej komunikacji bardziej rozwiniętych wzorców typu Publish/Subscribe, które ułatwią pracę z kodem w przyszłości.</p>
+
+<h2>Cykl życia strony i obiektów</h2>
+
+<p>Jest to dobra praktyka, ponieważ mechanizm ten jest w Knockoutcie dość ubogi. Warto jest przemyśleć, jakie typy zdarzeń mogą okazać się przydatne w trakcie pracy ze stroną. Czasem możesz potrzebować podpiąć się z własnymi funkcjami w konkretnych momentach życia strony, np. tuż przed/po wywołaniu polecenia bindowania danych (<code>ko.applyBindings</code>), czy też w momencie dołączenia nowej właściwości itp. Dobrą praktyką jest też zdefiniowanie funkcji-inicjalizatora dla całego mechanizmu Knockouta oraz funkcji, w której możesz opisać całą potrzebną konfigurację w jednym miejscu.</p>
+
+<h2>View modele &ndash; portlety i kontener aplikacji</h2>
+
+<p>Dobrą radą na początek jest przygotowanie pojedyńczego ViewModelu, który nie służy zasadniczo samemu przechowywaniu obserwowanych właściwości, lecz pełni rolę kontenera lub głównego obiektu aplikacji. Dlaczego? Po pierwsze Knockout zasadniczo nie umożliwia generowania wielu VMów-korzeni dla pojedyńczej strony HTML. Po drugie, działa tutaj analogia do MVVM w aplikacjach desktopowych. Pojedyńczy widok &ndash; stronę prezentowaną użytkownikowi &ndash; z reguły da się podzielić na szereg niezależnych fragmentów (portletów), z których każdy jest zarządzany przez inny ViewModel. Zapewnia to właściwą separację bardziej złożonego problemu, co znacznie ułatwia ogarnięcie całej logiki znajdującej się na stronie.</p>
+
+<p>Moja rada &ndash; nawet kiedy nie planujesz nadzwyczaj bogatej logiki na stronie, stwórz co najmniej jeden view model pełniący rolę rdzenia. W nim zdefiniuj pozostałe view modele, które będą służyły do bindowania właściwych danych. Żadna obserwowalna wartość wysyłana na serwer nie powinna być bezpośrednio powiązana z korzeniem. Nie kosztuje to wiele pracy, a w stuacji, kiedy twoja strona w przyszłości będzie ewoluować i rozrastać się o kolejne podwidoki/portlety, dodanie kolejnych VMów nie będzie stanowić problemu.</p>
+
+<h2>Utrzymaj separację Widoków od ViewModelu</h2>
+
+<p>Częstym błędem popełnianym na początku przez programistów zaczynających swoją przygodę z Knockoutem, jest wykonywanie operacji na drzewie DOM wewnątrz logiki ViewModeli. Jest to poważny błąd. Zastanów się: czy tworząc akcję kontrolera używasz jej do generowania HTMLa, który potem osadzasz na stronie?</p>
+
+<p>Modele MVVM i MVC nie bez powodu zapewniają separację pomiędzy widokami, a pozostałymi elementami aplikacji. W przypadku Knockout.js rolę widoku stanowi bezpośrednio strona HTML wzbogacona o atrybuty <strong>data-bind</strong>, wewnątrz których definiujemy pożądane wiązania. Jeżeli z kolei czujesz, że dostępne bindingi nie spełniają twoich potrzeb, pamiętaj że zawsze możesz zdefiniować własne.</p>
+
+<h2>Luźne zależności pomiędzy modułami w aplikacji</h2>
+
+<p>Pamiętaj, że zmodularyzowane aplikacje są łatwiejsze zarówno w utrzymywaniu jak i późniejszym rozwoju. Łatwiej jest także je debugować i testować. Z punktu widzenia programisty Javascript wzorzec Dependency Injection ma jeszcze jedną zaletę. Ponieważ unikasz w ten sposób odwoływania się do funkcji globalnych umieszczonych w wyższych partiach scope chain (więcej dowiesz się <a href="http://www.slideshare.net/nzakas/speed-up-your-javascript">tutaj</a>), twoja aplikacja staje się odrobinę szybsza.</p>
+
+<p>Unikaj wywoływania w kodzie swoich funkcji/metod różnego typu obiektów globalnych takich jak window, document, czy też obiektów-modułów do innych bibliotek np. jQuery. Zamiast tego przekazuj je jako paramtery do obiektów, które je wykorzystują.</p>
+
+<p>Innym &ndash; na pewno wartościowym &ndash; wsparciem, które może przydać się osobom nie przywykłym do pułapek języków dynamicznie typowanych, są języki kompilowane do Javascriptu, takie jak <a href="http://www.typescriptlang.org/" title="">TypeScript</a> czy <a href="http://www.dartlang.org/">Dart</a>.</p>
+
+<h2>Testy</h2>
+
+<p>Testy jednostkowe są przydatne w każdej większej aplikacji i logika po stronie klienta nie stanowi tutaj wyjątku. Im dalej rozwijasz swoją aplikację i im więcej operacji wykonywanych jest w przeglądarce użytkownika, tym bardziej prawdopodobne, że trafisz na moment w którym testy jednostkowe staną się nieocenione.</p>
+
+<p>W tym celu należy przedtem zapewnić &ldquo;testowalność&rdquo; swojego kodu. Wskazówki opisane przeze mnie powyżej (zwłaszcza te dotyczące modularyzacji i luźnych powiązań) dotyczą również tego zagadnienia. Mimo że Knockout nie zapewnia wbudowanych klas ułatwiających testowanie (AngularJS jest pomocny również pod tym względem), nie jest to dużym problemem, ponieważ Javascript jest językiem bardzo elastycznym i rozszerzalnym, zatem pisanie mocków nie stanowi tutaj problemu.</p>
+
+<p>Co do wyboru frameworka testowego jest to kwestia własnych preferencji. Jedni wybiorą polecany przez M$ <a href="http://qunitjs.com/">QUnit</a> wspierający programowanie TDD. Dla programistów .Net jest to tradycyjna dobrze znana ścieżka. Inni (w tym ja ;) ) wolą metodykę BDD i czytelność, jaką oferują biblioteki takie jak <a href="http://pivotal.github.com/jasmine/">Jasmine</a>. Dlaczego preferuję właśnie to drugie podejście? Dlatego że łatwiej definiować testy w kategoriach konkretnych zachowań, jakich oczekujemy po działaniu naszego kodu, niż operacji, które nie zawsze muszą jasno definiować to, co faktycznie chcemy osiągnąć.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Javascript a wzorce projektowe]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe/"/>
+    <updated>2013-02-23T19:01:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe</id>
+    <content type="html"><![CDATA[<p>Założę się, że wiele osób czytając ten tytuł puknie się w głowę. I owszem w wielu sytuacjach wzorce nie są niezbędne do tworzenia przejrzystych i dobrze rozwijalnych skryptów. Do czasu. Dokładnie do momentu gdy nasz skrypt zaczyna mieć więcej niż kilkadziesiąt linijek.</p>
+
+<p>W zależności od języka programowania, pisany przez nas kod może mieć mniejszą lub większą przejrzystość. Niektóre języki takie jak Haskel, są z natury bardzo klarowne i skupiają się na istocie rzeczy. Inne, jak właśnie Javascript, dają programiście olbrzymie możliwość zrobienia czegoś na pierdyliard sposobów, co nie oznacza, że każdy sposób jest poprawny. Jakby tego było mało, javascriptowe JITy są wstanie przełknąć nawet bardzo niezdarny kod. Dlatego właśnie dyscyplina samego programisty oraz stosowanie wzorców jest tym bardziej istotne.</p>
+
+<p>O tradycyjnych wzorcach &ndash; strategiach, obserwatorach etc. &ndash; napisano całą masę artykułów. Dlatego też poniżej postaram się przedstawić kilka mniej znanych, skupiając się szczególnie na tych, które są istotne z punktu widzenia JS, przez wzgląd na możliwości jakie daje oraz brakujących konstrukcji dostępnych w innych językach, których tutaj brakuje &ndash; w gruncie rzeczy czym są wzorce projektowe, jeżeli nie powszechnymi sposobami na obejście braków odpowiednich konstruktów w danym języku programowania?</p>
+
+<h2>Funkcje natychmiastowe</h2>
+
+<p>Mechanizm funkcji natychmiastowych (<strong>immediate functions</strong>) jest jedną z podstawowych sztuczek językowych wykorzystywanych w Javascriptcie. Ponieważ wiedza ta stanowi fundament innych wzorców, przedstawię go poniżej.
+``` js
+var immediateValue = (function(){</p>
+
+<pre><code>// wykonujemy jakąś operację i zwracamy wartosć
+    return x;
+})();
+
+// określamy zewnętrzne obiekty, które wywołujemy wewnątrz funkcji
+var module = (function(window, document){
+// wykonujemy jakąś operację
+return module;
+</code></pre>
+
+<p>})(window, document);
+```
+Jak widzimy całość polega na jednoczesnym zdefiniowaniu funkcji i jej wykonaniu. Jakie są zalety tego podejścia?:</p>
+
+<ul>
+<li>Możemy w ten sposób budować moduły &ndash; ponieważ zawartość funkcji powoduje stworzenie nowego zakresu (scope &ndash; chociaż z tym ze względów wydajnościowych nie należy przeginać), wszystkie zmienne lokalne użyte w funkcji-module nie są widoczne spoza niej, dopóki programista jawnie nie określi inaczej.</li>
+<li>Przekazując parametry do takiej funkcji możemy jawnie określić zależności pomiędzy operacjami/obiektami używanymi wewnątrz funkcji ze światem zewnętrznym.</li>
+</ul>
+
+
+<h2>Modularyzacja</h2>
+
+<p>Jest to dość często poruszany problem (sam nieraz o nim wspominałem), ponieważ JS jako tako sam nie umożliwia definiowania pakietów ani przestrzeni nazw. Stąd też pierwszym zaprezentowanym przeze mnie wzorcem będzie <strong>namespace</strong>. Ponieważ przykładowy kod umieściłem i opisałem w jednym z poprzednich <a href="http://horusiath.blogspot.com/2012/09/javascript-porady-i-uwagi.html">postów</a>, gwoli przypomnienia umieszczę tutaj przykładowy kod takiego rozwiązania.
+``` js
+window.namespace = function (path, root) {</p>
+
+<pre><code>var parent = root || window;
+var modules = path.split(".");
+for (var i = 0; i &lt; modules.length; i++) {
+    var module = modules[i];
+    parent[module] = (parent[module] || {});
+    parent = parent[module];
+}
+return parent;
+</code></pre>
+
+<p>};
+```</p>
+
+<h2>Cache'owanie funkcji</h2>
+
+<p>Ze względu na silniki starszych przeglądarek i chęć ograniczenia skomplikowanych operacji wiele bibliotek oferuje mniej lub bardziej wyrafinowane mechanizmy służące cache'owaniu danych. Javascript przychodzi tutaj z pomocą, pozwalając na zastosowanie tej techniki niemal dla dowolnej funkcji. Mowa tutaj o wzorcu <strong>memoization</strong>. Wykorzystuje on dwa podstawowe fakty dotyczące tego języka:</p>
+
+<ol>
+<li>Każda funkcja jest jednocześnie pełnoprawnym obiektem.</li>
+<li>Każdy obiekt może pełnić funkcje słownika &ndash; a co za tym idzie można wykorzystać go do dynamicznego przydzielania nowych właściwości i hashy.</li>
+</ol>
+
+
+<p>Poniższy kod przedstawia najprostszą implementację tego zachowania:
+``` js
+var memoizedFunction = (function(){</p>
+
+<pre><code>// parametr {value} stanowi jednocześnie klucz w naszym cache'u
+function fn(value){
+    // sprawdzmy, czy parametr został wcześniej zapamiętany
+    if(fn._cache[value]){
+        return fn._cache[value];
+    }else{
+        // zapamiętywanie wywołania funkcji
+        var result = doSomething(value); 
+        fn._cache[value] = result;
+        return result;
+    }
+}
+fn._cache = {};
+return fn;
+</code></pre>
+
+<p>})();
+```
+Należy zwrócić uwagę na fakt, że parametr przekazywany do funkcji w tej implementacji stanowi jednocześnie wartość cache'owanego klucza, a sam wzorzec musi implementować funkcje deteministyczne (tzn. takie które dla tego samego parametru wejściowego zwracają zawsze tą samą wartość/wykonują tę samą operacje). Stąd też dobrze, jeżeli maksymalna możliwa liczba przekazywanych parametrów jest znana &ndash; w sytuacjach skrajnych mogłoby dojść do tego, że cache zacząłby zajmować ogromną ilość pamięci. W takim wypadku trzeba dodatkowo zaimplementować dodatkowo mechanizm odśmiecania lub okresowego czyszczenia cache'u.</p>
+
+<p>Prawidłowe działanie funkcji w dużej mierze zależy od typu przekazywanego parametru &ndash; ze względu na to, że Javascript bywa dość nieprzewidywalny, najlepiej jest trzymać się typów prostych: String, Number, Boolean. W praktyce jednak wszystko to jednak zależy od twojej znajomości tricków i pułapek tego języka.</p>
+
+<p>Gdzie przydaje się powyższy wzorzec? Kilka przykładów:</p>
+
+<ul>
+<li>W wywołaniach do serwera np. jeżeli dla podanego adresu URL zwracana wartość jest stała, możemy użyć go w postaci klucza i zapamiętać zwracaną wartość. W ten sposób zmniejszymy czas i ilość requestów na serwer potrzebnych do skończenia danej operacji.</li>
+<li>Inne funkcje o stałych kluczach, ale jednocześnie wykonujące złożone obliczenia np. w mechanizmach bindowania danych do modelu DOM przeglądarki.</li>
+</ul>
+
+
+<h2>Dependency Injection</h2>
+
+<p>Pojęcie to jest ostatnio dość często używane, również ze względu na rosnącą popularność frameworków MVC. W Javascriptcie zostało ono użyte po raz pierwszy w dużej skali wraz z nadejściem <a href="http://angularjs.org/">AngularJS</a>. Jednakże, jeżeli chcielibyśmy, możemy zaimplementować kontener <strong>Inversion of Control</strong> dla własnych potrzeb.</p>
+
+<p>W pierwszej kolejności zdefiniujmy kontener IoC.
+``` js
+// kontener IoC
+var DependencyResolver = function(){</p>
+
+<pre><code>var self = this,
+// regex użyty do wyciągania nazw zależności z konstruktora
+ARG_REGEX = /^function\s*[^\(]*\(\s*([^\)]*)\)/m,
+dependencies = {};
+
+// funkcja rejestrująca typ w kontenerze
+this.register = function(key, type){
+    dependencies[key] = type;
+};
+
+// zwraca instancję obiektu identyfikowanego po podanym kluczu 
+this.resolve = function(key){ ... };
+
+// rozwiązujemy podane zależności podane w postaci listy kluczy
+// dla dependency resolvera do postaci tablicy gotowych obiektów
+function resolveDependencies(args){ ... };
+</code></pre>
+
+<p>};
+```
+&ldquo;Klasa&rdquo; ta udostępnia dwie metody:</p>
+
+<ul>
+<li><code>register(key, type)</code> &ndash; rejestruje podaną wartość/funkcję konstruktora pod podanym kluczem.</li>
+<li><code>resolve(key)</code> &ndash; tworzy typ zgodnie z zarejestrowaną wcześniej nazwą.</li>
+</ul>
+
+
+<p>Niestety javascript nie przechowuje informacji na temat typów parametrów pobieranych przez funkcję. Stąd też twórcy AngularJS postanowili zbudować następującą konwencję &ndash; w momencie, gdy przy próbie utworzenia obiektu pojawiaja się problem z określeniem typu argumentów przekazywanych do konstruktora, przyjmuje się, że nazwy parametrów są kluczami dla wartosci zarejestrowanych w kontenerze IoC. Jak to wygląda w praktyce? Ilustruje to następujący kod:
+``` js
+// budujemy kontener
+var resolver = new DependencyResolver();
+resolver.register(&lsquo;valueA&rsquo;, 1); // rejestrujemy 1 dla klucza &lsquo;valueA&rsquo;
+resolver.register(&lsquo;valueB&rsquo;, MyClass1); // rejestrujemy &ldquo;klasę&rdquo; dla klucza &lsquo;valueB&rsquo;</p>
+
+<p>// tworzymy nową &ldquo;klasę&rdquo; i rejestrujemy ją jako &lsquo;valueC&rsquo;
+var MyClass2 = function(valueA, valueB) {</p>
+
+<pre><code>// kontener wygeneruje opowiednie wartosci sugerując się nazwami parametrów
+</code></pre>
+
+<p>}
+resolver.register(&lsquo;valueC&rsquo;, MyClass2);</p>
+
+<p>// tworzymy obiekt
+resolver.resolve(&lsquo;valueC&rsquo;); // profit ;)
+<code>
+Ciało metody resolve przedstawia się w takim wypadku następująco:
+</code> js
+this.resolve = function(key){</p>
+
+<pre><code>var type = dependencies[key];
+
+// jeżeli zarejestrowany typ jest funkcją/konstruktorem
+// musimy rozwiązać listę parametrów podanych do dokonstruktora
+if(typeof type === 'function'){
+
+    // wyciągamy listę wartości przyjmowanych przez konstruktor
+    var args = ARG_REGEX.exec(type.toString())[1].split(',');
+    // zamieniamy je na właściwe obiekty
+    var resolvedArgs = resolveDependencies(args);
+
+    // tworzymy nową instancję danego typu
+    var instance = new type();
+    type.prototype.constructor.apply(instance, resolvedArgs);
+    return instance;
+} else {
+    // jeżeli typ jest typem prostym wystarczy go zwrócić
+    return type;
+}
+</code></pre>
+
+<p>};
+<code>
+Natomiast brakujące ciało metody resolveDependencies:
+</code> js
+function resolveDependencies(args){</p>
+
+<pre><code>var resolvedArgs = [];
+for(var i=0; i &lt; args.length; i++){
+    var dependency = args[i].trim();
+    if(dependency !== ''){
+        var resolved = self.resolve(dependency);
+        resolvedArgs.push(resolved);
+    }
+}
+return resolvedArgs;
+</code></pre>
+
+<p>};
+<code>
+Oczywiście powyższy kod nie określa kwestii czasu życia obiektu, którą kontenery IoC przeważnie rozwiązują. Jednakże jaki problem tkwi w powyższym rozwiązaniu? Otóż w momencie minimalizacji danego skryptu cała nasza wiedza o nazewnictwie parametrów funkcji znika (zostają one zastąpione krótkimi - z reguły jednoliterowymi aliasami). Niestety ale nie da się tego rozwiązać w elegancki sposób. W przypadku AngularJS zdefiniowana została specjalna właściwość $inject, którą dodajemy własnoręcznie do danej klasy, a która definiuje tablicę kluczy-parametrów, dzięki którym możliwe jest rozwiązanie zależności przez kontener. W takim wypadku w powyższej implementacji wystarczy dodać drobne usprawnienie:
+</code> js
+this.resolve = function(key){</p>
+
+<pre><code>...
+var args = type.$inject || ARG_REGEX.exec(type.toString())[1].split(',');
+...
+</code></pre>
+
+<p>}
+<code>
+, natomiast, w samej zdefiniowanej klasie:
+</code> js
+var MyClass = function(valueA, valueB){ &hellip; }
+MyClass.$inject = [&lsquo;valueA&rsquo;, &lsquo;valueB&rsquo;];
+```
+Dlaczego ten mechanizm się przydaje? Odpowiedź jest dokładnie taka sama jak w przypadku DI po stronie serwera: modularyzacja projektu, spójny sposób i kontrola nad konstrukcją obiektów. Całość jest wprost nieoceniona, kiedy po stronie klienta wykonywany jest bardziej zaawansowany wycinek logiki. A do tego te wsparcie dla testów jednostkowych.</p>
+
+<p>P.S.: Jestem zdania, że w każdym projekcie z większą ilością Javascriptu testy jednostkowe są nieocenione. Po pierwsze w tym języku wyjątkowo łatwo o błędy i niezdarny kod, a TDD oraz BDD rozwiązują oba te problemy. Po drugie jesteśmy po stronie klienta. Chcesz sprawdzić czy logika do kontrolek User Interface i wyświetlanie strony działa prawidłowo? Gratulacje &ndash; jesteś po właściwej stronie kabla.</p>
+
+<h2>Dziedziczenie</h2>
+
+<p>Pomimo, że Javascript jest językiem obiektowym, nie definiuje jednak mechanizmu dziedziczenia w sposób znany nam z innych języków. Na szczęście jego możliwości pozwalają nam na wykonanie takiego mechanizmu w postaci wzorca <strong>extend</strong> (<em>powered by CoffeScript ;)</em> ).
+``` js
+var extend = function(childPrototype, superPrototype){</p>
+
+<pre><code>// dziedziczenie składowych
+for(var property in superPrototype){ 
+    // iterujemy po wszystkich składowych rodzica
+    if(superPrototype.hasOwnProperty(property)){
+        childPrototype[property] = superPrototype[property]
+    }
+}
+
+// dziedziczenie konstruktora
+function ctor(){
+    this.constructor = childPrototype;
+}
+ctor.prototype = superPrototype.prototype;
+childPrototype.prototype = new ctor();
+
+// definiujemy dostęp do "klasy bazowej"
+childPrototype.__super__ = superPrototype.prototype;
+return childPrototype;
+</code></pre>
+
+<p>};
+<code>
+Niestety, jeżeli chcemy mieć dostęp do "wirtualizacji" metod w klasach pochodnych, musimy to wykonywać w dość krzywy sposób. Przykład poniżej.
+</code> js
+// klasa bazowa
+var Parent = (function(){</p>
+
+<pre><code>function Parent(firstName){
+    this.firstName = firstName;
+}
+// definiujemy "wirtualną" metodę
+Parent.prototype.show = function(){
+    return "Base: "+this.firstName;
+};
+return Parent;
+</code></pre>
+
+<p>})();</p>
+
+<p>// klasa pochodna
+var Child = (function(BaseType){</p>
+
+<pre><code>extend(Child, BaseType); // określamy warunki dziedziczenia
+
+function Child(firstName, lastName){
+    // wywołujemy konstruktor z klasy bazowej
+    Child.__super__.constructor.call(this, firstName);
+    this.lastName = lastName;
+}
+// "nadpisujemy" metodę z klasy bazowej
+Child.prototype.show = function(){
+    // wewnątrz nadpisanej metody wywołujemy jej bazową postać
+    var baseMessage = Child.__super__.show.call(this);
+    return "Inherited: "+this.lastName + " with " + baseMessage; 
+};
+return Child;
+</code></pre>
+
+<p>})(Parent); // przekazujemy klasę bazową mechanizmem funkcji natychmiastowej
+```
+Jak widać, nie jest to technika przejrzysta, głównie ze względu na obejścia, jakie trzeba wykonać, aby uzyskać dostęp do wywołań metod nadpisywanych z klas bazowych.</p>
+
+<p>Kiedy jest to przydatne? Szczerze umieściłem to jako ciekawostkę, ponieważ o ile o korzyściach dziedziczenia i wirtualizacji wie chyba każdy, kto miał do czynienia z programowaniem obiektowym, to forma, w jakiej jest to podane w Javascriptcie może okazać się ciężka do przełknięcia. Z tego powodu polecam tutaj języki kompilowane do Javascriptu np. CoffeeScript lub TypeScript, które rozwiązują ten problem za nas.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[node.js - renderowanie layoutów z wykorzystaniem doT.js]]></title>
+    <link href="http://Horusiath.github.io/blog/2012/12/30/nodejs-renderowanie-layoutow-z/"/>
+    <updated>2012-12-30T10:09:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2012/12/30/nodejs-renderowanie-layoutow-z</id>
+    <content type="html"><![CDATA[<p>Stało się. Po wielu podejściach skłoniłem się do <a href="http://nodejs.org/">node.js</a> i postanowiłem napisać w nim swoją pierwszą aplikację z prawdziwego zdarzenia. O moich motywach i wątpliwościach, jakie towarzyszyły wykorzystaniu javascriptu do tworzenia logiki po stronie serwera opowiem innym razem. W tym poście postaram się skupić na innym zagadnieniu.</p>
+
+<p>Po dość długim rekonesansie związanym z technologiami używanymi w node.js zdecydowałem się, że moja aplikacja zostanie oparta o bibliotekę <a href="http://expressjs.com/">express.js</a>. Jest to chyba najpopularniejszy framework w tym środowisku (ideowo czerpiący z Sinatry znanej wśród programistów Ruby'ego), którego głównymi zaletami są niewielki narzut obliczeniowy, łatwość konfiguracji, duża ilość zewnętrznych rozszerzeń oraz spora społeczność. W tym momencie należało również dokonać kilku dość istotnych wyborów. Ten, którego dotyczy mój wpis, dotyczył wyboru silnika renderującego. Z początku myślałem o najprostszym rozwiązaniu tzn. serwowaniu statycznych stron html. Jednakże takie rozwiązanie sprawia pewne problemy, z czego najbardziej upierdliwym jest chyba brak layoutów (ponieważ duża część widoków jest współdzielona, zmiana jednego z takich fragmentów wymagała by synchronizacji we wszystkich pozostałych stronach). Stąd postawiłem kilka warunków, jakie powinien spełniać silnik dla mojej aplikacji:</p>
+
+<ul>
+<li>Musi wspierać layouty/partiale</li>
+<li>Musi być szybki (ideałem byłaby prekompilacja, ale cache'owanie widoków też jest ok)</li>
+<li>Powinien zapewniać przynajmniej podstawową logikę w wykorzystywanych szablonach tzn. wyrażenia warunkowe i pętle.</li>
+</ul>
+
+
+<p>Nie uwzględniam tutaj problemu generowania dynamicznych widoków dla każdego użytkownika, ponieważ uważam, że tak specyficzna logika powinna być renderowana po stronie klienta (klient sam zajmuje się wyświetlaniem tego, to jest właściwe tylko dla niego &ndash; brzmi logicznie, prawda?). Po długich przygodach wybór padł ostatecznie na <a href="http://olado.github.com/doT/">doT.js</a>. Jest on obecnie uważany za jeden z najszybszych istniejących silników renderujących dla node.js (co potwierdzają benchmarki).</p>
+
+<p>Niestety dłuższe zabawy wykazały, że ciężko jest wykorzystać domyślne API doT.js do renderowania widoków w expressie. Z tego powodu postanowiłem stworzyć własne rozwiązanie. Zacząłem od wydzielenia logiki odpowiedzialnej za rendering do osobnego modułu <strong>renderer.js</strong><em> </em>umiejscowionego w głównym katalogu aplikacji. Początkowa definicja wyglądała następująco:
+<code>js
+path = require('path'), // operowanie na ścieżkach systemowych
+fs = require('fs'),     // I/O na plikach
+defaultLayout,          // domyślna nazwa layoutu
+extension,              // domyślne rozszerzenie plików-szablonów
+viewsPath,              // ścieżka, gdzie składowane są widoki
+cacheViews,             // flaga, czy cache'ować kompilowane widoki
+compiledViewsCache;     // cache na skompilowane widoki
+</code>
+Następnym krokiem jest funkcja inicjalizująca:
+``` js
+var setup = function(options){</p>
+
+<pre><code>extension = options.extension || 'html';
+defaultLayout = options.layout || 'layout';
+viewsPath = path.join(__dirname, options.path || 'views');
+cacheViews = options.cacheViews || true;
+compiledViewsCache = cacheViews ? {} : undefined;
+</code></pre>
+
+<p>};
+```
+Określiliśmy w niej kilka opcji, które wykorzystywane będą podczas renderowania:</p>
+
+<ul>
+<li>extension &ndash; nazwa rozszerzenia wykorzystywanego przez kompilowane szablony (domyślnie: html)</li>
+<li>defaultLayout &ndash; nazwa pliku layoutu (domyślnie: layout). Należy tutaj zaznaczyć, że w moim rozwiązaniu istnieje tylko 1 plik główny, nie istnieje domyślna obsługa zagnieżdżania widoków, mimo że wciąż jest taka możliwość.</li>
+<li>viewsPath &ndash; scieżka względna do katalogu z widokami (domyślnie: /views).</li>
+<li>cacheViews &ndash; czy skompilowany widok powinien zostać cache'owany? (domyślnie: tak)</li>
+</ul>
+
+
+<p>Teraz nadchodzi magia. Tworzymy funkcję, której zadaniem będzie wyrenderowanie podanego nam widoku:
+``` js
+var render = function(res, viewname, model, layout){</p>
+
+<pre><code>var layoutPath = path.join(viewsPath, (layout || defaultLayout) + '.' + extension);
+var viewPath = path.join(viewsPath, viewname + '.' + extension);
+
+var c;
+// czy dany widok został znaleziony w cache
+if(cacheViews &amp;amp;&amp;amp; typeof (c=compiledViewsCache[viewPath]) === 'function'){
+    res.send(c(model));
+} else {
+    // asynchroniczne odczytanie widoku
+    fs.readFile(viewPath, 'utf8', function(err, viewData) {
+        if(err) {
+            // błąd przy pobraniu pliku z widokiem
+        } else {
+            // asynchroniczne odczytanie layoutu
+            fs.readFile(layoutPath, 'utf8', function(err, layoutData) {
+                if(err){
+                    // błąd przy pobraniu layoutu
+                }else{
+                    // skompiluj layout z widokiem
+                    var compiled = dot.template(
+                        layoutData.toString(), 
+                        undefined, 
+                        { content: viewData.toString() }
+                    );
+                    if(cacheViews) {
+                        // dodaj widok do cache
+                        compiledViewsCache[viewPath] = compiled;
+                    }
+                    // wyświetl wyrenderowany widok
+                    res.send(compiled(model));
+                }  
+            });
+        }
+    });
+}
+</code></pre>
+
+<p>};
+```
+Funkcja ta przyjmuje 4 parametry: obiekt express.response, nazwę widoku, model, z którym widok powinien być skompilowany, oraz nazwę layoutu (jeżeli domyślny nam nie odpowiada). Dwa ostatnie parametry są opcjonalne. Wewnątrz funkcji wykonujemy następujące operacje:</p>
+
+<ol>
+<li>Jeżeli dany widok został zcache'owany, odczytujemy go z cache i kompilujemy z podanym modelem. Warto tutaj nadmienić, że cache nie służy nam do zachowywania gotowego htmla, a jedynie skompilowanej funkcji szablonu, która generuje ten html na podstawie otrzymanego modelu. W tym wypadku zyskujemy na czasie, jaki należałoby poświęcić na odczytanie i skompilowanie szablonów zawartych w plikach.</li>
+<li>Jeżeli widok nie był zcache'owany, odczytujemy kolejno plik szablonu z widokiem oraz layoutem (obie operacje odczytania pliku wykonywane są asynchronicznie), następie kompilujemy sam szablon, aby na koniec na jego podstawie wygenerować wynikowy html oraz wysłać odpowiedź.</li>
+</ol>
+
+
+<p>Aby moduł można uznać za gotowy, wystarczy udostępnić funkcje <em>setup</em> oraz <em>render</em> (dodając te funkcje do zmiennej <em>exports</em>).</p>
+
+<p>Konfiguracja tego modułu w aplikacji może wyglądać następująco:
+``` js
+var express  = require(&lsquo;express&rsquo;),</p>
+
+<pre><code>renderer= require('./renderer'),
+app  = express();
+</code></pre>
+
+<p>renderer.setup({</p>
+
+<pre><code>extension: 'html',
+layout: 'layout',
+viewsPath: '/views',
+cacheViews: true
+</code></pre>
+
+<p>});</p>
+
+<p>// dodanie do obiektu express.response funkcjonalności naszego modułu
+app.response.show = function(viewname, model, layout){</p>
+
+<pre><code>renderer.render(this, viewname, model,layout); 
+</code></pre>
+
+<p>};
+```
+Trzeba dodać, że obiekt app.response służący do rozszerzenia domyślnych funkcjonalności obiektu response, jest dostępny w express.js od wersji 3.x.</p>
+
+<p>Przykładowy plik <strong>layout.html</strong> może wyglądać następująco:
+```
+&lt;!DOCTYPE html>
+<html lang="pl"></p>
+
+<pre><code>&lt;head&gt;
+    &lt;title&gt;
+        { {=it.title} }
+    &lt;/title&gt;
+    &lt;meta charset="utf-8"/&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    { {#def.content} }
+&lt;/body&gt;
+</code></pre>
+
+<p></html>
+```
+Zdefiniowaliśmy w nim 2 zmienne:</p>
+
+<ul>
+<li><em>def.content </em>&ndash; zmienna czasu kompilacji, w tym miejscu wstawiona zostanie zawartość pliku konkretnego widoku.</li>
+<li><em>it.title</em> &ndash; zmienna właściwa dla danego modelu, zostanie. Domyślnie w doT.js <strong>it</strong> oznacza model przekazany do widoku, natomiast <em>title</em> to nazwa właściwości dostępnej w ramach modelu.</li>
+</ul>
+
+
+<p>Licząc, że widok zawarty jest w pliku <strong>home.html</strong> teraz wystarczy wywołać nasz widok w następujący sposób:
+``` js
+app.get(&lsquo;/&rsquo;, function(req, res) {</p>
+
+<pre><code>var model = {title: 'Strona główna'};
+res.show('home', model);    // nasza customowa metoda
+</code></pre>
+
+<p>});
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Javascript - porady i uwagi]]></title>
+    <link href="http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi/"/>
+    <updated>2012-09-09T15:16:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi</id>
+    <content type="html"><![CDATA[<p>Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z kodem JavaScriptu, z jakim przyszło mi się spotykać w pracy i na uczelni. Zauważyłem, że wiele osób skupia się na logice serwerowej, trzymając się wielu kanonów określających jak powinno się pisać czysty i rozwijalny kod. Z drugiej strony jednocześnie traktują one skrypty JS po macoszemu, jako coś przez co trzeba jakoś przebrnąć.</p>
+
+<p>Nie ma co ukrywać, że utrzymanie przejrzystości i rozszerzalności modułów w JavaScriptcie jest o wiele trudniejsze niż w standardowych językach wykonywanych po stronie serwera. Dlatego właśnie uważam, że tym bardziej wymagają one uwagi i wkładu w zachowanie jakości. Poniżej przedstawię kilka uwag/wskazówek dla programistów, którzy chcieliby poprawić jakość pisanego kodu.</p>
+
+<h2>1. Zapoznaj się z <a href="http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml">Google Style Guide</a></h2>
+
+<p>Myślę, że to powinien być pierwszy krok dla każdego programisty frontendowego (i nie tylko). W każdym języku istnieją pewne konwencje i złote rady i JS nie jest tu żadnym wyjątkiem. Poradnik Google'a to nic innego jak zbiór powszechnie wypracowanych, przemyślanych zasad, którymi warto kierować się w trakcie pisania aplikacji WWW. Część z moich dalszych uwag będzie też rozwinięciem punktów z tego podręcznika.</p>
+
+<h2>2. Zamykaj skrypty we własnych zakresach (scopes)</h2>
+
+<p>Ten punkt dotyczy częstej sytuacji w której tworząc skrypty do aplikacji często definiujemy wiele zmiennych i funkcji globalnych o tymczasowym zastosowaniu. Tworzy to całą masę śmieciowego kodu, który jest dostępny w innych częściach aplikacji i w przyszłości może poskutkować zmniejszeniem czytelności, kłopotami z dalszą rozwijalnością kodu i zwiększeniem ryzyka powstawania błędów.</p>
+
+<p>Rozwiązaniem tego problemu jest posłużenie się wzorcem funkcji natychmiastowych (wykonywanych natychmiast po ich zdefiniowaniu). Poniżej zaprezentowałem przykład obrazujący to rozwiązanie:
+``` js</p>
+
+<script type="text/javascript">
+(function (window, $) {
+    'use strict';
+
+    var someVariable;
+    // reszta kodu
+})(window, $);
+</script>
+
+
+<p>```
+Utworzyliśmy w ten sposób odrębny zakres (<em>scope</em>), w którym wykonywane są funkcje skryptu. Oznacza to m.in., że zadeklarowana w przykładzie zmienna <em>someVariable</em> nie będzie widoczna przez inne skrypty spoza tego zakresu. Wpis <em>&lsquo;use strict&rsquo;</em> jest pomijany przez starsze przeglądarki, zaś w nowszych sprawia, że pisany kod będzie znacznie bardziej restrykcyjnie traktowany przez kompilator, przez co łatwiej można w nim wyłapać błędy i niejasności. Więcej na ten temat można przeczytać <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Functions_and_function_scope/Strict_mode?redirectlocale=en-US&amp;amp;redirectslug=JavaScript%2FStrict_mode">tutaj</a>.</p>
+
+<p>Można się zatem zapytać, po co w argumentach funkcji umieszczone są redefinicje zmiennych <em>window </em>i<em> jQuery</em>? Odpowiedź jest prosta: przejrzystość. Podając jawnie globalne typy z innych bibliotek i zmiennych środowiskowych możemy w mgnieniu oka określić powiązania pomiędzy naszym skryptem, a zewnętrznymi modułami.</p>
+
+<h2>3. Organizuj zmienne globalne w modułach/przestrzeniach nazw</h2>
+
+<p>Kolejnym krokiem w stronę dobrej organizacji kodu jest wykorzystanie powszechnie stosowanej w językach <em>server-side</em> opcji cięcia kodu w moduły i przestrzenie nazw. Może się to wydawać mało zrozumiałe, ponieważ JavaScript nie definiuje jawnie takich konstrukcji językowych. Jednakże możliwości tego języka są praktycznie nieograniczone, co daje nam możliwość rozwiązania tego problemu w inny sposób.</p>
+
+<p>Pierwsza propozycja przedstawiona jest poniżej. Osobiście nie polecam jej, jednakże w przypadku, gdy mamy niewiele modułów w naszej aplikacji, może się okazać wystarczająca.
+<code>js
+var MyModule = (window.MyModule = window.MyModule || {});
+var MySubModule = (MyModule.MySubModule = MyModule.MySubModule || {});
+</code>
+Jest to prosta konstrukcja językowa wydobywająca moduł (reprezentowany w praktyce przez obiekt) z tzw. korzenia (<em>root</em> &ndash; w tym wypadku zmienna <em>window</em>) lub tworząca go w przypadku, gdy dany moduł nie został jeszcze utworzony. Zwrócony obiekt służy następnie jako uchwyt dla pozostałych definiowanych przez nas funkcji i zmiennych.</p>
+
+<p>Innym rozwiązaniem jest stworzenie predefiniowanej metody pozwalającej wydobywać/tworzyć moduły na zawołanie, wraz z zachowaniem ich hierarchii. Ten prosty wzorzec, nazywany jak nie ciężko się domyślić przestrzenią nazw (<em>namespace</em>), może być sprowadzony do postaci pojedyńczej funkcji:
+``` js
+window.namespace = function (path, root) {</p>
+
+<pre><code>var parent = root || window;    // jeżeli nie podaliśmy korzenia, korzystamy z obiektu okna
+var modules = path.split(".");
+for (var i = 0; i &lt; modules.length; i++) {
+    var module = modules[i];
+    parent[module] = (parent[module] || {});
+    parent = parent[module];
+}
+return parent;
+</code></pre>
+
+<p>};
+```
+Tak zdefiniowana funkcja pozwala nam pobierać lub tworzyć hierarchie modułów na żądanie. Przykładowe użycie może wyglądać następująco: <code>var regexes = namespace(&lsquo;System.Text.RegularExpressions&rsquo;);</code></p>
+
+<h2>4. Komunikuj się poprzez obiekty</h2>
+
+<p>Jest to dość wieloznaczne stwierdzenie, w praktyce jednak chodzi o prostą ideę: wykorzystanie proxy w komunikacji z zewnętrznymi serwisami, a nawet między różnymi modułami. Jest to wygodny sposób zachowanie luźnych powiązań.</p>
+
+<p>W ramach przykładu załóżmy, że wykorzystujemy obiekt pośredniczący w obsłudze żądań ajaxowych z różnych modułów naszej aplikacji. Niestety z jakiegoś powodu biblioteka jQuery, z której korzystaliśmy do obsługi tych wywołań, generuje błędy lub posiada zbyt ubogie funkcje. Dzięki wykorzystaniu proxy możemy ją zamienić na inną (lub napisać własną) bez potrzeby przepisywania kodu we wszystkich miejscach, które do tej pory wykorzystywały ją do komunikacji.</p>
+
+<p>Kolejną wynikającą z tego zaletą jest możliwość przeprowadzania testów jednostkowych dla skryptów klienckich. Nie ma przecież żadnych przeciwwskazań, aby stworzyć mocki, które będziemy mogli podstawiać w miejsce obiektu komunikatora.</p>
+
+<p>Innym zastosowaniem takiego rozwiązania jest możliwość reagowania na nadchodzące wiadomości w bardziej wyrafinowany sposób. Zastanówcie się, jak do tej pory reagowaliście, jeżeli w odpowiedzi na wasze żądanie na serwer zamiast upragnionego JSONa dostawaliście stringa zawierającego stronę z błędem? Oczywiście należałoby jakoś powiadomić użytkownika o wystąpieniu błędu lub wywołać odpowiednią reakcję systemu. To z kolei wiąże się z koniecznością każdorazowego sprawdzenia, czy zwrócona wiadomość jest prawidłowa. Wykorzystując interfejs pośredniczący moglibyśmy odpowiednio reagować na takie sytuacje <strong>zanim </strong>wiadomość zostanie przekazana dalej do oczekujących na nią elementów, a nawet za pomocą wzorca Publish/Subscribe tworzyć listy obiektów oczekujących i reagujących na konkretne rodzaje komunikatów.</p>
+
+<h2>5. Dokumentuj skrypty</h2>
+
+<p>Może to zabrzmi dziwnie, ale taka jest prawda. Kiedy rozwijasz duże aplikacje, bardzo możliwe że na przestrzeni miesięcy będziesz musiał wrócić do dawno nie oglądanego kodu lub twoja praca zostanie odziedziczona przez innego programistę, który nie ma zielonego pojęcia o tym co i jak działa. Z tego powodu w momencie, gdy skrypty nie są okraszone stosownymi komentarzami, ilość WTFów/min. znacznie wzrasta. Nie powinniśmy się przejmować wzrostem rozmiaru plików JS, ponieważ niemal każdy minifier załatwi ten problem za nas. Warto przyjąć sobie jakiś konkretny format pisania komentarzy, a w tej dziedzinie standardem wydaje się <a href="http://en.wikipedia.org/wiki/JSDoc">JSDoc</a>.</p>
+
+<h2>6. Minimalizuj skrypty</h2>
+
+<p>Kolejna sprawa, która powinna być dość oczywista w praktyce, często jest jednak pomijana. Minimalizowanie skryptów oraz styli pozwala nawet kilkukrotnie zmniejszyć rozmiar wymaganych do pobrania plików. Jak wiadomo im mniejszy rozmiar, tym mniej danych trzeba przesłać przez sieć i tym szybciej dana strona zostanie załadowana. Ma to znaczenie zwłaszcza dla użytkowników korzystających z urządzeń mobilnych, które często są wykorzystywane w otwartych obszarach np. miejskich hot-spotach, gdzie udźwig łącza stanowi pewien problem.</p>
+
+<p>Innym dobrym pomysłem jest łączenie wielu plików ze skryptami do jednego pliku. Znowu wynika to z faktu, że większa ilość plików wymaga wygenerowanie przez przeglądarkę większej ilości zapytań. W przypadku gdy przeglądarka klienta lub serwer hostujący nie obsługują protokołu <a href="https://sites.google.com/a/chromium.org/dev/spdy/spdy-whitepaper">SPDY</a>, oznacza to, że każdy żądany zasób będzie wymagał ustanowienia nowego połączenia TCP, co jest dość kosztowne i negatywnie przekłada się na czas transmisji, zwłaszcza na dużych dystansach między klientem a serwerem. Z tego powodu wskazane jest zarówno łączenie jak i minimalizacja skryptów i stylów w środowisku produkcyjnym.</p>
+
+<h2>7. Testuj skrypty</h2>
+
+<p>Nie jest chyba dla nikogo niespodzianką, że w życiu programisty dużą część czasu poświęca się nie tylko na pisaniu kodu, ale również na sprawdzeniu jego poprawności. Aby zautomatyzować ten proces, powstało wiele frameworków umożliwiających przeprowadzanie szybkich testów. Ponieważ w dzisiejszych aplikacjach webowych coraz większa część logiki zaczyna być wykonywana po stronie klienta, dobrą praktyką jest przygotowywanie testów również dla skryptów JS. Zalet tego podejścia jest sporo, warto wymienić chociaż kilka z nich:</p>
+
+<ul>
+<li>Przeprowadzanie testów jednostkowych wymusza budowanie modularnych aplikacji opartych o luźne powiązania między obiektami. Jest to bardzo dobra metodyka programowania i pomaga poprawić czytelność oraz jakość pisanego kodu.</li>
+<li>Od kiedy JavaScript umożliwia nam zdalne wywoływanie zdarzeń związanych z akcjami użytkownika, możliwe jest również przynajmniej częściowe zautomatyzowanie testów wymagających podejmowania działań po stronie klienta.</li>
+<li>W przypadku scalania i minimalizacji skryptów (zwłaszcza tych wykorzystujących niezminimalizowane biblioteki zewnętrzne do developingu i zminimalizowane w środowisku produkcyjnym) nigdy nie możemy mieć 100% pewności, że nasz scalony/zminimalizowany skrypt będzie dalej działał dokładnie tak jak sprawdzaliśmy.</li>
+</ul>
+
+
+<p>Środowisk do testów javascriptowych jest dość sporo. Osobiście mogę polecić <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, framework bazujący na rozwiązaniach znanych dla programistów Ruby z RSpeca. Jest łatwy do nauki i wprowadzenia w naszej aplikacji, a jednocześnie daje nam dużą swobodę w tworzeniu własnych rozwiązań.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[API Servery i MVC po stronie klienta]]></title>
+    <link href="http://Horusiath.github.io/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/"/>
+    <updated>2012-06-30T22:32:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta</id>
+    <content type="html"><![CDATA[<p>Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w stronę klienta. Sprawę potęguje fakt, że coraz więcej powstaje narzędzi ułatwiających te czynności, zaś duże firmy, takie jak Google, Twitter czy Facebook, promują przenoszenie kolejnych funkcjonalności do przeglądarki.</p>
+
+<p>Zacznijmy od tego, jak wygląda &ldquo;tradycyjny&rdquo; model działania aplikacji WWW.</p>
+
+<p>Serwer odbiera żądanie. Aby na nie odpowiedzieć, wykonuje wiele operacji takich jak mapowanie routingu, uwierzytelnianie, czy pobranie elementów z bazy. Po ich wykonaniu nadchodzi czas na proces przygotowania odpowiedzi. W obecnych czasach serwery nie serwują praktycznie żadnych statycznych stron HTML, zawartość jest przeważnie generowana dynamicznie i wypełniana na podstawie danych dla każdego żądania. Warto zauważyć, że tak wygenerowana strona może mieć dość spory rozmiar. W przypadku kolejnych żądań serwer powtarza wszystkie kroki, w wyniku zwracając kolejną stronę HTML, w większości przypadków bardzo podobną do poprzedniej (za sprawą wspólnego Layoutu oraz dołączanych skryptów i stylów).</p>
+
+<p>To tradycyjne podejście ma kilka zalet:</p>
+
+<ul>
+<li>Ponieważ większość logiki związanej z prezentacją generowana jest w postaci HTML po stronie serwera, maszyna klienta nie musi borykać się z ciężkimi skryptami. Jest to pewien plus w przypadku słabych maszyn czy starych przeglądarek, źle radzących sobie z javascriptem.</li>
+<li>Nie ma co ukrywać, że utrzymywanie kodu JS jest znacznie bardziej wymagające niż odpowiadającego mu kodu w innych językach wykorzystywanych po stronie serwera.</li>
+<li>Niektóre roboty internetowe ignorują pewne fragmenty adresów url lub nie wykrywają tych adresów w miejscach innych niż linki. Dodatkowo indeksery mogą mieć problemy z przetwarzaniem treści innych niż strony HTML. Z tego powodu tradycyjnie serwowane strony są łatwe do rozpoznawania i indeksowania.</li>
+</ul>
+
+
+<p>Na czym więc polega w skrócie budowa oparta o &ldquo;ciężkiego&rdquo; klienta i serwer API. Chodzi mianowicie o zrzucenie z serwera odpowiedzialności za generowanie stron HTML (które mogą być w rzeczywistości ładowane dynamicznie). Ma on odpowiadać jedynie za przesyłanie szablonów stron HTML, skryptów czy stylów oraz (co najważniejsze) udostępniać API pozwalające sterować logiką za pomocą żądań HTTP i zwracające surowe informacje (przekazywane przeważnie w formacie JSON), których prezentacją zajmą się skrypty po stronie klienta.</p>
+
+<p>Jakie zalety ma takie podejście?</p>
+
+<ul>
+<li>Zmniejszenie obciążenia serwera &ndash; jeżeli jesteśmy w stanie przesyłać niezbędne elementy prezentacji w postaci statycznych szablonów HTML, nasze serwery nie muszą ich generować w czasie rzeczywistym.</li>
+<li>Zmniejszenie rozmiaru przesyłanych danych &ndash; od kiedy nie musimy za każdym razem serwować widoku całej strony, a jedynie skupić się na prostych szablonach oraz danych w formacie JSON (który powoduje znacząco mniejszy narzut niż HTML), wykorzystywane przez nas pasmo jest znacznie mniejsze. Jest to dobra wiadomość zarówno dla hosta, jak i dla wielu użytkowników, którzy coraz częściej przeglądają internet poza domem korzystając ze swoich smartfonów.</li>
+<li>Dobra integracja z innymi usługami &ndash; od kiedy nasz serwer udostępnia informacje w formie API opartego o otwarte standardy, zarówno my jak i inni programiści możemy oprzeć na nim usługi inne niż standardowe strony WWW (jest to dobra wiadomość zwłaszcza dla twórców aplikacji na urządzenia mobilne).</li>
+<li>Single Page Application jako aplikacja desktopowa &ndash; dzięki możliwościom najnowszych przeglądarek jesteśmy w stanie szybko wzbogacić naszą aplikację o możliwość pracy offline, nawet kiedy użytkownik nie ma dostępu do Internetu.</li>
+</ul>
+
+
+<p>Oczywiście nie każdemu odpowiadają te rozwiązania i często można słyszeć głosy sprzeciwu. Ale ponieważ Internet udostępnia pole do otwartej dyskusji, postaram się wysunąć kilka kontrargumentów na najczęściej spotykane zarzuty.</p>
+
+<ul>
+<li>Co ze starszymi przeglądarkami? &ndash; częste pytanie, głównie ze względu na to, że wiele bajerów dostępnych w nowych przeglądarkach może słabo lub wcale nie działać na starszych. Oczywiście takie rzeczy jak wolno działający javascript można optymalizować, jednakże kiedy dochodzi się do granic, może pojawić się potrzeba dodania popupa <em>&ldquo;Przestań przeglądać Internet za pomocą kartofla&rdquo;</em> dla tych kilku użytkowników, którzy jeszcze nie wiedzą, że istnieją przeglądarki inne niż IE.</li>
+<li>Co ze słabszym sprzętem? &ndash; w dzisiejszych czasach praktycznie każdego stać na sprzęt spełniający wymagania większości stron działających na wydajnych przeglądarkach. Ta teza dotyczy również urządzeń mobilnych &ndash; większość smartfonów niewiele odstaje osiągami od desktopów sprzed kilku lat.</li>
+<li>A co, jeżeli ktoś ma wyłączoną obsługę JavaScriptu? &ndash; zdziwiłem się, gdy zobaczyłem to jako dość częsty argument w dyskusjach. Dla osób które nie widzą w tu nic absurdalnego, proponuję jednak przeczytać znowu to pytanie ze zrozumieniem, aż do skutku.</li>
+<li><em>&ldquo;It&rsquo;s fucking JavaScript&rdquo;</em> &ndash; tak, utrzymywanie dużej ilości kodu JS jest trudne, po przekroczeniu pewnego progu jestem w stanie przyznać, że to zadanie prawie niemożliwe. Na szczęście społeczność programistów JS jest dość pomysłowa i można znaleźć multum ułatwień pozwalających zachować prosty, czytelny i działający kod &ndash; począwszy od różnego typu platform, przez języki kompilowane do Javascriptu, a kończąc na frameworkach umożliwiających testy jednostkowe po stronie przeglądarki.</li>
+</ul>
+
+
+<p>Podsumowując, nowe podejście oparte na budowaniu aplikacji na zasadzie konstrukcji bogatych stron klienckich wspieranych przez serwery API może okazać się ciekawym i obiecującym rozwiązaniem. Zarówno dla twórców, poprzez zmniejszenie kosztów za pomocą odciążenia logiki serwerowej, jak i dla użytkowników, wzbogacając ich doświadczenia w korzystaniu ze stron oraz usprawniając pracę poza domem.</p>
+]]></content>
+  </entry>
+  
+</feed>

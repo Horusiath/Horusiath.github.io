@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: WCF | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/wcf/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Forwardowanie i streaming dużych plików przez WCF]]></title>
+    <link href="http://Horusiath.github.io/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/"/>
+    <updated>2012-07-04T19:08:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow</id>
+    <content type="html"><![CDATA[<p>W trakcie tworzenia serwisów bazujących na ASP.NET niejednokrotnie zdarza się potrzeba przesyłania dużych plików przez sieć. W przypadku, gdy kontroler, aby przetransportować plik do przeglądarki, musi odwołać się do usługi sieciowej (w opisywanym przez mnie wypadku WCF) sprawy mogą się trochę skomplikować. Ponieważ nie chcielibyśmy, aby nasz serwer regularnie zapychał się buforując dużą ilość danych, dobrym rozwiązaniem byłoby utworzenie strumienia wzdłuż całego stosu komunikacyjnego. Przedstawia to rysunek poglądowy poniżej.</p>
+
+<p><img border="0" src="http://3.bp.blogspot.com/-YNoTKRkDFdY/T_Rk7WLTmYI/AAAAAAAAAEo/x8aFQOc0siQ/s1600/flow.png" /></p>
+
+<p>Stwórzmy zatem przykładowe rozwiązanie takiego problemu. W tym celu podzielimy go na dwa mniejsze podproblemy: strumieniowanie pliku przy pomocy Windows Communication Foundation oraz forwardowanie otrzymanego strumienia bezpośrednio do przeglądarki. Co istotne, w rozwiązaniu tym nie możemy pozwolić sobie na zbuforowanie pliku w którymkolwiek momencie strumieniowania.</p>
+
+<h2>Streaming WCF</h2>
+
+<p>Zacznijmy od zdefiniowania przykładowego interfejsu naszej usługi. Może on wyglądać następująco:
+``` c#
+[ServiceContract]
+public interface IFileStreamer
+{</p>
+
+<pre><code>[OperationContract]
+FileStreamResponse GetFile(FileStreamRequest request);
+</code></pre>
+
+<p>}
+<code>
+Jak widzimy jedyną operacja wykonywaną przez naszą usługę jest pobranie obiektu klasy _FileStreamResponse_. Klasę taką możemy zdefiniować następująco:
+</code> c#
+[MessageContract]
+public class FileStreamResponse
+{</p>
+
+<pre><code>[MessageHeader]
+public string FileName { get; set; }
+
+[MessageHeader]
+public string ContentType { get; set; }
+
+[MessageHeader]
+public long FileLength { get; set; }
+
+[MessageBodyMember]
+public Stream Stream { get; set; }
+</code></pre>
+
+<p>}
+```
+Warto zatrzymać się na chwilę w tym miejscu. Jak widzimy obiekt tej klasy nie jest zdefiniowany za pomocą standardowego atrybutu <em>[DataContract]</em>, lecz nieco rzadziej spotykanego <em>[MessageContract]. </em>Powodem takiego zachowania jest właściwość oznaczona parametrem <em>[MessageBodyMember]</em>. Jest to główna treść naszego obiektu, strumień. Reszta danych zdefiniowana zostanie w nagłówku wiadomości SOAP, w którą opakowane są wszystkie serializowane obiekty transportowane przez naszą usługę. Jest tak, ponieważ zgodnie z regułami narzucanymi przez WCF, jeżeli zwracany jest strumień, powinien on być jedynym elementem zawartym w ciele wiadomości. Więcej o message contractach można dowiedzieć się <a href="http://msdn.microsoft.com/en-us/library/ms730255.aspx">tutaj</a> oraz <a href="http://msdn.microsoft.com/en-us/library/ms733742.aspx">tutaj</a>.</p>
+
+<p>Mimo że nasza usługa ma za zadanie strumieniować pliki, to w praktyce zwracany strumień jest klasy <em>Stream</em>. Dzieje się tak z dwóch powodów:</p>
+
+<ol>
+<li>Ponieważ klasa <em>FileStream</em> nie jest oznaczona atrybutem <em>Serializable</em>, nie może ona być zserializowana i przesłana przez sieć.</li>
+<li>W praktyce serializer WCF zawsze będzie konwertował wszystkie wyjściowe strumienie do klasy <em>MessageBodyStream</em>. Jest to ważne, ze względu na fakt że klasa ta nie dysponuje takimi możliwościami jak większość innych strumieni &ndash; opiszę je w drugiej części artykułu &ndash; i będziemy musieli ominąć jej braki.</li>
+</ol>
+
+
+<p>W dalszej kolejności powinniśmy się przyjrzeć budowie obiektu przekazywanego jako parametr. W naszym przykładzie wygląda on następująco:
+``` c#
+[MessageContract]
+public class FileStreamRequest
+{</p>
+
+<pre><code>[MessageBodyMember]
+public int Id { get; set; }
+</code></pre>
+
+<p>}
+```
+Jak widać jedyną zmienną przechowywaną przez nasz obiekt żądania jest pojedyncza liczba. Pytanie zatem brzmi: czy musimy budować osobny obiekt żądania na potrzeby tylko jednego prostego parametru? Odpowiedź brzmi: Tak. Dzieje się tak dlatego, że WCF wymaga od nas, aby w przypadku, gdy w operacji zwracane są obiekty oznaczone jako <em>[MessageContract]</em>, operacja ta może przyjmować za parametry jedynie inne obiekty oznaczone tym atrybutem i może w ten sposób przyjmować tylko jeden obiekt.</p>
+
+<p>Przejdźmy teraz do zdefiniowania klasy służącej za implementację naszej usługi.
+``` c#
+[ServiceBehavior(AddressFilterMode = AddressFilterMode.Any)]
+public class FileStreamer : IFileStreamer
+{</p>
+
+<pre><code>public FileStreamResponse GetFile(FileStreamRequest request)
+{
+    // pobieramy ścieżkę do pliku
+    var path = GetPathFor(request.Id);
+
+    var filename = Path.GetFileName(path);
+    var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+
+    return new FileStreamResponse
+    {
+        Stream = stream,
+        FileLength = stream.Length,
+        FileName = filename,
+        ContentType = "application/zip"
+    };
+}
+
+// ... dalsza implementacja 
+</code></pre>
+
+<p>}
+```
+Na koniec musimy zdefiniować konfigurację usługi tak, aby mogła ona wykorzystywać strumieniowanie. W tym wypadku jesteśmy ograniczeni do wyboru jednego z czterech bindingów, które to umożliwiają:</p>
+
+<ul>
+<li>BasicHttpBinding</li>
+<li>WebHttpBinding</li>
+<li>NetTcpBinding</li>
+<li>NetNamedPipeBinding</li>
+</ul>
+
+
+<p>Niezbędne jest również określenie maksymalnego rozmiaru danych przesyłanych w strumieniu oraz określenie kierunku strumienia &ndash; dla danych pobieranych z usługi jest to <em>StreamedResponse</em>. Dodatkowo warto określić kodowanie wiadomości (co pozwoli zmniejszyć jej rozmiar) oraz rozmiar bufora ramki (im większy jego rozmiar tym mniej &ldquo;rozdrobniona&rdquo; będzie nasza wiadomość, lecz jednocześnie więcej pamięci potrzebnej jest na obsługę bufora przez serwer). Domyślny rozmiar bufora w WCF wynosi 64KB.</p>
+
+<p>W rezultacie przykładowa konfiguracja może wyglądać następująco:
+``` xml
+<services>
+  <service name="<namespace>.FileStreamer"></p>
+
+<pre><code>&lt;endpoint
+  binding="basicHttpBinding"
+  address="http://localhost/&lt;webservice_address&gt;"
+  contract="&lt;namespace&gt;.IFileStreamer"
+  bindingConfiguration="streamedBasicHttpBinding"/&gt;
+</code></pre>
+
+<p>  </service>
+</services>
+<bindings>
+  <basicHttpBinding></p>
+
+<pre><code>&lt;binding name="streamedBasicHttpBinding"
+         transferMode="StreamedResponse"
+         messageEncoding="Mtom"
+         maxReceivedMessageSize="629145600"/&gt;
+&lt;!-- maksymalny rozmiar pliku: 600MB --&gt;
+</code></pre>
+
+<p>  </basicHttpBinding>
+</bindings></services>
+```
+Analogicznie do tego można utworzyć konfigurację kliencką. Można ją zdefiniować ręcznie albo posłużyć się opcją <em>Add Service Reference</em> z menu kontekstowego referencji w projekcie docelowym otwartym w Visual Studio lub używając narzędzia <em>svcutil </em>i wygenerować w ten sposób potrzebny plik proxy klienta i konfigurację.</p>
+
+<h2>Forwardowanie po stronie ASP</h2>
+
+<p>Zanim przejdziemy do pisania przykładowego kodu, należy zwrócić uwagę na kilka kwestii.</p>
+
+<p>Tak jak opisałem wcześniej mimo, że transport pliku z operacji WCF odbywa się za pomocą strumienia, nie jest to jednak obiekt klasy <em>FileStream</em>, lecz <em>MessageBodyStream</em>. Nanosi to na nasze zadanie pewne trudności:</p>
+
+<ul>
+<li>Metoda <em>Read </em>strumienia tej klasy nie musi zwracać w wyniku ilości faktycznie odczytanych wierszy. Ponieważ strumień nie definiuje również żadnego odpowiednika flagi <em>EndOfStream</em>, musimy z góry znać długość strumienia, aby w odpowiednim momencie zakończyć odczytywanie danych.</li>
+<li>Strumień ten nie implementuje właściwości <em>Length</em> (sic!), stąd też musieliśmy wcześniej zdefiniować message contract, w którym ustawiamy ręcznie tą długość jako jeden z parametrów przekazywanych w nagłówku wiadomości.</li>
+<li>Przy próbie bezpośredniego zwrócenia tego strumienia przy przekazaniu go do metody <em>File </em>kontrolera, nastąpi próba zbuforowania całego pliku przez kontroler. Zgodnie z początkowym założeniem nie możemy do tego dopuścić. Z tego powodu powinniśmy własnoręcznie skonstruować odpowiedź dla przeglądarki.</li>
+</ul>
+
+
+<p>W rezultacie przykładowy kod akcji kontrolera może wyglądać następująco:
+``` c#
+private ActionResult GetFileStream(long id)
+{</p>
+
+<pre><code>// fileStreamer - klient proxy do usługi WCF
+var message = fileStreamer.GetFile(new FileStreamRequest { Id = versionId });
+if (message.Stream != null &amp;&amp; message.FileLength != 0) 
+{
+    using (var stream = new BinaryReader(message.Stream))
+    {
+        Response.Clear();
+        Response.ContentType = message.ContentType;
+        Response.AddHeader("Content-Length", message.FileLength.ToString());
+        Response.AddHeader("Content-Disposition", "attachment; filename=" + message.FileName);
+
+        var defaultBufferSize = 1024*1024*64;   // 65KB
+        var bytesRead = 0L;
+        do
+        {
+            var frame = (bytesRead + defaultBufferSize) &lt;= message.FileLength
+                ? defaultBufferSize
+                : (int)(message.FileLength - bytesRead);
+
+            var buffer = stream.ReadBytes(frame);
+            Response.BinaryWrite(buffer);
+            Response.Flush();
+
+            bytesRead += frame;
+        } while ( bytesRead &lt; message.FileLength);
+
+        Response.End();
+    }
+}
+return null;
+</code></pre>
+
+<p>}
+```
+Ostatnia rzecz warta odnotowania, to w zasadzie rada dla developerów. Niestety, aby sprawdzić działanie strumienia w praktyce, musimy uruchomić naszą aplikację na rzeczywistym serwerze IIS (można to ustawić we właściwościach projektu), ponieważ standardowy serwer developerski ASP nie udostępnia tej opcji.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[WCF] Wydobywanie wiadomości w postaci SOAP po stronie klienta]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/"/>
+    <updated>2011-11-24T23:07:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci</id>
+    <content type="html"><![CDATA[<p>Windows Communication Foundation jest obecnie jednym z bardziej powszechnych (i moim zdaniem także jednym z najlepiej zaprojektowanych) frameworków do obsługi usług sieciowych (<em>Web Services</em>). Nie wdając się zbytnio w szczegóły działania takiej usługi, wystarczy nam wiedzieć, że aby zostać przekazana, każda wiadomość (reprezentowana po stronie .NETu przez obiekt odpowiedniej klasy) musi być zserializowana do postaci tzw. dokumentu, który w większości przypadków występuje pod postacią XML lub jego podzbiorem, SOAP.</p>
+
+<p>Z reguły nie musimy dysponować wiedzą o tym, w jaki sposób nasza wiadomość zostaje reprezentowana za kulisami usługi. Niestety w życiu pojawiają się sytuacje, kiedy ta informacja może mieć dla nas istotne znaczenie. Przykładem takiej sytuacji mogą być narzędzia diagnostyczne, których zadaniem jest kontrola i monitorowanie działania usługi.</p>
+
+<p>Sposobów na wydobycie wiadomości w jej &ldquo;surowej&rdquo; postaci, tzn. reprezentacji XML (lub SOAP, ponieważ zależy nam na w miarę czytelnej formie) jest kilka. Jednym z nich może być np. podpięcie się do modułu zajmującego się deserializacją dokumentu. Innym jest wykorzystanie wbudowanych w WCF opcji tracingu. W poniższym przykładzie przedstawię drugą opcję.</p>
+
+<h2>Etap 1 &ndash; konfiguracja</h2>
+
+<p>Ponieważ WCF jest środowiskiem, które umożliwia zdefiniowanie niemal wszystkiego za pomocą konfiguracji, warto skorzystać z tego rozwiązania, kiedy tylko mamy taką możliwość. O pozostałych sytuacjach tzn. kiedy sama konfiguracja to za mało, a dostarczone przez twórców frameworka &ldquo;klocki&rdquo; nam nie wystarczą opowiem w dalszej części wpisu.</p>
+
+<p>Jak więc za pomocą konfiguracji ustawić naszego klienta, aby możliwy był nasłuch nadchodzących wiadomości? Po pierwsze należy zdefiniować taką opcję wewnątrz gałęzi system.service model. Ilustruje to następujący fragment:
+``` xml
+  &lt;system.serviceModel></p>
+
+<pre><code>&lt;diagnostics&gt;
+  &lt;messageLogging
+    logMalformedMessages="true"
+    logMessagesAtServiceLevel="true"
+    logEntireMessage="true"
+    logMessagesAtTransportLevel="true"
+    maxMessagesToLog="-1"
+    maxSizeOfMessageToLog="10000"
+    /&gt;
+&lt;/diagnostics&gt;
+...pozostała część konfiguracji
+</code></pre>
+
+<p>  &lt;/system.serviceModel>
+```<br/>
+Co znaczą następujące atrybuty?:</p>
+
+<ul>
+<li><strong><em>logMalformedMessages</em></strong> &ndash; oznacza, że poza normalnymi wiadomościami, logowane zostaną również te, których deserializacja była niemożliwa (np. z powodu uszkodzenia zawartości dokumentu). W takim wypadku dokument zostaje logowany &ldquo;na surowo&rdquo; tzn. do momentu, kiedy był on jeszcze czytelny dla aplikacji. Jeżeli zawartość była zaszyfrowana w momencie wystąpienia błędu, log również będzie zaszyfrowany.</li>
+<li><strong><em>logMessagesAtServiceLevel</em></strong>, <strong><em>logMessagesAtTransportLevel</em></strong> &ndash; oznacza, czy wiadomości mają zostać logowane w momencie przejścia przez warstwę transportową, czy w chwili kiedy stają się dostępne dla usługi / konsumenta.</li>
+<li><strong><em>logEntireMessage</em></strong> &ndash; domyślnie ustawione na false. Określa czy logowana jest cała treść wiadomości czy tylko jej nagłówek SOAP.</li>
+<li><strong><em>maxMessagesToLog</em></strong> &ndash; określa limit wiadomości, które mogą być zalogowane. Pozwala nam uchronić się przed zasypaniem nadmierną ilością danych.</li>
+<li><strong><em>maxSizeOfMessageToLog</em></strong> &ndash; określa maksymalny rozmiar logowanej wiadomości. W momencie kiedy zapisywana wiadomość jest za długa, zapisana zostaje ta część która zmieściła się w limicie, a reszta zostaje ucięta i nie podlega logowaniu.</li>
+</ul>
+
+
+<p>Oczywiście nie musimy określać wszystkich tych atrybutów, ponieważ nie zawsze zależy nam na tak wysokim poziomie szczegółowości logowanych informacji.</p>
+
+<p>Kiedy określiliśmy zasady logowania wiadomości po stronie WCF, powiedzieliśmy naszej aplikacji jak ma wyglądać wiadomość, którą framework udostępnia do logowania. Teraz należy skonfigurować tracing, tzn. powiedzieć jakie typy wiadomości mają być logowane oraz jak ma przebiegać proces logowania (m.in. gdzie zapisujemy wiadomości). Oto wycinek przykładowej konfiguracji:
+``` xml
+  &lt;system.diagnostics></p>
+
+<pre><code>&lt;sources&gt;
+  &lt;source name="System.ServiceModel.MessageLogging"
+          switchValue="All"&gt;
+    &lt;listeners&gt;
+      &lt;add name="myListenerName"
+           type="assembly qualified name"
+           initializeData="my file path"/&gt;
+    &lt;/listeners&gt;
+  &lt;/source&gt;
+&lt;/sources&gt;
+</code></pre>
+
+<p>  &lt;/system.diagnostics>
+```
+Odrobina wyjaśnienia:</p>
+
+<ul>
+<li><strong>source</strong> &ndash; określa konfigurację obiektu, stanowiącego źródło nadchodzących logów. W przypadku, kiedy chcielibyśmy mieć możliwość późniejszego odwołania sie do tej instancji w kodzie aplikacji, należy zapamiętać nazwę stanowiącą identyfikator. Wartość switchValue określa jakiego typu wiadomości mają być logowane. Wyróżniamy:
+
+<ul>
+<li><strong><em>Off</em></strong> &ndash; wyłączona możliwość logowania.</li>
+<li><strong><em>Critical</em></strong> &ndash; logowane są błędy krytyczne, które mogą powodować wyłączenie się aplikacji (np. wyczerpanie pamięci, przepełnienie stosu, zawieszenie systemu).</li>
+<li><strong><em>Error</em></strong> &ndash; logowane są błędy, w tym te które mogą powodować nieprawidłowe działanie programu, które jednak nie spowodują zakończenia programu. Należą do nich chyba wszystkie niewyłapane wyjątki.&ndash; <strong><em>Warning</em></strong> &ndash; uprzedzenia programu o możliwości wystąpienia nieprawidłowości, które jednak nie będą miały większego wpływu na dalsze działanie aplikacji. Przykłady: nieprawidłowe logowanie, przekroczenie limitu czasu na wykonanie zadania.</li>
+<li><strong><em>Information</em></strong> &ndash; logowanie ważniejszych elementów działającej aplikacji np. poprawne odczytanie konfiguracji lub stworzenie kanału pomiędzy usługą a konsumentem &ndash; dla przypomnienia, WCF wymaga stworzenia kanału komunikacyjnego, jakiekolwiek protokoły wykorzystujące komunikację bezpołączeniową (w tym UDP) nie są obsługiwane.</li>
+<li><strong><em>Verbose</em></strong> &ndash; podobnie jak powyższe, jednak logowane są zdarzenia bardziej &ldquo;niskopoziomowe&rdquo; np. udane odczytanie nagłówka SOAP wiadomości.</li>
+<li><strong><em>ActivityTracing</em></strong> &ndash; logowane są wszystkie formy komunikacji między klientem a usługą, zarówno na poziomie usługi jak i w warstwie transportowej.</li>
+<li><strong><em>All</em></strong> &ndash; wszystkie powyższe.</li>
+</ul>
+</li>
+<li><strong>listeners</strong> &ndash; jest to kolekcja obiektów zajmujących się logowaniem wiadomości nadchodzących ze źródła. Dodając kolejny obiekt należy podać jego identyfikator (używany potem do rozpoznania go w kolekcji), typ czyli nazwę kwalifikowaną (pełna nazwa klasy, łącznie z podaniem przestrzeni nazw, nazwy zestawu / assembly, opcjonalnie również numer wersji i token). Do tego możemy również podać atrybut initializeData, który może posłużyć przekazaniu informacji inicjalizujących obiekt, bądź wykorzystywanych przez stosowny konstruktor listenera. Dostępnych mamy kilka typów wbudowanych listenerów oferowanych przez platformę .NET:
+
+<ul>
+<li><strong><em>TextWriterTraceListener</em></strong> &ndash; wykorzystuje standardowy strumień tekstowy do logowania wiadomości. W konfiguracji możemy podać plik, do którego logowne będą informacje. W aplikacji możemy podać strumień, dla którego listener stworzy obiekt TextWritera, który będzie później wykorzystywany do logowania zdarzeń.</li>
+<li><strong><em>XmlWriterTraceListener</em></strong> &ndash; tak jak powyższy, z tą różnicą że wykorzystywany wraper TextWritera jest zastąpiony XmlWriterem.</li>
+<li><strong><em>ConsoleTraceListener</em></strong> &ndash; automatycznie ustawia strumień wyjściowy konsoli (Console.Out) na odbiorcę logowanych wiadomości. Wszystkie zdarzenia zostaną wyświetlone na konsoli.</li>
+<li><strong><em>DefaultTraceListener</em></strong> &ndash; domyślnie używany tylko w trybie debug. Wysyła logowane wiadomości na okno Output środowiska Visual Studio.</li>
+<li><strong><em>EventLogTraceListener</em></strong> &ndash; wykorzystuje mechanizm logów udostępniony bezpośrednio przez nasz system operacyjny.</li>
+<li><strong><em>WebPageTraceListener</em></strong> &ndash; wykorzystywany do logowania informacji w kanałach udostępnianych przez ASP.NET framework.</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Powyższa konfiguracja jest w stanie samodzielnie &ndash; bez jakiejkolwiek ingerencji w kodzie &ndash; poradzić sobie z postawionym przez nas zadaniem zapisywania wiadomości w postaci SOAP. Niestety w sytuacji, kiedy podane nam możliwości listenerów nie wystarczą, np. kiedy chcielibyśmy logować wiadomości bezpośrednio w polu teksowym naszej aplikacji desktopowej, jesteśmy zmuszeni do wzięcia spraw we własne ręce i napisania własnego trace listenera.</p>
+
+<h2>Etap 2 &ndash; Logowanie wiadomości w polu tekstowym aplikacji</h2>
+
+<p>Kod który musimy napisać jest dość krótki i treściwy. Całość składa się z dwóch kroków:</p>
+
+<ol>
+<li>Stworzenie własnej klasy dziedziczącej po trace listenerze, umożliwiającej logowanie wiadomości w kontrolce aplikacji.</li>
+<li>Aktualizacja pliku konfiguracyjnego i podpięcie kontrolki do listenera.</li>
+</ol>
+
+
+<p>Implementacja klasy jest bardzo prosta, przykładowo może wyglądać tak:
+``` c#
+public class MyTraceListener : TraceListener
+{</p>
+
+<pre><code>public TextBoxBase TextBox { get; set; }
+public override void Write(string message)
+{
+    if(TextBox==null)return;
+    TextBox.Text += message;
+}
+
+public override void WriteLine(string message)
+{
+    if (TextBox == null) return;
+    TextBox.Text += message + Environment.NewLine;
+}
+</code></pre>
+
+<p>}
+```
+W podstawowej wersji klasy wystarczy zdefiniować dwie metody abstrakcyjne. Dodatkowo stworzyliśmy właściwość typu TextBoxBase (ten przykład operuje na kontrolce z biblioteki Windows Forms), którą wykorzystamy za chwilę do podpięcia naszej kontrolki.</p>
+
+<p>Jak więc należałoby podpiąć wybraną przez nas kontrolkę do listenera takiego, jak podany powyżej? W pierwszej kolejności powinniśmy stworzyć obiekt TraceSource, który jest odpowiednikiem węzła source podanego przez nas wcześniej w konfiguracji. Może być podany w postaci pola dostępnego wewnątrz naszej aplikacji:
+``` c#
+private static TraceSource source =</p>
+
+<pre><code>new TraceSource("System.ServiceModel.MessageLogging");
+</code></pre>
+
+<p><code>
+W konstruktorze podajemy taką samą nazwę, jak wartość atrybutu __name__ w konfiguracji danego źródła. Następnie wyciągamy listenera i podpinamy do niego naszego textboxa.
+</code> c#
+var listener = source.Listeners[&ldquo;listener_config_name&rdquo;] as MyTraceListener;
+listener.TextBox = myTextBox;
+```
+To wszystko. Kod inicjalizujący można umieścić np. w konstruktorze głównego okna naszej aplikacji. Od teraz wiadomości (filtrowaneg wg. tego co określiliśmy w konfiguracji) będą wypisywane w jej polu tekstowym.</p>
+]]></content>
+  </entry>
+  
+</feed>

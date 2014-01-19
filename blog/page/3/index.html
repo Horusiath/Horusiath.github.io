@@ -1,0 +1,1563 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/page/3">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/">API Servery I MVC Po Stronie Klienta</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-30T22:32:00+02:00" pubdate data-updated="true">Jun 30<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w stronę klienta. Sprawę potęguje fakt, że coraz więcej powstaje narzędzi ułatwiających te czynności, zaś duże firmy, takie jak Google, Twitter czy Facebook, promują przenoszenie kolejnych funkcjonalności do przeglądarki.</p>
+
+<p>Zacznijmy od tego, jak wygląda &ldquo;tradycyjny&rdquo; model działania aplikacji WWW.</p>
+
+<p>Serwer odbiera żądanie. Aby na nie odpowiedzieć, wykonuje wiele operacji takich jak mapowanie routingu, uwierzytelnianie, czy pobranie elementów z bazy. Po ich wykonaniu nadchodzi czas na proces przygotowania odpowiedzi. W obecnych czasach serwery nie serwują praktycznie żadnych statycznych stron HTML, zawartość jest przeważnie generowana dynamicznie i wypełniana na podstawie danych dla każdego żądania. Warto zauważyć, że tak wygenerowana strona może mieć dość spory rozmiar. W przypadku kolejnych żądań serwer powtarza wszystkie kroki, w wyniku zwracając kolejną stronę HTML, w większości przypadków bardzo podobną do poprzedniej (za sprawą wspólnego Layoutu oraz dołączanych skryptów i stylów).</p>
+
+<p>To tradycyjne podejście ma kilka zalet:</p>
+
+<ul>
+<li>Ponieważ większość logiki związanej z prezentacją generowana jest w postaci HTML po stronie serwera, maszyna klienta nie musi borykać się z ciężkimi skryptami. Jest to pewien plus w przypadku słabych maszyn czy starych przeglądarek, źle radzących sobie z javascriptem.</li>
+<li>Nie ma co ukrywać, że utrzymywanie kodu JS jest znacznie bardziej wymagające niż odpowiadającego mu kodu w innych językach wykorzystywanych po stronie serwera.</li>
+<li>Niektóre roboty internetowe ignorują pewne fragmenty adresów url lub nie wykrywają tych adresów w miejscach innych niż linki. Dodatkowo indeksery mogą mieć problemy z przetwarzaniem treści innych niż strony HTML. Z tego powodu tradycyjnie serwowane strony są łatwe do rozpoznawania i indeksowania.</li>
+</ul>
+
+
+<p>Na czym więc polega w skrócie budowa oparta o &ldquo;ciężkiego&rdquo; klienta i serwer API. Chodzi mianowicie o zrzucenie z serwera odpowiedzialności za generowanie stron HTML (które mogą być w rzeczywistości ładowane dynamicznie). Ma on odpowiadać jedynie za przesyłanie szablonów stron HTML, skryptów czy stylów oraz (co najważniejsze) udostępniać API pozwalające sterować logiką za pomocą żądań HTTP i zwracające surowe informacje (przekazywane przeważnie w formacie JSON), których prezentacją zajmą się skrypty po stronie klienta.</p>
+
+<p>Jakie zalety ma takie podejście?</p>
+
+<ul>
+<li>Zmniejszenie obciążenia serwera &ndash; jeżeli jesteśmy w stanie przesyłać niezbędne elementy prezentacji w postaci statycznych szablonów HTML, nasze serwery nie muszą ich generować w czasie rzeczywistym.</li>
+<li>Zmniejszenie rozmiaru przesyłanych danych &ndash; od kiedy nie musimy za każdym razem serwować widoku całej strony, a jedynie skupić się na prostych szablonach oraz danych w formacie JSON (który powoduje znacząco mniejszy narzut niż HTML), wykorzystywane przez nas pasmo jest znacznie mniejsze. Jest to dobra wiadomość zarówno dla hosta, jak i dla wielu użytkowników, którzy coraz częściej przeglądają internet poza domem korzystając ze swoich smartfonów.</li>
+<li>Dobra integracja z innymi usługami &ndash; od kiedy nasz serwer udostępnia informacje w formie API opartego o otwarte standardy, zarówno my jak i inni programiści możemy oprzeć na nim usługi inne niż standardowe strony WWW (jest to dobra wiadomość zwłaszcza dla twórców aplikacji na urządzenia mobilne).</li>
+<li>Single Page Application jako aplikacja desktopowa &ndash; dzięki możliwościom najnowszych przeglądarek jesteśmy w stanie szybko wzbogacić naszą aplikację o możliwość pracy offline, nawet kiedy użytkownik nie ma dostępu do Internetu.</li>
+</ul>
+
+
+<p>Oczywiście nie każdemu odpowiadają te rozwiązania i często można słyszeć głosy sprzeciwu. Ale ponieważ Internet udostępnia pole do otwartej dyskusji, postaram się wysunąć kilka kontrargumentów na najczęściej spotykane zarzuty.</p>
+
+<ul>
+<li>Co ze starszymi przeglądarkami? &ndash; częste pytanie, głównie ze względu na to, że wiele bajerów dostępnych w nowych przeglądarkach może słabo lub wcale nie działać na starszych. Oczywiście takie rzeczy jak wolno działający javascript można optymalizować, jednakże kiedy dochodzi się do granic, może pojawić się potrzeba dodania popupa <em>&ldquo;Przestań przeglądać Internet za pomocą kartofla&rdquo;</em> dla tych kilku użytkowników, którzy jeszcze nie wiedzą, że istnieją przeglądarki inne niż IE.</li>
+<li>Co ze słabszym sprzętem? &ndash; w dzisiejszych czasach praktycznie każdego stać na sprzęt spełniający wymagania większości stron działających na wydajnych przeglądarkach. Ta teza dotyczy również urządzeń mobilnych &ndash; większość smartfonów niewiele odstaje osiągami od desktopów sprzed kilku lat.</li>
+<li>A co, jeżeli ktoś ma wyłączoną obsługę JavaScriptu? &ndash; zdziwiłem się, gdy zobaczyłem to jako dość częsty argument w dyskusjach. Dla osób które nie widzą w tu nic absurdalnego, proponuję jednak przeczytać znowu to pytanie ze zrozumieniem, aż do skutku.</li>
+<li><em>&ldquo;It&rsquo;s fucking JavaScript&rdquo;</em> &ndash; tak, utrzymywanie dużej ilości kodu JS jest trudne, po przekroczeniu pewnego progu jestem w stanie przyznać, że to zadanie prawie niemożliwe. Na szczęście społeczność programistów JS jest dość pomysłowa i można znaleźć multum ułatwień pozwalających zachować prosty, czytelny i działający kod &ndash; począwszy od różnego typu platform, przez języki kompilowane do Javascriptu, a kończąc na frameworkach umożliwiających testy jednostkowe po stronie przeglądarki.</li>
+</ul>
+
+
+<p>Podsumowując, nowe podejście oparte na budowaniu aplikacji na zasadzie konstrukcji bogatych stron klienckich wspieranych przez serwery API może okazać się ciekawym i obiecującym rozwiązaniem. Zarówno dla twórców, poprzez zmniejszenie kosztów za pomocą odciążenia logiki serwerowej, jak i dla użytkowników, wzbogacając ich doświadczenia w korzystaniu ze stron oraz usprawniając pracę poza domem.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/05/26/linq-sortowanie-po-nazwie-wasciwosci/">LINQ - Sortowanie Po Nazwie Właściwości</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-05-26T14:57:00+02:00" pubdate data-updated="true">May 26<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>LINQ to potężne narzędzie, które odpowiednio używane, może zaoszczędzić wiele czasu w pracy z różnymi typami kolekcji czy podczas generowania zapytań. Czasami jednak okazuje się, że potrzebujemy nieco rozszerzyć jego możliwości. Jednym z takich przypadków może okazać się sortowanie.</p>
+
+<p>Owszem można powiedzieć, że w Linq dysponujemy metodami OrderBy oraz OrderByDescending, ale ograniczenie tych metod tkwi w fakcie, że wymagają przekazania parametru sortowania w postaci wyrażenia lamba. Co zrobić w momencie, gdy nie dysponujemy takim wyrażeniem (np. sortujemy według parametrów przekazanych po HTTP)?</p>
+
+<p>Rozwiązaniem takiego przypadku jest konstrukcja własnego rozszerzenia interfejsu IQueryable, które może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">OrderByName</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">data</span><span class="p">,</span> <span class="kt">string</span> <span class="n">propertyName</span><span class="p">,</span> <span class="kt">bool</span> <span class="k">descending</span> <span class="p">=</span> <span class="k">false</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">res</span> <span class="p">=</span> <span class="n">data</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">orderName</span> <span class="p">=</span> <span class="k">descending</span> <span class="p">?</span> <span class="s">&quot;OrderByDescending&quot;</span> <span class="p">:</span> <span class="s">&quot;OrderBy&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">typeSrc</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">parameter</span> <span class="p">=</span> <span class="n">Expression</span><span class="p">.</span><span class="n">Parameter</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="s">&quot;x&quot;</span><span class="p">);</span> <span class="c1">// (x)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">orderByProperty</span> <span class="p">=</span> <span class="n">Expression</span><span class="p">.</span><span class="n">Property</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">propertyName</span><span class="p">);</span>   <span class="c1">// (x.property)</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">typeDst</span> <span class="p">=</span> <span class="n">orderByProperty</span><span class="p">.</span><span class="n">Type</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">funcType</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;,&gt;).</span><span class="n">MakeGenericType</span><span class="p">(</span><span class="n">typeSrc</span><span class="p">,</span> <span class="n">typeDst</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">lambda</span> <span class="p">=</span> <span class="n">Expression</span><span class="p">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">funcType</span><span class="p">,</span> <span class="n">orderByProperty</span><span class="p">,</span> <span class="n">parameter</span><span class="p">);</span>   <span class="c1">// (x=&gt;x.property)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Queryable</span><span class="p">).</span><span class="n">GetMethods</span><span class="p">().</span><span class="n">First</span><span class="p">(</span><span class="n">m</span> <span class="p">=&gt;</span>
+</span><span class='line'>      <span class="n">m</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="n">orderName</span>
+</span><span class='line'>      <span class="c1">// musimy usunąć wersję OrderBy pobierającą element IComparer</span>
+</span><span class='line'>      <span class="p">&amp;&amp;</span> <span class="n">m</span><span class="p">.</span><span class="n">GetParameters</span><span class="p">().</span><span class="n">Length</span> <span class="p">==</span> <span class="m">2</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">.</span><span class="n">MakeGenericMethod</span><span class="p">(</span><span class="n">typeSrc</span><span class="p">,</span> <span class="n">typeDst</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">res</span> <span class="p">=</span> <span class="p">(</span><span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;)</span><span class="n">result</span><span class="p">.</span><span class="n">Invoke</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span> <span class="n">data</span><span class="p">,</span> <span class="n">lambda</span> <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Powyższy kod umożlwia sortowanie po właściwości przekazanej w postaci nazwy oraz jednocześnie ustawienie kierunku sortowania.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/01/07/javascript-konwersja-string-liczba/">[Javascript] Konwersja String - Liczba?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-01-07T08:39:00+01:00" pubdate data-updated="true">Jan 7<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Wydawać by się mogło, że to proste zagadnienie. Praktyka jednak pokazuje, że wielu początkujących programistów javascriptowych ma problemy z właściwym jego rozwiązaniem. Częstą praktyką jest wykorzystywanie dwóch wbudowanych funkcji: <code>parseInt</code> i <code>parseFloat</code>. Przyjżyjmy się im więc:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nb">parseInt</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>      <span class="c1">// wynik: 2</span>
+</span><span class='line'><span class="nb">parseInt</span><span class="p">(</span><span class="s2">&quot;2.2&quot;</span><span class="p">)</span>    <span class="c1">// ups, znowu mamy 2</span>
+</span><span class='line'><span class="nb">parseInt</span><span class="p">(</span><span class="s2">&quot;2 koty&quot;</span><span class="p">)</span> <span class="c1">// kolejne zaskoczenie, wynik: 2</span>
+</span><span class='line'><span class="nb">parseInt</span><span class="p">(</span><span class="s2">&quot;napis&quot;</span><span class="p">)</span>  <span class="c1">// nareszcie, wynik: NaN</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">parseFloat</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>    <span class="c1">// do przewidzenia, wynik: 2</span>
+</span><span class='line'><span class="nb">parseFloat</span><span class="p">(</span><span class="s2">&quot;2.2&quot;</span><span class="p">)</span>  <span class="c1">// wszystko jasne, wynik: 2.2</span>
+</span><span class='line'><span class="nb">parseFloat</span><span class="p">(</span><span class="s2">&quot;2.2 kota&quot;</span><span class="p">)</span> <span class="c1">// wynik: 2.2</span>
+</span><span class='line'><span class="nb">parseFloat</span><span class="p">(</span><span class="s2">&quot;napis&quot;</span><span class="p">)</span>  <span class="c1">// nareszcie, wynik: NaN</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widać nie zawsze znaczenie funkcji parsujących jest takie oczywiste jak mogłoby się wydawać. Owszem jesteśmy w stanie dokonać konwersji liczby przekazanej jako string do jej odpowiednika numerycznego. Kłopot polega na tym, że funkcje parsujące potrafią wydobyć liczbę z każdego łańcucha znaków zaczynającego się cyfrą.</p>
+
+<p>W jaki sposób możemy sprawić, aby konwersji poddawały się tylko i wyłącznie stringi zawierające poprawnie zapisane liczby? Odpowiedź jest stosunkowo prosta:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>    <span class="c1">// wynik: 2</span>
+</span><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;2.2&quot;</span><span class="p">)</span>  <span class="c1">// wynik: 2.2</span>
+</span><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;2aa&quot;</span><span class="p">)</span>  <span class="c1">// wynik: NaN</span>
+</span><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;.01&quot;</span><span class="p">)</span>  <span class="c1">// wynik: 0.01</span>
+</span><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>     <span class="c1">// wynik: 0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Niejawnie zachodzi tu w rzeczywistości konwersja: <code>Number(string)</code>. Jak widzimy metoda ta wciąż nie jest wolna od błędów, mimo to zapis taki jest prostszy i wciąż bardziej wiarygodny niż funkcje parsujące.</p>
+
+<p>Ostatecznie, aby sprawdzić czy podana wartość jest faktycznie liczbą (wykluczając jednocześnie 2 ostatnie wyniki z powyższego przykładu), można skorzystać z wyrażenia regularnego: <code>/^\d+(.\d+)?$/.test(myNumber)</code>. Wyrażenie to zaakceptuje wszystkie liczby stało i zmiennoprzecinkowe. Odrzuci przy tym puste łańcuchy znaków, oraz wartości poprzedzone lub kończące sie białymi znakami. Jeżeli chcielibyśmy, aby i one przechodzimy przez test, wówczas modyfikujemy wyrażenie w następujący sposób: <code>/^\s<em>\d+(.\d+)?\s</em>$/.test(myNumber)</code></p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/">[WCF] Wydobywanie Wiadomości W Postaci SOAP Po Stronie Klienta</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-24T23:07:00+01:00" pubdate data-updated="true">Nov 24<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Windows Communication Foundation jest obecnie jednym z bardziej powszechnych (i moim zdaniem także jednym z najlepiej zaprojektowanych) frameworków do obsługi usług sieciowych (<em>Web Services</em>). Nie wdając się zbytnio w szczegóły działania takiej usługi, wystarczy nam wiedzieć, że aby zostać przekazana, każda wiadomość (reprezentowana po stronie .NETu przez obiekt odpowiedniej klasy) musi być zserializowana do postaci tzw. dokumentu, który w większości przypadków występuje pod postacią XML lub jego podzbiorem, SOAP.</p>
+
+<p>Z reguły nie musimy dysponować wiedzą o tym, w jaki sposób nasza wiadomość zostaje reprezentowana za kulisami usługi. Niestety w życiu pojawiają się sytuacje, kiedy ta informacja może mieć dla nas istotne znaczenie. Przykładem takiej sytuacji mogą być narzędzia diagnostyczne, których zadaniem jest kontrola i monitorowanie działania usługi.</p>
+
+<p>Sposobów na wydobycie wiadomości w jej &ldquo;surowej&rdquo; postaci, tzn. reprezentacji XML (lub SOAP, ponieważ zależy nam na w miarę czytelnej formie) jest kilka. Jednym z nich może być np. podpięcie się do modułu zajmującego się deserializacją dokumentu. Innym jest wykorzystanie wbudowanych w WCF opcji tracingu. W poniższym przykładzie przedstawię drugą opcję.</p>
+
+<h2>Etap 1 &ndash; konfiguracja</h2>
+
+<p>Ponieważ WCF jest środowiskiem, które umożliwia zdefiniowanie niemal wszystkiego za pomocą konfiguracji, warto skorzystać z tego rozwiązania, kiedy tylko mamy taką możliwość. O pozostałych sytuacjach tzn. kiedy sama konfiguracja to za mało, a dostarczone przez twórców frameworka &ldquo;klocki&rdquo; nam nie wystarczą opowiem w dalszej części wpisu.</p>
+
+<p>Jak więc za pomocą konfiguracji ustawić naszego klienta, aby możliwy był nasłuch nadchodzących wiadomości? Po pierwsze należy zdefiniować taką opcję wewnątrz gałęzi system.service model. Ilustruje to następujący fragment:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;system.serviceModel&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;diagnostics&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;messageLogging</span>
+</span><span class='line'>        <span class="na">logMalformedMessages=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logMessagesAtServiceLevel=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logEntireMessage=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logMessagesAtTransportLevel=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">maxMessagesToLog=</span><span class="s">&quot;-1&quot;</span>
+</span><span class='line'>        <span class="na">maxSizeOfMessageToLog=</span><span class="s">&quot;10000&quot;</span>
+</span><span class='line'>        <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/diagnostics&gt;</span>
+</span><span class='line'>    ...pozostała część konfiguracji
+</span><span class='line'>  <span class="nt">&lt;/system.serviceModel&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>
+Co znaczą następujące atrybuty?:</p>
+
+<ul>
+<li><strong><em>logMalformedMessages</em></strong> &ndash; oznacza, że poza normalnymi wiadomościami, logowane zostaną również te, których deserializacja była niemożliwa (np. z powodu uszkodzenia zawartości dokumentu). W takim wypadku dokument zostaje logowany &ldquo;na surowo&rdquo; tzn. do momentu, kiedy był on jeszcze czytelny dla aplikacji. Jeżeli zawartość była zaszyfrowana w momencie wystąpienia błędu, log również będzie zaszyfrowany.</li>
+<li><strong><em>logMessagesAtServiceLevel</em></strong>, <strong><em>logMessagesAtTransportLevel</em></strong> &ndash; oznacza, czy wiadomości mają zostać logowane w momencie przejścia przez warstwę transportową, czy w chwili kiedy stają się dostępne dla usługi / konsumenta.</li>
+<li><strong><em>logEntireMessage</em></strong> &ndash; domyślnie ustawione na false. Określa czy logowana jest cała treść wiadomości czy tylko jej nagłówek SOAP.</li>
+<li><strong><em>maxMessagesToLog</em></strong> &ndash; określa limit wiadomości, które mogą być zalogowane. Pozwala nam uchronić się przed zasypaniem nadmierną ilością danych.</li>
+<li><strong><em>maxSizeOfMessageToLog</em></strong> &ndash; określa maksymalny rozmiar logowanej wiadomości. W momencie kiedy zapisywana wiadomość jest za długa, zapisana zostaje ta część która zmieściła się w limicie, a reszta zostaje ucięta i nie podlega logowaniu.</li>
+</ul>
+
+
+<p>Oczywiście nie musimy określać wszystkich tych atrybutów, ponieważ nie zawsze zależy nam na tak wysokim poziomie szczegółowości logowanych informacji.</p>
+
+<p>Kiedy określiliśmy zasady logowania wiadomości po stronie WCF, powiedzieliśmy naszej aplikacji jak ma wyglądać wiadomość, którą framework udostępnia do logowania. Teraz należy skonfigurować tracing, tzn. powiedzieć jakie typy wiadomości mają być logowane oraz jak ma przebiegać proces logowania (m.in. gdzie zapisujemy wiadomości). Oto wycinek przykładowej konfiguracji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;system.diagnostics&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;sources&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;source</span> <span class="na">name=</span><span class="s">&quot;System.ServiceModel.MessageLogging&quot;</span>
+</span><span class='line'>              <span class="na">switchValue=</span><span class="s">&quot;All&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;listeners&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;add</span> <span class="na">name=</span><span class="s">&quot;myListenerName&quot;</span>
+</span><span class='line'>               <span class="na">type=</span><span class="s">&quot;assembly qualified name&quot;</span>
+</span><span class='line'>               <span class="na">initializeData=</span><span class="s">&quot;my file path&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/listeners&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/source&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/sources&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/system.diagnostics&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Odrobina wyjaśnienia:</p>
+
+<ul>
+<li><strong>source</strong> &ndash; określa konfigurację obiektu, stanowiącego źródło nadchodzących logów. W przypadku, kiedy chcielibyśmy mieć możliwość późniejszego odwołania sie do tej instancji w kodzie aplikacji, należy zapamiętać nazwę stanowiącą identyfikator. Wartość switchValue określa jakiego typu wiadomości mają być logowane. Wyróżniamy:
+
+<ul>
+<li><strong><em>Off</em></strong> &ndash; wyłączona możliwość logowania.</li>
+<li><strong><em>Critical</em></strong> &ndash; logowane są błędy krytyczne, które mogą powodować wyłączenie się aplikacji (np. wyczerpanie pamięci, przepełnienie stosu, zawieszenie systemu).</li>
+<li><strong><em>Error</em></strong> &ndash; logowane są błędy, w tym te które mogą powodować nieprawidłowe działanie programu, które jednak nie spowodują zakończenia programu. Należą do nich chyba wszystkie niewyłapane wyjątki.&ndash; <strong><em>Warning</em></strong> &ndash; uprzedzenia programu o możliwości wystąpienia nieprawidłowości, które jednak nie będą miały większego wpływu na dalsze działanie aplikacji. Przykłady: nieprawidłowe logowanie, przekroczenie limitu czasu na wykonanie zadania.</li>
+<li><strong><em>Information</em></strong> &ndash; logowanie ważniejszych elementów działającej aplikacji np. poprawne odczytanie konfiguracji lub stworzenie kanału pomiędzy usługą a konsumentem &ndash; dla przypomnienia, WCF wymaga stworzenia kanału komunikacyjnego, jakiekolwiek protokoły wykorzystujące komunikację bezpołączeniową (w tym UDP) nie są obsługiwane.</li>
+<li><strong><em>Verbose</em></strong> &ndash; podobnie jak powyższe, jednak logowane są zdarzenia bardziej &ldquo;niskopoziomowe&rdquo; np. udane odczytanie nagłówka SOAP wiadomości.</li>
+<li><strong><em>ActivityTracing</em></strong> &ndash; logowane są wszystkie formy komunikacji między klientem a usługą, zarówno na poziomie usługi jak i w warstwie transportowej.</li>
+<li><strong><em>All</em></strong> &ndash; wszystkie powyższe.</li>
+</ul>
+</li>
+<li><strong>listeners</strong> &ndash; jest to kolekcja obiektów zajmujących się logowaniem wiadomości nadchodzących ze źródła. Dodając kolejny obiekt należy podać jego identyfikator (używany potem do rozpoznania go w kolekcji), typ czyli nazwę kwalifikowaną (pełna nazwa klasy, łącznie z podaniem przestrzeni nazw, nazwy zestawu / assembly, opcjonalnie również numer wersji i token). Do tego możemy również podać atrybut initializeData, który może posłużyć przekazaniu informacji inicjalizujących obiekt, bądź wykorzystywanych przez stosowny konstruktor listenera. Dostępnych mamy kilka typów wbudowanych listenerów oferowanych przez platformę .NET:
+
+<ul>
+<li><strong><em>TextWriterTraceListener</em></strong> &ndash; wykorzystuje standardowy strumień tekstowy do logowania wiadomości. W konfiguracji możemy podać plik, do którego logowne będą informacje. W aplikacji możemy podać strumień, dla którego listener stworzy obiekt TextWritera, który będzie później wykorzystywany do logowania zdarzeń.</li>
+<li><strong><em>XmlWriterTraceListener</em></strong> &ndash; tak jak powyższy, z tą różnicą że wykorzystywany wraper TextWritera jest zastąpiony XmlWriterem.</li>
+<li><strong><em>ConsoleTraceListener</em></strong> &ndash; automatycznie ustawia strumień wyjściowy konsoli (Console.Out) na odbiorcę logowanych wiadomości. Wszystkie zdarzenia zostaną wyświetlone na konsoli.</li>
+<li><strong><em>DefaultTraceListener</em></strong> &ndash; domyślnie używany tylko w trybie debug. Wysyła logowane wiadomości na okno Output środowiska Visual Studio.</li>
+<li><strong><em>EventLogTraceListener</em></strong> &ndash; wykorzystuje mechanizm logów udostępniony bezpośrednio przez nasz system operacyjny.</li>
+<li><strong><em>WebPageTraceListener</em></strong> &ndash; wykorzystywany do logowania informacji w kanałach udostępnianych przez ASP.NET framework.</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Powyższa konfiguracja jest w stanie samodzielnie &ndash; bez jakiejkolwiek ingerencji w kodzie &ndash; poradzić sobie z postawionym przez nas zadaniem zapisywania wiadomości w postaci SOAP. Niestety w sytuacji, kiedy podane nam możliwości listenerów nie wystarczą, np. kiedy chcielibyśmy logować wiadomości bezpośrednio w polu teksowym naszej aplikacji desktopowej, jesteśmy zmuszeni do wzięcia spraw we własne ręce i napisania własnego trace listenera.</p>
+
+<h2>Etap 2 &ndash; Logowanie wiadomości w polu tekstowym aplikacji</h2>
+
+<p>Kod który musimy napisać jest dość krótki i treściwy. Całość składa się z dwóch kroków:</p>
+
+<ol>
+<li>Stworzenie własnej klasy dziedziczącej po trace listenerze, umożliwiającej logowanie wiadomości w kontrolce aplikacji.</li>
+<li>Aktualizacja pliku konfiguracyjnego i podpięcie kontrolki do listenera.</li>
+</ol>
+
+
+<p>Implementacja klasy jest bardzo prosta, przykładowo może wyglądać tak:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">MyTraceListener</span> <span class="p">:</span> <span class="n">TraceListener</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">TextBoxBase</span> <span class="n">TextBox</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Write</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="n">TextBox</span><span class="p">==</span><span class="k">null</span><span class="p">)</span><span class="k">return</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">TextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">message</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">WriteLine</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">TextBox</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">TextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">message</span> <span class="p">+</span> <span class="n">Environment</span><span class="p">.</span><span class="n">NewLine</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W podstawowej wersji klasy wystarczy zdefiniować dwie metody abstrakcyjne. Dodatkowo stworzyliśmy właściwość typu TextBoxBase (ten przykład operuje na kontrolce z biblioteki Windows Forms), którą wykorzystamy za chwilę do podpięcia naszej kontrolki.</p>
+
+<p>Jak więc należałoby podpiąć wybraną przez nas kontrolkę do listenera takiego, jak podany powyżej? W pierwszej kolejności powinniśmy stworzyć obiekt TraceSource, który jest odpowiednikiem węzła source podanego przez nas wcześniej w konfiguracji. Może być podany w postaci pola dostępnego wewnątrz naszej aplikacji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="n">TraceSource</span> <span class="n">source</span> <span class="p">=</span>
+</span><span class='line'>    <span class="k">new</span> <span class="nf">TraceSource</span><span class="p">(</span><span class="s">&quot;System.ServiceModel.MessageLogging&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W konstruktorze podajemy taką samą nazwę, jak wartość atrybutu <strong>name</strong> w konfiguracji danego źródła. Następnie wyciągamy listenera i podpinamy do niego naszego textboxa.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">listener</span> <span class="p">=</span> <span class="n">source</span><span class="p">.</span><span class="n">Listeners</span><span class="p">[</span><span class="s">&quot;listener_config_name&quot;</span><span class="p">]</span> <span class="k">as</span> <span class="n">MyTraceListener</span><span class="p">;</span>
+</span><span class='line'><span class="n">listener</span><span class="p">.</span><span class="n">TextBox</span> <span class="p">=</span> <span class="n">myTextBox</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To wszystko. Kod inicjalizujący można umieścić np. w konstruktorze głównego okna naszej aplikacji. Od teraz wiadomości (filtrowaneg wg. tego co określiliśmy w konfiguracji) będą wypisywane w jej polu tekstowym.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/11/17/javascript-jak-przetworzyc-query-string/">[Javascript] Jak Przetworzyć Query String?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-17T20:57:00+01:00" pubdate data-updated="true">Nov 17<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W środowisku programowania po stronie klienta nieraz zdarza się nam konieczność wydobycia informacji przekazywanych poprzez query string. Niestety rzadko kiedy taki czysty, nieprzetworzony ciąg znaków do czegokolwiek nam się przydaje. Tutaj z pomocą przychodzą różne pluginy (przykładem niech będzie <a href="https://github.com/cowboy/jquery-urlinternal">jquery urlinternal</a>). Jednakże nie zawsze musimy wytaczać przysłowiowe działo na komara i może sie okazać, że rozwiązanie naszych problemów może stanowić krótki kawałek kodu.</p>
+
+<p>Przedstawmy więc jak taki kod mógłby wyglądać. W wersji podstawowej przedstawmy proste pobieranie par klucz-wartość i umieszczanie ich w postaci obiektu JSON:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">querystring</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">raw</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">search</span><span class="p">;</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">parts</span> <span class="o">=</span> <span class="nx">raw</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">);</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="s1">&#39;{&#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">parts</span><span class="p">){</span>
+</span><span class='line'>            <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nx">parts</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">);</span>
+</span><span class='line'>            <span class="kd">var</span> <span class="nx">num</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">||</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+</span><span class='line'>            <span class="nx">result</span> <span class="o">+=</span> <span class="s1">&#39;&quot;&#39;</span><span class="o">+</span> <span class="nx">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot; : &#39;</span><span class="p">;</span>
+</span><span class='line'>            <span class="nx">result</span> <span class="o">+=</span> <span class="p">(</span><span class="nx">num</span> <span class="o">||</span> <span class="nx">num</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">num</span> <span class="o">:</span> <span class="s1">&#39;&quot;&#39;</span><span class="o">+</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot;&#39;</span><span class="p">;</span>
+</span><span class='line'>            <span class="k">if</span><span class="p">(</span><span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">parts</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>                <span class="nx">result</span><span class="o">+=</span><span class="s1">&#39;, &#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="nx">result</span><span class="o">+=</span><span class="s1">&#39;}&#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">json</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nx">json</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Rozjaśnijmy nieco obraz sytuacji:</p>
+
+<ul>
+<li>linijka 3 &ndash; ponieważ window.location.search zaczyna querystring od znaku &lsquo;?&rsquo;, omijamy 1 znak, a resztę tniemy po znakach rodzielających kolejne pary klucz-wartość.</li>
+<li>linijka 6 &ndash; każdą parę dzielimy osobno na klucz (index 0) i wartość (index1)</li>
+<li>linijka 7 &ndash; sprawdzamy czy wartość jest liczbą. Robimy to najpierw próbując parsować ją do liczby całkowitej (<strong>Int</strong>), a w przypadku gdy to się nie powiedzie do liczby zmiennoprzecinkowej (<strong>Float</strong>). Jeżeli parsowana wartość nie jest liczbą funkcje parsujące zwracają stałą <strong>NaN</strong> (not a number), której logiczna wartość wynosi <strong>false</strong>.</li>
+<li>linijka 9 &ndash; sprawdzamy czy sparsowana przez nas wartość jest liczbą, jeżeli tak &ndash; dodajemy ją do ciągu bez zmian, w przeciwnym razie doklejamy ją, uprzednio otaczając cudzysłowem (&ldquo;&rdquo;). W ten sposób będzie ona domyślnie odczytywana jako string.</li>
+<li>linijka 10 &ndash; sprawdzamy, czy nasza para nie jest ostatnia &ndash; jeżeli jest, pomijamy ten krok, w przeciwnym razie dodajemy przycinek.</li>
+<li>Ponieważ całość wyrażenia jest ręcznie składana do stringa, na koniec wywołujemy metodę JSON.parse, aby konwertować nasz string do prawdziwego obiektu JSON. Uwaga: starsze przeglądarki mogą nie oferować dostępu do obiektu JSON.</li>
+</ul>
+
+
+<p>Warto zauważyć, że funkcja ta nie wymaga dołączania biblioteki jQuery. Teraz możemy swobodnie pobierać wartości zapisane w query stringu, wykorzystując prosty dostęp do właściwości obiektu javascriptowego:</p>
+
+<ol>
+<li>W przypadku standardowych nazw klucza, można stosować konwencję: json.key</li>
+<li>W momencie gdy klucz zbudowany był z niedozwolonych dla właściwości znaków (np. &ndash;, +, / itp.) możemy potraktować obiekt jak słownik: json[&ldquo;other-key-property&rdquo;]</li>
+</ol>
+
+
+<p>Co ważne, do utworzonego przez nas obiektu możemy dopisywać własne pary klucz-wartość wykorzystując standardową konwencję: <code>json.newkey = &ldquo;new value&rdquo;</code> oraz <code>json[&ldquo;new key&rdquo;] = number</code>.</p>
+
+<h2>Rozszerzanie możliwości</h2>
+
+<h3>Iterowanie po kluczach i wartościach</h3>
+
+<p>Czasami zdarza sie konieczność wydobycia wszystkich kluczy lub wartości należących do danego przetworzonego przez nas obiektu querystring. W tym celu możemy dodać do naszego obiektu JSON następującą funkcję (cały czas przyjmujemy że <strong>json</strong> to nazwa zmiennej przechowującej obiekt zwrócony nam przez przedstawioną powyżej funkcję <code>querystring()</code>):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">json</span><span class="p">.</span><span class="nx">values</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="p">[];</span>
+</span><span class='line'>    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">json</span><span class="p">){</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="nx">json</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span>
+</span><span class='line'>           <span class="o">&amp;&amp;</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">!=</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
+</span><span class='line'>             <span class="c1">// tak przekazujemy wartość właściwości</span>
+</span><span class='line'>             <span class="nx">res</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+</span><span class='line'>             <span class="c1">// a tak nazwę klucza</span>
+</span><span class='line'>             <span class="nx">res</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">res</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W tym wypadku wykorzystujemy pętlę for do iterowania po wszystkich elementach składowych obiektu, dodatkowo filtrując je poprzez wykorzystanie wbudowanej funkcji hasOwnProperty w celu rozpoznania, czy dana składowa jest rzeczywiście dodaną przez nas właściwością, a następnie sprawdzając jednocześnie czy nie jest funkcją (ponieważ docelowo query string służy tylko przenoszeniu wartości).</p>
+
+<h3>Powtórne przetworzenie do postaci querystring</h3>
+
+<p>W momencie, gdy nasze operacje na słowniku/obiekcie querystring dojdą końca możemy chcieć przetworzyć go spowrotem do wartości początkowej, np. w celu ponownego umieszczenia go w adresie okna. Funkcjonalność tą możemy zrealizować poprzez następującą metodę:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">json</span><span class="p">.</span><span class="nx">toQuery</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">json</span><span class="p">){</span>
+</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="nx">json</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span>
+</span><span class='line'>              <span class="o">&amp;&amp;</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">!=</span> <span class="s1">&#39;function&#39;</span><span class="p">)</span>
+</span><span class='line'>                <span class="nx">res</span><span class="o">+=</span> <span class="nx">i</span><span class="o">+</span><span class="s1">&#39;=&#39;</span><span class="o">+</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&amp;&#39;</span><span class="p">;</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">res</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wykorzystując stworzoną poprzednio pętlę umożliwiającą iterację po właściwościach obiektu JSON dokonujemy sklejenia par klucz-wartość do jednolitej postaci stringa, który zbudowany jest tak samo jak bazowy query string wyciągany z naszej przeglądarki.</p>
+
+<p>Notka dla osób korzystających z map routingu: jak można się domyślić powyższy przykład działa jedynie wtedy, gdy przekazywany przez nas query string zbudowany jest w standardowej konwencji. Z tego powodu wszelkie wartości przekazywane na potrzeby map routingu np. w konwencji <code>controller/action/parameter</code>nie zostaną przetworzone.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/11/02/ajax-post-tablicy-do-akcji/">[Ajax] Post Tablicy Do Akcji</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-02T17:22:00+01:00" pubdate data-updated="true">Nov 2<span>nd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Podczas pracy nad łączeniem wywołań ajaxowych z frameworkiem ASP MVC 3 natknąłem się na dość interesujący problem &ndash; rozpatrzmy scenariusz, w którym mamy zamiar przekazać tablicę obiektów jakiegoś prostego typu (liczba, string) za pośrednictwem ajaxowego posta do jednej z akcji kontrolera. Taki przykład można zaprezentować w następujący sposób:</p>
+
+<p>Client side:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">array</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">,</span> <span class="s1">&#39;two&#39;</span><span class="p">,</span> <span class="s1">&#39;three&#39;</span><span class="p">];</span>
+</span><span class='line'><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="s1">&#39;@Url.Action(&quot;AjaxPost&quot;)&#39;</span><span class="p">,</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">data</span><span class="o">:</span> <span class="nx">array</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Server side:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[HttpPost]</span>
+</span><span class='line'><span class="k">public</span> <span class="n">JsonResult</span> <span class="nf">AjaxPost</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">array</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="n">array</span> <span class="p">!=</span> <span class="k">null</span><span class="p">){</span>
+</span><span class='line'>      <span class="c1">// to do</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W praktyce takie coś nie przejdzie, domyślny binder nie jest w stanie zrozumieć argumentów przekazanych w powyższym kodzie javascriptu. Powodem jest linijka zwierająca opis parametru &ndash; data : array. Wydawać by się mogło, że zapis ten można naprawić parsując naszą tablicę do notacji JSON, jednakże standardowe mechanizmy również nie sprawdzają się w tej roli. Z tego powodu następujące zapisy będą błędne:</p>
+
+<ul>
+<li>wykorzystanie <code>JSON.stringify(array)</code> lub <code> JSON.stringify({ &lsquo;array&rsquo; : array})</code></li>
+<li>wykorzystanie zewnętrznych bibliotek np. <code>$.parseJSON(array)</code>, <code>$.parseJSON({&lsquo;array&rsquo; : array})</code></li>
+</ul>
+
+
+<p>Rozwiązaniem tego problemu jest wykorzystanie funkcji z biblioteki jQuery o nazwie <a href="http://api.jquery.com/jQuery.param/">param</a>. Z jej wykorzystaniem nasza linijka powinna wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">data</span><span class="o">:</span> <span class="nx">$</span><span class="p">.</span><span class="nx">param</span><span class="p">({</span><span class="s1">&#39;array&#39;</span> <span class="o">:</span> <span class="nx">array</span><span class="p">},</span> <span class="kc">true</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Umieszczenie tablicy w obiekcie JSON jest wymagane, w dodatku nazwa pola musi odpowiadać nazwie parametru przekazywanego do naszej metody po stronie serwera (w przeciwnym razie binder nie rozpozna, którą zmienną zmapować na dany parametr).</p>
+
+<p>Można to oczywiście wykonać nie korzystając z gotowych bibliotek. W takim wypadku przekazywane przez nas parametry zapisane w postaci tekstu, w podanym przeze mnie przypadku, powinny mieć następującą postać: <code>array=one&amp;array=two&amp;array=three</code></p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/">FluentMigrator - Wersjonowanie Bazy Danych</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-19T21:25:00+02:00" pubdate data-updated="true">Oct 19<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W dzisiejszym poście pokrótce postaram się opisać narzędzie, jakim jest FluentMigrator oraz dlaczego warto korzystać z niego podczas pisania projektów (zwłaszcza kiedy mowa o projektach zespołowych).</p>
+
+<p>W sytuacjach kiedy zespół programistów tworzy aplikację wykorzystującą dostęp do wspólnej bazy danych, wszelkie zmiany wykonywane przez każdego z nich (np. dodawanie nowych tabel, kolumn czy zmiana nazw już istniejących) mogą powodować problemy w kompatybilności &ndash; zwłaszcza w przypadku wykorzysytwania modeli ORM. W tym celu warto się zabezpieczyć (a w dłuższej mierze czasu również znacząco przyspieszyć szybkość wprowadzanych zmian i aktualizacji systemu), korzystając z narzędzi umożliwiających wersjonowanie bazy danych w sposób &ndash; przynajmniej ideologicznie &ndash; podobny do tradycyjnych systemów kontroli wersji.</p>
+
+<p>FluentMigrator (<a href="https://github.com/schambers/fluentmigrator/wiki">link</a>) jest właśnie takim narzędziem. Jednakże w przeciwieństwie do standardowych systemów kontroli wersji, gdzie zmiany są utrzymywane i aktualizowane za pomocą kilku prostych komend, tutaj czeka nas nieco więcej pracy.</p>
+
+<h2>Migracje i Profile</h2>
+
+<p>Podstawowym terminem występującym we fluent migratorze jest tzw. migracja. Reprezentuje ona pojedyńczy zestaw zmian (coś na kształt jednego <em>commitu</em> w systemach kontroli wersji). W rzeczywistości jest to klasa dziedzicząca po abstrakcyjnej klasie <strong>Migrator</strong> (lub którejś z jego pochodnych), w której wprowadzamy kod wykonujący interesujące nas zmiany. Aby wiązanie to było możliwe zobowiązani jesteśmy zaimplementować 2 metody:</p>
+
+<ul>
+<li><strong>Up</strong> &ndash; jest to metoda odpowiedzialna wprowadzenie zmian (<em>upgrade</em>) przed podniesieniem aktualnej wersji bazy danych.</li>
+<li><strong>Down</strong> &ndash; metoda opozycyjna do Up, odpowiada za <em>downgrade</em> wersji naszej bazy. Jej zadaniem jest cofnięcie wszystkich zmian, które wykonaliśmy w Up&#8217;ie.</li>
+</ul>
+
+
+<p>W niektórych sytuacjach możliwe jest zautomatyzowanie tego procesu i automatyczne generowanie methody down na podstawie zmian wykonanych podczas Up. Drugą ważną sprawą związaną z migracjami jest atrybut <strong>MigrationAttribute</strong>. Pobiera on jeden parametr &ndash; liczbę typu long, która określa aktualny numer migracji. Umożliwia nam to wykonywanie up/down w sposób uporządkowany z zachowaniem odpowiednich współzależności między kolejnymi wersjami.</p>
+
+<p>Innym ciekawym uzupełnieniem powyższych funkcjonalności jest atrybut <strong>Profile</strong>, który w pewien sposób kojarzy mi się z branchami znanymi z systemów kontroli wersji. Dodając profil do konkretnych migracji jesteśmy w stanie tworzyć alternatywne przebiegi migracji tzn. wykonywać tylko te upgrade&#8217;y, które znajdują się w ramach danego profilu.</p>
+
+<h2>Fluent Interface</h2>
+
+<p>Dalszym rozszerzeniem istniejących plusów jest zestaw interfejsów umożliwiających budowę tabel, ich uzupełnianie oraz wykonywanie stworzonych przez nas skryptów. Zaletą tego rozwiązania jest to, że nie wymaga ono od nas pisania skryptów Sql pod konkretną bazę danych, ponieważ jesteśmy w stanie wygenerować je za pośrednictwem fluent interface. Co do wad, jest ich kilka, dlatego też wszelkie wykonywane przez nas zmiany muszą być wykonywane z rozwagą i przy dobrym zrozumieniu możliwości posiadanego przez nas narzędzia:</p>
+
+<ul>
+<li>Fluent interface nie jest w stanie samodzielnie wygenerować elementów bazy specyficznych dla danego dialektu sql np. możemy wygenerować tabele dla baz MSSql oraz Oracle, jednak takie rzeczy jak sekwencje i triggery Oracle&#8217;a muszą być wykonane za pośrednictwem skryptów.</li>
+<li>Fluent interface nie gwarantuje zgodności z EntityFramework ani innymi frameworkami ORM. Przykładem może być metoda <code>.AsInt32()</code>dostępna poprzez interface. Mimo nazwy, kolumna wygenerowana przez tą metodę może być typu <code>Number(10,0)</code>, co z kolei EF4 przekształci jako Int64, mimo że nie było to naszym celem.</li>
+<li>Wykonywanie skryptów z użyciem właściwości <em>Execute</em> nie gwarantuje pomyślności, nawet w sytuacjach kiedy te skrypty wprowadzane ręcznie do bazy wykonywane są prawidłowo. Wynika to z faktu, że w komunikacji z bazą FluentInterface korzysta z istniejących bibliotek .dll, które pełnią w naszym projekcie rolę adaptera dla klienta bazy danych.</li>
+</ul>
+
+
+<p>Dobrym pomysłem może być podpięcie narzędzia migrate.exe (jego projekt jest dostępny na stronie projektu na githubie) do post-buildu naszego projektu. Robimy to wchodząc we właściwości (<em>Project&rArr;nazwa_projektu&rArr;Properties</em>), następnie klikamy zakładkę <em>Build Events</em> i w oknie <em>Post-build event command line</em> wywołujemy migrate.exe w właściwymi parametrami np.:<code>ścieżka_do_migrate/migrate.exe -a ścieżka_do_naszej_biblioteki/nazwa_biblioteki.dll -db typ_bazy_danych -c connection_string -profile Profil -version nr_versji</code>, gdzie:</p>
+
+<ul>
+<li><strong>a</strong> &ndash; określa fizyczną scieżkę pod którą możemy znaleźć skompilowaną bibliotekę zawierającą zdefiniowane przez nas migracje</li>
+<li><strong>db</strong> &ndash; określa rodzaj bazy danych, jest wykorzystywana potem przez fabrykę FluentMigratora, która na podstawie przekazanego parametru próbuje stworzyć obiekt adaptera dla naszej bazy danych</li>
+<li><strong>c</strong> &ndash; connectionString umożliwiający dostęp do naszej bazy danych.</li>
+<li><strong>profile</strong> &ndash; (parametr opcjonalny) określa profil migracji, które mają zostać wykonane</li>
+<li><strong>version</strong> &ndash; (parametr opcjonalny) określa wersję, do której ma zostać wykonany upgrade. Jeżeli przyjmuje wartość 0, oznacza to, że wykonane zostaną wszystkie migracje znalezione w danej bibliotece .dll.</li>
+</ul>
+
+
+<p>Rozwiązanie takie oferuje tą zaletę, że wymusza, aby w trakcie wykoniania buildu biblioteki, zostały wprowadzone zmiany do bazy. Jeżeli napisane przez nas migracje są nieprawidłowe lub nie zostały wprowadzone, projekt nie zostanie zbudowany.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/09/19/c-prosta-implementacja-silnika-do/">[C#] Prosta Implementacja Silnika Do Wyszukiwania Pełnotekstowego</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-19T18:21:00+02:00" pubdate data-updated="true">Sep 19<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W dzisiejszym poście postaram się przedstawić jedno z możliwych rozwiązań problemu, jakim jest konieczność odnajdywania plików zawierających w sobie pewne poszukiwane przez nas frazy. Mowa tu oczywiście o problemach związanych z implementacją wyszukiwarki pełnotekstowej. Poniżej przedstawię sposób na jedną z prostszych jej implementacji.</p>
+
+<h2>Wstęp</h2>
+
+<p>Na wstępie warto zwrócić uwagę na podstawowy ciąg czynności, które powinny wystąpić, aby dany plik został zaindeksowany oraz aby późniejsze wyszukiwanie przebiegało szybciej i bardziej dokładnie. Na główne kroki składają się:</p>
+
+<ul>
+<li>Przetworzenie zawartości pliku &ndash; pierwszym krokiem jest zamiana tekstu na postać bardziej sformalizowaną (tzw. termy). W tym momencie następują czynności takie jak:
+
+<ul>
+<li>usunięcie znaków interpunkcyjnych i znaczników</li>
+<li>usunięcie zbędnych słów (np. przyimków)</li>
+<li>zamiana wielkich liter na małe</li>
+<li>usunięcie niepotrzebnych końcówek w odmianach słów</li>
+</ul>
+</li>
+<li>Zamiana sformatowanego tekstu na wektor &ndash; wektory są dobrą metodą reprezentacji słów w danym tekście. Kilka z najpopularniejszych sposobów zapisywania danych w wektorach:
+
+<ul>
+<li><strong>Binarny </strong>&ndash; w tym wypadku wektor zapisuje wartość binarną (prawda/fałsz) dla każdego opisywanego słowa. Słowa występujące w tekście są oznaczane jako prawda. Pozostałe nie występujące w pliku (lecz wciąż mające swoje miejsce w wektorze) oznaczone są jako fałsz. Wady:
+
+<ul>
+<li>mała dokładność informacji (wiemy wyłącznie o tym, czy dane słowo występuje w tekście)
+Zalety:</li>
+<li>szybka możliwość weryfikacji występowania danego słowa w tekście</li>
+<li>taki sposób zapisu zajmuje najmniej miejsca w pamięci</li>
+</ul>
+</li>
+<li><strong>&ldquo;Bag-of-words&rdquo;</strong> &ndash; taki sposób reprezentacji dokumentu (w swojej podstawowej wersji) zlicza ilość (częstotliwość) wystąpień danego słowa w tekście. Zamiast oznaczania słowa w postaci bitu określamy go przez liczbę wyrażającą jego liczność.Wady:
+
+<ul>
+<li>Wymaga zdecydowanie większej ilości pamięci niż zapis binarny przy takiej samej ilości zaindeksowanych dokumentów.
+Zalety:</li>
+<li>Pozwala wydobyć więcej informacji o dokumencie.</li>
+<li>Umożliwia tworzenie podstawowego rankingu najlepiej pasujących dokumentów.</li>
+</ul>
+</li>
+<li><strong>Pozycyjny </strong>&ndash; w takiej postaci zapisujemy nie tylko ilość wystąpień danego termu w dokumencie, ale również zapisujemy pozycje, w których dane termy zostały znalezione.Wady:
+
+<ul>
+<li>Wymaga największej ilości pamięci dla pojedynczego wektora.</li>
+<li>Generowanie odpowiedzi na zapytanie dotyczące wyszukiwania może być czasochłonne.
+Zalety:</li>
+<li>Jest to najbardziej kompletny zapis, zwrócone wyniki mają największą dokładność.</li>
+<li>Na podstawie danych zawartych w wektorze możliwe jest częściowe lub kompletne odtworzenie dokumentu.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Zapisanie wektora &ndash; wymagana tutaj jest struktura danych umożliwiająca szybki dostęp oraz będąca w stanie przechowywać duże ilości informacji (np. rozproszone struktury danych oparte o tablice haszujące lub skompresowane drzewa TRIE).</li>
+</ul>
+
+
+<p>Na potrzeby naszej implementacji postanowiłem przyjąć następujące założenia:</p>
+
+<ol>
+<li>Nie przywiązujemy większej uwagi do aspektów optymalizacji &ndash; chodzi tutaj o możliwie maksymalną prostotę wykonanego rozwiązania.</li>
+<li>Skupiamy się na strukturach danych istniejących w bibliotece postawowej.</li>
+<li>Reprezentacja binarna &ndash; powody: możliwość prostej i szybkiej implementacji.</li>
+<li>Operujemy na z góry ustalonej (maksymalnej) liczbie słów.</li>
+</ol>
+
+
+<h2>Implementacja</h2>
+
+<p>Do pierwszej części zadania stworzymy prostą listę przechowującą implementacje interfejsu <em>IFilter</em> (będzie on reprezentować pojedyńczą operację służącą przekształceniu tekstu-termu w kolejny tekst-term). Przetwarzanie tekstu będzie polegało na przekazaniu wyniku działania jednego filtru do następnego. Na nasze potrzeby interfejs będzie implementował tylko 1 metodę: <code>string Apply(string text);</code>. Kilka najprostszych filtrów to:</p>
+
+<ol>
+<li>Filtr redukujący wszystkie wielkie litery w tekście &ndash; tutaj wystarczy na parametrze wywołać metodę <em>ToLower()</em>.</li>
+<li>Filtr usuwający znaki interpunkcyjne z tekstu</li>
+<li>Znaki przeznaczone do usunięcia zostaną zapisane wewnątrz właściwości StopChars (może to być dowolny typ wyliczeniowy <em>char </em>&ndash; taki wymóg spełniają również zwykłe stringi).</li>
+<li>Przykładowa implementacja metody Apply:</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="kt">string</span> <span class="nf">Apply</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">text</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">c</span> <span class="k">in</span> <span class="n">StopChars</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">result</span> <span class="p">=</span> <span class="n">result</span><span class="p">.</span><span class="n">Replace</span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="n">ToString</span><span class="p">(),</span>
+</span><span class='line'>                           <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>Filtr usuwający zbędne wyrazy:
+
+<ul>
+<li>Wyrazy przeznaczone do usunięcia będą znajdowały się wewnątrz właściwości StopWords (tutaj dowolny typ implementujący <code>IEnumerable<string></code>).</li>
+<li>Przykładowa implementacja metody Apply:</li>
+</ul>
+</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="kt">string</span> <span class="nf">Apply</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">text</span>
+</span><span class='line'>        <span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
+</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">.</span><span class="n">ToList</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">word</span> <span class="k">in</span> <span class="n">StopWords</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">result</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+</span><span class='line'>            <span class="k">if</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">==</span> <span class="n">word</span><span class="p">)</span>
+</span><span class='line'>                <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Dla ułatwienia operację filtrowania wydzielimy do osobnej metody. Będzie ona używana zarówno podczas indeksowania plików, jak i ich wyszukiwania. Przykładowa implementacja:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IList</span><span class="p">&lt;</span><span class="n">IFilter</span><span class="p">&gt;</span> <span class="n">Filters</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span> <span class="kt">string</span> <span class="nf">Filter</span><span class="p">(</span><span class="kt">string</span> <span class="n">txt</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">txt</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">filter</span> <span class="k">in</span> <span class="n">Filters</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">result</span> <span class="p">=</span> <span class="n">filter</span><span class="p">.</span><span class="n">Apply</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W dalszej kolejności będziemy potrzebowali metody, która pozwoli nam zamienić tak przetworzony tekst na wektor bitowy. W tym celu utworzymy dwie pomocnicze właściwości:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IDictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;</span> <span class="n">Indexer</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'><span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">Words</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Zadaniem Indexera będzie gromadzenie par nazwa_pliku &ndash; wektor_pliku. Z kolei właściwość <em>Words</em> pozwoli nam przechować numery indeksów, pod którymi znalezione mogą być konkretne słowa. Sama metoda służąca zamianie tekstu na odpowiadający mu wektor może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="n">BitArray</span> <span class="nf">CreateVector</span><span class="p">(</span><span class="kt">string</span> <span class="n">filtered</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">vector</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BitArray</span><span class="p">(</span><span class="n">MAX_SIZE</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">splits</span> <span class="p">=</span> <span class="n">filtered</span><span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
+</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">s</span> <span class="k">in</span> <span class="n">splits</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(!</span><span class="n">Words</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+</span><span class='line'>            <span class="n">Words</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">vector</span><span class="p">[</span><span class="n">Words</span><span class="p">.</span><span class="n">IndexOf</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">vector</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W tym przypadku MAX_SIZE jest zwyczajną stałą typu<em> int</em> określającą maksymalną liczbę obsługiwanych przez nas słów. Całość wygląda następująco:</p>
+
+<ol>
+<li>Dzielimy przekazany tekst na słowa.</li>
+<li>Dla każdego słowa sprawdzamy, czy został mu nadany odpowiedni indeks w liście <em>Words</em>. Jeżeli nie, dodajemy go do listy. Ponieważ nowe elementy dodawane są na koniec listy, nie musimy się obawiać zmiany pozycji dotychczas zaindeksowanych słów.&lt;</li>
+<li>Na koniec ustawiamy bit wystąpienia słowa na pozycji wskazanej przez słowa zaindeskowane w kroku 2.</li>
+</ol>
+
+
+<p>Cały cykl dodawania pliku do indeksu jest bardzo krótki i wygląda następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">AddToIndexer</span><span class="p">(</span><span class="kt">string</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">string</span> <span class="n">content</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">filtered</span> <span class="p">=</span> <span class="n">Filter</span><span class="p">(</span><span class="n">content</span><span class="p">);</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">vector</span> <span class="p">=</span> <span class="n">CreateVector</span><span class="p">(</span><span class="n">filtered</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">Indexer</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">vector</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ostatnią rzeczą, bez której nasza praca nie miałaby sensu, jest implementacja metody odpowiedzialnej za wyszukiwanie zaindeksowanych plików wg. występujących w nich słów-termów. Poniższy kod odpowiada za znalezienie plików, w których występują wszystkie słowa kluczowe przekazane jako parametr (a więc będący odpowiednikiem logicznego AND):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">FindAnd</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">splits</span> <span class="p">=</span> <span class="n">Filter</span><span class="p">(</span><span class="n">text</span><span class="p">).</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
+</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;&gt;</span> <span class="n">result</span> <span class="p">=</span>
+</span><span class='line'>        <span class="k">new</span> <span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;[</span><span class="m">0</span><span class="p">];</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">flag</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">split</span> <span class="k">in</span> <span class="n">splits</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="n">Words</span><span class="p">.</span><span class="n">IndexOf</span><span class="p">(</span><span class="n">split</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">==</span> <span class="p">-</span><span class="m">1</span> <span class="p">||</span> <span class="n">i</span> <span class="p">&gt;=</span> <span class="n">MAX_SIZE</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(!</span><span class="n">flag</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">flag</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>            <span class="n">result</span> <span class="p">=</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">Indexer</span>
+</span><span class='line'>                     <span class="k">where</span> <span class="n">pair</span><span class="p">.</span><span class="n">Value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span class='line'>                     <span class="k">select</span> <span class="n">pair</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">else</span>
+</span><span class='line'>            <span class="n">result</span> <span class="p">=</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">result</span>
+</span><span class='line'>                     <span class="k">where</span> <span class="n">pair</span><span class="p">.</span><span class="n">Value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span class='line'>                     <span class="k">select</span> <span class="n">pair</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">result</span> <span class="k">select</span> <span class="n">pair</span><span class="p">.</span><span class="n">Key</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Słowem wyjaśnienia:</p>
+
+<ol>
+<li>Na starcie przepuszczamy poszukiwany ciąg znaków przez nasze filtry, aby zamienić je na ich odpowiedniki w termach. Kolejnym krokiem jest ich podział na pojedyńcze słowa.</li>
+<li>Dla każdego z poszukiwanych słów przechodzimy przez następujące kroki:
+
+<ul>
+<li>Sprawdzamy czy dane słowo zostało zaindeksowane (a więc czy możliwe jest jego znalezienie) &ndash; jeżeli nie przechodzimy do następnego cyklu pętli.</li>
+<li>W przypadku, gdy dane słowo jest pierwszym, wg. którego przeszukujemy nasz indeks, celem przeszukiwań jest zmienna Indexer zawierająca pełną pulę dostępnych wyników. W innym przypadku (pętla wykonuje się dla kolejnych słów), dziedzina poszukiwań obejmuje tylko wyniki zdobyte w poprzedzającym cyklu.</li>
+<li>Na koniec pozbywamy się niepotrzebnych już informacji o wektorach zwracając same nazwy plików.</li>
+</ul>
+</li>
+</ol>
+
+
+<p>Nie będę się zajmował tutaj wprowadzaniem odpowiednika logicznego OR (a więc metody wyszukującej pliki, w których pojawiło się co najmniej jedno z poszukiwanych słów), ponieważ jest to operacja prostsza &ndash; dzięki użyciu linku wystarczy złączyć wyniki dla każdego z pojedyńczych słów, a następnie usunąć powtarzające się wyniki (np. za pomocą metody <em>Distinct()</em>).</div></p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/">Programowanie GPGPU - Microsoft.Accelerator V2</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-19T18:09:00+02:00" pubdate data-updated="true">Sep 19<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Ostatnimi czasy postanowiłem zapoznać się z technikami programowania równoległego pod karty graficzne. Zacząłem poszukiwać rozwiązań, które bez konieczności poświęcania długich godzin na poznawanie nowych technologii pozwoliłyby mi wykorzystać potencjał drzemiący w GPU.</p>
+
+<p>Niestety problemy pojawiły się już na starcie, kiedy okazało się, że moja karta graficzna nosi na sobie ślady epoki poprzedzającej pojawienie się CUDA. Ograniczony do standardowych operacji oferowanych przez OpenGL i DirectX zacząłem szukać bibliotek-nakładek na te środowiska. Wśród opublikowanych rozwiązań natknąłem się na 2 interesujące biblioteki:
+&ndash; <a href="http://sourceforge.net/projects/cloo/">Cloo</a> &ndash; jest to.NET-owa nakładka na popularną w środowisku GPGPU bibliotekę OpenCL, umożliwiającą nam programowanie równoległe poprzez OpenGL.
+&ndash; <a href="http://research.microsoft.com/en-us/projects/accelerator/">Microsoft.Accelerator v. 2</a> &ndash; ta biblioteka z kolei jest odpowiedzią Microsoftu na napływające trendy. Nie jest to jeszcze gotowy produkt, lecz wciąż jest rozwijany i może rokować spore nadzieje.</p>
+
+<p>W tym poście postaram się opisać bibliotekę Microsoftu, pokrótce ją scharakteryzować (dla tych, których zanudzi czytanie dokumentacji na oficjalnej stronie) oraz jak przygotować projekt, aby móc wykorzystać jej potencjał.</p>
+
+<h2>Czym jest Accelerator?</h2>
+
+<p>Accelerator stanowi bibliotekę nałożoną na środowisko DirectX9, pozwalające nam za jego pomocą korzystać z karty graficznej do obliczeń nie związanych z grafiką (od wersji 2 biblioteki możliwe jest również przełączenie się na tradycyjny multiprocessing oferowany przez wielordzeniowe CPU).</p>
+
+<p>W jaki sposób jest to wykonywane? Otóż wyobraźmy sobie, że zasadniczo programując Pixel i Vertex Shadery tworzymy tak naprawdę kod programu, którego celem jest operowanie na przekazanym mu zbiorze zmiennych. Microsoft.Accelerator wykorzystuje ten sposób myślenia o Pixel Shaderach definiując specjalne klasy tablic, które w trakcie przetwarzania są zamieniane przez środowisko do postaci tekstury, która jest poddawana obróbce. Operacje które możemy wykonywać na tych tablicach, są również zdefiniowane (właściwe metody przechowywane są w klasie statycznej <strong>ParallelArrays</strong>), aby następnie składane do postaci <em>pojedynczego</em> pixel shadera (w tym celu Accelerator stosuje znany z języków funkcyjnych mechanizm leniwej ewaluacji wyrażeń, w którym rezultat działania metod jest produkowany dopiero kiedy należy go zwrócić do dalszego przetwarzania, nie zaś kiedy wywołujemy daną metodę).</p>
+
+<p>W odróżnieniu od Cloo udostępniony nam mechanizm gotowych operacji pozwala na skupienie się na osiągnięciu pożądanych wyników, bez ryzyka ugrzęźnięcia w źle napisanym kodzie.</p>
+
+<h2>Jak zainstalować Accelerator w naszym projekcie?</h2>
+
+<ol>
+<li>Ściągamy pakiet ze strony podanej pod <a href="http://research.microsoft.com/en-us/downloads/e45cf1d7-fd3d-4e03-a219-c0f3fca9881e/">tym linkiem</a>, a następnie instalujemy go. Ścieżka instalacji to <code>C:\Program Files (x86)\Microsoft\Accelerator v2 </code>dla systemów 64-bitowych zainstalowanych na partycji C. W stworzonym folderze otrzymamy dokumentację oraz kilka przykładowych programów.</li>
+<li>Jeżeli chcemy dołączyć bibliotekę do naszego projektu, to w otworzonym projekcie w Visual Studio dodajemy referencję do pliku <em>Microsoft.Accelerator.dll</em>, który możemy znaleźć w podfolderze <code>Accelerator v2/bin/Managed</code> .</li>
+<li>Dodatkowo w folderze <em>bin</em> mogliśmy się natknąć na 2 foldery: x64 i x86. Należy dodać plik <em>Accelerator.dll</em> z odpowiedniego folderu (zależnie od naszego sprzętu) do folderu, w którym znajduje się nasza aplikacja. <strong>Uwaga</strong>: jeżeli nie dodamy tego pliku lub dodamy nie właściwą wersję, będziemy w stanie skompilować program, ale podczas jego działania wyrzucony zostanie stosowny wyjątek (<strong>BadImageFormatException</strong> w przypadku skopiowania biblioteki z niewłaściwego folderu lub <strong>DllNotFoundException</strong> w przypadku nie wykrycia biblioteki, którą należało skopiować).</li>
+</ol>
+
+
+<p>Po tym wszystkim możemy już swobodnie pracować. Polecam zapoznać się z przykładami dostępnymi w folderze z zainstalowanym Acceleratorem ;) .</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/08/16/prosta-scena-do-gry-przy-uzyciu-html5/">Prosta Scena Do Gry Przy Użyciu Html5 I CoffeeScriptu</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-08-16T23:18:00+02:00" pubdate data-updated="true">Aug 16<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W dzisiejszym poście postaram się streścić (w postaci przykładu oczywiście ;) ) moje krótkie doznania związane z nauką Coffee Scriptu i jego zastosowaniu w aplikacjach tworzonych przy pomocy Visual Studio.</p>
+
+<p>Zacznijmy od tego, czym jest CoffeeScript? Otóż jest to język skryptowy wysokiego poziomu (składnią przypominający Ruby&#8217;ego i po części Pythona), kompilowany bezpośrednio do JavaScriptu. Na jego plus dochodzi fakt, że nie odbiega on za daleko od samego .js, a przez to jest on wygodny do operowania zarówno na elementach strony jak i we współpracy z już istniejącymi bibliotekami .js (nie są przy tym wymagane żadne dodatkowe zabiegi). Dla osób, które o tym nie słyszały i nie miały wcześniej do czynienia polecam oficjalną stronę (link <a href="http://jashkenas.github.com/coffee-script/">tutaj</a>). Jest tam dokładny opis języka wraz z przykładami użycia i interaktywną konsolą, pokazującą na żywo jak wygląda napisany przez nas kod zaraz po skompilowaniu.</p>
+
+<p>Jak zamontować Coffee Script w aplikacji pisanej w Visual Studio? Jest wiele rozwiązań, ja przedstawię dwa, które uznałem za najprostsze do zrozumienia i najbardziej sensowne:
+&ndash; Używanie kompilatorów w czasie wykonania &ndash; jest to rozwiązanie dające sporą kontrolę i pewne pole do popisu, ale też bardziej obciążające maszynę. Istnieje wiele kompilatorów przygotowanych pod platformę .NET, osobiście mogę polecić <a href="https://github.com/abolibibelot/coffeescript-dotnet#readme">CoffeeScript.Net</a> (głównie ze względu na to, że z innymi kompilatorami nie miałem wiele do czynienia).
+&ndash; Można też ściągnąć stosowny template do Visual Studio (ja korzystam z tych zawartych w <a href="http://www.mindscapehq.com/products/web-workbench">Mindscape Web Workbench</a>). Generują one kod na bierząco w trakcie jego pisania &ndash; jest do preferowana przeze mnie opcja, ponieważ na bierząco możemy sprawdzać, czy nie popełniamy błędów a nasz kod się kompiluje. W takim wypadku wystarczy dodać do strony standardowy skrypt js, a jako źródło podać ścieżkę do pliku .coffee i zmienić jej rozszerzenie na .js.</p>
+
+<h2>Tworzymy obsługę sceny</h2>
+
+<p>W tym punkcie zacznijmy od stworzenia klasy, której zadaniem będzie rysowanie obiektów na scenie (w tym celu należy uprzednio stworzyć odpowiedni canvas) i wypełnianiu jej tła.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Graphics</span>
+</span><span class='line'>  <span class="nv">constructor: </span><span class="nf">(canvas) -&gt;</span>
+</span><span class='line'>      <span class="nv">can = </span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">canvas</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@ctx = </span><span class="nx">can</span><span class="p">.</span><span class="nx">getContext</span><span class="p">(</span><span class="s">&quot;2d&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@w = </span><span class="nx">can</span><span class="p">.</span><span class="nx">width</span>
+</span><span class='line'>      <span class="vi">@h = </span><span class="nx">can</span><span class="p">.</span><span class="nx">height</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">drawBack: </span><span class="nf">(r, g, b) -&gt;</span>
+</span><span class='line'>       <span class="vi">@ctx.fillStyle = </span><span class="s">&quot;rgb(</span><span class="si">#{</span><span class="nx">r</span><span class="si">}</span><span class="s">,</span><span class="si">#{</span><span class="nx">g</span><span class="si">}</span><span class="s">,</span><span class="si">#{</span><span class="nx">b</span><span class="si">}</span><span class="s">)&quot;</span>
+</span><span class='line'>       <span class="nx">@ctx</span><span class="p">.</span><span class="nx">fillRect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">@w</span><span class="p">,</span> <span class="nx">@h</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">drawRect: </span><span class="nf">(p) -&gt;</span>
+</span><span class='line'>      <span class="vi">@ctx.fillStyle = </span><span class="s">&quot;rgb(200, 200, 200)&quot;</span>
+</span><span class='line'>      <span class="nx">@ctx</span><span class="p">.</span><span class="nx">fillRect</span><span class="p">(</span><span class="nx">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Słowo wyjasnienia:</p>
+
+<ul>
+<li><code>constructor</code> &ndash; jak łatwo się domyślić reprezentuje on konstruktor naszej klasy. Przekazujemy do niego nazwę identyfikatora elementu <strong>Canvas</strong>, który wykorzystamy do renderowania. Symbol <code>@ </code>jest w JavaScript&#8217;cie zamieniany bezpośrednio na <strong>this</strong>. (należy z tym uważać, zwłaszcza podczas zagłębiania @ w funkcjach przekazywanych jako parametry).</li>
+<li><code>drawBack</code> &ndash; zamalowuje powierzchnię w tle kolorem o podanych w parametrach wartościach r, g, b. Wyrażenie <code>#{r}</code> (i podobne) są zamieniane na konkatencje (złączenie) całości wyrażenia do jednego stringa wraz z wypełnionymi wartościami zawartymi w zmiennej r.</li>
+<li><code>drawRect</code> &ndash; odpowiada za narysowanie prostokąta o parametrach przekazanych przez tablicę (wybrałem tablicę ze względu na prostotę, można ją zastąpić na wiele sposobów). Jak można się domyślić indeksy 0, 1, 2, 3 tablicy odpowiadają kolejno 0 &ndash; odległość lewego górnego rogu od lewej krawędzi canvy, 1 &ndash; odległości lewego górnego rogu od górnej krawędzi canvy, 2 &ndash; szerokości prostokątu, 3 &ndash; wysokości prostokątu.</li>
+</ul>
+
+
+<p>Kiedy już rozumiemy jak będzie wykonywane renderowanie elementów na scenie, przejdźmy do dalszych operacji.</p>
+
+<h2>Budowa animowanej sceny</h2>
+
+<p>Kolejnym krokiem będzie stworzenie klasy odpowiedzialnej za obsługę zdarzeń oraz pętli gry. Sposoby konstrukcji samej pętli są różne, polecam zapoznać się z <a href="http://nokarma.org/2011/02/02/javascript-game-development-the-game-loop/index.html">tym wpisem</a>. Autor dobrze i wyczerpująco tłumaczy zasady konstrukcji pętli gry w JavaScript&#8217;cie.</p>
+
+<p>Moje podejście postaram się wyjaśnić na poniższym kodzie:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Game</span>
+</span><span class='line'>  <span class="nv">constructor: </span><span class="nf">(canvas) -&gt;</span>
+</span><span class='line'>      <span class="vi">@w = </span><span class="nx">canvas</span><span class="p">.</span><span class="nx">width</span>
+</span><span class='line'>      <span class="vi">@h = </span><span class="nx">canvas</span><span class="p">.</span><span class="nx">height</span>
+</span><span class='line'>      <span class="vi">@g = </span><span class="k">new</span> <span class="nx">Graphics</span><span class="p">(</span><span class="nx">canvas</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@fps = </span><span class="mi">50</span>
+</span><span class='line'>      <span class="vi">@loop_id = </span><span class="kc">undefined</span>
+</span><span class='line'>      <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s">&quot;keydown&quot;</span><span class="p">,</span> <span class="nx">@update</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">update: </span><span class="nf">(evt) -&gt;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">38</span>        <span class="c1">#arrow down</span>
+</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">5</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">40</span>   <span class="c1">#arrow up</span>
+</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">5</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">37</span>   <span class="c1">#arrow left</span>
+</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">5</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">39</span>   <span class="c1">#arrow right</span>
+</span><span class='line'>          <span class="nx">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">5</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">draw: </span><span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nx">@g</span><span class="p">.</span><span class="nx">drawBack</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>      <span class="nx">@g</span><span class="p">.</span><span class="nx">drawRect</span><span class="p">(</span><span class="nx">p1</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">startGame: </span><span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nv">self = </span><span class="nx">@</span>
+</span><span class='line'>      <span class="vi">@loop_id = </span><span class="nx">setInterval</span><span class="p">((()</span> <span class="nf">-&gt;</span>
+</span><span class='line'>       <span class="nx">self</span><span class="p">.</span><span class="nx">draw</span><span class="p">()</span>
+</span><span class='line'>       <span class="p">),</span> <span class="mi">1000</span> <span class="o">/</span> <span class="nx">self</span><span class="p">.</span><span class="nx">fps</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">endGame: </span><span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">@loop_id</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Nieco wyjaśnień:
+&ndash; <code>constructor</code> &ndash; tutaj jak widzimy jednocześnie definiujemy stworzony przez nas uprzednio obiekt klasy Graphics, ale też dodatkowo dodajemy definiujemy listener (methoda <strong>update</strong>), który będzie zajmował się obsługą klawiatury na potrzeby okna przeglądarki. Pola naszej klasy:
+&ndash; <code>fps</code> &ndash; liczba cykli pętli / klatek na sekundę &ndash; jest to wartość orientacyjna, nasza przeglądarka wcale nie musi, a prawdopodobnie nawet nie będzie dotrzymywać zamierzonej przez nas wartości.
+&ndash; <code>loop_id</code> &ndash; uchwyt do metody wykonującej pętlę, niezbędny jeżeli będziemy chcieli ją zatrzymać.
+&ndash; <code>update</code> &ndash; prosta metoda obsługująca poruszanie naszego obiektu po planszy. Wartość p1[0] odpowiada ruchowi w poziomie, analogicznie p1[1] to ruch w pionie. wyrażenie <code>evt?.which</code> odpowiada zapisowi słownemu &ndash; sprawdź, czy obiekt <strong>evt</strong> istnieje, a jeżeli tak podaj wartość jego pola <strong>which</strong> (określa ono kod naciśniętego przycisku &ndash; znacznie więcej na ten temat można przeczytać <a href="http://unixpapa.com/js/key.html">tutaj</a>).
+&ndash; <code>draw</code> &ndash; wywołujemy tutaj kolejno metody do wypełniania tła kolorem czarnym, a następnie odrysowujemy nasz kształt (prostokąt) w pozycjach podanych przez tablicę.
+&ndash; <code>startGame</code> &ndash; ustawiamy cykliczne wykonywanie metody <code>draw </code>(w założeniu 50 klatek/sek. w praktyce będzie to inna wartość). Warto zauważyć, że aby wywołać metodę <strong>draw</strong> z bieżącego obiektu Game, zapisaliśmy uprzednio wartość this (w CoffeScript jej odpowiednikiem jest znak <code>@</code>) do osobnej zmiennej. Dzieje się tak dlatego, ponieważ po wejściu do funkcji obsługiwanej przez <code>setInterval</code>zmienia się kontekst wykonywanego bloku kodu, a co za tym idzie zmienna <code>this</code>/<code>@</code>wskazuje już na inny obiekt (w tym wypadku będzie to bodajże okno przeglądarki). Na koniec zapisujemy uchwyt do wykonywanej metody w zmiennej @loop_id.</p>
+
+<p>W praktyce to wszystko wystarczy, aby uruchomić podstawową scenę uwzględniającą animacje i reagującą na akcje wykonywane przez użytkownika na klawiaturze :) . Przykładowe uruchomienie sceny:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">p1 = </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">50</span><span class="p">]</span>    <span class="c1"># x, y, width, height</span>
+</span><span class='line'><span class="nx">$</span> <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="c1"># odpowiednik document.ready, wymaga dołączenia jquery</span>
+</span><span class='line'>  <span class="nv">game = </span><span class="k">new</span> <span class="nx">Game</span><span class="p">(</span><span class="s">&quot;arena&quot;</span><span class="p">)</span>   <span class="c1"># arena - canvas id</span>
+</span><span class='line'>  <span class="nx">game</span><span class="p">.</span><span class="nx">startGame</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Uwagi:
+&ndash; Z nieznanych mi przyczyn (nie ustaliłem jeszcze dokładnego powodu) javascript skompilowany z powyższego kodu może mieć problemy z uruchomieniem na przeglądarce Chrome. Firefox i Opera nie sprawiają tutaj większych problemów.
+&ndash; Istnieje sporo gotowych frameworków, które odciążają nas z konieczności konstruowania inteligentnych pętli gry. Jest to temat wart zbadania.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/4/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/2/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

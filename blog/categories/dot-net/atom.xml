@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: .net | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/dot-net/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[O pomyłkach i wnioskach z pracy w ASP.NET MVC]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
+    <updated>2013-10-20T09:49:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
+    <content type="html"><![CDATA[<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
+
+<p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
+
+<h2>Twoja encja ≠ Twój model</h2>
+
+<p>Zasadniczym błędem (lub raczej skrótem myślowym) jest założenie, że każda klasa mapowana przez ORM na tabele może służyć jako model przekazywany bezpośrednio do widoku. Nie znaczy to, że jest to nie możliwe, jednak opcja ta jest z reguły nadużywana. Wynika to poniekąd ze stylu programowania wyuczonego z tutoriali z cyklu &ldquo;wyklep CRUDa w 5 min.&rdquo;. Piękne i proste, jednak nie mające wiele wspólnego z problemami dnia codziennego. Z drugiej strony jest to wina samego lenistwa programistów oraz przeświadczenia, że faza projektowania z rozpiską architektury chociażby na kartce papieru jest tylko dla kobiet i leszczy ;)</p>
+
+<p>Pytanie brzmi: kiedy należałoby porzucić modelowanie z encji na rzecz dedykowanych klas POCO? Prawda jest taka, że zależy to od przypadku i wymaga odrobiny doświadczenia.</p>
+
+<ul>
+<li>Jedną z podpowiedzi może być poziom zagłębienia zależności. Im jest on głębszy, tym bardziej wykorzystywana przez nas klasa odbiega strukturą od modelu wymaganego przez widok. Przykładowo już 2 poziom zagłębienia np. <code>Model.Products.SelectMany(p => p.Orders)</code> może świadczyć o tym, że dana encja nie jest właściwym kandydatem i powinna zostać zmapowana na dedykowaną do tego celu klasę.</li>
+<li>Innym przykładem może być sytuacja, w której nasz model wykazuje pewien związek z regułami biznesowymi. Przykładowo częstym sposobem reprezentacji okresu czasu powiązanego z danym obiektem jest dodanie do modelu dwóch pól określających granice czasowe. W tym momencie pojawia się jednak pewien dysonans między definicją biznesową (okres czasu jest pojedynczym obiektem) a rzeczywistą implementacją (okres czasu to dwa generyczne pola dat). Jeżeli logika biznesowa silnie bazuje na danej definicji np. przedział czasowy często pojawia się w kontekście wykonywanych operacji, wtedy możliwe, że lepiej byłoby wyodrębnić ją do osobnej klasy.</li>
+<li>Jak powszechnie wiadomo, we współczesnym świecie aplikacji WWW wymagania klientów są jednymi z najbardziej zmiennych elementów systemu. Możliwość oddzielenia modeli od encji wspiera ten trend, ponieważ o ile encje są powiązane ze schematem bazy danych (przez co są znacznie mniej podatne na zmiany ze względu na konieczność utrzymania spójności z istniejącymi danymi), o tyle modele wykorzystywane przez nas w aplikacji mogą być swobodnie modelowane do naszych potrzeb.</li>
+</ul>
+
+
+<h2>Twój ViewData = Twój Model</h2>
+
+<p>W przypadku niektórych frameworków model jest zdefiniowany w sposób jasny i jednoznaczny. W przypadku ASP.NET MVC nie jest jednak tak łatwo, ponieważ otrzymujemy tutaj więcej niż jeden sposób dostarczenia danych do widoku. Mowa tu oczywiście o ViewData. Wg. mnie obiekt ten, jakkolwiek przydatny, jest podstawowym złamaniem wzorca MVC w ASP.NET MVC. Dlaczego? Ponieważ &nbsp;prawda wygląda tak, że niezależnie od zdefiniowanych przez ciebie klas, prawdziwy model ma zawsze tylko jeden typ: <a href="http://msdn.microsoft.com/en-us/library/system.web.mvc.viewdatadictionary(v=vs.108">ViewDataDictionary</a>.aspx).</p>
+
+<p>Czy to źle? Niekoniecznie, zależy od przyjętego podejścia. Co z tego wynika? W przypadku modeli zwracanych przez formularze zazwyczaj przyjmuje się, że generyczny model powinien zawierać tylko te dane, które zostały wprowadzone przez użytkownika. Tzn. że informacje takie jak opcja wybrana przez użytkownika z listy powinna być częścią modelu podczas gdy sama lista dostępnych opcji powinna być przekazywana za pośrednictwem ViewBag/ViewData. Naturalnie w przypadku, gdy parsujemy model do postaci JSON przekazywanej do klienta, ta zasada nie dotyczy.</p>
+
+<h2>Nic nie znaczące Error Messages</h2>
+
+<p>Jednymi ze gorszych chwil w życiu programisty, są sytuacje, kiedy trzeba obsłużyć zgłoszenie o błędzie w aplikacji. Zdarza się, że zaglądamy wtedy do logów (o ile taką informację zalogowaliśmy ;) ), aby odnaleźć jakieś przydatne informacje, które pozwolą nam zidentyfikować naturę problemu. Jakże wielkie jest rozczarowanie, gdy jedynym hintem jaki wtedy otrzymujemy jest: <code>Object reference not set to an instance of an object.</code> Bardzo rzeczowa i jednoznaczna informacja wśród kilkuset linii kodu wymagających zbadania.</p>
+
+<p>Innym ciężkim przypadkiem jest logowanie niewystarczającej ilości informacji. Przykład (blok try-catch jest czysto poglądowy):
+``` c#
+try
+{</p>
+
+<pre><code>...
+var product = productRepository.GetById(id);
+if(product.Status != ProductStatus.Finished)
+    throw new InvalidStatusException("Provided product has invalid status");
+...
+</code></pre>
+
+<p>} catch(Exception e) {</p>
+
+<pre><code>    logger.Log(e.Message);
+</code></pre>
+
+<p>}
+```
+Co jest złego w tym przypadku? Wyobraźmy sobie, że dostajemy zgłoszenienie, o błędzie a w logach jedyną informacją jest: <code>Provided product has invalid status</code>. Czy wiemy o jakim statusie mowa? Czy wiemy o jaki produkt chodzi? Nie mamy żadnych informacji pozwalających zidentyfikować dany przypadek, mimo że wszystko co potrzebne mamy 2 linijki wyżej w kodzie źródłowym naszej aplikacji.</p>
+
+<p>Stąd mój apel: nie bądź leniwcem, minuta pracy teraz pozwoli ci zaoszczędzić godziny problemów później.</p>
+
+<h2>Too thin controllers, too fat services</h2>
+
+<p><em>Fat models, thin controllers</em> jest zwrotem często używanym w świecie MVC. Często jednak wynikiem utrzymania tej reguły jest zjawisko, które sam określam jako papierowe kontrolery. Weźmy na przykład następującą akcję MVC:
+``` c#
+[HttpPost]
+public void ToggleUserBan(bool activate)
+{</p>
+
+<pre><code>this.userService.ToggleUserBan(activate);
+</code></pre>
+
+<p>}
+<code>
+Na czym polega błąd? Prawdopodobnie metoda ToggleUserBan w serwisie jest przypadkiem zbyt szczegółowym. Daje to podstawy do przypuszczenia, że architektura aplikacji w którymś momencie się posypała. Zajrzyjmy więc do naszego hipotetycznego IUserService:
+</code> c#
+interface IUserService {</p>
+
+<pre><code>void ToggleUserBan(bool flag);
+IEnumerable&lt;User&gt; GetAllUsers();
+IEnumerable&lt;User&gt; GetActiveUsers();
+IEnumerable&lt;User&gt; GetBannedUsers();
+// ...kolejne 70 metod
+</code></pre>
+
+<p>}
+```
+Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do czynienia to nic innego, jak zwykłe zamiatanie brudu pod dywan. Pseudorozwiązanie polegające na przeniesieniu proceduralnego makaronu w miejsce, w które rzadziej się zagląda. Jest to częsty rezultat braku rewizji kodu i testów jednostkowych, oraz samowoli programistów.</p>
+
+<h2>Garść innych porad</h2>
+
+<ul>
+<li>unikaj static classes &ndash; utrudniają one modularyzację systemu i wprowadzają twarde powiązania, z których bardzo ciężko jest potem zrezygnować. Extension methods są w zasadzie jedynym zastosowaniem dla statycznych klas, dla jakich sam znajduję użytek.</li>
+<li>unikaj partial classes &ndash; dopuszczalne tylko w wypadku, gdy rozszerzasz klasę generowaną przez zewnętrzne narzędzia (co swoją drogą samo w sobie jest złym pomysłem ale o tym może kiedy indziej ;) )</li>
+<li>w przypadku zmiennych używaj nazw, które pozwalają określić ich typ i przeznaczenie &ndash; różnego rodzaju skróty oszczędzają dosłownie kilka sekund podczas pisania tylko po to, aby w przyszłości przedłużyć rozszyfrowywanie kodu przez kogoś innego o kilka minut. Pamiętaj, że w życiu programisty kod czyta się częściej niż pisze.</li>
+<li>podczas zwracania kolekcji zwracaj najmniejszy interface, który umożliwia wykonanie zadania &ndash; nie ma sensu wymagać aby argument był listą, jeżeli jedynym wykonywanym na nim działaniem jest foreach</li>
+<li>jeżeli zwracasz string lub kolekcje nigdy nie zwracaj nulli &ndash; zawsze używaj string.Empty lub Enumerable.Empty&lt;></li>
+<li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ServiceStack - alternatywa dla ASP.NET]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/"/>
+    <updated>2013-08-10T20:14:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet</id>
+    <content type="html"><![CDATA[<p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
+
+<ul>
+<li><a href="http://www.servicestack.net/">ServiceStack</a> &ndash; najbardziej znana alternatywa, o której opowiem więcej w dalszej części posta.</li>
+<li><a href="http://nancyfx.org/">Nancy</a>&ndash; drugi obok ServiceStack, najbardziej znany framework, czerpiący inspirację ze znanego frameworka Sinatra, napisanego w Rubym.</li>
+<li><a href="https://github.com/openrasta/openrasta/wiki/Why-Choose-OpenRasta">OpenRasta</a>&ndash; biblioteka stworzona z myślą o tworzeniu API opartego o zasoby.</li>
+<li><a href="http://amirrajan.net/Oak/">Oak</a> &ndash; framework mocno zainspirowany dynamiką bibliotek Ruby.</li>
+<li><a href="http://blog.markrendle.net/2012/06/01/simple-web/">Simple.Web</a> &ndash; micro framework twórcy znanego micro ORMa Simple.Data, który umieszczam również w ramach ciekawostki.</li>
+</ul>
+
+
+<p>Sądzę, że dość niewiele osób słyszało te nazwy (zwłaszcza ostatnie dwie). Ja jednak postanowiłem opowiedzieć i zachęcić do najpopularniejszego z tych rozwiązań, czyli ServiceStack.</p>
+
+<p>Co takiego otrzymujemy, decydując się na jego wykorzystanie?:</p>
+
+<ul>
+<li>Cały zestaw <em>extension methods</em> do wbudowanych typów .NET, przyspieszających pracę programistów.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Auto-mapping">Mechanizm mapowania obiektów</a> &ndash; podobny do AutoMappera, choć prostszy i bardziej ubogi.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Built-in-profiling">Profiler</a> wbudowany w środowisko.</li>
+<li><a href="http://fluentvalidation.codeplex.com/wikipage?title=CreatingAValidator">Zaawansowany mechanizm walidacji</a>, umożliwiający m.in. warunkową walidację poszczególnych pól.</li>
+<li>Mechanizm <a href="https://github.com/ServiceStack/ServiceStack/wiki/Authentication-and-authorization">autentykacji</a> i zarządzania dostępem oparty o role i uprawnienia z możliwością logowania poprzez OpenID.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/The-IoC-container">Kontener IoC</a> &ndash; również z możliwością podpięcia własnego.</li>
+<li>Minimalistyczny framework ORM (<a href="https://github.com/ServiceStack/ServiceStack.OrmLite">OrmLite</a>) &ndash; umożliwia on podłączenie do najpopularniejszych relacyjnych, baz danych. Naturalnie on również może być zastąpiony bardziej kompleksowym rozwiązaniem.</li>
+<li>Wiązania do rózniej maści usług logowania (np. NLog, Elmah, Log4Net, EventLog, Enterprise Lib.) i cache'owania (np. domyślny InMemory, Memcached, Redis, Azure lub Amazon Web Services).</li>
+<li>Bundlera plików JavaScript, CSS, LESS, SASS i CoffeeScript &ndash; chociaż trzeba przyznać, że jest to dość wyboista droga.</li>
+<li>Mechanizm do kolejkowania wiadomości &ndash; obecnie tylko za pośrednictwem Redisa. Trwają prace nad wprowadzeniem bindingów do ZeroMQ, RabbitMQ, Azure Service Bus oraz Amazon SQS.</li>
+<li>Gotowe SDK do aplikacji klienckich pod C#, Silverlight, JavaScript oraz Dart.</li>
+</ul>
+
+
+<p>Ale mówiąc o jego najbardziej kompleksowych zaletach:</p>
+
+<h2>Web services &amp; Content Negotiation</h2>
+
+<p>Jest to &ndash; moim zdaniem &ndash; najciekawsza cecha Service Stack. Tworząc dotychczasowe usługi sieciowe z wykorzystaniem standardowych bibliotek .NET musieliśmy uzależniać technologię, jaką zamierzaliśmy wykorzystać od formatu danych, jakiego się spodziewaliśmy. A więc tworząc serwisy wykorzystujące SOAP lub XML tworzyliśmy dla nich specjalne usługi w WCFie. Jeżeli chcielibyśmy, aby zwracały one dane w postaci JSON, prawdopodobnie większość z nas wykorzystałaby najnowsze podejście w postaci ASP.NET Web API, dla pozostałych formatów ASP.NET.</p>
+
+<p>Problemem takiego podejścia jest fakt, że za każdym z tych rozwiązań stoi osobna technologia, która nie jest kompatybilna z pozostałymi. Niezależnie od tego, co wybierzemy, nigdy nie otrzymamy kompletnego rozwiązania.</p>
+
+<p>Jak wygląda to w przypadku ServiceStack? To proste. Każdy z modułów naszej aplikacji może być zamknięty w ramach klas dziedziczących po wspólnej klasie <code>Service</code>(jednak wbrew pozorom nie mamy tu do czynienia z wzorcem MVC) &ndash; lub w razie potrzeby, którejś z jej klas bazowych bądź interfejsu <code>IService</code>. Każda metoda obsługująca żądanie pobiera w parametrze obiekt POCO (Plain Old Class Object) i zwraca inny obiekt POCO. Dopiero na poziomie frameworka rozwiązywany jest problem serializacji danego obiektu do końcowego formatu, który może być wnioskowany na podstawie nagłówka HTTP, zawartości URL bądź dowolnego innego warunku, jaki zdefiniujemy podczas konfiguracji. Rozwiązanie to znane jest jako <em>Content Negotiation</em>. Dzięki temu jedna klasa może pełnić rolę kontrolera ASP.NET, WebAPI i serwisu WCF w tym samym czasie!</p>
+
+<p>Domyślnie dysponujemy wbudowanymi serializatorami dla formatów: SOAP (1.1 oraz 1.2), XML, JSON, CSV i JSV. Dodatkowo w sieci można pobrać pluginy rozszerzające tą listę o niemal wszystkie formatery dostępne w świecie .NET, w tym też binarne. Jedna linijka kodu w konfiguracji nieraz wystarcza, aby wprowadzić dany format do naszej aplikacji. Warto zauważyć, że ta sama zasada panuje w przypadku dynamicznie generowanych stron HTML &ndash; po doinstalowaniu pluginu możemy generować strony w oparciu o składnię Razora oraz Markdown.</p>
+
+<h2>Wydajność</h2>
+
+<p>Twórcy ServiceStack zwracają szczególną uwagę na szybkość swojej platformy, w myśl powiedzenia: <i>&ldquo;We care about two things: speed and quality. And the quality we care about is speed&rdquo;</i>. Nie powinno więc dziwić, że większości wypadków framework ten przewyższa ASP.NET i WCF w kwestiach wydajnościowych. Wynika to z prostego faktu. Mamy tu do czynienia z inicjatywą open source, a w przedsięwzięciach tego typu dużą rolę odgrywa prostota. Nie ma tutaj miejsca na platformy typu Enterprise, z setkami warstw abstrakcji, pełnymi potworków typu <a href="http://ws.apache.org/xmlrpc/apidocs/org/apache/xmlrpc/server/RequestProcessorFactoryFactory.RequestSpecificProcessorFactoryFactory.html">RequestSpecificProcessorFactoryFactory</a>(tak, jest to wyraz mojego &ldquo;hejtu&rdquo; względem podejścia projektowego w Javie, ale fakt faktem problem ten dotyka również .NETu ;) ).</p>
+
+<p>Konkretne porównania i benchmarki można znaleźć <a href="https://github.com/ServiceStack/ServiceStack/wiki/Real-world-performance">tutaj</a>. I jak widać, nie chodzi tu o jakiś pomijalny zysk rzędu kilkunastu procent.</p>
+
+<h2>Testowalność</h2>
+
+<p>ServiceStack jest frameworkiem z natury bardzo zmodularyzowanym, umożliwiającym wymianę poszczególnych komponentów. To z kolei czyni go naturalnym kandydatem do wprowadzenia testów jednostkowych.</p>
+
+<p>Innym atutem jest podejście wymiany danych opartych na komunikatach (message-based design), które w wypadku ServiceStack są zwykłymi klasami POCO. Dzięki temu testując poszczególne moduły/usługi nie musimy przetwarzać wbudowanych we framework obiektów żądań i odpowiedzi. Zamiast tego mamy do czynienia ze standardowym zbiorem klas, zdefiniowanych przez nas samych, które z zewnątrz nie zdradzają zależności od używanego przez nas frameworka. Ponad to architektura sprawia, że najwygodniejszym podejściem jest budowa dużej ilości serwisów z małą ilością metod, co dodatkowo ułatwia zachowanie ziarnistości systemu.</p>
+
+<h2>Wieloplatformowość</h2>
+
+<p>Ostatnią wartą odnotowania cechą pozostaje fakt, że wybierając SS otrzymujemy w pełni funkcjonalny framework działający zarówno pod Windowsem jak i platformami linuxowymi. Wiem, że pod ASP również można programować w sposób pozwalający na postawienie aplikacji na Linuxie, ale jest to rozwiązanie niekompletne. Przykładowo, ServiceStack jest obecnie jedyną opcją pozwalającą na uruchomienie usług SOAP pod Mono.</p>
+
+<p>Nie oznacza to jednak, że decydując się na SS, musimy rezygnować z naszej dotychczasowej aplikacji napisanej w ASP.NET. Równie dobrze możemy uruchomić hosta ServiceStack wewnątrz Global.asax i używać go np. tylko jako zamiennika warstwy nośnej dla usług WCF.</p>
+
+<p>Całość doskonale wpisuje się w naturę technologii webowych, ich otwartość i multiplatformowość. Dodatkowo umożliwia ona optymalizację kosztów (hosting linuxowy jest średnio 5-krotnie tańszy niż porównywalny windowsowy) i otwiera nowe możliwości na rynku, który w przypadku .NET w ogromnej części składa się z aplikacji biznesowych.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Czego programiści .NET mogliby nauczyć się od Rubystów?]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/"/>
+    <updated>2013-06-16T12:28:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc</id>
+    <content type="html"><![CDATA[<p>.NET był wybraną przeze mnie technologią niemal od początku mojej przygody z programowaniem. Uważam jednak, że programista nie powinien się zamykać w jednej szyfladce i poznawać szerokie spectrum technologii. Porównywać je i znać wady oraz zalety każdej z nich. Ostatecznie zaś umieć dobrać właściwą technologię do rozwiązania napotykanych problemów &ndash; nie odwrotnie ;)</p>
+
+<p>Stąd też pytanie w temacie. Czy faktycznie programiści .NET mogą nauczyć się czegoś ze środowiska Ruby, języka, który ostatnimi czasy zbiera niemało batów (głównie związanych z wydajnością oraz bezpieczeństwem jego najpopularniejszej platformy, RoRa)? Otóż jak się okazuje całkiem sporo, nawet pomimo już istniejącego trendu absorbowania do platformy .NET sporej ilości rozwiązań napotykanych w konkurencyjnych gałęziach. Poniżej postaram się wymienić te, które moim zdaniem są warte odnotowania.</p>
+
+<h2>1. Przestań polegać na swoim IDE</h2>
+
+<p>Nie da się tego ukryć &ndash; Visual Studio jest jednym z najlepszych, o ile nie najlepszym IDE, z jakim programista może mieć obecnie przyjemność pracować. Ma to jednak pewną cenę. W pewnym momencie zaczynamy polegać na swoim IDE w stopniu większym, niż na własnych umiejętnościach. Co gorsza przenosi się to bezpośrednio na tworzone biblioteki (przykład&hellip; Entity Framework &ndash; czy ktoś próbował kiedyś stworzyć model edmx bez pomocy wizarda wbudowanego w Visual Studio?). Jeżeli nie możesz sprawnie korzystać z biblioteki bez wsparcia swojego IDE, oznacza to, że jest ona zbyt skomplikowana i najzwyczajniej w świecie zepsuta.</p>
+
+<p>W przypadku Ruby'ego, narzędzie pracy jest kwestią gustu. Jednakże kiedy pierwszy raz przyszło mi pracować z teamem RoR każde z nich w porównaniu do Visual Studio wygląda jak notatnik z kolorowaniem składni. Żadnego zaawansowanego refactoringu, intellisense, nawigacji między plikami w projekcie, generowania buildów. Co było w tym najzabawniejsze? Po 2 tygodniach wcale mi tego nie brakowało. Przysłowiowy notatnik + konsola całkowicie wystarczały do pracy, zaś narzędzia są skonstruowane tak, aby programista był sobie w stanie poradzić ze wszystkim zaraz po zainstalowaniu interpretera.</p>
+
+<h2>2. Debuger jest opcją, nie obowiązkiem</h2>
+
+<p>W świecie .NET jest to dziwna opinia. Wielu programistów wykorzystuje go jako normalne narzędzie pracy służące sprawdzeniu, czy aplikacja działa poprawnie. Dodatkowo sam Visual Studio ułatwia takie podejście. Jako programista Ruby nigdy nie musiałem skorzystać z debuggera &ndash; prawdę mówiąc, nigdy go nie zainstalowałem. Nie oznacza to oczywiście, że kod napisany w Rubym jest zawsze właściwy. Wynika to z innego podejścia. W tym środowisku standardem jest pisanie unit testów do weryfikacji każdej bardziej złożonej części systemu. Dzięki temu testy w Rubym są domyślnym <strong>must have</strong> przy każdym projekcie.</p>
+
+<h2>3. Nie bój się eksperymentować</h2>
+
+<p>To co najbardziej spodobało mi się we współpracy z programistami Ruby, to otwartość na nowinki, chęć wypróbowania innych podejść. Wiąże się z tym pewne ryzyko, ale również określony zysk. Tutaj powstaje pewien problem &ndash; ryzyko w skostniałym świecie aplikacji biznesowych z reguły jest czymś nie do przyjęcia. Dodatkowym hamulcem jest tutaj fakt, że wielu starszych programistów ze środowiska .NET nieprzychylnie patrzy na rozwiązania open source (w końcu kogo wtedy pociągnąć do odpowiedzialności?) oraz ogólnie technologiom spoza kółka Microsoftu.</p>
+
+<p>Nie należy bać się zmian. Nawet jeżeli ryzyko jest nieakceptowalne w aplikacjach dla klientów zewnętrznych, wciąż możemy wprowadzać drobne zmiany dla systemów używanych wewnątrz firmy oraz wypróbowywać tam nowe podejścia. Z jednej strony może to przełożyć się na zysk w przyszłości, z drugiej działa to jak magnes na programistów-pasjonatów, a takich nigdy nie ma za wielu, prawda? ;)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[O redundancji w wyrażeniach LINQ]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/"/>
+    <updated>2013-04-23T21:35:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq</id>
+    <content type="html"><![CDATA[<p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
+
+<h2>Przykład</h2>
+
+<p>Weźmy pod uwagę następujący przykład &ndash; otrzymaliśmy dokumentację, w której opisana jest pewna encja. Może ona mieć następującą postać:
+``` c#
+public class Document
+{</p>
+
+<pre><code>public DateTime CreateDate { get; set; }
+public string Type { get; set; }
+</code></pre>
+
+<p>   // .. reszta implementacji
+}
+<code>
+W ramach logiki biznesowej wykonywanej na encjach tej klasy stworzone zostało pojęcie przeterminowania - z dalszej części dokumentacji dowiadujemy się, że za przeterminowane uznajemy te encje, w których data utworzenia jest starsza niż X dni (X może być dowolne np. ustawione w konfiguracji systemu) zaś typ przybiera konkretną wartość. Bez trudu zawężamy więc wyniki za pomocą zapytania:
+</code> c#
+var x = .. pobieramy X
+var documents = DataContext.Documents</p>
+
+<pre><code>    .Where(x =&gt; x.CreateDate.AddDays(x) &lt; DateTime.Now &amp;&amp; x.Type == "M1");
+</code></pre>
+
+<p>```
+Niestety w późniejszym czasie słowo &ldquo;przeterminowany&rdquo; pojawia się w tym kontekscie jeszcze kilka razy w różnych miejsach aplikacji. Co robimy? W większości spotkanych przeze mnie przypadków piszemy klauzulę <code>Where(&hellip;)</code> ponownie. Ale czy na pewno?</p>
+
+<h2>Inne podejście</h2>
+
+<p>Rozwiązaniem powyżej sytuacji może być stary dobry <em>monkey patching</em>, reprezentowany w C# przez mechanizm extension methods. Z jego użyciem moglibyśmy rozwiązać ten problem w następujący sposób:
+``` c#
+public static int X { get {&hellip;} }
+/// <summary>
+/// Słowo komentarza od ojca dyrektora.
+/// </summary>
+public static IQueryable<Document> Expired(this IQueryable<Document> data)
+{</p>
+
+<pre><code>var x = X;
+return data.Where(x =&gt; x.CreateDate.AddDays(x) &lt; DateTime.Now &amp;&amp; x.Type == "M1");
+</code></pre>
+
+<p>}
+<code>
+Przykład wykorzystania:
+</code> c#
+var expiredDocuments = DataContext.Documents.Expired();
+```
+W ten sposób stworzyliśmy stereotyp, który możemy wykorzystywać zawsze w sytuacji kiedy mamy do czynienia z tym konkretnym zachowaniem. Jakie są zalety tego podejścia? Po pierwsze trzymamy się zasady DRY (Don&rsquo;t Repeat Yourself). Po drugie sądzę, że taki zapis jest o wiele bardziej czytelny i ułatwia późniejsze zrozumienie kontekstu, w jakim wykonywane są zapytania.</p>
+
+<p>Innym sposobem na rozwiązanie powyższego problemu jest naturalnie przeniesienie filtru bezpośrednio do kontekstu danych:<code>var data = DataContext.GetExpiredDocuments();</code>. Na czym jednak polega przewaga monkey patchingu? Po pierwsze nie jesteśmy twardo związani ze źródłem danych &ndash; napisany wcześniej stereotyp może być zastosowany dla dowolnej kolekcji, nawet takiej która powstała w wyniku deserializacji żądania HTTP. Po drugie rozwinięcie to można wstawić w dowolnym momencie tworzonego zapytania, z dowolnej encji posiadające odpowiednią relację.</p>
+
+<p>W rezultacie otrzymujemy rozwiązanie bardziej uniwersalne i podatne na zmiany.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc/"/>
+    <updated>2013-01-12T22:32:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc</id>
+    <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
+
+<h2>1. Object-Relational Mapping</h2>
+
+<p>Na pierwszy ogień niech pójdą frameworki ORM. Jak nie ciężko się domyślić pod względem popularności triumfuje tutaj Entity Framework jako rozwiązanie promowane przez MS, zaś odrobinę z tyłu wydaje się być NHibernate. Jak to jednak wygląda, jeżeli wzięlibyśmy pod uwagę wydajność? Zaczynając od bardzo popularnego zestawienia <a href="http://ormeter.net/">ORM Battle</a>:</p>
+
+<ul>
+<li><a href="http://dataobjects.net/">DataObjects.NET</a> mogą poszczycić się najbardziej wydajną budową zapytań LINQ.</li>
+<li><a href="http://bltoolkit.net/">Business Logic Toolkit</a> jest stawiany jako zwycięzca w kwestii ogólnej wydajności (operacje CRUD itp.).
+-Pod względem zapytań LINQ wydajnosć <a href="http://nhforge.org/">NHibernate </a>jest skandaliczna &ndash; tutaj jednak należy się słowo wyjaśnienia, ponieważ framework ten posiada własny mechanizm generowania zapytań w locie (Criteria wraz z nakładką QueryOver), który oferuje znacznie lepszą wydajność oraz pozwala na więcej w stosunku do linq.</li>
+</ul>
+
+
+<p>Warto jednak zauważyć, że zestawienie to nie jest pełne, brakuje w nim powiem kilku ważnych bibliotek. Powołując się na kolejny benchmark wykonany przez <a href="http://servicestack.net/benchmarks/">ServiceStack</a> (ta nazwa powtórzy się tutaj jeszcze przy kilku okazjach), wysnuć można kilka innych wniosków:</p>
+
+<ul>
+<li>Narzut nakładany przez Entity Framework może wydłużyć czas wykonania zapytania nawet 13-krotnie! &ndash; (zakładam, że dla bardziej złożonych zapytań ta różnica zmniejsza się na korzyść EF) To ogromna przepaść nawet biorąc pod uwagę <a href="http://noamlewis.wordpress.com/2012/07/18/net-4-5-improves-orm-performance-across-the-chart/">usprawnienia</a> nałożone w .NET 4.5.</li>
+<li>Zwycięstwo wydajności należy do <a href="http://code.google.com/p/dapper-dot-net/">Dappera</a> &ndash; jest to microframework ORM stworzony przez Stackoverflow na potrzeby wysoko wydajnego dostępu do bazy danych, wykorzystywanego w tym serwisie. Tuż za nim znalazł się z kolei <a href="https://github.com/ServiceStack/ServiceStack.OrmLite">ServiceStack.OrmLite</a> (należy jednak pamiętać, że są oni autorami tego benchmarku).</li>
+</ul>
+
+
+<p>Na czym więc polega sukces i droga do szybkości? Myślę, że główną rolę odgrywa tutaj prostota &ndash; zarówno EF jak i NHibernate oferują rozbudowane interfejsy do budowy zapytań (LINQ i QueryOver), własne języki pośrednie (NHibernate &ndash; HQL, Entity Framework &ndash; ESQL), mechanizmy zarządzania obiektami itp. <strong>BLT</strong>, <strong>Dapper</strong> i <strong>OrmLite </strong>stosują tutaj proste operacje z wykorzystaniem standardowych zapytań SQL, odrzucając wyższe warstwy abstrakcji i trzymając się blisko podstawowych mechanizmów komunikacji z bazą danych. Dodatkowo microframeworki obarczają programistę koniecznością ręcznego zarządzania relacjami oraz synchronizacji stanu danych pomiędzy encjami i bazą. To z kolei przenosi dług wydajnościowy na kod napisany przez programistę.</p>
+
+<h2>2. Kontenery Inversion of Control</h2>
+
+<p><em>Dependency Injection</em> to już standard, mimo że wciąż nie jest to mechanizm domyślny w ASP.NET. Zapewnienie luźnych wiązań określane jest jako dobra praktyka zarówno w MVC jak i MVVM (stosowanym przez liczne frameworki stosowane również w aplikacjach desktopowych oraz na urządzenia mobline). Opierając się na kilku (<a href="http://www.palmmedia.de/blog/2011/8/30/ioc-container-benchmark-performance-comparison">1</a>, <a href="http://www.iocbattle.com/">2</a>, <a href="http://servicestack.net/benchmarks/#highcharts-8">3</a>, <a href="http://philipm.at/2011/0808/">4</a>) testach można podjąć się złożenia kilku wniosków:</p>
+
+<ol>
+<li><a href="http://www.ninject.org/">NInject</a> (który notabene jest całkiem popularnym rozwiązaniem) wydajnościowo jest jednym z najsłabszych i najwolniejszych kontenerów.</li>
+<li>Biblioteki promowane przez Microsoft &ndash; <a href="http://mef.codeplex.com/">MEF</a> oraz <a href="http://unity.codeplex.com/">Unity</a> &ndash; również nie prezentują porażającego poziomu. O ile Unity prezentuje się dość dobrze, to wciąż stanowi dość słabą konkurencję dla innych rozwiązań zawartych w zestawieniach.</li>
+<li>Mimo tego, że powyższe benchmarki nie zawsze się uzupełniają, po odrobinie przeszukiwania sieci można w zasadzie określić, że wśród zwycięzców wydajności znajdują się: <a href="http://docs.structuremap.net/">StructureMap</a> oraz <a href="http://funq.codeplex.com/">Funq</a> (który z tego co mi wiadomo nie jest obecnie wspierany, co idzie zdecydowanie na jego niekorzyść, jednak stanowi część frameworka <em>ServiceStack</em>, jest również dostępny w postaci open source).</li>
+</ol>
+
+
+<h2>3. Serializacja</h2>
+
+<p>Serializacja obiektów to dość szerokie zagadnienie, ponieważ możemy mieć na myśli różne formaty (xml, json czy dane binarne), zaś każdy z nich znajduje zastosowanie w innych sytuacjach i ma inną specyfikę. Opierając się na różnych źródłach (<a href="http://www.servicestack.net/benchmarks/NorthwindDatabaseRowsSerialization.100000-times.2010-08-17.html">1</a>, <a href="http://servicestack.net/benchmarks/#highcharts-6">2</a>), można pokusić się o kilka stwierdzeń:</p>
+
+<ul>
+<li>Jeżeli chodzi o rozmiar zajmowany przez serializowane obiekty, najwydajniejszym rozwiązaniem wydawać by się mogła serializacja binarna. Jest to prosty i dość logiczny wniosek, jednak okazuje się, że na tym polu również istnieje pewna konkurencja (m.in ze strony formatu json), zaś wbudowane w .NET formatery i serializatory wcale nie są najwydajniejszym, co platforma ta może zaoferować.</li>
+<li>Palma pierwszeństwa należy się <a href="https://developers.google.com/protocol-buffers/">Protocol Buffers</a> (protokół wymyślony przez Google oraz stosowany do komunikacji pomiędzy wewnętrznymi usługami giganta z Mountain View) oraz ich .NET-owym bindingom: totalne zwycięstwo zarówno pod względem rozmiaru serializowanego obiektu, jak i czasie serializacji/deserializacji. Biblioteka ta, ma jeszcze jedną przewagę &ndash; mimo, że wyjściowym formatem jest format binarny to w przeciwieństwie do domyślnych rozwiązań .NET protokół ten nie jest powiązany z jedną platformą i może służyć do komunikacji z usługami napisanymi w innych językach programowania.</li>
+<li>W kwestii serializacji JSON:
+
+<ul>
+<li>Serializery wbudowane we framework .NET należą do najwolniejszych rozwiązań dostępnych na rynku &ndash; jest to tym bardziej przykre, że stanowią one domyślną metodę serializacji zawartą w kontrolerach ASP MVC.</li>
+<li><a href="http://james.newtonking.com/projects/json-net.aspx">JSON.NET</a> (najpopularniejsza alternatywa dla wbudowanych serializatorów, używana m.in. w najnowszym WebAPI) mimo, że o jest wiele lepszy standardowych rozwiązań, również nie poraża swoimi osiągami</li>
+<li>Zwycięzcą pozostaje <a href="http://www.servicestack.net/docs/text-serializers/json-serializer">ServiceStack</a> (ponownie ;) ). 2-3x większa szybkość niż konkurencyjny Json.NET i jeszcze większa przewaga nad rozwiązaniami domyślnymi.</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>4. Client-side MVC/MVVM</h2>
+
+<p>W <a href="http://horusiath.blogspot.com/2012/06/krotki-przeglad-po-frameworkach-mvc-w.html">jednym z poprzednich wpisów</a> opisałem kilka popularnych frameworków javascriptowych stosowanych do prezentacji i zarządzania logiką po stronie przeglądarki. Ocena możliwości i szybkości tych platform należy do szczególnie trudnych. W internecie da się znaleźć kilka stron pozwalających na przyjżenie się bliżej i ocenieni wydajności na własne oczy (polecam <a href="http://stackoverflow.com/questions/12955337/angular-js-backbone-js-and-other-mv-patterned-js-libraries">ten wpis</a>).</p>
+
+<ul>
+<li><a href="http://backbonejs.org/">Backbone</a> jest wydajny, jednak należy tu wziąć pod uwagę fakt, że nie zapewnia żadnego typu bindingu między widokiem a modelem, w dodatku wymaga od użytkownika ręcznego manipulowania drzewem DOM &ndash; to z kolei stawia go w innej klasie problemów i w zasadzie ciężko go porównywać z frameworkami umożliwiającymi wiązania danych.</li>
+<li>Generalnie rzecz biorąc <a href="http://angularjs.org/">AngularJS</a> ma lepszą wydajność do <a href="http://knockoutjs.com/">Knockouta</a>. Jednak ta tendencja zmienia się wraz ze wzrostem liczy wiązań tzn. im większa tym bardziej Knockout wysuwa się na prowadzenie. W tym wypadku jednak duży wpływ na wynik końcowy ma sama budowa kontrolerów w AngularJS (dla lepszej wydajności powinny być one małe i nie zawierać zbyt dużej ilości powiązań ani skomplikowanej logiki obliczeniowej, która powinna być wykonywana osobno przez mechanizm serwisów dostępny we frameworku).</li>
+</ul>
+
+
+<h2>5. Templating Engines</h2>
+
+<p>Dużą różnicę robi również wykorzystanie silników do generowania szablonów stron WWW (od kiedy większość ze stron generowana jest w sposób dynamiczny). Tutaj jednak rozbijemy problem na 2 części:</p>
+
+<ol>
+<li>Silniki po stronie serwera &ndash; Na stackoverflow można znaleźć <a href="http://stackoverflow.com/questions/1451319/asp-net-mvc-view-engine-comparison">wątek</a>, który przedstawia krótką charakterystykę około 12 różnych silników wykorzystywanych do generowania stron po stronie serwera. Niestety, nie udało mi się znaleźć podobnego zestawienia jeżeli chodzi o kwestie wydajnościowe. Zamiast tego postaram się przedstawić kilka dobrych rad dotyczących kwestii wydajnościowych dotyczących dwóch domyślnych silników .NET, Aspx i Razor:
+
+<ul>
+<li>W większości przypadków Aspx działa lepiej niż porównywalny kod w Razorze (zwłaszcza w porównianiu z pierwszą wersją) &ndash; różnica ta wynosi przeważnie od 50% do 12% na korzyść aspx. Tutaj jednak wiele zależy od zmiany ustawień domyślnych, cacheowania elementów strony itp.</li>
+<li>W przypadku kiedy nie wykorzystujesz obu tych silników, usuń ten którego nie używasz. W wielu przypadkach przyspiesza to działanie aplikacji, m.in. przez to, że w prosty sposób skraca ilość przeszukiwanych szablonów w katalogu <em>Views</em> aplikacji MVC o połowę.</li>
+<li>Porada dotycząca ViewState (WebForms) &ndash; nie potrzebujesz mechanizmu ViewState na stronie? Wyłącz go. Potrzebujesz go? Zastanów się czy na pewno, zrób obejście, a potem go wyłącz. Serio. Mechanizm ten jest powszechnie uznawany za jedno z największych nieporozumień w świecie aplikacji webowych.</li>
+</ul>
+</li>
+<li>Silniki po stronie klienta &ndash; Budowa pełnego stosu MVC po stronie klienta nie jest jedynym sposobem na budowę dobrze zorganizowanego mechanizmu zarządzania widokami. W wielu przypadkach możliwe jest wykorzystanie prostego silnika wykorzystującego szablony do generowania widoków w bezpośrednio przez przeglądarkę. Mechanizm tak stosowany jest m.in. przez LinkedIn, jak również Twittera, który udostępnił swój silnik <a href="http://twitter.github.com/hogan.js/">Hogan.js</a> jako projekt open source. Dobry test wydajności rozmaitych silników zaprezentowano na <a href="http://jsperf.com/dom-vs-innerhtml-based-templating/112">tej stronie</a>.</li>
+</ol>
+
+
+<p>W większości takich porównań korona wydajności należy do <a href="http://olado.github.com/doT/index.html">doT.js</a>. Jedną z przyjemnych rzeczy w tej bibliotece, jest możliwość określania, które elementy szablonu będą generowane w czasie kompilacji (po wykonaniu kompilacji generowana jest funkcja kompilatora generująca wynikowy html na podstawie modelu przekazanego jako parametr &ndash; funkcja ta może być cache'owana), a które z nich będą wykonywane w runtime.</p>
+
+<h2>Podsumowanie</h2>
+
+<p>Po analizie dostępnych rozwiązań to co najbardziej mnie uderzyło, to fakt jak wiele z najpopularniejszych bibliotek prezentuje się zaskakująco żenująco w testach dotyczących wydajności. Za swoje małe odkrycie mogę uznać z kolei stos zaoferowany przez ServiceStack, dla których wydajność wydaje się priorytetem w każdej kategorii, w której podjęli się konkurować. Niestety nie miałem do tej pory dużo do czynienia z tym frameworkiem, co jednak bardzo przypadło mi do gustu, to fakt że jest to rozwiązanie kompletne, oferujące możliwość kompletnego zastąpienia każdego modułu w tradycyjnym stosie ASP.NET MVC/WCF/EntityFramework swoim własnym, spójnym zbiorem bibliotek. Do tego w całości działającym pod Mono na Linuxie.</p>
+]]></content>
+  </entry>
+  
+</feed>

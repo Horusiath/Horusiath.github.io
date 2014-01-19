@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: free talk | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/free-talk/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Garść pro tipów przydatnych podczas tworzenia aplikacji]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
+    <updated>2013-06-26T22:49:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
+    <content type="html"><![CDATA[<p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
+
+<p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
+
+<h2>1. &ldquo;Jesteśmy jedną rodziną, mamy wspólne korzenie&rdquo;</h2>
+
+<p>Naturalną cechą aplikacji webowych rozwijanych w ramach środowiska .NET jest ich podział na wiele różnych projektów. Nie jest to wymóg, jednakże z reguły zdecydowanie pomaga w organizacji oraz w trakcie późniejszego wdrażania rozwiązań. To co jednak uznałem za warte przypomnienia to wzajemne powiązania pomiędzy projektami. Mówiąc zaś dokładniej, przydatność stworzenia wspólnej biblioteki-korzenia, dowiązywanej przez wszystkie pozostałe projekty w aplikacji.</p>
+
+<p>Ma to kilka prostych przyczyn. Po pierwsze zdaża się, że musimy zaimplementować pewną funkcjonalność w kilku bibliotekach, będących na podobnym poziomie zależności, których jednak nie możemy powiązać ze sobą np. ze względu na rekurencyjne zapętlenie zależności &ndash; tutaj wspólny &ldquo;korzeń&rdquo; okazuje się nieoceniony. Po drugie, w trakcie pracy z aplikacją nieraz powstaje chęć stworzenia własnego DSLa bądź zestawu rozszerzeń upraszczających pracę z daną platformą bądź językiem. Ileż to razy rodziła się ochota na dodanie <em>extension method</em>, której brakuje nam w istniejących już klasach .NET? Tutaj również możliwość współdzielenia tego typu funkcjonalności jest bardzo przydatna.</p>
+
+<p>Idea wspólnego &ldquo;korzenia&rdquo; przydaje się również kiedy mowa o klasach wyjątków. Dobrą praktyką w trakcie definiowania aplikacji jest wywoływanie własnych wyjątków, które mogą informować nie tylko o błędach w operacjach logicznych systemu, lecz również logice biznesowej jako takiej. Moim zdaniem wszystkie takie <em>customowe</em> wyjątki powinny mieć wspólną klasę bazową. Dzięki temu w późniejszych fragmentach aplikacji będziemy mogli bez problemu wychwytywać te z nich, które stworzyliśmy sami na potrzeby naszego systemu i odpowiednio na nie reagować &ndash; przekształać do postaci czytelnej dla końcowego użytkownika, logować itp.</p>
+
+<h2>2. Atomic frontend design</h2>
+
+<p>Atomic design to koncepcja projektowania elementów HTML w sposób uporządkowany na bazie kompozytów. Nieraz w życiu codziennym zdarza się nam określać komponenty strony w dość ogólny sposób, pozostawiając szczegóły implementacji na &ldquo;doprecyzowanie później&rdquo; ;) W rezultacie kończymy w morzu (lub raczej szambie) znaczników o mgliście oznaczonych brzegach. Ponieważ HTML na stronach może mieć bardzo rozrośniętą postać, którą jako programiści też będziemy musieli utrzymywać, warto zadbać też o ten aspekt aplikacji.</p>
+
+<p>Idea atomic designu skupia się własnie na wiązaniu elementów HTML w kompozyty, które z kolei są łączone ze sobą dalej w kolejne, bardziej abstrakcyjne struktury. Więcej szczegółów na ten temat możecie dowiedzieć się <a href="http://bradfrostweb.com/blog/post/atomic-web-design/">tutaj</a>. W praktyce warto poznać to podejście już teraz &ndash; w obecnej chwili widać wyłaniający się coraz mocniej trend, który w przyszłości może poskutować nowym standardem umożliwiającym definiowanie własnych znaczników HTML, mających bezpośrednie wsparcie ze strony silnika renderującego.</p>
+
+<p>Chcąc wspomóc developerów i przygotować współczesne aplikacje webowe do nadchodzących standardów, inżynierowie Google'a stworzyli projekt <a href="http://www.polymer-project.org/">polymer</a> (czerpiący m.in. z koncepcji atomic designu), którego zadaniem jest zbudować odpowiednią platformę abstrakcji z istniejących już rozwiązań: HTML, Javascriptu oraz CSS. Zgodnie z ich przewidywaniami wraz z rozwojem przeglądarek funkcje oferowane przez tą bibliotekę mają w przyszłości zostać zastąpione specjalizowanymi, natywnymi odpowiednikami, zaś zadaniem polymeru jest umożliwić obecnym aplikacjom kompatybilność z dopiero powstającymi technologiami. Ciekawostka: mimo, że AngularJS stanowi oddzielny projekt, zapowiedziano już że w kolejnych wersjach będzie on coraz bardziej integrowany z polymerem.</p>
+
+<h2>3. Stwórz własną platformę abstrakcji&hellip;</h2>
+
+<p>Kolejna kwestia wynika z prostej tendencji uzależniania logiki aplikacji od wykorzystywanych bibliotek. W praktyce skutkuje to twardym związaniem naszego systemu z konkretnymi rozwiązaniami &ndash; które w przyszłości mogą stracić wsparcie, okazać się przestarzałe lub niewystarczające do naszych potrzeb. Taka monolityczna budowa nie jest przychylna zmianom, a jak powszechnie wiadomo klienci lubią wpadać na nowe pomysłu i zmieniać swoje zdanie.</p>
+
+<p>Stąd też idealnym rozwiązaniem jest stworzenie klasycznej płaszczyzny abstrakcji, całkowicie izolującej naszą logikę biznesową, która stanowi jądro każdej aplikacji biznesowej, od zewnętrznych platform, realizowanych pośrednio jako obiekty proxy/adaptery. Piszę idealnym, w praktyce jednak rzadko takie rozwiązanie okazuje się w 100% możliwe. Warto jednak poświęcić mu trochę uwagi &ndash; również z perspektywy modularyzacji i możliwości testowania.</p>
+
+<h2>4. &hellip; ale nie przeginaj z warstwami</h2>
+
+<p>Pamiętaj, że każda dodatkowa wartwa abstrakcji z jednej strony umożliwia ci podzielenie problemu na prostsze, bardziej ogólne definicje (a ludzie z natury lubią pojmować świat ogólnikowo), z drugiej strony jednak stanowi jednocześnie kolejną barierę w optymalizacji.</p>
+
+<p>To co warto przypomnieć, to fakt, że tworzenie aplikacji to proces, w którym wymagania zmieniają się w czasie. Produkcja oprogramowania nie jest jednym z konkursów algorytmicznych, gdzie wszelkie bariery i wartości graniczne są niezmienne i podane z góry. To co dziś świetnie się sprawdza, jutro może okazać się niewystarczające.</p>
+
+<p>Ważnym czynnikiem jest odpowiednie zdefiniowanie problemu i dobór właściwych wzorców i rozwiązań. Jako programiści nieraz generalizujemy pewne problemy tak, aby dało się je rozwiązać przy pomocy istniejących technologii, kosztem rzeczywistej złożoności całego systemu. Dla zainteresowanych proponuję obejżeć <a href="http://www.infoq.com/presentations/8-lines-code-refactoring">wykład</a> Grega Younga na ten temat.</p>
+
+<p>Wielowarstwowe aplikacje stanowią pewien problem, kiedy przychodzi do optymalizacji. Nie oznacza to jednak, że budowa z podziałem na warstwy jest zła. Jest wygodna z punktu widzenia programisty i projektowania koncepcji rozwiązań dla problemów postawionych przed systemem. Z drugiej strony jednak każda aplikacja posiada pewne punkty zapalne &ndash; wymagające dużej wydajności &ndash; które będą wymagać niestandardowego trakowania, w tym też odejścia od wcześniej przyjętych koncepcji i zwrotu w stronę rozwiązań bardziej nisko poziomowych. Dobrze, aby aplikacja umożliwiała pewien sposób na osiągnięcie tego celu bez zaburzania reszty konstrukcji.</p>
+
+<p>Jednym z możliwych kompromisów jest wielopoziomowy caching. Zamiast przebijać sie przez kolejne płaszczyzny abstrakcji w celu możliwości operowania na bardziej niskopoziomowych mechanizmach, cache'ujemy uzykiwane wartości na poszczególnych warstwach. Wielopoziomowy cache umożliwia też przyrostowe skalowanie wydajności w zależności od potrzeb.</p>
+
+<h2>5. Kradnij&hellip;</h2>
+
+<p>&hellip; moc obliczeniową maszyn klienta. Jest to bardzo dobre podejście, ponieważ wykonywanie części logiki po stronie przeglądarki nie dość, że odciąża serwery, za które musimy płacić, to dodatkowo stanowi rozwiązanie o wiele bardziej skalowalne, ponieważ ogólna ilość dostępnej mocy obliczeniowej rośnie wraz z liczbą maszyn wysyłających żądania na serwer. Stąd też część obliczeń, takich jak renderowanie dynamicznego HTMLa, czy preprocesowanie modelu danych od razu do postaci przystępnej do obliczeń po stronie serwera, można wykonywać bezpośrednio w przeglądarce.</p>
+
+<h2>6. Oszukuj</h2>
+
+<p>Co mam przez to na myśli? Po pierwsze powtarzam: cache'uj dane. W świecie aplikacji na platformie .NET często jest to opcja marginalizowana. W wielu przypadkach dopuszczalne jest, aby użytkownik zobaczył <em>przybliżone</em> dane. A co jeżeli nie są one aktualne? <em>Keep calm and oj tam oj tam</em> ;)</p>
+
+<p>Problem, z którym się też spotkałem, to stosowanie <em>prymitywych</em> cache'ów w miejscach, w których ciężko określić górną granicę przyrostu danych. Tak, zwykły .NETowy słownik może wystarczy w twoim środowisku developerskim, ale w momencie, gdy za rok dane pompowane do niego na produkcji będą liczone w setkach tysięcy (lub więcej) obiektów, wszyscy na własne oczy zobaczą, że wyprodukowałeś trabanta w cenie porsche. Technologie sprawdzone na polu walki, takie jak Memcache i Redis są tutaj, gotowe cię wesprzeć. Korzystaj z tej możliwości.</p>
+
+<p>Po drugie pamiętaj o złotej zasadzie &ndash; czego user nie dotknie, tego sercu nie żal. Przykład-anegdota: swego czasu aplikacje na urządzenia Apple były podawane jako wzór szybko uruchamiających się programów. Aplikacja, która na innych systemach uruchamiała się w kilka sekund, na iPhone była gotowa w ułamku tego czasu. Na czym polegał sekret? Otóż w rzeczywistości to, co widział użytkownik, było w rzeczywistości zrzutem ekranu z działającej aplikacji, bez jakichkolwiek możliwości interakcji. Dzięki temu użytkownik miał wrażenie, że aplikacja uruchamia się niemal natychmiast. W rzeczywistości, zanim wykonał on jakąkolwiek akcję w UI, mijało parę sekund, w trakcie których program miał czas, aby się załadować i podstawić pod &ldquo;zaślepkę&rdquo; faktyczny interfejs użytkownika.</p>
+
+<p>Liczę na to, że lektura ta okazała się ciekawa i być może uda mi się w przyszłości opisać dalsze koncepty i przemyślenia.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Parę słów o HTMLu i CSSie]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/"/>
+    <updated>2013-04-21T08:45:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie</id>
+    <content type="html"><![CDATA[<p>W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie codziennej pracy. Część z nich cieszy się już sporą popularnością w świecie web developerów innych środowisk, zaś w świecie .NET stawiają swoje pierwsze kroki.</p>
+
+<p>Zanim zacznę właściwą część postu, chcę wszystkim przypomnieć o <a href="http://visualstudiogallery.msdn.microsoft.com/6ed4c78f-a23e-49ad-b5fd-369af0c2107f">Web Essentials</a>. Jest to absolutny <em>must have</em> jeżeli chodzi o web development w VS2012. Wiele z feature'ów opisywanych przeze mnie dalej jest już wbudowanych w to rozszerzenie.</p>
+
+<h2>Zen Coding</h2>
+
+<p>Jeżeli chodzi o kwestie tworzenia szablonów dynamicznych stron HTML, możemy podzielić programistów na dwie grupy. Pierwsza z nich to szczęściarze, mogący budować szablonych za pomocą czytelnych, przejżystych notacji (np. <a href="http://haml.info/">HAML</a> lub <a href="http://jade-lang.com/">Jade</a>). Druga (czyli reszta ;) ) to osoby zmuszane do osadzania dynamicznego kodu w otoczce pseudo-HTML. Z myślą o tej drugiej grupie powstał standard znany powszechnie jako Zen Coding. O co w nim chodzi? Załóżmy, że chcielibyśmy stworzyć kod HTML w następującej postaci:
+``` html</p>
+
+<div id="container">
+    <p>Menu</p>
+    <ul class="menu">
+        <li><a href=""></a></li>
+        <li><a href=""></a></li>
+        <li><a href=""></a></li>
+        <li><a href=""></a></li>
+        <li><a href=""></a></li>
+    </ul>
+</div>
+
+
+<p><code>
+Nie jestem chyba jedyną osobą, która uważa, że pisanie czegoś takiego z palca to strata czasu? Z pomocą ZenCoding możemy to uprościć do następującej postaci:
+</code></p>
+
+<h1>container>p{Menu}+ul.menu>(li>a)*5</h1>
+
+<p>```
+W przypadku Web Essentials dla VS2012 jedyne co musimy zrobić, to umieścić takie wyrażenie w nowej linii oraz nacisnąć Tab (natychmiast po końcu wyrażenia bez spacji), aby wygenerować wynikowy HTML.</p>
+
+<h2>Prekompilowany CSS</h2>
+
+<p>Do niedawna była to jeszcze nowinka. Jednakże zalety notacji takich jak <a href="http://lesscss.org/">LESS</a> czy <a href="http://sass-lang.com/">SASS</a> szybko zapewniły im właściwe miejsce. Zastanówmy się, dlaczego warto z nich korzystać?</p>
+
+<ul>
+<li>Przyswajalność &ndash; że nauka nowej notacji zajmuje kilka godzin/dni.</li>
+<li>Usunięcie powtarzalności kodu &ndash; stosując zmienne, wartości wyliczane oraz zagłębione style, mozemy osiągnąć nasz cel szybciej oraz bez konieczności kopiowania tych samych linijek. W dodatku powstały w ten sposób kod jest bardziej podatny na zmiany niż jego statyczny odpowiednik.</li>
+<li>Hierarchizacja &ndash; stosowanie importów jest kolejnym krokiem usuwajacym powtarzalny kod, jak również umożliwia podział kodu CSS na konkretne jednostki odpowiedzialności. Pozwala również w pewnym stopniu usunąć konieczność łączenia plików CSS za pomocą bundlerów.</li>
+<li>Rozmiar &ndash; narzędzia takie jak Web Essentials automatycznie kompilują pliki .less do kodu CSS podczas zapisu zmian w pliku. Dodatkowo są w stanie skompilować je osobno do postaci z wcięciami (czytelnej dla developera) oraz zminimalizowanej (pozbawionej białych znaków) &ndash; doskonałej do zastosowania w środowisku produkcyjnym.</li>
+</ul>
+
+
+<p>W skrócie pozwala nam wprowadzić odrobinę porządku i organizacji w dziedzinę, która do tej pory jest powszechnie uważana za żmudną, powtarzalną i chaotyczną.</p>
+
+<h2>Palety barw</h2>
+
+<p>Nie ma co ukrywać. Programista nie jest artystą-grafikiem i nie powinno się oczekiwać od niego estetyki i twórczości na poziomie zawodowego designera. Czasem jednak okazuje się, że gotowy layout wykorzystywany na naszej stronie jest niewystarczający i musimy skombinować na szybko &ldquo;coś własnego&rdquo;, czy to w formie dodatkowego stylu czy motywu do odznaczenia części strony.</p>
+
+<p>W takim wypadku z pomocą przychodzi <a href="https://kuler.adobe.com/">Adobe Kuler</a>. Umożliwia on dostosowanie istniejącego lub zdefiniowanie własnego motywu kolorystycznego do wykorzystania na stronie zgodnie z powszechnymi regułami rządzącymi zasadami kompozycji barw.</p>
+
+<h2>CSS &ndash; czy wiesz z czego korzystasz?</h2>
+
+<p>Czy tworząc plik CSS zastanawialiście się, jak duża część opisanych przez was reguł faktycznie jest wykorzystywana na stronie? Chrome umożliwia sprawdzenie tego w dość prosty sposób. Wystarczy z poziomu Developer Tools uruchomić Audyt na zakładce o tej samej nazwie. Po kilku sekundach jesteśmy w stanie zauważyć coś w ten deseń:</p>
+
+<div class="separator" style="clear: both; text-align: center;"><a href="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s1600/chrome-devtool.jpg" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="150" src="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s320/chrome-devtool.jpg" width="320" /></a></div>
+
+
+<p>Jaki wynik osiągacie na swojej stronie? ;) Powiem szczerze, że wykorzystywanie około 40% dołączonych reguł można uznać za wysoki wynik.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Nowe technologie - tak czy nie?]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/02/19/nowe-technologie-tak-czy-nie/"/>
+    <updated>2013-02-19T18:54:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/02/19/nowe-technologie-tak-czy-nie</id>
+    <content type="html"><![CDATA[<p>Jedną z ciekawszych cech web developerki jest mnogość dostępnych na tym polu rozwiązań i technologii. Dlaczego uważam, że to dobrze? Poniekąd dlatego, że w ten sposób programista może przezwyciężyć spadek motywacji i nudę związaną z wykonywaniem kolejnego <em>wielkiego projektu w młodym, dynamicznym zespole</em>. Stwarza również pole do popisu i ciągłego rozwoju, pokazuje różne sposoby na zrobienie tego samego lepiej i szybciej.</p>
+
+<p>Niestety z punktu widzenia osób odpowiedzialnych za dostarczenie projektu klientowi nowa technologia w projekcie to nieprzewidywalna zmienna. Kierownik projektu otrzymując propozycję wykorzystania czegoś nowego musi wziąć pod uwagę wiele niewiadomych. Kilka z tych które wpadły mi do głowy to:</div><div><ul><li>Czy w ogóle tego potrzebujemy?</li><li>Czy jest to dobrze udokumentowane? O jak dojrzałym projekcie mówimy? Jak wygląda sprawa ze wsparciem ze strony społeczności, producenta etc.?</li><li>Czy twórca nie porzuci wsparcia dla bieżącej wersji zostawiając nas na lodzie?</li><li>Ile czasu zajmie teamowi przyswojenie tej technologii? A skoro już ją ma poznać, to czy będziemy mogli wykorzystać tą wiedzę w innych projektach?</li><li>Jak wykorzystanie tej technologii wpłynie na opóźnienie/przyspieszenie wykonania projektu na etapie startowym, głównym, czy końcowym?</li><li>Jak wpłynie to na wzrost/spadek końcowego kosztu projektu, koszt jego utrzymania i modernizacji?</li></ul><div>&nbsp; &nbsp; Każdy z tych czynników może pomóc w osiągnięciu końcowego efektu, stworzyć aplikację szybciej, poprawić jej wydajność, zwiększyć stopień modularności kodu, a przez to pomóc w jego późniejszym rozwoju. Z drugiej strony zastosowanie (lub nieumiejętne zastosowanie) danego frameworka może odbić się echem w każdej fazie życia projektu, tym głośniejszym im dłużej on będzie budowany, rozwijany i eksploatowany przez klienta.</p>
+
+<p>Nie znaczy to jednak, że powinniśmy się wystrzegać nowości. Wręcz przeciwnie. Jest to swego rodzaju inwestycja, która przy pewnym wkładzie (tzw. &ldquo;próg wejścia&rdquo;) nieraz procentuje w przyszłości. W jaki sposób dobierać jednak technologie, żeby w dalszej perspektywie czasu zwróciły się one w naszym projekcie? Postanowiłem spisać swoje spostrzeżenia na ten temat.</p>
+
+<h2>Nie za wiele na raz</h2>
+
+<p>Podchodząc do nowego projektu nie raz chciałoby się dać ponieść entuzjazmowi i zacząć go z całym stosem nowych bibliotek, czekających na poznanie. Problem pojawia się, jeżeli rzeczywiście przegniemy. Przypomina to wtedy ruszanie samochodem bezpośrednio z 5 biegu. Mija miesiąc, dwa, trzy, a mimo wysiłków całego teamu robota stoi w miejscu. W efekcie morale pada pysk. To właśnie efekt skumulowanego okresu wdrażania się w nowe technologie.</p>
+
+<p>Wdrażanie kolejnych nowości powinno wchodzić z rozwagą (najlepiej pojedynczo lub niewielkimi grupkami &ndash; wciąż możliwe jest dodawanie nowych rzeczy w trakcie rozwijania projektu), tak abyśmy nie stracili sprzed oczu ostatecznego celu naszej pracy. Prawda jest gorzka: u podstaw nie chodzi przecież o naszą naukę i samorozwój lecz o to, aby dostarczyć klientowi to czego potrzebuje.</p>
+
+<h2>Kiedy warto?</h2>
+
+<p>To dobre pytanie. Kiedy powinniśmy wprowadzać nowy framework do naszej domeny pracy? Opcji, które trzeba rozważyć jest wiele. Oprócz standardowych za i przeciw np. kwestie wydajnościowe, koszty eksploatacji czy przyspieszenie produkcji, uwzględniłbym również:</p>
+
+<ul>
+<li>&ldquo;Próg wejścia&rdquo; w nowy framework &ndash; jest to jedno z zasadniczych zagadnień do rozwiązania na samym starcie. Jeżeli próg jest mały, prawdopodobnie będziemy mogli szybko skończyć z nauką i przejść do właściwego wykorzystywania go w naszej aplikacji. Co jednak kiedy jest on duży? Tutaj warto wziąć pod uwagę kilka zmiennych:
+
+<ul>
+<li>Czas trwania projektu &ndash; jeżeli projekt będzie rozwijany latami, to nawet stosunkowo trudna w opanowaniu technologia nie wytworzy dużego długu czasowego.</li>
+<li>Częstotliwość zmian w zespole &ndash; jak wiadomo, zespół nie zawsze jest kwestią stałą i nieraz może się zdarzyć, że kolejni członkowie będą przychodzić i odchodzić, zanim na dobre wdrożą się w nowe technologie. Dotyczy to również późniejszego utrzymywania projektu. W takim wypadku długi okres nauki również działa na naszą niekorzyść.</li>
+<li>&ldquo;Reużywalność&rdquo; zdobytej wiedzy &ndash; czy poznana technologia będzie mogła być użyta później w innych projektach. Odpowiedź twierdząca pozwala to zredukować sprzeciw związany z argumentami zawartymi w poprzednim punkcie.</li>
+</ul>
+</li>
+<li>&ldquo;Próg wyjścia&rdquo; z aplikacji &ndash; fakt, że z sukcesem wprowadziliśmy nową bibliotekę do projektu to nie koniec naszych zmagań. Budowa aplikacji z reguły wiąże się z faktem, że wymagania klienta zmieniają się dynamicznie w czasie. Przypomina to grę w szachy, w której nie widzimy całej szachownicy. Z tego powodu rozważenie wszystkich działań na kilka ruchów do przodu może sprawiać problem. Może się okazać, że w zaawansowanym stadium prac nad projektem klient życzy sobie nowej funkcjonalności lub zmiany istniejącej w sposób, który jest poza możliwościami naszej wspaniałej, nowo dodanej biblioteki. Z tego powodu w lepszej pozycji stoją rozwiązania kompleksowe, pozwalające programiście na dodawanie własnych pluginów, modułów oraz udostępniające otwarty kod.</li>
+<li>Zaangażowanie zespołu- a więc czy ktoś w ogóle wykazuje chęci do poznania nowinek czy raczej woli trzymać się starych, znanych rozwiązań. Czy są chętni poznawać ją we własnym zakresie? Jest to głównie pytanie z kategorii: czy masz przyjemość pracować w <em>nerd teamie</em>? Trudno jest dodawać coś nowego, jeżeli będziesz jedyną osobą, która zamierza z tego korzystać.</li>
+<li>Popularność &ndash; jak wiadomo im lepiej opisany w Internecie jest dany framework, tym lepiej dla potencjalnego developera. Fakt, że dużo osób korzysta z danego rozwiązania zwiększa szanse, że w razie problemów będziemy mogli znaleźć na nie odpowiedź zanim sami będziemy musieli zadać pytanie.</li>
+<li>Wsparcie producenta &ndash; również support dla danej biblioteki ma tu znaczenie. W sytuacji kiedy nie znaleźliśmy rozwiązania sami, a na forach również nie ma nikogo kto do tej pory trafił na ten problem, pytanie do twórców jest ostatnią lub przed ostatnią (jeżeli mamy wgląd w kod źródłowy) rzeczą jaką możemy zrobić. Jak wiadomo w tej sytuacji najlepszy jest gwarantowany support (najczęściej płatny), niestety nawet on nie jest rzeczą pewną &ndash; przykład: swego czasu natrafiłem na błąd kontrolki DevExpressa, który mimo, że znany od 2009r. jest zgłoszony i opisany na oficjalnym forum wsparcia, do tej pory nie został rozwiązany.</li>
+</ul>
+
+
+<h2>Wnioski</h2>
+
+<p>Niestety kwestia inwestowania w nowe technologie to złożony problem. Mimo, że często jest to opłacalne ryzyko, to czasem jednak niefortunny wybór może okazać się prawdziwą miną, której zarówno project manager (jako bezpośrednio odpowiedzialny za koszta i terminy), jaki i programiści (jako ci, na których spłynie całe powstałe w ten sposób gówno) w razie wybuchu wolą uniknąć.</p>
+
+<p>Wyjściem pośrednim są tutaj oczywiście pet-projekty &ndash; aplikacje semi-testowe i takie, które nigdy nie wychodzą zasięgiem poza wewnętrzne systemy firmy, jednocześnie na tyle proste, aby służyć za pole treningowe dla programistów.</p>
+
+<p>Myślę, że głównym rozwiązaniem jest tutaj umiejętność dostrzegania potencjalnych korzyści, szacowania ryzyka jak również wzajemnego zrozumienia każdej ze stron nawzajem. W gruncie rzeczy jest to temat otwarty i mimo, że ostateczna decyzja z reguły zostaje w rękach pojedynczych osób, powinien on być rozwiązywany poprzez otwartą wymianę poglądów (nawet w postaci 5-cio minutowej konferencji przez Skype) wszystkich osób zaangażowanych w proces wytwarzania oprogramowania.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc/"/>
+    <updated>2013-01-12T22:32:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc</id>
+    <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
+
+<h2>1. Object-Relational Mapping</h2>
+
+<p>Na pierwszy ogień niech pójdą frameworki ORM. Jak nie ciężko się domyślić pod względem popularności triumfuje tutaj Entity Framework jako rozwiązanie promowane przez MS, zaś odrobinę z tyłu wydaje się być NHibernate. Jak to jednak wygląda, jeżeli wzięlibyśmy pod uwagę wydajność? Zaczynając od bardzo popularnego zestawienia <a href="http://ormeter.net/">ORM Battle</a>:</p>
+
+<ul>
+<li><a href="http://dataobjects.net/">DataObjects.NET</a> mogą poszczycić się najbardziej wydajną budową zapytań LINQ.</li>
+<li><a href="http://bltoolkit.net/">Business Logic Toolkit</a> jest stawiany jako zwycięzca w kwestii ogólnej wydajności (operacje CRUD itp.).
+-Pod względem zapytań LINQ wydajnosć <a href="http://nhforge.org/">NHibernate </a>jest skandaliczna &ndash; tutaj jednak należy się słowo wyjaśnienia, ponieważ framework ten posiada własny mechanizm generowania zapytań w locie (Criteria wraz z nakładką QueryOver), który oferuje znacznie lepszą wydajność oraz pozwala na więcej w stosunku do linq.</li>
+</ul>
+
+
+<p>Warto jednak zauważyć, że zestawienie to nie jest pełne, brakuje w nim powiem kilku ważnych bibliotek. Powołując się na kolejny benchmark wykonany przez <a href="http://servicestack.net/benchmarks/">ServiceStack</a> (ta nazwa powtórzy się tutaj jeszcze przy kilku okazjach), wysnuć można kilka innych wniosków:</p>
+
+<ul>
+<li>Narzut nakładany przez Entity Framework może wydłużyć czas wykonania zapytania nawet 13-krotnie! &ndash; (zakładam, że dla bardziej złożonych zapytań ta różnica zmniejsza się na korzyść EF) To ogromna przepaść nawet biorąc pod uwagę <a href="http://noamlewis.wordpress.com/2012/07/18/net-4-5-improves-orm-performance-across-the-chart/">usprawnienia</a> nałożone w .NET 4.5.</li>
+<li>Zwycięstwo wydajności należy do <a href="http://code.google.com/p/dapper-dot-net/">Dappera</a> &ndash; jest to microframework ORM stworzony przez Stackoverflow na potrzeby wysoko wydajnego dostępu do bazy danych, wykorzystywanego w tym serwisie. Tuż za nim znalazł się z kolei <a href="https://github.com/ServiceStack/ServiceStack.OrmLite">ServiceStack.OrmLite</a> (należy jednak pamiętać, że są oni autorami tego benchmarku).</li>
+</ul>
+
+
+<p>Na czym więc polega sukces i droga do szybkości? Myślę, że główną rolę odgrywa tutaj prostota &ndash; zarówno EF jak i NHibernate oferują rozbudowane interfejsy do budowy zapytań (LINQ i QueryOver), własne języki pośrednie (NHibernate &ndash; HQL, Entity Framework &ndash; ESQL), mechanizmy zarządzania obiektami itp. <strong>BLT</strong>, <strong>Dapper</strong> i <strong>OrmLite </strong>stosują tutaj proste operacje z wykorzystaniem standardowych zapytań SQL, odrzucając wyższe warstwy abstrakcji i trzymając się blisko podstawowych mechanizmów komunikacji z bazą danych. Dodatkowo microframeworki obarczają programistę koniecznością ręcznego zarządzania relacjami oraz synchronizacji stanu danych pomiędzy encjami i bazą. To z kolei przenosi dług wydajnościowy na kod napisany przez programistę.</p>
+
+<h2>2. Kontenery Inversion of Control</h2>
+
+<p><em>Dependency Injection</em> to już standard, mimo że wciąż nie jest to mechanizm domyślny w ASP.NET. Zapewnienie luźnych wiązań określane jest jako dobra praktyka zarówno w MVC jak i MVVM (stosowanym przez liczne frameworki stosowane również w aplikacjach desktopowych oraz na urządzenia mobline). Opierając się na kilku (<a href="http://www.palmmedia.de/blog/2011/8/30/ioc-container-benchmark-performance-comparison">1</a>, <a href="http://www.iocbattle.com/">2</a>, <a href="http://servicestack.net/benchmarks/#highcharts-8">3</a>, <a href="http://philipm.at/2011/0808/">4</a>) testach można podjąć się złożenia kilku wniosków:</p>
+
+<ol>
+<li><a href="http://www.ninject.org/">NInject</a> (który notabene jest całkiem popularnym rozwiązaniem) wydajnościowo jest jednym z najsłabszych i najwolniejszych kontenerów.</li>
+<li>Biblioteki promowane przez Microsoft &ndash; <a href="http://mef.codeplex.com/">MEF</a> oraz <a href="http://unity.codeplex.com/">Unity</a> &ndash; również nie prezentują porażającego poziomu. O ile Unity prezentuje się dość dobrze, to wciąż stanowi dość słabą konkurencję dla innych rozwiązań zawartych w zestawieniach.</li>
+<li>Mimo tego, że powyższe benchmarki nie zawsze się uzupełniają, po odrobinie przeszukiwania sieci można w zasadzie określić, że wśród zwycięzców wydajności znajdują się: <a href="http://docs.structuremap.net/">StructureMap</a> oraz <a href="http://funq.codeplex.com/">Funq</a> (który z tego co mi wiadomo nie jest obecnie wspierany, co idzie zdecydowanie na jego niekorzyść, jednak stanowi część frameworka <em>ServiceStack</em>, jest również dostępny w postaci open source).</li>
+</ol>
+
+
+<h2>3. Serializacja</h2>
+
+<p>Serializacja obiektów to dość szerokie zagadnienie, ponieważ możemy mieć na myśli różne formaty (xml, json czy dane binarne), zaś każdy z nich znajduje zastosowanie w innych sytuacjach i ma inną specyfikę. Opierając się na różnych źródłach (<a href="http://www.servicestack.net/benchmarks/NorthwindDatabaseRowsSerialization.100000-times.2010-08-17.html">1</a>, <a href="http://servicestack.net/benchmarks/#highcharts-6">2</a>), można pokusić się o kilka stwierdzeń:</p>
+
+<ul>
+<li>Jeżeli chodzi o rozmiar zajmowany przez serializowane obiekty, najwydajniejszym rozwiązaniem wydawać by się mogła serializacja binarna. Jest to prosty i dość logiczny wniosek, jednak okazuje się, że na tym polu również istnieje pewna konkurencja (m.in ze strony formatu json), zaś wbudowane w .NET formatery i serializatory wcale nie są najwydajniejszym, co platforma ta może zaoferować.</li>
+<li>Palma pierwszeństwa należy się <a href="https://developers.google.com/protocol-buffers/">Protocol Buffers</a> (protokół wymyślony przez Google oraz stosowany do komunikacji pomiędzy wewnętrznymi usługami giganta z Mountain View) oraz ich .NET-owym bindingom: totalne zwycięstwo zarówno pod względem rozmiaru serializowanego obiektu, jak i czasie serializacji/deserializacji. Biblioteka ta, ma jeszcze jedną przewagę &ndash; mimo, że wyjściowym formatem jest format binarny to w przeciwieństwie do domyślnych rozwiązań .NET protokół ten nie jest powiązany z jedną platformą i może służyć do komunikacji z usługami napisanymi w innych językach programowania.</li>
+<li>W kwestii serializacji JSON:
+
+<ul>
+<li>Serializery wbudowane we framework .NET należą do najwolniejszych rozwiązań dostępnych na rynku &ndash; jest to tym bardziej przykre, że stanowią one domyślną metodę serializacji zawartą w kontrolerach ASP MVC.</li>
+<li><a href="http://james.newtonking.com/projects/json-net.aspx">JSON.NET</a> (najpopularniejsza alternatywa dla wbudowanych serializatorów, używana m.in. w najnowszym WebAPI) mimo, że o jest wiele lepszy standardowych rozwiązań, również nie poraża swoimi osiągami</li>
+<li>Zwycięzcą pozostaje <a href="http://www.servicestack.net/docs/text-serializers/json-serializer">ServiceStack</a> (ponownie ;) ). 2-3x większa szybkość niż konkurencyjny Json.NET i jeszcze większa przewaga nad rozwiązaniami domyślnymi.</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>4. Client-side MVC/MVVM</h2>
+
+<p>W <a href="http://horusiath.blogspot.com/2012/06/krotki-przeglad-po-frameworkach-mvc-w.html">jednym z poprzednich wpisów</a> opisałem kilka popularnych frameworków javascriptowych stosowanych do prezentacji i zarządzania logiką po stronie przeglądarki. Ocena możliwości i szybkości tych platform należy do szczególnie trudnych. W internecie da się znaleźć kilka stron pozwalających na przyjżenie się bliżej i ocenieni wydajności na własne oczy (polecam <a href="http://stackoverflow.com/questions/12955337/angular-js-backbone-js-and-other-mv-patterned-js-libraries">ten wpis</a>).</p>
+
+<ul>
+<li><a href="http://backbonejs.org/">Backbone</a> jest wydajny, jednak należy tu wziąć pod uwagę fakt, że nie zapewnia żadnego typu bindingu między widokiem a modelem, w dodatku wymaga od użytkownika ręcznego manipulowania drzewem DOM &ndash; to z kolei stawia go w innej klasie problemów i w zasadzie ciężko go porównywać z frameworkami umożliwiającymi wiązania danych.</li>
+<li>Generalnie rzecz biorąc <a href="http://angularjs.org/">AngularJS</a> ma lepszą wydajność do <a href="http://knockoutjs.com/">Knockouta</a>. Jednak ta tendencja zmienia się wraz ze wzrostem liczy wiązań tzn. im większa tym bardziej Knockout wysuwa się na prowadzenie. W tym wypadku jednak duży wpływ na wynik końcowy ma sama budowa kontrolerów w AngularJS (dla lepszej wydajności powinny być one małe i nie zawierać zbyt dużej ilości powiązań ani skomplikowanej logiki obliczeniowej, która powinna być wykonywana osobno przez mechanizm serwisów dostępny we frameworku).</li>
+</ul>
+
+
+<h2>5. Templating Engines</h2>
+
+<p>Dużą różnicę robi również wykorzystanie silników do generowania szablonów stron WWW (od kiedy większość ze stron generowana jest w sposób dynamiczny). Tutaj jednak rozbijemy problem na 2 części:</p>
+
+<ol>
+<li>Silniki po stronie serwera &ndash; Na stackoverflow można znaleźć <a href="http://stackoverflow.com/questions/1451319/asp-net-mvc-view-engine-comparison">wątek</a>, który przedstawia krótką charakterystykę około 12 różnych silników wykorzystywanych do generowania stron po stronie serwera. Niestety, nie udało mi się znaleźć podobnego zestawienia jeżeli chodzi o kwestie wydajnościowe. Zamiast tego postaram się przedstawić kilka dobrych rad dotyczących kwestii wydajnościowych dotyczących dwóch domyślnych silników .NET, Aspx i Razor:
+
+<ul>
+<li>W większości przypadków Aspx działa lepiej niż porównywalny kod w Razorze (zwłaszcza w porównianiu z pierwszą wersją) &ndash; różnica ta wynosi przeważnie od 50% do 12% na korzyść aspx. Tutaj jednak wiele zależy od zmiany ustawień domyślnych, cacheowania elementów strony itp.</li>
+<li>W przypadku kiedy nie wykorzystujesz obu tych silników, usuń ten którego nie używasz. W wielu przypadkach przyspiesza to działanie aplikacji, m.in. przez to, że w prosty sposób skraca ilość przeszukiwanych szablonów w katalogu <em>Views</em> aplikacji MVC o połowę.</li>
+<li>Porada dotycząca ViewState (WebForms) &ndash; nie potrzebujesz mechanizmu ViewState na stronie? Wyłącz go. Potrzebujesz go? Zastanów się czy na pewno, zrób obejście, a potem go wyłącz. Serio. Mechanizm ten jest powszechnie uznawany za jedno z największych nieporozumień w świecie aplikacji webowych.</li>
+</ul>
+</li>
+<li>Silniki po stronie klienta &ndash; Budowa pełnego stosu MVC po stronie klienta nie jest jedynym sposobem na budowę dobrze zorganizowanego mechanizmu zarządzania widokami. W wielu przypadkach możliwe jest wykorzystanie prostego silnika wykorzystującego szablony do generowania widoków w bezpośrednio przez przeglądarkę. Mechanizm tak stosowany jest m.in. przez LinkedIn, jak również Twittera, który udostępnił swój silnik <a href="http://twitter.github.com/hogan.js/">Hogan.js</a> jako projekt open source. Dobry test wydajności rozmaitych silników zaprezentowano na <a href="http://jsperf.com/dom-vs-innerhtml-based-templating/112">tej stronie</a>.</li>
+</ol>
+
+
+<p>W większości takich porównań korona wydajności należy do <a href="http://olado.github.com/doT/index.html">doT.js</a>. Jedną z przyjemnych rzeczy w tej bibliotece, jest możliwość określania, które elementy szablonu będą generowane w czasie kompilacji (po wykonaniu kompilacji generowana jest funkcja kompilatora generująca wynikowy html na podstawie modelu przekazanego jako parametr &ndash; funkcja ta może być cache'owana), a które z nich będą wykonywane w runtime.</p>
+
+<h2>Podsumowanie</h2>
+
+<p>Po analizie dostępnych rozwiązań to co najbardziej mnie uderzyło, to fakt jak wiele z najpopularniejszych bibliotek prezentuje się zaskakująco żenująco w testach dotyczących wydajności. Za swoje małe odkrycie mogę uznać z kolei stos zaoferowany przez ServiceStack, dla których wydajność wydaje się priorytetem w każdej kategorii, w której podjęli się konkurować. Niestety nie miałem do tej pory dużo do czynienia z tym frameworkiem, co jednak bardzo przypadło mi do gustu, to fakt że jest to rozwiązanie kompletne, oferujące możliwość kompletnego zastąpienia każdego modułu w tradycyjnym stosie ASP.NET MVC/WCF/EntityFramework swoim własnym, spójnym zbiorem bibliotek. Do tego w całości działającym pod Mono na Linuxie.</p>
+]]></content>
+  </entry>
+  
+</feed>

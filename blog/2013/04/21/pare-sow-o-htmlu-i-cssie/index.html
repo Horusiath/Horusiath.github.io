@@ -1,0 +1,346 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Parę słów o HTMLu i CSSie - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Parę Słów O HTMLu I CSSie</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-21T08:45:00+02:00" pubdate data-updated="true">Apr 21<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie codziennej pracy. Część z nich cieszy się już sporą popularnością w świecie web developerów innych środowisk, zaś w świecie .NET stawiają swoje pierwsze kroki.</p>
+
+<p>Zanim zacznę właściwą część postu, chcę wszystkim przypomnieć o <a href="http://visualstudiogallery.msdn.microsoft.com/6ed4c78f-a23e-49ad-b5fd-369af0c2107f">Web Essentials</a>. Jest to absolutny <em>must have</em> jeżeli chodzi o web development w VS2012. Wiele z feature&#8217;ów opisywanych przeze mnie dalej jest już wbudowanych w to rozszerzenie.</p>
+
+<h2>Zen Coding</h2>
+
+<p>Jeżeli chodzi o kwestie tworzenia szablonów dynamicznych stron HTML, możemy podzielić programistów na dwie grupy. Pierwsza z nich to szczęściarze, mogący budować szablonych za pomocą czytelnych, przejżystych notacji (np. <a href="http://haml.info/">HAML</a> lub <a href="http://jade-lang.com/">Jade</a>). Druga (czyli reszta ;) ) to osoby zmuszane do osadzania dynamicznego kodu w otoczce pseudo-HTML. Z myślą o tej drugiej grupie powstał standard znany powszechnie jako Zen Coding. O co w nim chodzi? Załóżmy, że chcielibyśmy stworzyć kod HTML w następującej postaci:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;container&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;p&gt;</span>Menu<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;menu&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Nie jestem chyba jedyną osobą, która uważa, że pisanie czegoś takiego z palca to strata czasu? Z pomocą ZenCoding możemy to uprościć do następującej postaci:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>#container&gt;p{Menu}+ul.menu&gt;(li&gt;a)*5
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W przypadku Web Essentials dla VS2012 jedyne co musimy zrobić, to umieścić takie wyrażenie w nowej linii oraz nacisnąć Tab (natychmiast po końcu wyrażenia bez spacji), aby wygenerować wynikowy HTML.</p>
+
+<h2>Prekompilowany CSS</h2>
+
+<p>Do niedawna była to jeszcze nowinka. Jednakże zalety notacji takich jak <a href="http://lesscss.org/">LESS</a> czy <a href="http://sass-lang.com/">SASS</a> szybko zapewniły im właściwe miejsce. Zastanówmy się, dlaczego warto z nich korzystać?</p>
+
+<ul>
+<li>Przyswajalność &ndash; że nauka nowej notacji zajmuje kilka godzin/dni.</li>
+<li>Usunięcie powtarzalności kodu &ndash; stosując zmienne, wartości wyliczane oraz zagłębione style, mozemy osiągnąć nasz cel szybciej oraz bez konieczności kopiowania tych samych linijek. W dodatku powstały w ten sposób kod jest bardziej podatny na zmiany niż jego statyczny odpowiednik.</li>
+<li>Hierarchizacja &ndash; stosowanie importów jest kolejnym krokiem usuwajacym powtarzalny kod, jak również umożliwia podział kodu CSS na konkretne jednostki odpowiedzialności. Pozwala również w pewnym stopniu usunąć konieczność łączenia plików CSS za pomocą bundlerów.</li>
+<li>Rozmiar &ndash; narzędzia takie jak Web Essentials automatycznie kompilują pliki .less do kodu CSS podczas zapisu zmian w pliku. Dodatkowo są w stanie skompilować je osobno do postaci z wcięciami (czytelnej dla developera) oraz zminimalizowanej (pozbawionej białych znaków) &ndash; doskonałej do zastosowania w środowisku produkcyjnym.</li>
+</ul>
+
+
+<p>W skrócie pozwala nam wprowadzić odrobinę porządku i organizacji w dziedzinę, która do tej pory jest powszechnie uważana za żmudną, powtarzalną i chaotyczną.</p>
+
+<h2>Palety barw</h2>
+
+<p>Nie ma co ukrywać. Programista nie jest artystą-grafikiem i nie powinno się oczekiwać od niego estetyki i twórczości na poziomie zawodowego designera. Czasem jednak okazuje się, że gotowy layout wykorzystywany na naszej stronie jest niewystarczający i musimy skombinować na szybko &ldquo;coś własnego&rdquo;, czy to w formie dodatkowego stylu czy motywu do odznaczenia części strony.</p>
+
+<p>W takim wypadku z pomocą przychodzi <a href="https://kuler.adobe.com/">Adobe Kuler</a>. Umożliwia on dostosowanie istniejącego lub zdefiniowanie własnego motywu kolorystycznego do wykorzystania na stronie zgodnie z powszechnymi regułami rządzącymi zasadami kompozycji barw.</p>
+
+<h2>CSS &ndash; czy wiesz z czego korzystasz?</h2>
+
+<p>Czy tworząc plik CSS zastanawialiście się, jak duża część opisanych przez was reguł faktycznie jest wykorzystywana na stronie? Chrome umożliwia sprawdzenie tego w dość prosty sposób. Wystarczy z poziomu Developer Tools uruchomić Audyt na zakładce o tej samej nazwie. Po kilku sekundach jesteśmy w stanie zauważyć coś w ten deseń:</p>
+
+<div class="separator" style="clear: both; text-align: center;"><a href="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s1600/chrome-devtool.jpg" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="150" src="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s320/chrome-devtool.jpg" width="320" /></a></div>
+
+
+<p>Jaki wynik osiągacie na swojej stronie? ;) Powiem szczerze, że wykorzystywanie około 40% dołączonych reguł można uznać za wysoki wynik.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-21T08:45:00+02:00" pubdate data-updated="true">Apr 21<span>st</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/free-talk/'>free talk</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/03/20/niska-wydajnosc-rubyego-studium/" title="Previous Post: Niska wydajność Ruby'ego - studium porównawcze">&laquo; Niska wydajność Ruby'ego - studium porównawcze</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/" title="Next Post: O redundancji w wyrażeniach LINQ">O redundancji w wyrażeniach LINQ &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,404 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>[Javascript] Jak przetworzyć query string? - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="W środowisku programowania po stronie klienta nieraz zdarza się nam konieczność wydobycia informacji przekazywanych poprzez query string. Niestety &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2011/11/17/javascript-jak-przetworzyc-query-string">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">[Javascript] Jak Przetworzyć Query String?</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-17T20:57:00+01:00" pubdate data-updated="true">Nov 17<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>W środowisku programowania po stronie klienta nieraz zdarza się nam konieczność wydobycia informacji przekazywanych poprzez query string. Niestety rzadko kiedy taki czysty, nieprzetworzony ciąg znaków do czegokolwiek nam się przydaje. Tutaj z pomocą przychodzą różne pluginy (przykładem niech będzie <a href="https://github.com/cowboy/jquery-urlinternal">jquery urlinternal</a>). Jednakże nie zawsze musimy wytaczać przysłowiowe działo na komara i może sie okazać, że rozwiązanie naszych problemów może stanowić krótki kawałek kodu.</p>
+
+<p>Przedstawmy więc jak taki kod mógłby wyglądać. W wersji podstawowej przedstawmy proste pobieranie par klucz-wartość i umieszczanie ich w postaci obiektu JSON:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">querystring</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">raw</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">search</span><span class="p">;</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">parts</span> <span class="o">=</span> <span class="nx">raw</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">);</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="s1">&#39;{&#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">parts</span><span class="p">){</span>
+</span><span class='line'>            <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nx">parts</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">);</span>
+</span><span class='line'>            <span class="kd">var</span> <span class="nx">num</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">||</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+</span><span class='line'>            <span class="nx">result</span> <span class="o">+=</span> <span class="s1">&#39;&quot;&#39;</span><span class="o">+</span> <span class="nx">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot; : &#39;</span><span class="p">;</span>
+</span><span class='line'>            <span class="nx">result</span> <span class="o">+=</span> <span class="p">(</span><span class="nx">num</span> <span class="o">||</span> <span class="nx">num</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">num</span> <span class="o">:</span> <span class="s1">&#39;&quot;&#39;</span><span class="o">+</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot;&#39;</span><span class="p">;</span>
+</span><span class='line'>            <span class="k">if</span><span class="p">(</span><span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">parts</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>                <span class="nx">result</span><span class="o">+=</span><span class="s1">&#39;, &#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="nx">result</span><span class="o">+=</span><span class="s1">&#39;}&#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">json</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nx">json</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Rozjaśnijmy nieco obraz sytuacji:</p>
+
+<ul>
+<li>linijka 3 &ndash; ponieważ window.location.search zaczyna querystring od znaku &lsquo;?&rsquo;, omijamy 1 znak, a resztę tniemy po znakach rodzielających kolejne pary klucz-wartość.</li>
+<li>linijka 6 &ndash; każdą parę dzielimy osobno na klucz (index 0) i wartość (index1)</li>
+<li>linijka 7 &ndash; sprawdzamy czy wartość jest liczbą. Robimy to najpierw próbując parsować ją do liczby całkowitej (<strong>Int</strong>), a w przypadku gdy to się nie powiedzie do liczby zmiennoprzecinkowej (<strong>Float</strong>). Jeżeli parsowana wartość nie jest liczbą funkcje parsujące zwracają stałą <strong>NaN</strong> (not a number), której logiczna wartość wynosi <strong>false</strong>.</li>
+<li>linijka 9 &ndash; sprawdzamy czy sparsowana przez nas wartość jest liczbą, jeżeli tak &ndash; dodajemy ją do ciągu bez zmian, w przeciwnym razie doklejamy ją, uprzednio otaczając cudzysłowem (&ldquo;&rdquo;). W ten sposób będzie ona domyślnie odczytywana jako string.</li>
+<li>linijka 10 &ndash; sprawdzamy, czy nasza para nie jest ostatnia &ndash; jeżeli jest, pomijamy ten krok, w przeciwnym razie dodajemy przycinek.</li>
+<li>Ponieważ całość wyrażenia jest ręcznie składana do stringa, na koniec wywołujemy metodę JSON.parse, aby konwertować nasz string do prawdziwego obiektu JSON. Uwaga: starsze przeglądarki mogą nie oferować dostępu do obiektu JSON.</li>
+</ul>
+
+
+<p>Warto zauważyć, że funkcja ta nie wymaga dołączania biblioteki jQuery. Teraz możemy swobodnie pobierać wartości zapisane w query stringu, wykorzystując prosty dostęp do właściwości obiektu javascriptowego:</p>
+
+<ol>
+<li>W przypadku standardowych nazw klucza, można stosować konwencję: json.key</li>
+<li>W momencie gdy klucz zbudowany był z niedozwolonych dla właściwości znaków (np. &ndash;, +, / itp.) możemy potraktować obiekt jak słownik: json[&ldquo;other-key-property&rdquo;]</li>
+</ol>
+
+
+<p>Co ważne, do utworzonego przez nas obiektu możemy dopisywać własne pary klucz-wartość wykorzystując standardową konwencję: <code>json.newkey = &ldquo;new value&rdquo;</code> oraz <code>json[&ldquo;new key&rdquo;] = number</code>.</p>
+
+<h2>Rozszerzanie możliwości</h2>
+
+<h3>Iterowanie po kluczach i wartościach</h3>
+
+<p>Czasami zdarza sie konieczność wydobycia wszystkich kluczy lub wartości należących do danego przetworzonego przez nas obiektu querystring. W tym celu możemy dodać do naszego obiektu JSON następującą funkcję (cały czas przyjmujemy że <strong>json</strong> to nazwa zmiennej przechowującej obiekt zwrócony nam przez przedstawioną powyżej funkcję <code>querystring()</code>):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">json</span><span class="p">.</span><span class="nx">values</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="p">[];</span>
+</span><span class='line'>    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">json</span><span class="p">){</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="nx">json</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span>
+</span><span class='line'>           <span class="o">&amp;&amp;</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">!=</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
+</span><span class='line'>             <span class="c1">// tak przekazujemy wartość właściwości</span>
+</span><span class='line'>             <span class="nx">res</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+</span><span class='line'>             <span class="c1">// a tak nazwę klucza</span>
+</span><span class='line'>             <span class="nx">res</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">res</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W tym wypadku wykorzystujemy pętlę for do iterowania po wszystkich elementach składowych obiektu, dodatkowo filtrując je poprzez wykorzystanie wbudowanej funkcji hasOwnProperty w celu rozpoznania, czy dana składowa jest rzeczywiście dodaną przez nas właściwością, a następnie sprawdzając jednocześnie czy nie jest funkcją (ponieważ docelowo query string służy tylko przenoszeniu wartości).</p>
+
+<h3>Powtórne przetworzenie do postaci querystring</h3>
+
+<p>W momencie, gdy nasze operacje na słowniku/obiekcie querystring dojdą końca możemy chcieć przetworzyć go spowrotem do wartości początkowej, np. w celu ponownego umieszczenia go w adresie okna. Funkcjonalność tą możemy zrealizować poprzez następującą metodę:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">json</span><span class="p">.</span><span class="nx">toQuery</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">json</span><span class="p">){</span>
+</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="nx">json</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span>
+</span><span class='line'>              <span class="o">&amp;&amp;</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">!=</span> <span class="s1">&#39;function&#39;</span><span class="p">)</span>
+</span><span class='line'>                <span class="nx">res</span><span class="o">+=</span> <span class="nx">i</span><span class="o">+</span><span class="s1">&#39;=&#39;</span><span class="o">+</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&amp;&#39;</span><span class="p">;</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">res</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wykorzystując stworzoną poprzednio pętlę umożliwiającą iterację po właściwościach obiektu JSON dokonujemy sklejenia par klucz-wartość do jednolitej postaci stringa, który zbudowany jest tak samo jak bazowy query string wyciągany z naszej przeglądarki.</p>
+
+<p>Notka dla osób korzystających z map routingu: jak można się domyślić powyższy przykład działa jedynie wtedy, gdy przekazywany przez nas query string zbudowany jest w standardowej konwencji. Z tego powodu wszelkie wartości przekazywane na potrzeby map routingu np. w konwencji <code>controller/action/parameter</code>nie zostaną przetworzone.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-17T20:57:00+01:00" pubdate data-updated="true">Nov 17<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2011/11/17/javascript-jak-przetworzyc-query-string/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2011/11/17/javascript-jak-przetworzyc-query-string/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/11/02/ajax-post-tablicy-do-akcji/" title="Previous Post: [Ajax] Post tablicy do akcji">&laquo; [Ajax] Post tablicy do akcji</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/" title="Next Post: [WCF] Wydobywanie wiadomości w postaci SOAP po stronie klienta">[WCF] Wydobywanie wiadomości w postaci SOAP po stronie klienta &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

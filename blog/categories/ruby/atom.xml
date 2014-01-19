@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Czego programiści .NET mogliby nauczyć się od Rubystów?]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/"/>
+    <updated>2013-06-16T12:28:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc</id>
+    <content type="html"><![CDATA[<p>.NET był wybraną przeze mnie technologią niemal od początku mojej przygody z programowaniem. Uważam jednak, że programista nie powinien się zamykać w jednej szyfladce i poznawać szerokie spectrum technologii. Porównywać je i znać wady oraz zalety każdej z nich. Ostatecznie zaś umieć dobrać właściwą technologię do rozwiązania napotykanych problemów &ndash; nie odwrotnie ;)</p>
+
+<p>Stąd też pytanie w temacie. Czy faktycznie programiści .NET mogą nauczyć się czegoś ze środowiska Ruby, języka, który ostatnimi czasy zbiera niemało batów (głównie związanych z wydajnością oraz bezpieczeństwem jego najpopularniejszej platformy, RoRa)? Otóż jak się okazuje całkiem sporo, nawet pomimo już istniejącego trendu absorbowania do platformy .NET sporej ilości rozwiązań napotykanych w konkurencyjnych gałęziach. Poniżej postaram się wymienić te, które moim zdaniem są warte odnotowania.</p>
+
+<h2>1. Przestań polegać na swoim IDE</h2>
+
+<p>Nie da się tego ukryć &ndash; Visual Studio jest jednym z najlepszych, o ile nie najlepszym IDE, z jakim programista może mieć obecnie przyjemność pracować. Ma to jednak pewną cenę. W pewnym momencie zaczynamy polegać na swoim IDE w stopniu większym, niż na własnych umiejętnościach. Co gorsza przenosi się to bezpośrednio na tworzone biblioteki (przykład&hellip; Entity Framework &ndash; czy ktoś próbował kiedyś stworzyć model edmx bez pomocy wizarda wbudowanego w Visual Studio?). Jeżeli nie możesz sprawnie korzystać z biblioteki bez wsparcia swojego IDE, oznacza to, że jest ona zbyt skomplikowana i najzwyczajniej w świecie zepsuta.</p>
+
+<p>W przypadku Ruby'ego, narzędzie pracy jest kwestią gustu. Jednakże kiedy pierwszy raz przyszło mi pracować z teamem RoR każde z nich w porównaniu do Visual Studio wygląda jak notatnik z kolorowaniem składni. Żadnego zaawansowanego refactoringu, intellisense, nawigacji między plikami w projekcie, generowania buildów. Co było w tym najzabawniejsze? Po 2 tygodniach wcale mi tego nie brakowało. Przysłowiowy notatnik + konsola całkowicie wystarczały do pracy, zaś narzędzia są skonstruowane tak, aby programista był sobie w stanie poradzić ze wszystkim zaraz po zainstalowaniu interpretera.</p>
+
+<h2>2. Debuger jest opcją, nie obowiązkiem</h2>
+
+<p>W świecie .NET jest to dziwna opinia. Wielu programistów wykorzystuje go jako normalne narzędzie pracy służące sprawdzeniu, czy aplikacja działa poprawnie. Dodatkowo sam Visual Studio ułatwia takie podejście. Jako programista Ruby nigdy nie musiałem skorzystać z debuggera &ndash; prawdę mówiąc, nigdy go nie zainstalowałem. Nie oznacza to oczywiście, że kod napisany w Rubym jest zawsze właściwy. Wynika to z innego podejścia. W tym środowisku standardem jest pisanie unit testów do weryfikacji każdej bardziej złożonej części systemu. Dzięki temu testy w Rubym są domyślnym <strong>must have</strong> przy każdym projekcie.</p>
+
+<h2>3. Nie bój się eksperymentować</h2>
+
+<p>To co najbardziej spodobało mi się we współpracy z programistami Ruby, to otwartość na nowinki, chęć wypróbowania innych podejść. Wiąże się z tym pewne ryzyko, ale również określony zysk. Tutaj powstaje pewien problem &ndash; ryzyko w skostniałym świecie aplikacji biznesowych z reguły jest czymś nie do przyjęcia. Dodatkowym hamulcem jest tutaj fakt, że wielu starszych programistów ze środowiska .NET nieprzychylnie patrzy na rozwiązania open source (w końcu kogo wtedy pociągnąć do odpowiedzialności?) oraz ogólnie technologiom spoza kółka Microsoftu.</p>
+
+<p>Nie należy bać się zmian. Nawet jeżeli ryzyko jest nieakceptowalne w aplikacjach dla klientów zewnętrznych, wciąż możemy wprowadzać drobne zmiany dla systemów używanych wewnątrz firmy oraz wypróbowywać tam nowe podejścia. Z jednej strony może to przełożyć się na zysk w przyszłości, z drugiej działa to jak magnes na programistów-pasjonatów, a takich nigdy nie ma za wielu, prawda? ;)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Zapowiedź Ruby 2.1 - generational heap]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/"/>
+    <updated>2013-05-14T20:02:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/05/14/zapowiedz-ruby-21-generational-heap</id>
+    <content type="html"><![CDATA[<p>Nie minęło wiele czasu od wydania Ruby'ego w wersji 2.0, a już pojawiła się ciekawa nowinka &ndash; od wersji 2.1 MRI ma wspierać generacje na zarządzanej stercie. Była to dla mnie wiadomość o tyle ciekawsza, że do tej pory sądziłem, że nie jest to możliwe bez zerwania kompatybilności z niskopoziomowymi rozszerzeniami języka C, które znajdują się w niektórych bibliotekach &ndash; tymczasem zapewniono, że żadna tego typu sytuacja nie będzie mieć miejsca.</p>
+
+<h2>Generacje w Rubym (MRI)</h2>
+
+<p>Jak więc ma wyglądać nowy mechanizm GC? Do tej pory wiadomo niewiele, dlatego postaram się podzielić szczegółami, które udało mi się zebrać. Nowy garbage collector nosi nazwę <strong>RGenGC</strong> i domyślnie będzie dzielił stertę na dwie generacje &ndash; często odśmiecana przestrzeń niewielkiego rozmiaru dla obiektów krótkotrwałych (obiekty tworzone w zakresach lokalnych metod często kończą tu swój żywot) oraz przestrzeń obiektów długotrwałych, awansowanych z pierwszej generacji.</p>
+
+<p>Dotychczasowym problemem była konieczność zmiany adresów obiektów, związana z przenoszeniem obiektu pomiędzy generacjami. O ile MRI mogłoby śledzić takie &ldquo;ruchome&rdquo; instancje, o tyle rozszerzenia napisane w języku C nie są w stanie tego zrobić (wewnętrznie referencje na obiekty w Rubym są po prostu zwykłymi wskaźnikami). Jak rozwiązano ten problem? Postanowiono podzielić referencje na obiekty na dwie klasy:</p>
+
+<ul>
+<li>Lśniące (<em>shiny</em>) &ndash; obiekty z takimi referencjami mogą być swobodnie śledzone i przenoszone pomiędzy generacjami zarządzanej sterty.</li>
+<li>Ciemne (<em>shady</em>) &ndash; w momencie, kiedy jakiś obiekt zostanie wykorzystany z poziomu C, zostaje on przypisany do tej klasy. Obiekty tego typu nie mogą być przenoszone ani zebrane przez kolektor, dopóki są wykorzystywane przez kod niezarządzany.</li>
+</ul>
+
+
+<p>Przypomina to znane z innych środowisk mechanizmy współpracy pomiędzy kodem wysoko- i niskopoziomowym (w .NET takie &ldquo;nieprzenaszalne&rdquo; obiekty noszą nazwę <em>pinned objects</em>).</p>
+
+<p>Jaki ma to wpływ na wydajność? Dotychczas nie stworzono oficjalnych benchmarków, nieoficjalnie mówi się o kilku procentowej poprawie względem poprzedniego rozwiązania. Należy jednak pamiętać, że prace wciąż trwają i wiele może się jeszcze zmienić.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Niska wydajność Ruby'ego - studium porównawcze]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
+    <updated>2013-03-20T23:42:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
+    <content type="html"><![CDATA[<p>We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego dopasowania języka do zbioru metodyk i stosu technologicznego nastawionego na maksymalizację wydajności pracy programisty. Stanowią one &ldquo;wylęgarnię&rdquo; nowatorskich praktyk, które nieraz przenikają dalej i zostają zaadaptowane przez inne środowiska. Wystarczy podać kilka przykładów ze środowiska .NET: migracje w najnowszym EF4.3+, kierunek w jakim zmierza cały ASP.NET MVC czy dynamizacja języka C# &ndash; myśleliście, że idea stojąca za LINQ to nowatorski pomysł? ;) .</p>
+
+<p>Niestety za każym razem, kiedy mowa o Rubym, powracają kwestie jego wydajności. Jest to pięta achillesowa tego języka, powtarzana jak mantra w kolejnych dyskusjach programistów. Na czym jednak polegają te problemy? W tym postcie postaram się je opisać (w odniesieniu do najpopularniejszego kompilatora Ruby'ego &ndash; MRI) oraz opowiedzieć o rozwiązaniach, jakie zostały zaadaptowane w innych językach. Ponieważ moje obserwacje będę porównywał do innych implementacji, w tym Javy, C#, Pythona i różnych wirtualnych maszyn JavaScriptu, liczę że każdy będzie mógł wynieść z tego jakąś przydatną wiedzę.</p>
+
+<h2>Garbage Collector</h2>
+
+<p>Ten wątek musiał się tu pojawić, dlatego też postanowiłem zacząć właśnie od niego. Rozdział ten będzie dość trudny do przełknięcia dla osób, które z teorią stojącą za językami programowania nigdy nie miały do czynienia. Zanim przejdą one dalej, proponuję zaznajomić się z <a href="http://en.wikipedia.org/wiki/Garbage_collection_(computer_science">tym wpisem</a>) na Wikipedii.</p>
+
+<p>W dużym skrócie, Garbage collector w MRI wykorzystuje (podobnie jak wszystkie najpopularniejsze współcześnie maszyny wirtualne) algorytm <em>mark and sweep</em>. Jest to jednak pojęcie bardzo szerokie. Zagłębiając się w detale, dochodzimy do pewnych różnic.</p>
+
+<h3>Podział zarządzanego stosu</h3>
+
+<p>Większość programistów Javy i .NET zapewne kojarzy, że zarządzana sterta występująca w tych językach nie jest strukturą jednolitą, lecz jest podzielona na wiele przestrzeni (mowa tu o generacjach, ale nie tylko). I tak w przypadku .NET &ndash; na przykładzie SGena używanego w Mono, a świetnie opisanego <a href="http://www.mono-project.com/Generational_GC">tutaj</a> mamy do czynienia z podziałem sterty na kilka zbiorów:</p>
+
+<ul>
+<li><strong>Generacje</strong> &ndash; Zazwyczaj istnieją dwie lub więcej. Pierwszą jest <strong>żłobek</strong> (<em>nursery</em>). Ten zbiór jest relatywnie mały (domyślnie 4MB dla SGena, &frac12; pamięci cache L2 dla Pythona made by PyPy) i często czyszczony. Jest sprawny głównie ze względu na fakt, że większość obiektów przechowywanych na stercie ma stosunkowo krótki czas istnienia (np. zmienne lokalne funkcji/metod, które są niepotrzebne poza zakresem danej metody). Obiekty bardziej długowieczne przenoszone są na sterty kolejnych generacji. W rezultacie pamięć jest czyszczona częściej, jednak liczy się tutaj rozmiar przeszukiwanej pamięci (żłobek jest mały, przez co jego znakowanie i czyszczenie trwa bardzo krótko).</li>
+<li><strong>Przestrzeń dużych obiektów</strong> &ndash; ponieważ naprawdę duże obiekty są dość ciężkie do alokacji (znalezienie na stercie jednolitego bloku pamięci nie zajętego przez inne obiekty może być wyzwaniem), są one rozpatrywane osobno, zarówno na wirtualnych maszynach Javy jak i .NETu (tak w przypadku Mono jak i M$).</li>
+<li><strong>Łańcuchy znaków (string)</strong> &ndash; tekst jest również traktowany w specjalny sposób. Przykładowo wpisując w dwóch różnych miejscach w kodzie <em>&ldquo;ala ma kota&rdquo;</em> w praktyce definiujemy ten łańcuch znaków tylko raz, tworząc do niego dwie referencje. Ta zasada dotyczy zarówno Javy, .NETu, Pythona oraz najnowszych silników JavaScriptu. Ruby nie implementuje tej funkcjonalności &ndash; moim zdaniem na przeszkodzie stoi tutaj natura stringów w tym języku, które zgodnie ze specyfikacją mogą być mutowalne.</li>
+</ul>
+
+
+<p>Niestety w Rubym brakuje podziału sterty na generacje, przez co jest ona błyskawicznie zapychana obiektami o krótkim czasie życia, zaś &ldquo;sprzątnięcie&rdquo; całej sterty zajmuje sporo czasu. W chwili obecnej nie jest to możliwe, ponieważ GC w MRI nie implementuje przenoszenia obiektów wewnątrz sterty (dlaczego tak jest opowiem dalej).</p>
+
+<h3>Co znajduje się na stosie</h3>
+
+<p>W przypadku <strong>Javy</strong> sprawa podziału alokacji pomiędzy stos i stertę wygląda stosunkowo prosto: typy natywne i referencje na obiekty lądują na stosie, a reszta (obiekty klas) na stertę. W przypadku <strong>C#</strong> jest to trochę bardziej skomplikowane, ponieważ na stosie mogą wylądować również obiekty-struktury (<em>struct</em>) oraz obiekty utworzone za pomocą słowa kluczowego <strong>stackallock</strong>.</p>
+
+<p>Pomiędzy GC Javy (oraz javascriptowym V8) a Mono istnieje dodatkowa różnica: dwa pierwsze stosują tzw. precyzyjne wskaźniki, tzn. podczas przechodzenia po stosie przez marker (uruchamiany przez GC w pierwszej fazie pracy i służący oznaczeniu obiektów, które trzeba sprzątnąć) natrafiając na wartości od razu wie, czy są one wartościami czy referencjami na obiekty znajdujące się na stercie. Przykładowo maszyna wirtualna JavaScriptu z Chroma używa do tego specjalnego bitu określającego czy dana wartość jest referencją (stąd na V8 w wersji 32-bitowej liczby całkowite są wewnętrznie składowane jako wartości <em>31-bitowe</em>). Niestety SGen Mono musi za każdym razem sprawdzić (a w razie wątpliwości założyć z góry), czy taka wartość wskazuje adres na stercie.</p>
+
+<p>W przypadku Ruby'ego sprawa wygląda częściowo prościej: w tym języku nie istnieją typy wartościowe, zatem wszystkie wartości (w tym liczby oraz flagi logiczne) są reprezentowane przez obiekty składowane na zarządzanej stercie. To sprawia, że czas dostępu do nich jest dłuższy.</p>
+
+<p>Inna niespodzianka, jaką szykuje nam Ruby, sięga jeszcze dalej. Interpreter MRI (do nadejścia wersji 1.9) konstruował kod Ruby'ego przez pośrednią translację do <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">drzewa AST</a>. Jednakże chcąc zapewnić programistom &ldquo;pełnię władzy&rdquo; nad kodem, tak stworzone drzewo było składowane w postaci struktur Ruby'ego na jego zarządzanej stercie! Oznacza to, że cały aktualnie wykonywany kod jest reprezentowany przez faktycznie istniejące drzewo obiektów, zajmujące ogromną ilość pamięci.</p>
+
+<h3>Jak zarządzana jest sterta: .NET Mono</h3>
+
+<p>Kolejne zestawienie z Mono. Mówiąc dość ogólnie sterta jest podzielona na tak zwane bloki, one z kolei na sloty. Podczas oznaczania obiektów na stercie dzielimy je na 3 typy:</p>
+
+<ul>
+<li><strong>Root objects</strong> &ndash; są to obiekty, do których znaleziono referencje na stosie i które nie powinny zostać usunięte.</li>
+<li><strong>Garbage </strong>&ndash; a zatem obiekty-śmieci oraz puste przestrzenie, które mogą zostać realokowane pod nowe obiekty.</li>
+<li><strong>Pinned objects</strong> &ndash; specjalny rodzaj tzw. przypiętych obiektów. Są to obszary pamięci wyjęte spoza kontroli zarządzanej sterty, a więc np. struktury z języka C, na które mamy referencje z poziomu P/Invoke oraz obiekty przypięte ręcznie w zakresach <strong>unsafe</strong> (za pomocą słowa kluczowego <strong>fixed</strong>). W Mono do tej listy dochodzą również te adresy, które zostały znalezione na stosie, ale nie koniecznie wskazują na obiekty. Ze względów bezpieczeństwa takich obiektów nie można odśmiecać.</li>
+</ul>
+
+
+<p>Z punktu widzenia Garbage Collectora najbardziej upierdliwe są pinned objects. Dlaczego? Otóż w trakcie odśmiecania pamięci GC zostawia &ldquo;dziury&rdquo; pustych przestrzeni, które mogą posłużyć w przyszłości do zaalokowania nowych obiektów. Niestety te dziury powodują fragmentację pamięci. Co z tego, że mamy 10 luk po 100 bajtów, jeżeli potrzebujemy stworzyć obiekt rozmiaru 200B? Dlatego też GC w Mono został wyposażony w opcję realokacji obiektów &ndash; umożliwia to przesunięcie położenia obiektów w pamięci tak, aby złączyć luki powstałe po odśmiecaniu w 1 ciągły blok w pamięci.</p>
+
+<h3>Jak zarządzana jest sterta: Ruby</h3>
+
+<p>Z punktu widzenia MRI sterta również jest podzielona na komórki, które są reprezentowane w pamięci jako zwykłe struktury C (dokładna nazwa to <em>struct VALUE</em>).</p>
+
+<p>Ciekawostką jest sposób znajdowania pustych fragmentów na stercie służących pod przyszłe alokacje obiektów. Do wersji 2.0 (a więc we wszystkich obecnie używanych) mamy do czynienia ze strukturą przyjmującą postać linked listy. Szukając nieużywanych komórek musieliśmy przeglądać kolejne węzły z listy i sprawdzać ich zajętość &ndash; przeskakiwanie po pamięci oraz znalezienie odpowiednio dużego ciągłego bloku może być czasochłonne, sama lista również ma swój rozmiar. Od wersji 2.0 zamieniono ją inną strukturą &ndash; bitmapą. Od teraz za każdym razem, kiedy tworzona jest zarządzana sterta, część pamięci na jej początku zostaje zarezerwowana na potrzeby bitmapy. Określa ona w prosty sposób (ustawiając lub zerując kolejne bity w pamięci) zajętość kolejnych komórek VALUE. Przeszukiwanie takiej struktury jest o wiele szybsze, zajmuje ona też mniej miejsca w pamięci &ndash; ponieważ bloki RValue mają po 40 bajtów i wymagają 1 bitu do sygnalizacji łatwo wyliczyć, że ostateczna bitmapa zajmuje około 1/(40*8) = 1/320 rozmiaru całej sterty.</p>
+
+<p>Do czego sprowadza się największy (moim zdaniem) problem Ruby'ego? Otóż GC w MRI nie dysponuje opcją przenoszenia obiektów. Porównując do Mono wszystkie obiekty w Rubym traktowane są jako pinned object. Niesie to szereg następstw m.in. w przypadku konieczności alokacji dużego obiektu na stercie o mocno sfragmentowanej strukturze, może istnieć potrzeba rozszerzenia rozmiaru sterty (a zatem zwiększenia zużycia RAMu w całym programie) pomimo, że istnieje dostateczna ilość miejsca, aby taki obiekt zaalokować.</p>
+
+<p>Czy można zmienić GC w Rubym na taki, który zdolny jest przesuwać obiekty? Nie. Na drodze stoją tu referencje na obiekty, które wewnątrz są w rzeczywistości zwykłymi wskaźnikami na bloki pamięci bezpośrednio na stercie. Przesunięcie obiektu na stercie wiąże się ze zmianą jego adresu, ponieważ jednak nie wiemy ile referencji (których w algorytmie <em>mark&amp;sweep</em> nie zliczamy) należy powiadomić o nowej lokacji obiektu, taka operacja nie jest możliwa. Naturalnie można to zmienić (np. wprowadzić wskaźniki pośrednie), jednakże spowoduje to dysonans między dotychczasowymi implementacjami wtyczek z języka C montowanych do Ruby'ego i zniszczy jego kompatybilność wstecz. Niestety sądzę, że prędzej czy później ta decyzja musi zostać podjęta.</p>
+
+<h2>Klątwa języków dynamicznych</span></h2>
+
+<p>Kolejnym krokiem w zrozumieniu problemu niskiej wydajności jest poznanie natury &ndash; i ceny &ndash; towarzyszącej językom dynamicznym. Weźmy pod uwagę następujący przykład: załóżmy, że stworzyliśmy klasę w dowolnym języku statycznie typowanym (np. Java lub C#). Jej postać jest następująca:
+``` c#
+public class Point
+{</p>
+
+<pre><code>public int x;
+public int y;
+</code></pre>
+
+<p>}
+```
+Nie zagłębiając się zanadto w szczegóły jesteśmy w stanie stwierdzić, że wywołanie konstruktora powinno zaowocować stworzeniem w pamięci obiektu zajmującego 8 bajtów (2*sizeof(int)). Jak to wygląda w językach dynamicznie typowanych? Otóż w Rubym MRI, Pythonie oraz JavaScriptcie (w niektórych przypadkach) tworzony obiekt jest de facto nie zwykłym blokiem pamięci lecz strukturą budową bardziej przypominającą hash mapę/słownik, w którym każde pola reprezentowane jest przez string (js), hash (py) lub symbol reprezentowany w globalnej tablicy symboli (rb). Dotyczy to każdego pojedynczego obiektu. Wynika to w naturalny sposób z faktu, że tworząc obiekt danego typu, możemy go w dowolnej chwili rozszerzyć o nowe pola bez zmiany struktury obiektów o tej samej klasie. Czas dostępu do pól w takich obiektach jest bardzo duży, zaś same struktury są o wiele większe niż ich odpowiedniki w językach statycznie typowanych.</p>
+
+<p>Czy da się to ominąć? Tak, rozwiązanie zostało już wynalezione i zaimplementowane w JavaScriptcie na silnikach V8 (Chrome) oraz najnowszym SquirrelFish (Safari). Oba te silniki definiują tzw. <em>hidden classes</em>. Idea która za nimi stoi wynika z prostej przesłanki. Otóż zauważono, że nawet w językach dynamicznych wewnętrzna struktura obiektów przez znaczną większość czasu pozostaje taka sama. Z tego powodu możemy reprezentować obiekty o tej samej budowie przez ukrytą klasę &ndash; jej struktura pamięci jest identyczna z tą w językach statycznie typowanych. W momencie kiedy rozszerzamy dany obiekt o kolejne pola, tworzymy dla niego kolejną ukrytą klasę, o nowej, rozrośniętej budowie, a następnie realokujemy do nowej postaci. Z punktu widzenia wykonywanego programu jest to dość rzadkie zjawisko, natomiast korzyści płynące z tego podejścia są ogromne.</p>
+
+<h2>JIT, Interpreter oraz Tracing</h2>
+
+<p>Ostatnia różnica, na której chcę się skupić dotyczy różnic wynikających z kompilatorów JIT (używanych obecnie niemal we wszystkich najpopularniejszych językach: Javie, C# czy Pythonie na silniku PyPy) w stosunku do tradycyjnych interpreterów (Ruby MRI) oraz możliwości jakich dostarczają.</p>
+
+<p>Podstawowa różnica między tymi dwoma typami polega na tym, że tradycyjny interpreter przetwarza i generuje kod maszynowy na bieżąco w czasie rzeczywistym, interpretując skrypt linijka po linijce. JIT w tym czasie wykonuje małe wyprzedzenie, przetwarzając cały dostępny kod jeszcze przed punktem jego wykonania.</p>
+
+<p>Dodatkową korzyścią płynącą z podejścia kompilacji JIT jest możliwość dynamicznej optymalizacji kodu w trakcie jego działania. Takie podejście stosowane jest przez wszystkie najnowsze maszyny wirtualne. Jedna z takich technik znana jest jako <strong>trace trees</strong> i została opisana <a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/ICS-TR-06-16.pdf">tutaj</a>. W dużym skrócie ideą tego podejścia jest wyłapanie w aplikacji powtarzających się fragmentów kodu oraz zoptymalizowanie ich w taki sposób, aby wykonywały one jak najmniej instrukcji procesora. W jaki sposób jest to osiągane?</p>
+
+<ul>
+<li><strong>Inlining </strong>&ndash; a więc ograniczenie liczby instrukcji call do zewnętrznych funkcji poprzez skopiowanie ich zawartości do wnętrza pętli.</li>
+<li><strong>Wnioskowanie typów</strong> &ndash; przykład: jeżeli w języku dynamicznym dodajemy do siebie w pętli dwie&nbsp;wartości typu int&nbsp;1000 razy, mamy przesłanki aby twierdzić, że operacje wykonane na tej zmiennej zawsze będą dotyczyć obiektu tego samego typu (gdyby nie to, musielibyśmy za każym razem sprawdzać czy operator dodawania nie został np. użyty raz dla <strong>int</strong>ów a inny raz dla <strong>string</strong>ów). Takie wnioski umożliwią nam wygenerowanie kodu maszynowego zoptymalizowanego do tego konkretnego typu &ndash; jest to bardzo przydatne z punktu widzenia Ruby'ego. Za przykład niech posłuży metoda dodawania 2 liczb całkowitych &ndash; teoretycznie możliwa do wykonania w 1 instrukcji maszynowej, w Rubym jest opakowana w metodę wirtualną, która dodatkowo definiuje sprawdzanie zakresu dla wynikowej liczby i w zależności od wyniku zwraca jedną z dwóch wewnętrznie różnych implementacji obiektu opakowującego dany wynik</li>
+<li><strong>Rekonstrukcja do postaci kodu maszynowego wykonywalnego na GPU</strong> &ndash; wykonywalne, o ile kompilator jest w stanie rozpoznać stosowny kod na podstawie określonych wzorców (z tego co wiem, maszyna wirtualna na FireFoxie potrafi coś takiego).</li>
+</ul>
+
+
+<p>Rozwiązania zostały już wykorzystane na najnowszych VMach JavaScriptu. Niestety Ruby i Python wciąż czekają na swoją kolej.</p>
+]]></content>
+  </entry>
+  
+</feed>

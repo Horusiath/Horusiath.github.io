@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: algorytmy | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/algorytmy/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Silverlight - detekcja krawędzi]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/02/25/silverlight-detekcja-krawedzi/"/>
+    <updated>2011-02-25T11:35:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/02/25/silverlight-detekcja-krawedzi</id>
+    <content type="html"><![CDATA[<p>W dzisiejszym poście postaram się opisać, w jaki sposób zaimplementować filtr obrazu służący do wykrywania krawędzi. W tym celu posłużymy się implementacją filtru Sobela (jest to jeden z najpopularniejszych filtrów służących temu celowi). Ale po kolei. Najpierw ustalmy plan, według którego będziemy przygotowywać obraz do obróbki:</p>
+
+<ul>
+<li>Po pierwsze potrzebna nam będzie klasa umożliwiającą odwołanie się do pojedyńczych pixeli obrazu. W Windows Forms i WPF nie ma z tym większego problemu (możliwe są operacje wskaźnikowe), o tyle tutaj konieczne jest wykorzystanie innej metody. W tym celu posłużymy się klasą <strong>WriteableBitmap</strong>, która jest dostępna od 3 edycji Silverlighta.</li>
+<li>Po drugie, nasz obraz wstępnie przetworzymy na inny widoczny w skali szarości. Uprości do budowę filtru przy możliwych do zaakceptowania stratach informacji.</li>
+</ul>
+
+
+<p>Na wstępie warto wspomieć co nieco o samej klasie <strong>WriteableBitmap</strong>. Wybrałem ją, ponieważ udostępnia ona pełną kolekcję pixeli składających się na obraz w postaci prostej właściwości Pixels, zwracającej tablicę typu int. 4 bajty składające się na pixel to kolejno: BGRA. Dzięki temu możemy szybko iterować po kolejnych pixelach obrazu. Jest to wygodne rozwiązanie.</p>
+
+<p>Podczas pisania filtru Sobela przyjąłem, że każdorazowo przekazywana do niego bitmapa będzie zawierała obraz w skali szarości. Pokażę tutaj krótki przykład pętli zamieniającej zakres kolorów:
+``` c#
+for (int i = 0; i &lt; bmp.PixelHeight * bmp.PixelWidth; ++i) {</p>
+
+<pre><code> int pix = bmp.Pixels[i];
+
+ var t = BitConverter.GetBytes(pix);
+ byte p = (byte)(r * t[2] + g * t[1] + b * t[0]);
+ int pixel = BitConverter.ToInt32(new byte[] { p, p, p, 255 }, 0);
+
+ bmp.Pixels[i] = pixel;
+</code></pre>
+
+<p>}
+```
+Zmienne <code>r</code>, <code>g</code> i <code>b</code> prezentują odpowienio wagi, których używamy w każdej składowej przy obliczaniu odcienia szarości. Ich wartości mogą być różne, dlatego też ich tu nie podaję. Chętni sami zapoznają się z tym tematem.</p>
+
+<p>Teraz pola na implementację samego filtru wykrywania krawędzi. Z dokładniejszym opisem jego działania można zapoznać się <a href="http://en.wikipedia.org/wiki/Sobel_operator">tutaj</a>. Ważną częścią filtru są dwie macierze, które będziemy nakładać na każdy pixel oraz jego otoczenie. Oto jak wygląda ich implementacja:
+``` c#
+private readonly int[,] _xk = new int[,]</p>
+
+<pre><code>                                             {    
+            { -1,  0,  1 },
+            { -2,  0,  2 },
+            { -1,  0,  1 }
+                                             };
+</code></pre>
+
+<p>private readonly int[,] _yk = new int[,]</p>
+
+<pre><code>                                             {    
+            {  1,  2,  1 },
+            {  0,  0,  0 },
+            { -1, -2, -1 }
+                                             };
+</code></pre>
+
+<p><code>
+Mając tak zdefiniowane struktury, wystarczy już tylko stworzyć pętle iterujące po kolumnach i wierszach pixeli. Kod realizujący to zadanie wygląda następująco:
+</code> c#
+WriteableBitmap output = new WriteableBitmap(</p>
+
+<pre><code> bmp.PixelWidth, bmp.PixelHeight);
+</code></pre>
+
+<p>byte g;
+double gx, gy, max = 0;
+for (int i = 1; i &lt; bmp.PixelHeight-1; i++){</p>
+
+<pre><code> for (int j = 1; j &lt; bmp.PixelWidth-1; j++){
+      gx = gy = 0;
+      for (int k = -1; k &lt; 2; k++){
+            for (int l = -1; l &lt; 2; l++){
+                 double pix = 
+                      BitConverter.GetBytes(
+                      bmp.Pixels[(i+k)*bmp.PixelWidth + j + l])[0];
+                 gx += pix*_xk[k+1, l+1];
+                 gy += pix*_yk[k+1, l+1];
+            }
+      }
+      g = (byte)Math.Min(Math.Sqrt(gx * gx + gy * gy), 255);
+      output.Pixels[bmp.PixelWidth * i + j] = 
+            BitConverter.ToInt32(new byte[] {g, g, g, 255}, 0);
+ }
+</code></pre>
+
+<p>}
+```
+Jak widać nie iterujemy po wszystkich pixelach, lecz pozostawiamy &ldquo;obramowanie&rdquo; grubości 1 pixela wzdłuż wszystkich boków obrazu. Jest to konieczne, gdyż w przeciwnym razie nie moglibyśmy przyłożyć macierzy X i Y do pixeli brzegowych. Z tego samego powodu potrzebne jest rozróżnienie wierszy i kolumn (mimo że właściwość Pixels udostępnia nam tablicę 1-wymiarową).</p>
+
+<p>Dodatkowe słowo wyjaśnienia &ndash; w tym przykładzie posługuję się <strong>BitConverter</strong>em, aby odczytywać wartości konkretnych składowych pixela oraz składać je w pixel. Jest to rozwiązanie czytelne, dlatego warto je tu przedstawić.</p>
+
+<p>PS: nie badałem szybkości działania tego rozwiązania na dużych obrazach. W moim projekcie posługuję się obrazami uzyskiwanymi z kamerki internetowej 1,2Mpx. W takich warunkach szybkość działania jest absolutnie wystarczająca.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[CSharp] Skompresowane drzewo TRIE]]></title>
+    <link href="http://Horusiath.github.io/blog/2010/11/16/csharp-skompresowane-drzewo-trie/"/>
+    <updated>2010-11-16T13:32:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2010/11/16/csharp-skompresowane-drzewo-trie</id>
+    <content type="html"><![CDATA[<p>Ostatnimi czasy powróciłem do programów wykonywanych na potrzeby przedmiotów na Informatyce. Wśród nich udało mi się odnaleźć projekt skompresowanego drzewa TRIE. Po drobnym odświeżeniu pomyślałem, że mogę się nim podzielić tutaj.</p>
+
+<p>Czym w zasadzie jest skompresowane drzewo TRIE? Czym różni się tak bardzo od swojej normalnej wersji? Głębiej zainteresowanych tematem odsyłam do wyszukiwania. Najprostszym źródłem jest wikipedia [<a href="http://pl.wikipedia.org/wiki/Skompresowane_drzewo_trie">Link</a>]. Tutaj postaram się skupić na opisaniu podstawowych operacji: dodaniu elementu, usunięciu go, wyszukaniu i odczytaniu klucza.</p>
+
+<p><strong>Odczytanie słowa-klucza dla wybranego węzła</strong> &ndash; tutaj widać pierwszą różnicę w stosunku do standardowego TRIE. Węzeł nie przechowuje całego klucza, a jedynie tę jego część, która jest unikalna dla samego węzła i nie powtarza się w pokrewnych gałęziach. W związku z tym samo odczytanie polega na poruszaniu się w górę drzewa (aż do korzenia) i wrzucaniu na stos kolejnych fragmentów klucza, przechowywanych przez przodków węzła, w którym zaczęliśmy. Następnie wystarczy złączyć ściągane ze stosu elementy &ndash; w ten sposób otrzymujemy gotowy klucz.</p>
+
+<p><strong>Wyszukiwanie węzła wg. podanego wzorca</strong> &ndash; zaczynając od korzenia, musimy sprawdzić wzorzec dla każdego z jego dzieci. W pierwszej kolejności eliminujemy te węzły, których składowa klucza jest dłuższa od wzorca (takie węzły są automatycznie niezgodne). Dla pozostałych wykonujemy porównanie wzorca ze składową szukając momentu, w którym oba ciągi się różnią. Dalej wycinamy z wzorca zgodną część (w tym celu należało zapamiętać numer pozycji, w której wystąpiła różnica) i powtarzamy operację wyszukiwania dla kolejnych dzieci węzła, przekazując im skrócony wzorzec.</p>
+
+<p><strong>Dodawanie węzła</strong> &ndash; tutaj sprawa może być dość skomplikowana. Pierwszy przypadek: Zaczynając od korzenia, dla każdego z jego dzieci należy porównać podany klucz z ich składową klucza. Dla tych, które są częściowo zgodne, skracamy klucz o wspólną część i sprawdzamy dalej. Jeżeli w ten sposób doszliśmy do końca i wszystkie składowe we wszystkich węzłach zostały sprawdzone w całości, po prostu dodajemy kolejny węzeł do dzieci najbardziej podobnego rodzica. W innym wypadku, jeżeli ostatnia składowa klucza jest tylko częściowo podobna, należy wyciąć część wspólną i stworzyć z niej węzeł, do którego dodajemy 2 węzły mające za składowe różniące się między sobą części klucza. Ostatnia sytuacja zachodzi wtedy, gdy klucz okazuje się w pełni zgodny ze składową, ale jest od niej krótszy. Wtedy ponownie wydzielamy część wspólną, ale tym razem węzeł, który był rodzicem, zostaje ustawiony jako dziecko względem nowo stworzonego węzła, który zajmuje jego dotychczasowe miejsce w drzewie.</p>
+
+<p><strong>Usuwanie węzła</strong> &ndash; zaczynając od korzenia, wyszukujemy wzorca wśród jego dzieci. Zakładając, że usuwany węzeł istnieje, wyrzucamy go z drzewa i wracamy do jego rodzica. Jeżeli rodzicowi zostało tylko jedno dziecko, ale sam zawiera pewną wartość, nie robimy nic. Jeżeli jest inaczej usówamy rodzica, zaś na początku składowej klucza jedynaka dodajemy składową rodzica i ustawiamy więzy pokrewienstwa.</p>
+
+<p>Całość opisuje poniższy kod &ndash; klasa PatriciaTreeNode opisuje jedynie operacje na węzłach:
+``` c#
+public class PatriciaTreeNode<T> where T : class
+{</p>
+
+<pre><code> public string Key { set; get; }
+ public T Value { set; get; }
+ public IList&lt;PatriciaTreeNode&lt;T&gt;&gt; Nodes { set; get; }
+ public PatriciaTreeNode&lt;T&gt; Parent { set; get; }
+ public override string ToString()
+ {
+      return getWord();
+ }
+ private string getWord()
+ {
+      //ponieważ na każdym węźle trzymamy jedynie część całego słowa, aby odczytać cały klucz należy
+      //złączyć wszystkie częściowe klucze na węzłach zaczynając od korzenia
+      Stack&lt;string&gt; stack = new Stack&lt;string&gt;();
+      for (PatriciaTreeNode&lt;T&gt; t = this; t != null; t = t.Parent)
+            stack.Push(t.Key);
+      StringBuilder sb = new StringBuilder();
+      while (stack.Count != 0)
+            sb.Append(stack.Pop());
+      return sb.ToString();
+ }
+ public PatriciaTreeNode()
+ {
+      Value = null;
+      Key = null;
+      Nodes = null;
+      Parent = null;
+ }
+ public PatriciaTreeNode(PatriciaTreeNode&lt;T&gt; parent, string key, T value = null)
+ {
+      Nodes = null;
+      Parent = parent;
+      Key = key;
+      Value = value;
+      if (parent.Nodes == null)
+            parent.Nodes = new List&lt;PatriciaTreeNode&lt;T&gt;&gt;();
+      parent.Nodes.Add(this);
+ }
+ private PatriciaTreeNode&lt;T&gt; Replace2(string st, int i)
+ {
+      //stwórz nowy węzeł ze wspólnej części kluczy dwóch węzłów wywoływanych z poprzedniej funkcji
+      //i oznacza index ostatniego znaku w częsci słowa wspólnej dla obu węzłów
+      PatriciaTreeNode&lt;T&gt; node = new PatriciaTreeNode&lt;T&gt;(this.Parent, Key.Substring(0, i));
+      this.Key = this.Key.Substring(i); //z niewspólnej dla węzłów części klucza stwórz nowy klucz
+      this.Parent.Nodes.Remove(this);             //usuń zależność dziecko-rodzic
+      PatriciaTreeNode&lt;T&gt;.SetRelationship(node, this);   //ustawiamy relacje ojciec-dziecko
+      //musimy stworzyć nowe dziecko z drugiej niewspólnej części klucza
+      PatriciaTreeNode&lt;T&gt; newChild = new PatriciaTreeNode&lt;T&gt;(node, st.Substring(i));
+      return newChild;
+ }
+ private PatriciaTreeNode&lt;T&gt; Replace(string st, int i)
+ {
+      //ta podmiana służy sytuacji, gdy trzeba rozbić jeden węzeł na dwa nowe w relacji rodzic-dziecko,
+      //ponieważ klucz nowego węzła zawiera się w starym
+      PatriciaTreeNode&lt;T&gt; node = new PatriciaTreeNode&lt;T&gt;(this.Parent, st);
+      this.Key = this.Key.Substring(i);
+      this.Parent.Nodes.Remove(this);
+      this.Parent = node;
+      PatriciaTreeNode&lt;T&gt;.SetRelationship(node, this);
+      return node;
+ }
+ private static void SetRelationship(PatriciaTreeNode&lt;T&gt; parent, PatriciaTreeNode&lt;T&gt; child)
+ {
+      if (parent.Nodes == null)
+            parent.Nodes = new List&lt;PatriciaTreeNode&lt;T&gt;&gt;();
+      parent.Nodes.Add(child);
+      child.Parent = parent;
+ }
+ public PatriciaTreeNode&lt;T&gt; Add(string st)
+ {
+      PatriciaTreeNode&lt;T&gt; node = null;
+      if (st == "") return null;             //jeżeli przekazano pusty łańcuch zwracamy null
+      if (this.Parent != null &amp;&amp; Key[0] != st[0]) return null;   //jeżeli klucz nie ma części wspólnej z st, nie rób nic
+      int i;
+      bool b = true;
+      if (Nodes == null)
+      {
+            if (Parent == null)
+            {
+                 node = new PatriciaTreeNode&lt;T&gt;(this, st);
+                 return node;
+            }
+            if (st.Length &lt; Key.Length)
+            {
+                 return AddChecker(st);
+            }
+            else     //jeżeli to wzorzec jest dłuższy
+            {
+                 for (i = 0; i &lt; Key.Length; i++) if (st[i] != Key[i]) { b = false; break; }
+                 if (b) //jeżeli wzorzec jest zgodny z kluczem, ale nie jest cały sprawdzony
+                 {
+                      node = new PatriciaTreeNode&lt;T&gt;(this, st.Substring(i));
+                      return node;
+                 }
+                 return Replace2(st, i);
+            }
+      }
+      else   //jeżeli mają dzieci
+      {
+            if (Parent == null)
+            {
+                 //sprawdzamy czy wzorca nie można dołączyć do któregoś z dzieci
+                 foreach (PatriciaTreeNode&lt;T&gt; n in Nodes)
+                      if ((node = n.Add(st)) != null)
+                            return node;
+                 node = new PatriciaTreeNode&lt;T&gt;(this, st);
+                 return node;
+            }
+            if (st.Length &lt; Key.Length)
+            {
+                 return AddChecker(st);
+            }
+            else
+            {
+                 for (i = 0; i &lt; Key.Length; i++) if (st[i] != Key[i]) { b = false; break; }
+                 if (b) //jeżeli wzorzec jest zgodny z kluczem, ale nie jest cały sprawdzony
+                 {
+                      //próbujemy dodać pozostałą część wzorca do któregoś z dzieci
+                      foreach (PatriciaTreeNode&lt;T&gt; n in Nodes)
+                            if ((node = n.Add(st.Substring(i))) != null)
+                                 return node;
+                      //jeżeli żadne dziecko nie przyjęło wzorca, tworzymy nowe dziecko
+                      node = new PatriciaTreeNode&lt;T&gt;(this, st.Substring(i));
+                      return node;
+                 }
+                 return Replace2(st, i);
+            }
+      }
+      return null;
+ }
+ public static PatriciaTreeNode&lt;T&gt; Remove(string st, PatriciaTreeNode&lt;T&gt; root)
+ {
+      PatriciaTreeNode&lt;T&gt; node = Search(st, root);   //wyszukujemy poszukiwanego słowa
+      if (node == null) return null;
+      if (node.Nodes == null)
+      {
+            if (node.Parent.Parent == null) //jeżeli ojciec jest korzeniem
+            {
+                 node.Parent.Nodes.Remove(node);
+                 node.Parent = null;
+                 return node;
+            }
+            else                                     //ojciec nie jest korzeniem
+            {
+                 PatriciaTreeNode&lt;T&gt; n = node.Parent;
+                 //usuwamy więzy zależności między odnalezionym węzłem i jego ojcem
+                 node.Parent = null;
+                 n.Nodes.Remove(node);
+                 if (n.Nodes.Count == 1 &amp;&amp; n.Value == null)     //jeżeli ojcowi zostało tylko 1 dziecko i sam nie ma żadnej wartości
+                 {
+                      //dążymy do sytuacji w której dziecko przejmuje rolę ojca
+                      PatriciaTreeNode&lt;T&gt; o = n.Nodes[0];           //wybieramy dziecko
+                      o.Key = n.Key + o.Key;                             //łączymy klucze rodzica i dziecka
+                      n.Nodes.Clear();
+                      o.Parent = n.Parent;
+                      n.Parent.Nodes.Add(o);
+                      n.Parent.Nodes.Remove(n);
+                      return n;
+                 }
+                 return node;
+            }
+      }
+      else if (node.Nodes.Count == 1)
+      {
+            PatriciaTreeNode&lt;T&gt; o = node.Nodes[0];
+            o.Key = node.Key + o.Key;
+            PatriciaTreeNode&lt;T&gt;.SetRelationship(node.Parent, o);
+            node.Parent.Nodes.Remove(node);
+            node.Nodes.Clear();
+            return node;
+      }
+      return node;
+ }
+ private PatriciaTreeNode&lt;T&gt; AddChecker(string st)
+ {
+      bool b = true;
+      int i;
+      //sprawdzamy do którego znaku oba słowa są do siebie podobne
+      for (i = 0; i &lt; st.Length; i++) if (st[i] != Key[i]) { b = false; break; }
+      if (b)    //jeżeli wzorzec jest zgodny z kluczem, ale nie cały klucz został sprawdzony
+            return Replace(st, i);
+      return Replace2(st, i);     //jeżeli w jakimś miejscu są niezgodne
+ }
+ public static PatriciaTreeNode&lt;T&gt; Search(string st, PatriciaTreeNode&lt;T&gt; main)
+ {
+      PatriciaTreeNode&lt;T&gt; node;
+      int i = 0;
+      string word;                   //słowo przekazywane do kolejnych funkcji
+      if (main.Parent != null)    //podany węzeł nie jest korzeniem
+      {
+            if ((st.Length - main.Key.Length) &lt; 0) return null;   //jeżeli  wzorzec jest krótszy od klucza, zakończ
+            for (; i &lt; main.Key.Length; i++)
+                 if (st[i] != main.Key[i]) return null;               //jeżeli klucz węzła różni się od wzorca, zakończ
+            //jeżeli wszystko się zgadza, a słowa są tej samej długości, zwróć węzeł
+            if (st.Length == main.Key.Length) return main;
+      }
+      if (main.Nodes != null)     //jeżeli węzeł ma dzieci
+      {
+            word = st.Substring(i);   //przepisz niesprawdzony fragment wzorca
+            //szukamy reszty wzorca wśród dzieci
+            foreach(PatriciaTreeNode&lt;T&gt; n in main.Nodes)
+                 if((node = Search(word, n)) != null) return node;
+      }
+      return null;
+ }
+ public static PatriciaTreeNode&lt;T&gt; SearchTemplate(string st, PatriciaTreeNode&lt;T&gt; main)
+ {
+      PatriciaTreeNode&lt;T&gt; node = null;
+      if (main.Parent != null)    //ojciec nie jest korzeniem
+      {
+            if (main.Key[0] != st[0]) return null;
+            int i;
+            bool b = true;
+            if (main.Key.Length &gt; st.Length)          //jeżeli klucz jest dłuższy od słowa
+            {
+                 for (i = 0; i &lt; st.Length; i++) if (st[i] != main.Key[i]) { b = false; break; }      //sprawdzanie zgodności
+                 if (b) return main;                      //jeżeli wzorzec był w pełni zgodny z kluczem, zwróć ten węzeł
+                 return null;
+            }
+            else     //jeżeli klucz jest krótszy od wzorca
+            {
+                 for (i = 0; i &lt; main.Key.Length; i++) if (st[i] != main.Key[i]) { b = false; break; }  //sprawdzanie zgodności
+                 //jeżeli jest zgodny, sprawdź pozostałą część wzorca wśród dzieci
+                 if (b)
+                 {
+                      if (i == st.Length) return main;   //jeżeli nie ma czego dalej sprawdzać zwracamy węzeł
+                      if (main.Nodes != null)
+                            foreach (PatriciaTreeNode&lt;T&gt; n in main.Nodes)
+                                 if ((node = SearchTemplate(st.Substring(i), n)) != null) return node;
+                 }
+                 return null;
+            }
+      }
+      else   //jeżeli węzeł to korzeń
+      {
+            if (main.Nodes != null)
+                 foreach (PatriciaTreeNode&lt;T&gt; n in main.Nodes)
+                      if ((node = SearchTemplate(st, n)) != null) return node;
+      }
+      return null;
+ }
+</code></pre>
+
+<p>}
+```
+Teraz wystarczy tylko dorzucić do tego &ldquo;nakładkę&rdquo; i gotowe.</p>
+]]></content>
+  </entry>
+  
+</feed>

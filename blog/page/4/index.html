@@ -1,0 +1,1477 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Uwaga: poniższy wpis jest kierowany przede wszystkim do osób, które w tematyce TDD i DI są dość świeże lub &lsquo;nie czują&rsquo; jeszcze niektórych &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/page/4">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/07/31/ninject-i-pierwsze-starcie-z-dependency/">Ninject I Pierwsze Starcie Z Dependency Injection</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-07-31T23:52:00+02:00" pubdate data-updated="true">Jul 31<span>st</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Uwaga: poniższy wpis jest kierowany przede wszystkim do osób, które w tematyce TDD i DI są dość świeże lub &lsquo;nie czują&rsquo; jeszcze niektórych z przedstawianych poniżej pojęć.</p>
+
+<p>Nie dalej jak parę dni temu postanowiłem nieco rozwinąć swoją wiedzę z zakresu TDD (Test Driven Development). Jak pewnie osoby, które są zorientowane w podstawach tej metodyki wiedzą, niezbędnym elementem wymaganym podczas tworzenia takich rozwiązań jest konieczność przetestowania praktycznie każdej metody i klasy za pomocą <strong>wcześniej przygotowanych</strong> testów jednostkowych (tak jest, najpierw piszemy testy, a dopiero potem przygotowujemy implementację, która ma je poprawnie wykonać).</p>
+
+<p>Jak się jednak okazuje dość szybko natykamy się na pewien problem &ndash; w jaki sposób mamy przetestować klasy, które tworzą między sobą głębokie drzewa zależności lub sięgające do zewnętrznych zasobów. Przykładem może być chociażby klasa wykorzystująca zapytania do bazy danych czy operująca na danych przy użyciu obiektów z jakiegoś ORMa. Jak mamy przetestować wyniki zapytań w kosztownym w obsłudze i ciągle zmieniającym się środowisku bazy danych, która nie znajduje się bezpośrednio pod kontrolą klas odpowiedzialnych za testy?</p>
+
+<p>Rozwiązaniem tego problemu jest wzorzec <strong>Dependency Injection</strong>. Główną definicją z nim powiązaną jest pojęcie <em>loose coupling</em>. Zakłada ono, że należy unikać powiązania klas pomiędzy sobą na rzecz zależności klasa-interfejs, konstrukcji klas implementujących odpowiednie interfejsy oraz testowania metod prezentowanych za pośrednictwem interfejsów. Dokładniej przedstawię to na przykładzie poniżej.</p>
+
+<p>Inną ważną cechą związaną z wzorcem DI jest <strong>kontener DI</strong>. W skrócie chodzi o to, aby nie przekazywać ręcznie klas prezentujących dane interfejsy. Zamiast tego dysponujemy fabryką zwracającą na nasze zlecenie odpowiednie obiekty. W tym właśnie miejscu dochodzimy do tematu mojego posta. Mowa tutaj mianowicie o bibliotece Ninject. Jest to w pełni open source&#8217;owy projekt dostępny na githubie (strona główna projektu: <a href="http://ninject.org/">http://ninject.org/</a>). Wprowadza on w świat .Net zestaw klas umożliwiających nam szybkie i sprawne operowanie na kontenerach DI. Dla ciekawskich: innym projektem udostępniającym omawiane kontenery jest wspierany przez Microsoft <a href="http://unity.codeplex.com/">Unity 2.0</a>.</p>
+
+<h2>Projektowanie klas w myśl Dependency Injection</h2>
+
+<p>Ponieważ metodologia TDD znajduje powszechne uznanie w środowisku programistów ASP.Net MVC, za mój przykład posłuży właśnie ta platforma. Zakładam, że czytający mój wpis będzie miał pewne pojęcie odnośnie powodów stosowania wzorca repozytorium (<em>Repository pattern</em>), dlatego też od razu zabiorę się do opisania przypadku.</p>
+
+<p>Przyjmijmy, że dysponujemy klasą kontrolera (nazwijmy ją <strong>ItemsController</strong>), która zajmuje się nadzorowaniem wyświetlanych widoków w oparciu o obiekty klasy <strong>Item</strong>&ndash; w naszym przypadku będzie to docelowo obiekt mapowany na odpowiadający mu rekord w tabeli w bazie danych, jego implementacja jest obecnie nieistotna. W celu stworzenia jednolitego modelu nasz kontroler wykorzystywać będzie obiekt klasy <strong>ItemsRepository</strong>, przy pomocy którego będzie pobierał dane z bazy.</p>
+
+<p>Jest to dość standardowy scenariusz, wszystko powinno więc być dość jasne. Nasz wstępny wygląd klas może wyglądać w następujący sposób:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">ItemsController</span> <span class="p">:</span> <span class="n">Controller</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">ItemsRepository</span> <span class="n">repository</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="n">ViewResult</span> <span class="nf">Index</span><span class="p">()</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="cm">/* ... tutaj pobieramy rekordy</span>
+</span><span class='line'><span class="cm">     z bazy i przekazujemy je do widoku */</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">ItemsRepository</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="c1">// obiekt używany podczas mapowania obiektów z bazy</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">DataContext</span> <span class="n">context</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Item</span><span class="p">&gt;</span> <span class="n">Items</span><span class="p">{</span>
+</span><span class='line'>      <span class="k">get</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="cm">/* pobieramy rekordy z bazy i zwracamy</span>
+</span><span class='line'><span class="cm">         je jako obiekty klasy Item */</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wszystko wygląda na proste i przejrzyste do momentu, kiedy chcemy napisać testy jednostkowe mające na celu sprawdzenie, czy metoda Index kontrolera faktycznie zwraca porządany widok wypełniony właściwymi danymi.</p>
+
+<p>Tutaj dochodzimy do sedna Dependency Injection. Rozwiązaniem powyższego przypadku może być wydzielenie funkcjonalności repozytorium do postaci interfejsu ( a następnie przekazanie go do jako argumentu lub właściwości do kontrolera. Po takim zabiegu nasz kod wygląda następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IItemsRepository</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Item</span><span class="p">&gt;</span> <span class="n">Items</span><span class="p">{</span><span class="k">get</span><span class="p">;}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">ItemsRepository</span> <span class="p">:</span> <span class="n">IItemsRepository</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">DataContext</span> <span class="n">context</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Item</span><span class="p">&gt;</span> <span class="n">Items</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">get</span><span class="p">{...}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">ItemsController</span> <span class="p">:</span> <span class="n">Controller</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">IItemsRepository</span> <span class="n">repository</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="nf">ItemsController</span><span class="p">(</span><span class="n">IItemsRepository</span> <span class="n">repo</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">repository</span> <span class="p">=</span> <span class="n">repo</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="n">ViewResult</span> <span class="nf">Index</span><span class="p">()</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="p">...</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widzimy teraz nie jesteśmy związani na stałe wykorzystywaniem naszego repozytorium wewnątrz kontrolera. Jeżeli chcemy przetestować funkcjonalność kontrolera (bez angażowania w to naszej klasy <strong>ItemsRepository</strong>) wystarczy napisać testową implementację interfejsu <strong>IItemsRepository</strong>, która może zwracać dowolną wybraną przez nas kolekcję obiektów <strong>Item, </strong>nawet jeżeli nie są one w żaden sposób powiązane z bazą danych (a to z kolei zapewnia nam przezroczystość i kontrolę wystarczającą do przeprowadzenia testów oraz umożliwia wsparcie ze strony mocków).</p>
+
+<h2>Pora na Ninject</h2>
+
+<p>Kiedy nasze klasy są już gotowe powinniśmy się zastanowić w jaki sposób będziemy wywoływać konstruktor naszego kontrolera (podejście <em>Constructor Injection</em>). W tym celu wykorzystamy dostępną w ASP.Net MVC opcję umożliwiającą nam samodzielne określenie obiektu fabryki zajmującej się tworzeniem nowych kontrolerów. W tym celu musimy najpierw napisać własną klasę dziedziczącą po <code>System.Web.Mvc.DefaultControllerFactory</code> . Oto przykładowa implementacja fabryki:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">NinjectControllerFactory</span> <span class="p">:</span> <span class="n">DefaultControllerFactory</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="c1">// nasz DI container, który wykorzystamy do tworzenia powiązań</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">IKernel</span> <span class="n">kernel</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="nf">NinjectControllerFactory</span> <span class="p">()</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">kernel</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StandardKernel</span><span class="p">();</span>
+</span><span class='line'>      <span class="n">kernel</span><span class="p">.</span><span class="n">Bind</span><span class="p">&lt;</span><span class="n">IItemRepository</span><span class="p">&gt;().</span><span class="n">To</span><span class="p">&lt;</span><span class="n">ItemRepository</span><span class="p">&gt;();</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">protected</span> <span class="k">override</span> <span class="n">IController</span> <span class="nf">GetControllerInstance</span><span class="p">(</span><span class="n">RequestContext</span> <span class="n">reqCtx</span><span class="p">,</span> <span class="n">Type</span> <span class="n">controllerType</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">kernel</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="n">controllerType</span><span class="p">)</span> <span class="k">as</span> <span class="n">IController</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Na co warto zwrócić uwagę to fakt, że wewnątrz konstruktora możemy zauważyć tajemniczą linijkę:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">kernel</span><span class="p">.</span><span class="n">Bind</span><span class="p">&lt;</span><span class="n">IItemRepository</span><span class="p">&gt;().</span><span class="n">To</span><span class="p">&lt;</span><span class="n">ItemRepository</span><span class="p">&gt;();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jej znaczenie jest następujące &ndash; każemy kontenerowi naszej fabryki stworzyć powiązanie polegające na tym, że za każdym razem kiedy wyślemy do kontenera żądanie utworzenia obiektu wymagającego <strong>IItemRepository</strong>, wtedy automatycznie wykonane zostanie mapowanie wiązania i przekazanie obiektu <strong>ItemRepository</strong>. Sytuacja taka zachodzi wewnątrz metody <em>GetControllerInstance</em>, gdzie wywołujemy polecenie <code>kernel.Get()</code>. Jeżeli typ przekazanego kontrolera będzie wymagał przekazania obiektu do konstruktora (jak w przypadku klasy <strong>ItemsController</strong>), zostanie on automatycznie wypełniony. Pozwala to na sprawne i płynne operowanie kodem.</p>
+
+<p><strong>Uwaga</strong>: jeżeli chcemy, aby powyższa fabryka była faktycznie wykorzystywana w naszym projekcie, musimy ją podpiąć. Robimy to w następujący sposób &ndash; wewnątrz pliku <strong>Global.asax.cs</strong> znajdujemy metodę <code>Application_Start</code>i na jej końcu dodajemy następującą linijkę:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">ControllerBuilder</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">SetControllerFactory</span><span class="p">(</span><span class="k">new</span> <span class="n">NinjectControllerFactory</span><span class="p">());</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/07/13/mssql-date-range-na-tablicach/">[MSSQL] Date Range Na Tablicach Rekurencyjnych</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-07-13T15:47:00+02:00" pubdate data-updated="true">Jul 13<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Ostatnimi czasy dostałem do napisania zadanie związane z koniecznością stworzenia zapytania SQL (na potrzeby projektu budowanego w MSSQL Server 2008), którego jedną z charakterystycznych cech była konieczność sprawdzenia warunku dla wszystkich dat z podanego zakresu. Z początku proste, zadanie to miało jednak kilka dodatkowych warunków:</p>
+
+<ol>
+<li>Nie wolno mi było tworzyć w systemie tablic pomocniczych (żadnych poleceń CREATE TABLE ani ALTER TABLE) &ndash; zapytanie miało być w domyśle wykorzystywane w wielu miejscach jednocześnie, a wcześniejsze stworzenie tablicy z danymi uznane było za nadmiarowość danych.</li>
+<li>Zapytanie miało zachowywać się właściwie, gdy jeden z parametrów (data końcowa) był NULLem &ndash; w takim przypadku pobieramy datę bieżącą.</li>
+<li>Zapytanie miało mieć parametr decydujący o tym, czy sprawdzane daty znajdują się w odstępach dziennych, tygodniowych czy miesięcznych.</li>
+<li>Całość miała być skonstruowana tak, aby zapytania można było użyć podczas generowania raportów RDL.</li>
+</ol>
+
+
+<p>Mając do tej pory małe doświadczenia z samym SQL-em zacząłem szybko zgłębiać temat. Ostatecznie powziąłem decyzję o wykorzystaniu ciekawego wynalazku &ndash; tablic rekurencyjnych. Ponieważ było to rozwiązanie dopuszczalne z punktu widzenia wymagań, postanowiłem stworzyć pomocniczą funkcję.</p>
+
+<p>Oto przykładowa implementacja rozwiązania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">FUNCTION</span> <span class="n">dbo</span><span class="p">.</span><span class="n">DateRange</span>
+</span><span class='line'><span class="p">(</span><span class="o">@</span><span class="n">start_date</span> <span class="n">datetime</span><span class="p">,</span>
+</span><span class='line'> <span class="o">@</span><span class="n">end_date</span> <span class="n">datetime</span><span class="p">,</span>
+</span><span class='line'> <span class="o">@</span><span class="n">unit</span> <span class="n">nvarchar</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+</span><span class='line'><span class="k">RETURNS</span>
+</span><span class='line'> <span class="o">@</span><span class="n">Dates</span> <span class="k">TABLE</span><span class="p">(</span><span class="k">data</span> <span class="n">datetime</span><span class="p">)</span>
+</span><span class='line'><span class="k">AS</span>
+</span><span class='line'><span class="k">BEGIN</span>
+</span><span class='line'>  <span class="k">WITH</span> <span class="n">cte</span> <span class="k">AS</span>
+</span><span class='line'>  <span class="p">(</span>
+</span><span class='line'>      <span class="k">SELECT</span> <span class="mi">1</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="k">AS</span> <span class="k">data</span>
+</span><span class='line'>      <span class="k">UNION</span> <span class="k">ALL</span>
+</span><span class='line'>      <span class="k">SELECT</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="k">CASE</span> <span class="o">@</span><span class="n">unit</span>
+</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;day&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
+</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;week&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
+</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;month&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
+</span><span class='line'>      <span class="k">END</span>
+</span><span class='line'>      <span class="k">FROM</span> <span class="n">cte</span>
+</span><span class='line'>      <span class="k">WHERE</span>
+</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;day&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
+</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
+</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span> <span class="k">OR</span>
+</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;week&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
+</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
+</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span> <span class="k">OR</span>
+</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;month&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
+</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
+</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">)</span>
+</span><span class='line'>  <span class="k">INSERT</span> <span class="k">INTO</span> <span class="o">@</span><span class="n">Dates</span> <span class="p">(</span><span class="k">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">SELECT</span> <span class="k">data</span> <span class="k">FROM</span> <span class="n">cte</span>
+</span><span class='line'>  <span class="k">OPTION</span> <span class="p">(</span><span class="n">MAXRECURSION</span> <span class="mi">32000</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">RETURN</span><span class="p">;</span>
+</span><span class='line'><span class="k">END</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widać, funkcja przyjmuje 3 parametry:</p>
+
+<ul>
+<li>datę początkową &ndash; w przypadku funkcji jest wymagana, lecz w samym zapytaniu można ją dostosować do swoich potrzeb.</li>
+<li>datę końcową &ndash; możliwe jest tu podanie wartości NULL, dla takiego przypadku pobieramy bieżącą datę.</li>
+<li>jednostkę &ndash; mowa tutaj o typie jednostek w jakich mierzymy przedziały (codziennie, w tygodniach, w miesiącach)</li>
+</ul>
+
+
+<p>Przykładowe wywołanie funkcji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">SELECT</span> <span class="k">data</span>
+</span><span class='line'><span class="k">FROM</span> <span class="n">dbo</span><span class="p">.</span><span class="n">DateRange</span><span class="p">(</span><span class="s1">&#39;2011-01-01&#39;</span><span class="p">,</span> <span class="k">NULL</span><span class="p">,</span> <span class="s1">&#39;month&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Dodatkowo warto zwrócić uwagę na opcję określającą maksymalny poziom rekurencji w generowanej tabeli. Nie jest do element obowiązkowy, niemniej warto się w ten sposób zabezpieczyć.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy/">Wyświetlanie Stron Aspx Przy Pomocy Iframe I Jquery Ui Dialog</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-06-22T06:57:00+02:00" pubdate data-updated="true">Jun 22<span>nd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Witam, w dzisiejszym poście chciałbym podzielić się rozwiązaniem problemu, który pomimo, że przydarza się dość rzadko, to jednak zdążył napsuć mi trochę nerwów. Zacznijmy od opisania tematu:</p>
+
+<p>Dysponujemy standardową stroną aspx (zawierającą w sobie zarówno kontrolki aspx jak i skrypty jQuery), która docelowo ma zostać wyświetlona wewnątrz okna dialogowego dostępnego poprzez biblioteki jquery i jquery ui.</p>
+
+<p>Zadanie wydaje się banalne, przecież wystarczyłoby w stronie wyświetlającej okno wpisać kilka linijek:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;dialog&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;iframe</span> <span class="na">src=</span><span class="s">&quot;ścieżka do wyświetlonej strony&quot;</span><span class="nt">&gt;&lt;/iframe&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Teraz już tylko wypisanie <code>$(&ldquo;#dialog&rdquo;).dialog()</code> i po sprawie. Ale czy na pewno? Otóż w moim przypadku takie podejście do sprawy skończyło się wyrzuceniem script errorów na stronie wyświetlanej w ramce (mowa tu o błędach typu <em>Object is undefined</em>). Co gorsza błąd ten był nagminny: występował niezależnie od tego, czy strona źródłowa posiadała dodaną informację o odnośnikach do plików jquery czy też nie.</p>
+
+<p>Ostatecznie rozwiązanie tego problemu okazało się stosunkowo proste. Chodzi w nim o to, aby nie dodawać atrybutu src do iframe bezpośrednio z poziomu html, a dopiero po wywołaniu metody dialog() na porządanym elemencie, który ma stać się oknem dialogowym. Przykładowy prawidłowo napisany kod:</p>
+
+<p>Html:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;dialog&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;iframe</span> <span class="na">id=</span><span class="s">&quot;frame&quot;</span><span class="nt">&gt;&lt;/iframe&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>JavaScript:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#dialog&quot;</span><span class="p">).</span><span class="nx">dialog</span><span class="p">();</span>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#frame&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;src&#39;</span><span class="p">,</span> <span class="s1">&#39;ścieżka do wyświetlanej strony&#39;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Po takiej operacji nasze okno powinno być gotowe.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie/">Przeszukiwanie Sieci I Indeksowanie Stron Internetowych</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-04-29T19:32:00+02:00" pubdate data-updated="true">Apr 29<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Ostatnimi czasy postanowiłem stworzyć prostą aplikację, której zadaniem byłoby przeszukiwanie wszerz stron internetowych. Temat zacznę od omówienia mojego spojżenia na problem:</p>
+
+<ol>
+<li>Jeżeli weźmiemy pod uwagę, że sieć można reprezentować pod postacią grafu skierowanego, mamy do dyspozycji bardzo proste rozwiązanie w postaci algorytmu BFS. Każdy nowo zaakceptowany link będzie dorzucany do wspólnej kolejki i każdorazowo z niej zdejmowany, kiedy przyjdzie pora na przetworzenie strony pod wybranym linkiem.</li>
+<li>Aby uniknąć zakleszczenia, dodatkowo poza kolejką umieszczamy link w liście &ndash; w ten sposób zaindeksujemy wszystkie odwiedzone strony i będziemy mogli sprawdzić, czy dana strona nie została już poprzednio odwiedzona.</li>
+<li>Na sam koniec, aby ograniczyć przestrzeń przeszukiwać ustalimy adres url domeny, do której przeszukiwań będziemy się ograniczać.</li>
+</ol>
+
+
+<p>Podstawowa konstrukcja naszej klasy będzie zatem wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">class</span> <span class="nc">Crawler</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">http</span> <span class="p">=</span> <span class="s">&quot;http://&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">public</span> <span class="k">static</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">Sites</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">public</span> <span class="kt">string</span> <span class="n">Url</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">private</span> <span class="n">Queue</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">queue</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Queue</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
+</span><span class='line'>  <span class="n">Regex</span> <span class="n">anchor</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Regex</span><span class="p">(</span><span class="s">&quot;&lt;a href=\&quot;.*\&quot;&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">private</span> <span class="kt">int</span> <span class="n">id</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="nf">Crawler</span><span class="p">(</span><span class="kt">string</span> <span class="n">domain</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">Url</span> <span class="p">=</span> <span class="n">domain</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">Sites</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Chwila na wyjaśnienie:</p>
+
+<ul>
+<li>ustawiłem słowo <strong>http</strong> w postaci stałej, aby łatwiej się później nim posługiwać.</li>
+<li><strong>anchor</strong> stanowi wyrażenie regularne, po którym będziemy wykrywać wszystkie znaczniki <code>a</code> z atrybutem <code>href</code>, które zawierają linki do innych stron.</li>
+<li><strong>id</strong> to nic innego jak licznik stron</li>
+</ul>
+
+
+<p>Teraz należy wyposażyć naszą klasę w możliwość przeglądania stron. W tym celu wewnątrz niej implementujemy następującą metodę:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">Start</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>   <span class="n">queue</span><span class="p">.</span><span class="n">Enqueue</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+</span><span class='line'>   <span class="n">WebClient</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">WebClient</span><span class="p">();</span>
+</span><span class='line'>   <span class="k">do</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">link</span> <span class="p">=</span> <span class="n">queue</span><span class="p">.</span><span class="n">Dequeue</span><span class="p">();</span>
+</span><span class='line'>      <span class="k">try</span> <span class="p">{</span>
+</span><span class='line'>              <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">reader</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StreamReader</span><span class="p">(</span><span class="n">client</span><span class="p">.</span><span class="n">OpenRead</span><span class="p">(</span><span class="n">link</span><span class="p">)))</span> <span class="p">{</span>
+</span><span class='line'>                  <span class="n">SearchLinks</span><span class="p">(</span><span class="n">reader</span><span class="p">.</span><span class="n">ReadToEnd</span><span class="p">());</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="k">catch</span> <span class="p">(</span><span class="n">WebException</span> <span class="n">exc</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;\tError on site {0} : {1}&quot;</span><span class="p">,</span> <span class="n">link</span><span class="p">,</span> <span class="n">exc</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>   <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">queue</span><span class="p">.</span><span class="n">Count</span> <span class="p">!=</span> <span class="m">0</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Parametrem metody jest korzeń &ndash; strona startowa, z której rozpoczynamy przeszukiwanie sieci. Do samego pobierania stron wykorzystujemy obiekt <em>WebClient</em>. Przeszukiwanie kolejnych stron będzie odbywać się tak długo, jak długo pozostaje coś do przeszukania (kolejka nie jest pusta). Sam mechanizm wyszukiwania linków ukryty jest pod metodą <em>SearchLinks</em> do której przejdę za chwilę. Przedtem jednak musimy się upewnić, że nasza pętla będzie odporna na występowanie błędów podczas odczytywania stron, jak choćby <em>Error 404</em>, któy może spowodować, że nasz WebClient wyrzuci wyjątek w trakcie próby otworzenia strumienia do strony.</p>
+
+<p>Przejdźmy teraz do implementacji kolejnej metody:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">void</span> <span class="nf">SearchLinks</span><span class="p">(</span><span class="kt">string</span> <span class="n">result</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>   <span class="kt">var</span> <span class="n">matches</span> <span class="p">=</span> <span class="n">anchor</span><span class="p">.</span><span class="n">Matches</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">match</span> <span class="k">in</span> <span class="n">matches</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">r</span> <span class="p">=</span> <span class="n">match</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">site</span> <span class="p">=</span> <span class="n">GetAddress</span><span class="p">(</span><span class="n">Url</span><span class="p">,</span> <span class="n">r</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(!</span><span class="n">Sites</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">site</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="kt">string</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">site</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;{0}. Found: {1}&quot;</span><span class="p">,</span> <span class="p">++</span><span class="n">id</span><span class="p">,</span> <span class="n">site</span><span class="p">);</span>
+</span><span class='line'>          <span class="n">Sites</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">site</span><span class="p">);</span>
+</span><span class='line'>          <span class="n">queue</span><span class="p">.</span><span class="n">Enqueue</span><span class="p">(</span><span class="n">site</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W tym kroku pobieramy w parametrze całą zawartość strony w postaci tekstu. Następnie sprawdzamy dopasowania naszego wyrażenia regularnego metodą Matches. Zwraca ona kolekcję obiektów określających wykryte dopasowania. Następnie dla każdego z dopasowań wyciągamy z niego link do kolejnej strony metodą <strong>GetAddress</strong> (implementacja poniżej).</p>
+
+<p>Końcowym krokiem właściwego algorytmu jest sprawdzenie, czy faktycznie uzyskano jakiś link oraz czy nie został on już wcześniej przeszukany &ndash; jeżeli te warunki zostały spełnione dokonujemy odpowiedniego wpisu, uaktualniamy listę odkrytych stron i dodajemy ją do kolejki stron wymagających przeszukania.</p>
+
+<p>Ostatnim problemem jest wydobycie adresu url z odkrytego wzorca. Oto moje rozwiązanie tego problemu:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="kt">string</span> <span class="nf">GetAddress</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">,</span> <span class="kt">string</span> <span class="n">r</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">string</span> <span class="n">result</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">splits</span> <span class="p">=</span> <span class="n">r</span><span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot;\&quot;&quot;</span><span class="p">},</span> <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">splits</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">ishttp</span> <span class="p">=</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Contains</span><span class="p">(</span><span class="n">http</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Contains</span><span class="p">(</span><span class="s">&quot;.html&quot;</span><span class="p">)</span> <span class="p">||</span> <span class="n">ishttp</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="n">ishttp</span> <span class="p">&amp;&amp;</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Contains</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
+</span><span class='line'>          <span class="p">{</span>
+</span><span class='line'>              <span class="n">result</span> <span class="p">+=</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>          <span class="k">else</span> <span class="nf">if</span><span class="p">(!</span><span class="n">ishttp</span><span class="p">)</span>
+</span><span class='line'>          <span class="p">{</span>
+</span><span class='line'>              <span class="n">result</span> <span class="p">+=</span> <span class="n">http</span> <span class="p">+</span> <span class="n">url</span> <span class="p">+</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>          <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wykryte wyrażenie rozdzielamy na stringi poprzez znak &ldquo; . Jest to wymagane ponieważ dopasowany wzorzec będzie zawierać nie tylko adres strony, ale również sam atrybut a href (w przypadku podanego przeze mnie wyrażenia będzie to zawsze pierwszy element tablicy powstałej w wyniku pocięcia wzorca) i inne atrybuty (style itd&hellip;). Następnie sprawdzamy czy dany łańcuch znaków zawiera podciąg <em>&#8220;<a href="http://">http://</a>&rdquo;</em> &ndash; będzie to przez nas wykorzystane więcej niż raz, zapisałem więc ten wynik w osobnej zmiennej <em>ishttp</em>.</p>
+
+<p>Dalsze rozdzielenie wynika z dwóch możliwych zachowań:
+&ndash; wykryty adres jest absolutny &ndash; zawiera więc zarówno ciąg http jak i nazwę domeny, w której się poruszamy. Warto tutaj zaznaczyć, że ten algorytm wykrywa również strony zapisane w postaci <em><a href="http://xxx.nazwa_domeny.xxx_,">http://xxx.nazwa_domeny.xxx_,</a> gdzie </em>xxx_ są dowolnymi ciągami znaków.
+&ndash; adres wskazuje na ścieżkę względną &ndash; w tym przypadku konstruujemy pełny adres strony, kończąc go znalezionym adresem.</p>
+
+<p>Tak stworzona klasa jest w stanie indeksować wszystkie strony .html (można je zmodyfikować, aby sprawdzało również linki o innych rozszerzeniach) w podanej domenie bez ryzyka wejścia w nieskończoną pętlę.</p>
+
+<p>Przykładowe wywołanie rozwiązania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">Crawler</span> <span class="n">crawler</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Crawler</span><span class="p">(</span><span class="s">&quot;pb.edu.pl&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="n">crawler</span><span class="p">.</span><span class="n">Start</span><span class="p">(</span><span class="s">&quot;http://wi.pb.edu.pl/&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/04/10/komunikacja-klient-serwer-w/">Biblioteka Miesiąca - Lidgren.Network</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-04-10T11:19:00+02:00" pubdate data-updated="true">Apr 10<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Nie dalej jak miesiąc temu wraz ze znajomym rozpracowywaliśmy koncepcję komunikacji klient-klient oraz klient-serwer na potrzeby projektu który razem wykonujemy. Wtedy właśnie natknął się on na znalezisko, które na pierwszy rzut oka wygląda nadzwyczaj interesująco. Mowa tutaj o <a href="http://code.google.com/p/lidgren-network-gen3/">Lidgren.Network</a>. Co tak naprawdę skrywa się za tą nazwą? Otóż jest to biblioteka stworzona na potrzeby platformy .NET, która dostarcza nam proste i wygodne API do komunikacji klient &ndash; serwer za pomocą UDP.</p>
+
+<p>Dlaczego wybrałem tą bibliotekę? Przedstawię tutaj kilka faktów, które wymieniłbym na jej plus:</p>
+
+<ul>
+<li>Otwarty kod. Dodatkową zaletą jest fakt, że wszystkie klasy pakietu są dość dobrze okomentowane.</li>
+<li>Implementacja wielkich liczb całkowitych. Na minus tego rozwiązania idzie fakt, że ich konstrukcja przypomina stylem Javę.</li>
+<li>Duża konfigurowalność. Podstawowe operacje wymagane do prowadzenia komunikacji są dość proste do nauczenia i szybkie do implementacji, lecz cała biblioteka umożliwia dostosowanie mechanizmu dokładnie do naszych potrzeb.</li>
+<li>Przygotowanie mechanizmu do dystrubucji komunikatów na wielu klientów.</li>
+<li>Metody umożliwiające wygodne przesyłanie zarówno stringów (wiadomości tekstowe), łańcuchów bajtów (np. przesyłanie obrazu i plików), jak nawet dostęp do pojedyńczych bitów. Nie musimy sami tego implementować, wystarczy że skorzystamy z gotowych rozwiązań.</li>
+<li>Duża ilość sampli, z których można się nauczyć obsługi biblioteki.</li>
+</ul>
+
+
+<p>Krótko mówiąc jest to bardzo przyjazna biblioteka, która zrzuca z nas większość ciężaru związanego z ręczną implementacją wielu przydatnych rozwiązań. Proponuję dobrze się jej przyjżeć, a może unikniemy w ten sposób potrzeby wymyślania koła na nowo ;) .</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity/">Pobieranie Dużych Zbiorów W Entity Framework</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-03-24T19:48:00+01:00" pubdate data-updated="true">Mar 24<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Siedząc dzisiaj w pracy natknąłem się na pewien problem. Otóż spotkałem się z koniecznością pobrania wierszy z bazy i zapisania jej w pliku. Problem w zasadzie trywialny, lecz kiedy mówimy o konieczności zapisania kilkuset tysięcy wierszy, nie jest już tak łatwo. Żadne standardowe odwołanie nie zda tutaj egzaminu, ponieważ wcześniej czy później nasz program zapełni całą dostępną pamięć.</p>
+
+<p>Znajomy polecił mi wykorzystać funkcjonalność, jaką dostarczają metody Skip i Take, dostępne w LINQ. Dzięki nim możemy w prosty sposób podzielić przetwarzaną przez nas bazę na mniejsze fragmenty, które następnie przetwarzamy.</p>
+
+<p>Poniżej przedstawiam przykładowy kod rozwiązania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">using</span><span class="p">(</span><span class="n">Entities</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Entities</span><span class="p">())</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>   <span class="kt">var</span> <span class="n">package</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="m">1</span><span class="p">];</span>
+</span><span class='line'>   <span class="kt">int</span> <span class="n">count</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>          <span class="c1">// licznik</span>
+</span><span class='line'>   <span class="kt">int</span> <span class="n">resolution</span> <span class="p">=</span> <span class="m">1000</span><span class="p">;</span>  <span class="c1">// &quot;rozmiar&quot; paczki</span>
+</span><span class='line'>   <span class="k">do</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="n">package</span> <span class="p">=</span> <span class="p">(</span><span class="k">from</span> <span class="n">d</span> <span class="k">in</span> <span class="n">context</span><span class="p">.</span><span class="n">Data</span>
+</span><span class='line'>                       <span class="k">select</span> <span class="n">d</span><span class="p">).</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">)</span>
+</span><span class='line'>              <span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="n">count</span><span class="p">).</span><span class="n">Take</span><span class="p">(</span><span class="n">resolution</span><span class="p">).</span><span class="n">ToArray</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">count</span> <span class="p">+=</span> <span class="n">resolution</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">package</span><span class="p">.</span><span class="n">Lenght</span> <span class="p">==</span> <span class="n">resolution</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widać rozwiązanie jest proste. Sądze, że jedyne co wymaga wyjaśnienia, to wykorzystanie OrderBy. Jest to potrzebne, ponieważ ponieważ stałe pomijanie (metoda Skip) pewnych elementów kolekcji wymaga jej poprzedniego posortowania.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w/">Silverlight - Parametry Inicjalizacyjne W HTML</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-03-10T23:45:00+01:00" pubdate data-updated="true">Mar 10<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W dzisiejszym poście opiszę krótko obsługę parametrów inicjalizacyjnych w aplikacjach silverlight znajdujących się na naszych stronach. Stanowią one wygodny sposób przekazywania pewnych wartości do aplikacji, gdyż jesteśmy w stanie zapisać je już na poziomie kodu html. Ale do rzeczy.</p>
+
+<p>Jeżeli przeglądaliście kiedyś stronę html z osadzoną na niej kontrolką silverlight, na pewno zauważyliście, że wewnątrz znaczników object zdefiniowane mamy różne parametry aplikacji. Wśród tych wygenerowanych domyślnie mamy m.in:</p>
+
+<ul>
+<li><strong>source</strong> &ndash; określa położenie pliku .xap zawierającego aplikację silverlight</li>
+<li><strong>onerror</strong> &ndash; określa reakcję na wystąpienie błędu w aplikacji</li>
+<li><strong>background</strong> &ndash; określa domyślny kolor tła</li>
+</ul>
+
+
+<p>Są oczywiście jeszcze inne, my skupimy się jednak na wykorzystaniu parametrów inicjalizacyjnych (<strong>InitParams</strong>). Ich sposób zapisu w kodzie html wygląda następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;param</span> <span class="na">name=</span><span class="s">&quot;InitParams&quot;</span> <span class="na">value=</span><span class="s">&quot;key1=value1,</span>
+</span><span class='line'><span class="s">      key2=value2,</span>
+</span><span class='line'><span class="s">      key3=value3,</span>
+</span><span class='line'><span class="s">      key4=value4&quot;</span> <span class="nt">/&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ponieważ wszystkie nazwy parametrów są znaczące, nazwa name musi zawierać wartośc <strong>InitParams</strong>. Dzięki niej nasza aplikacja rozpozna, że ma do czynienia z odpowiednim typem parametrów, które będziemy mogli obsłużyć. Atrybut <strong>value</strong> parametru zawiera serię par klucz-wartość oddzielonych przecinkami, które potem będziemy w stanie odczytać i odpowiednio zapisać w naszej kontrolce.</p>
+
+<p>Teraz kiedy wykonalismy, co należało po stronie html, należy przejść do kodu po stronie aplikacji. Należy pamiętać, że zapisana przez nas lista par nie zostaje zapisana automatycznie w aplikacji. W rzeczywistości pary te zapisane są we właściwości <strong>InitParams</strong> obiektu <strong>StartupEventArgs</strong>, który jest przekazywany przez zdarzenie Startup aplikacji. Wydaje się to trochę zagmatwane, dlatego przejdźmy do rzeczy. Otwieramy plik <strong>App.xaml.cs</strong> (plik z kodem aplikacji, nie kontrolki użytkownika). W konstruktorze klasy dodajemy linijkę:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">this</span><span class="p">.</span><span class="n">Startup</span> <span class="p">+=</span> <span class="k">this</span><span class="p">.</span><span class="n">Application_Startup</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ma tu miejsce oczywiście niejawne przypisanie delegata obsługującego metodę <strong>Application_Startup</strong> do zdarzenia <strong>Startup</strong> obiektu klasy <strong>App</strong> (który dziedziczy to zdarzenie po swojej klasie bazowej <strong>Application</strong>). Dalej opisujemy działanie powyższej metody:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">void</span> <span class="nf">Application_Startup</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">StartupEventArgs</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>   <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">InitParams</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">para</span> <span class="k">in</span> <span class="n">e</span><span class="p">.</span><span class="n">InitParams</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="k">this</span><span class="p">.</span><span class="n">Resources</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">para</span><span class="p">.</span><span class="n">Key</span><span class="p">,</span> <span class="n">para</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="c1">//poniższy kod jest generowany automatycznie</span>
+</span><span class='line'>   <span class="k">this</span><span class="p">.</span><span class="n">RootVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MainPage</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widać wpierw pobieramy tu pary klucz-wartość (dokładnie te same które zdefiniowaliśmy wewnątrz atrybutu <strong>value</strong> parametru <strong>InitParams</strong> w kodzie html), a następnie zapisujemy je wewnątrz słownika <strong>Resources</strong> aplikacji. Stąd będziemy mieli do nich prosty dostęp. Aby nasza silverlight&#8217;owa kontrolka była w stanie pobrać te wartości, wystarczy wpisać poniższą linijkę wewnątrz naszej aplikacji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="k">value</span> <span class="p">=</span> <span class="n">App</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Resources</span><span class="p">[</span><span class="n">key</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Value</strong> stanowi wartość zwracaną przez słownik dla danego klucza <strong>key</strong>. Jak się okazało, wykorzystanie parametrów inicjalizacyjnych jest proste i pozwala na przejżyste przekazywanie wartości za pośrednictwem kodu html.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/03/01/transformata-xsl/">Transformata XSL</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-03-01T19:58:00+01:00" pubdate data-updated="true">Mar 1<span>st</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W dzisiejszym poście przedstawię problem, z którym przyszło mi się ostatnio zmierzyć. Miałem do wykonania proste zadanie &ndash; Musiałem dokonać transformacji danych z jednego pliku XML na inny plik XML za pomocą stworzonego przez siebie pliku <strong>transformaty XSL</strong>.</p>
+
+<p>Nie ma w tym większej filozofii, gdyby nie kilka ciekawostek:</p>
+
+<ul>
+<li>W sieci jest stosunkowo dużo materiałów i przykładów odnośnie konwersji <strong>XML to HTML</strong>, ale o wiele rzadziej można się natknąć na przydatne informacje odnośnie transformacji <strong>XML to XML</strong>.</li>
+<li>W pliku podczas transformacji natrafiłem na potrzebę stworzenia węzła wynikowego, którego nazwa była w postaci wartości w jednym z węzłów źródłowych, zatem nie była znana w momencie pisania pliku XSLT</li>
+<li>Podczas iterowania po dzieciach danego węzła musiałem mieć możliwość odczytania ich aktualnego indeksu na liście węzłów-dzieci należących do danego rodzica.</li>
+</ul>
+
+
+<p>Zacznijmy jednak od krótkiej definicji <strong>XSLT</strong>. Jest to prosty język znacznikowy oparty na <strong>XML</strong>. Służy on formowaniu przekształceń (transformat) plików <strong>XML</strong> na inne typy plików (m.in. html, czysty tekst, czy inne pliki xml). Jest to wygodne rozwiązanie, zwłaszcza gdy przychodzi nam do stworzenia strony w htmlu zawierającej dane w postaci xml. <strong>XSLT</strong> służy wtedy wygodnemu tworzeniu wzorca takiej strony.</p>
+
+<p>Poniżej przedstawię parę prostych porad odnośnie tworzenia transformaty dla plików <strong>XML</strong>. Są to w zasadzie podstawy, ale mam nadzieję, że pozwolą zaoszczędzić nieco czasu osobom, które stawiają pierwsze kroki w tej dziedzinie.</p>
+
+<h2>XML to XML</h2>
+
+<p>Pierwszym krokiem powinno być zdefiniowanie w naszej transformacie formatu wyjściowego transformowanych plików. Służy do tego następująca konstrukcja:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&#39;1.0&#39;?&gt;</span>
+</span><span class='line'><span class="nt">&lt;xsl:stylesheet</span> <span class="na">version=</span><span class="s">&quot;1.0&quot;</span> <span class="na">xmlns:xsl=</span><span class="s">&quot;http://www.w3.org/1999/XSL/Transform&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;xsl:output</span> <span class="na">method=</span><span class="s">&quot;xml&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;/xsl:stylesheet&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Atrybut method znacznika <code>xsl:output</code> pozwala nam zdefiniować format pliku wyjściowego.</p>
+
+<p>Drugim podstawowym krokiem jest konstrukcja węzła xml. W tym celu posłużymy się znacznikiem <code>xsl:element</code> z atrybutem name. Przykład:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;xsl:element</span> <span class="na">name=</span><span class="s">&quot;pozycja&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">&quot;root/position&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/xsl:element&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Powyższy fragment spowoduje stworzenie węzła o nazwie pozycja, mającego za swoją wartość wartość odpowiadającego węzła position, będącego dzieckiem węzła root. Tyle odnośnie podstaw.</p>
+
+<h2>Dynamiczne nazywanie węzłów</h2>
+
+<p>Następną ciekawostką jest wspomniana przeze mnie wcześniej możliwość dynamicznego nazywania węzłów za pomocą wyrażeń <strong><strong>XSLT</strong></strong>. Aby przykład był jaśniejszy, zobrazuję go tak:</p>
+
+<p>Załóżmy, że mamy węzeł <code>pos</code> zawierający wartośc <code>geo1</code>. Chcielibyśmy, aby w wynikowym pliku xml pojawił się węzeł o nazwie <code>pos_geo1</code>, dodatkowo, żeby jego nazwa mogła ulegać zmianie w zależności od wartości przechowywanej w <code>pos</code>. Niestety, wyrażenie <code>value-of</code> tutaj nie zadziała. Na szczęście w xslt istnieje jednak jego odpowiednik, który można stosować do atrybutów węzłów &ndash; chodzi o parę nawiasów <strong>{}</strong>. Są one atrybutowym odpowiednikiem <code>value-of</code>, tzn. doklejają wartość przechowywaną pod wyrażeniem, które znajduje się wewnątrz tych nawiasów jako element stringa w atrybucie. Przykład:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;xsl:element</span> <span class="na">name=</span><span class="s">&quot;pos_{pos}&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;/xsl:element&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p> W przypadku, kiedy wewnątrz węzła źródłowego znajduje się wartość <code>geo1</code>, powyższy kod spowoduje stworzenie węzła o nazwie <code>pos_geo1</code>.</p>
+
+<h2>Index iterowanego elementu</h2>
+
+<p>Ostatnim przykładem będzie wydobycie numeru indeksu aktualnie iterowanego elementu. Jak wiemy, do iterowania po elementach-dzieciach danego węzła służy konstrukcja <code>xsl:for-each</code>. Jednakże, tak jak pętle foreach znane z normalnych języków programowania, nie posiada ona żadnej (jawnej) wartości inkrementowanej. Skąd więc ją wydobyć? Służy do tego metoda <code>position()</code> , którą zawieramy wewnątrz poznanych wcześniej sześciennych nawiasów <strong>{}</strong>. Należy pamiętać, że w przeciwieństwie do większości języków programowania pierwszy indeks będzie miał numer 1 a nie zero. Przykład:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;xsl:for-each</span> <span class="na">select=</span><span class="s">&quot;kryteria&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;xsl:element</span> <span class="na">name=</span><span class="s">&quot;kryt_{position()-1}&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">&quot;kryterium&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/xsl:element&gt;</span>
+</span><span class='line'><span class="nt">&lt;/xsl:for-each&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Powyższy przykład spowoduje zamianę seri znacznika <strong>kryteria</strong> z dziećmi <strong>kryterium</strong> na serię znaczników o nazwie <strong>kryt</strong>_nr gdzie nr będzie aktualnym indeksem danego <strong>kryterium</strong> na liście dzieci węzła <strong>kryteria</strong>. Dodatkowo odejmując 1 spowodujemy, że odliczanie numeru nr zacznie się od 0.</p>
+
+<p>To wszystko na dzisiaj. Mam nadzieję, że te informacje trochę pomogą i skrócą wasz czas nauki narzędzia, jakim jest <strong><strong>XSLT</strong></strong>.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/02/25/silverlight-detekcja-krawedzi/">Silverlight - Detekcja Krawędzi</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-25T11:35:00+01:00" pubdate data-updated="true">Feb 25<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W dzisiejszym poście postaram się opisać, w jaki sposób zaimplementować filtr obrazu służący do wykrywania krawędzi. W tym celu posłużymy się implementacją filtru Sobela (jest to jeden z najpopularniejszych filtrów służących temu celowi). Ale po kolei. Najpierw ustalmy plan, według którego będziemy przygotowywać obraz do obróbki:</p>
+
+<ul>
+<li>Po pierwsze potrzebna nam będzie klasa umożliwiającą odwołanie się do pojedyńczych pixeli obrazu. W Windows Forms i WPF nie ma z tym większego problemu (możliwe są operacje wskaźnikowe), o tyle tutaj konieczne jest wykorzystanie innej metody. W tym celu posłużymy się klasą <strong>WriteableBitmap</strong>, która jest dostępna od 3 edycji Silverlighta.</li>
+<li>Po drugie, nasz obraz wstępnie przetworzymy na inny widoczny w skali szarości. Uprości do budowę filtru przy możliwych do zaakceptowania stratach informacji.</li>
+</ul>
+
+
+<p>Na wstępie warto wspomieć co nieco o samej klasie <strong>WriteableBitmap</strong>. Wybrałem ją, ponieważ udostępnia ona pełną kolekcję pixeli składających się na obraz w postaci prostej właściwości Pixels, zwracającej tablicę typu int. 4 bajty składające się na pixel to kolejno: BGRA. Dzięki temu możemy szybko iterować po kolejnych pixelach obrazu. Jest to wygodne rozwiązanie.</p>
+
+<p>Podczas pisania filtru Sobela przyjąłem, że każdorazowo przekazywana do niego bitmapa będzie zawierała obraz w skali szarości. Pokażę tutaj krótki przykład pętli zamieniającej zakres kolorów:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelHeight</span> <span class="p">*</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>   <span class="kt">int</span> <span class="n">pix</span> <span class="p">=</span> <span class="n">bmp</span><span class="p">.</span><span class="n">Pixels</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">BitConverter</span><span class="p">.</span><span class="n">GetBytes</span><span class="p">(</span><span class="n">pix</span><span class="p">);</span>
+</span><span class='line'>   <span class="kt">byte</span> <span class="n">p</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)(</span><span class="n">r</span> <span class="p">*</span> <span class="n">t</span><span class="p">[</span><span class="m">2</span><span class="p">]</span> <span class="p">+</span> <span class="n">g</span> <span class="p">*</span> <span class="n">t</span><span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="p">+</span> <span class="n">b</span> <span class="p">*</span> <span class="n">t</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+</span><span class='line'>   <span class="kt">int</span> <span class="n">pixel</span> <span class="p">=</span> <span class="n">BitConverter</span><span class="p">.</span><span class="n">ToInt32</span><span class="p">(</span><span class="k">new</span> <span class="kt">byte</span><span class="p">[]</span> <span class="p">{</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="m">255</span> <span class="p">},</span> <span class="m">0</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="n">bmp</span><span class="p">.</span><span class="n">Pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">pixel</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Zmienne <code>r</code>, <code>g</code> i <code>b</code> prezentują odpowienio wagi, których używamy w każdej składowej przy obliczaniu odcienia szarości. Ich wartości mogą być różne, dlatego też ich tu nie podaję. Chętni sami zapoznają się z tym tematem.</p>
+
+<p>Teraz pola na implementację samego filtru wykrywania krawędzi. Z dokładniejszym opisem jego działania można zapoznać się <a href="http://en.wikipedia.org/wiki/Sobel_operator">tutaj</a>. Ważną częścią filtru są dwie macierze, które będziemy nakładać na każdy pixel oraz jego otoczenie. Oto jak wygląda ich implementacja:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span><span class="p">[,]</span> <span class="n">_xk</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[,]</span>
+</span><span class='line'>                                               <span class="p">{</span>   
+</span><span class='line'>              <span class="p">{</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">1</span> <span class="p">},</span>
+</span><span class='line'>              <span class="p">{</span> <span class="p">-</span><span class="m">2</span><span class="p">,</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">2</span> <span class="p">},</span>
+</span><span class='line'>              <span class="p">{</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">1</span> <span class="p">}</span>
+</span><span class='line'>                                               <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span><span class="p">[,]</span> <span class="n">_yk</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[,]</span>
+</span><span class='line'>                                               <span class="p">{</span>   
+</span><span class='line'>              <span class="p">{</span>  <span class="m">1</span><span class="p">,</span>  <span class="m">2</span><span class="p">,</span>  <span class="m">1</span> <span class="p">},</span>
+</span><span class='line'>              <span class="p">{</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">0</span> <span class="p">},</span>
+</span><span class='line'>              <span class="p">{</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span> <span class="p">-</span><span class="m">2</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span> <span class="p">}</span>
+</span><span class='line'>                                               <span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Mając tak zdefiniowane struktury, wystarczy już tylko stworzyć pętle iterujące po kolumnach i wierszach pixeli. Kod realizujący to zadanie wygląda następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">WriteableBitmap</span> <span class="n">output</span> <span class="p">=</span> <span class="k">new</span> <span class="n">WriteableBitmap</span><span class="p">(</span>
+</span><span class='line'>   <span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">);</span>
+</span><span class='line'><span class="kt">byte</span> <span class="n">g</span><span class="p">;</span>
+</span><span class='line'><span class="kt">double</span> <span class="n">gx</span><span class="p">,</span> <span class="n">gy</span><span class="p">,</span> <span class="n">max</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+</span><span class='line'><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">-</span><span class="m">1</span><span class="p">;</span> <span class="n">i</span><span class="p">++){</span>
+</span><span class='line'>   <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">j</span> <span class="p">&lt;</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">-</span><span class="m">1</span><span class="p">;</span> <span class="n">j</span><span class="p">++){</span>
+</span><span class='line'>        <span class="n">gx</span> <span class="p">=</span> <span class="n">gy</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span> <span class="n">k</span> <span class="p">&lt;</span> <span class="m">2</span><span class="p">;</span> <span class="n">k</span><span class="p">++){</span>
+</span><span class='line'>              <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">l</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span> <span class="n">l</span> <span class="p">&lt;</span> <span class="m">2</span><span class="p">;</span> <span class="n">l</span><span class="p">++){</span>
+</span><span class='line'>                   <span class="kt">double</span> <span class="n">pix</span> <span class="p">=</span>
+</span><span class='line'>                        <span class="n">BitConverter</span><span class="p">.</span><span class="n">GetBytes</span><span class="p">(</span>
+</span><span class='line'>                        <span class="n">bmp</span><span class="p">.</span><span class="n">Pixels</span><span class="p">[(</span><span class="n">i</span><span class="p">+</span><span class="n">k</span><span class="p">)*</span><span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span> <span class="p">+</span> <span class="n">j</span> <span class="p">+</span> <span class="n">l</span><span class="p">])[</span><span class="m">0</span><span class="p">];</span>
+</span><span class='line'>                   <span class="n">gx</span> <span class="p">+=</span> <span class="n">pix</span><span class="p">*</span><span class="n">_xk</span><span class="p">[</span><span class="n">k</span><span class="p">+</span><span class="m">1</span><span class="p">,</span> <span class="n">l</span><span class="p">+</span><span class="m">1</span><span class="p">];</span>
+</span><span class='line'>                   <span class="n">gy</span> <span class="p">+=</span> <span class="n">pix</span><span class="p">*</span><span class="n">_yk</span><span class="p">[</span><span class="n">k</span><span class="p">+</span><span class="m">1</span><span class="p">,</span> <span class="n">l</span><span class="p">+</span><span class="m">1</span><span class="p">];</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="n">g</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span><span class="n">Math</span><span class="p">.</span><span class="n">Min</span><span class="p">(</span><span class="n">Math</span><span class="p">.</span><span class="n">Sqrt</span><span class="p">(</span><span class="n">gx</span> <span class="p">*</span> <span class="n">gx</span> <span class="p">+</span> <span class="n">gy</span> <span class="p">*</span> <span class="n">gy</span><span class="p">),</span> <span class="m">255</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">output</span><span class="p">.</span><span class="n">Pixels</span><span class="p">[</span><span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span> <span class="p">*</span> <span class="n">i</span> <span class="p">+</span> <span class="n">j</span><span class="p">]</span> <span class="p">=</span>
+</span><span class='line'>              <span class="n">BitConverter</span><span class="p">.</span><span class="n">ToInt32</span><span class="p">(</span><span class="k">new</span> <span class="kt">byte</span><span class="p">[]</span> <span class="p">{</span><span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="m">255</span><span class="p">},</span> <span class="m">0</span><span class="p">);</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widać nie iterujemy po wszystkich pixelach, lecz pozostawiamy &ldquo;obramowanie&rdquo; grubości 1 pixela wzdłuż wszystkich boków obrazu. Jest to konieczne, gdyż w przeciwnym razie nie moglibyśmy przyłożyć macierzy X i Y do pixeli brzegowych. Z tego samego powodu potrzebne jest rozróżnienie wierszy i kolumn (mimo że właściwość Pixels udostępnia nam tablicę 1-wymiarową).</p>
+
+<p>Dodatkowe słowo wyjaśnienia &ndash; w tym przykładzie posługuję się <strong>BitConverter</strong>em, aby odczytywać wartości konkretnych składowych pixela oraz składać je w pixel. Jest to rozwiązanie czytelne, dlatego warto je tu przedstawić.</p>
+
+<p>PS: nie badałem szybkości działania tego rozwiązania na dużych obrazach. W moim projekcie posługuję się obrazami uzyskiwanymi z kamerki internetowej 1,2Mpx. W takich warunkach szybkość działania jest absolutnie wystarczająca.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/02/20/c-class-vs-struct/">[C#] Class vs. Struct</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-20T13:26:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Dzisiejszy post dotyczyć będzie podstawowych cech języka C#. Mówię tutaj o różnicach występujących pomiędzy strukturami a standardowymi klasami. Rzecz była wałkowana już wiele razy, jednak tutaj postaram się zgromadzić i uporządkować tyle informacji, ile znalazłem na ten temat.</p>
+
+<p>Zacznijmy więc od różnic:</p>
+
+<ul>
+<li>Klasy bazowe &ndash; jak powszechnie wiadomo wszystkie klasy w C# dziedziczą po typie <strong>Object</strong>. Dotyczy to również struktur, jednak w sposób niebezpośredni. Każda struktura dziedziczy po typie <strong>ValueType</strong>. Warto jednak wiedzieć, że sam <strong>ValueType również dziedziczy po typie Object</strong>.</li>
+<li>Dziedziczenie &ndash; wszystkie struktury są niejawnie zapieczętowane (<strong>sealed</strong>). Oznacza to, że nie mogą służyć jako klasy bazowe do dziedziczenia. Dodatkowo same nie mogą dziedziczyć po innych typach. Aby to zrozumieć przedstawię zdezasemblowany nagłówek struktury w języku CIL: <code>.class public sealed MyStruct extends [mscorlib]System.ValueType</code>. Możliwy jest również inny skrótowy zapis:<code>.class public sealed value MyStruct</code></li>
+<li>Miejsce w pamięci &ndash; klasy tworzone są na zarządzanej stercie (chociaż można na to wpływać). Struktury tworzone są zawsze na stosie. Wynika stąd, że dostęp do struktur jest szybszy, ale jednocześnie nie powinny one być zbyt duże (stąd jedno z ich określeń jako &ldquo;<em>lekkich klas</em>&rdquo;). Taki stan rzeczy niesie za sobą również inną konsekwencję &ndash; struktury (jak wszystkie typy wartościowe) mają czas życia ograniczony zasięgiem, w którym się zajmują tzn. po wyjściu poza zasięg są one natychmiast usuwane z pamięci (nie trzeba ich odśmiecać).</li>
+<li>Przekazywanie &ndash; dochodzimy do momentu przekazywania obiektów jako np. parametrów funkcji. Klasy zawsze przekazywane są przez referencję (tzn. podawany jest wskaźnik na adres bloku pamięci, który jest zajmowany przez obiekt) &ndash; tak więc wszelkie zmiany dokonane na parametrze będą zachowane po wyjściu z funkcji. Struktury są typami przekazywanymi przez wartość (tzn. parametr funkcji będzie w istocie <em>głęboką kopią</em> przekazanej struktury), co za tym idzie zmiany dokonywane na strukturze przekazanej jako parametr nie będą odzwierciedlone w orginale. Nie jest to zawsze porządane zachowanie, dlatego czasami warto oznaczać takie parametry za pomocą słów kluczowych <strong>out</strong> (kiedy chcemy zainicjalizować daną strukturę) oraz <strong>ref</strong>(kiedy wiemy, że struktura ta jest już zainicjalizowana).</li>
+</ul>
+
+
+<p>Powstaje jeszcze jedno ciekawe pytanie: co się stanie w sytuacji, kiedy struktura zawierająca w sobie typ referencyjny zostanie przekazana? Co się wtedy stanie z klasą wewnątrz niej. Odpowiedź brzmi: skopiowana zostanie jedynie referencja na obiekt, będziemy więc mieli do czynienia z <em>płytką kopią</em> obiektu, mimo, że przekazana struktura będzie <em>głęboką kopią</em>.
+&ndash; Wartość null &ndash; w przeciwieństwie do klas struktury nie mogą przyjmować wartości null. Dlatego dobrym zwyczajem jest stworzenie statycznego getera zwracającego jakiś odpowiednik pustej struktury. Oczywiście wszystkie typy wartościowe mogą zostać opakowane w typie generyczym Nullable<T> i przyjmować jako takie wartość null (w takim wypadku zawartość naszej stuktury znajduje się pod właściwością Value). Czasami jest to rozwiązanie porządane, a na jego korzyść idzie fakt, że typ ten został wyposażony dość przyjazną programiście konstrukcję:&lt;</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">Nullable</span><span class="p">&lt;</span><span class="n">MyStruct</span><span class="p">&gt;</span> <span class="n">p</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyStruct</span><span class="p">();</span>
+</span><span class='line'><span class="c1">//prostszy zapis</span>
+</span><span class='line'><span class="n">MyStruct</span><span class="p">?</span> <span class="n">p</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyStruct</span><span class="p">();</span>
+</span><span class='line'><span class="c1">//lub</span>
+</span><span class='line'><span class="n">MyStruct</span><span class="p">?</span> <span class="n">p</span> <span class="p">=</span> <span class="k">default</span><span class="p">(</span><span class="n">MyStruct</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Konstruktory &ndash; struktury zabraniają programiście nadpisywać konstruktor domyślny. Możliwe jest jedynie ustanawianie konstruktorów z parametrami. Ciekawostką jest fakt, że ze struktur można korzystać bezpośrednio po nazwaniu referencji. Jednak wymogiem, który musi być spełniony jest wcześniejsze jawne zainicjalizowanie wszystkich pól składowych struktury. Przykład:
+Definicja struktury:</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">struct</span> <span class="nc">MyStruct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">public</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">public</span> <span class="k">void</span> <span class="nf">ShowX</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wykorzystanie:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">MyStruct</span> <span class="n">s</span><span class="p">;</span>
+</span><span class='line'><span class="n">s</span><span class="p">.</span><span class="n">x</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>    <span class="c1">//bez tego dostaniemy błąd kompilatora</span>
+</span><span class='line'><span class="n">s</span><span class="p">.</span><span class="n">ShowX</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Inicjalizacja pól &ndash; struktury nie mogą inicjalizować początkowych wartości swoich pól. Wpisanie wewnątrz struktury definicji pola w poniższej postaci spowoduje wyrzucenie błędu przez kompilator: <code>
+public int y = 1;</code></li>
+<li>Metoda Finalize() &ndash; jak wiadomo klasy wykorzystują tą metodę w momencie, kiedy zachodzi ich odśmiecenie. Każda z nich niebezpośrednio przesłania tą metodę. Jednak nie ma to miejsa w przypadku struktur, gdyż nie są one przechowywane na stercie ani nie podlegają kontroli <strong>Garbage Collectora</strong>.</li>
+</ul>
+
+
+<p>Opowiedzieliśmy już o różnicach, czas na to co jest wspólne dla klas i struktur:
+&ndash; Zarówno klasy jak i struktury mogą deklarować zmienne statyczne, publiczne, prywatne (struktury nie mogą zawierać pól o dostępie <em>protected</em>) i jak i internal.
+&ndash; Klasy i struktury mogą definiować typy generyczne.
+&ndash; Mogą implementować interfejsy (mimo, że struktury nie obsługują dziedziczenia, implementacja interfejsów jest możliwa).
+&ndash; Mogą przeciążać operatory i definiować stałe.
+&ndash; Mogą definiować właściwości i obsługiwać zdarzenia.</p>
+
+<p>Jak widać różnic jest dość sporo, tyle na plus co i na minus. Struktury w C# znacznie się różnią od swoich odpowiedników w C++. Czasami warto się zastanowić nad ich wykorzystaniem w praktyce, gdyż może to poskutkować szybszym działaniem programu. Sądzę, że z tego powodu nie należy ich zawsze spisywać na straty.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/5/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/3/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>O redundancji w wyrażeniach LINQ - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">O Redundancji W Wyrażeniach LINQ</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-23T21:35:00+02:00" pubdate data-updated="true">Apr 23<span>rd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
+
+<h2>Przykład</h2>
+
+<p>Weźmy pod uwagę następujący przykład &ndash; otrzymaliśmy dokumentację, w której opisana jest pewna encja. Może ona mieć następującą postać:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Document</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">public</span> <span class="n">DateTime</span> <span class="n">CreateDate</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">public</span> <span class="kt">string</span> <span class="n">Type</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="c1">// .. reszta implementacji</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W ramach logiki biznesowej wykonywanej na encjach tej klasy stworzone zostało pojęcie przeterminowania &ndash; z dalszej części dokumentacji dowiadujemy się, że za przeterminowane uznajemy te encje, w których data utworzenia jest starsza niż X dni (X może być dowolne np. ustawione w konfiguracji systemu) zaś typ przybiera konkretną wartość. Bez trudu zawężamy więc wyniki za pomocą zapytania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">x</span> <span class="p">=</span> <span class="p">..</span> <span class="n">pobieramy</span> <span class="n">X</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">documents</span> <span class="p">=</span> <span class="n">DataContext</span><span class="p">.</span><span class="n">Documents</span>
+</span><span class='line'>        <span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">CreateDate</span><span class="p">.</span><span class="n">AddDays</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">&lt;</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span> <span class="p">&amp;&amp;</span> <span class="n">x</span><span class="p">.</span><span class="n">Type</span> <span class="p">==</span> <span class="s">&quot;M1&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Niestety w późniejszym czasie słowo &ldquo;przeterminowany&rdquo; pojawia się w tym kontekscie jeszcze kilka razy w różnych miejsach aplikacji. Co robimy? W większości spotkanych przeze mnie przypadków piszemy klauzulę <code>Where(&hellip;)</code> ponownie. Ale czy na pewno?</p>
+
+<h2>Inne podejście</h2>
+
+<p>Rozwiązaniem powyżej sytuacji może być stary dobry <em>monkey patching</em>, reprezentowany w C# przez mechanizm extension methods. Z jego użyciem moglibyśmy rozwiązać ten problem w następujący sposób:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="n">X</span> <span class="p">{</span> <span class="k">get</span> <span class="p">{...}</span> <span class="p">}</span>
+</span><span class='line'><span class="c1">/// &lt;summary&gt;</span>
+</span><span class='line'><span class="c1">/// Słowo komentarza od ojca dyrektora.</span>
+</span><span class='line'><span class="c1">/// &lt;/summary&gt;</span>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">Document</span><span class="p">&gt;</span> <span class="n">Expired</span><span class="p">(</span><span class="k">this</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">Document</span><span class="p">&gt;</span> <span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">x</span> <span class="p">=</span> <span class="n">X</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">data</span><span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">CreateDate</span><span class="p">.</span><span class="n">AddDays</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">&lt;</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span> <span class="p">&amp;&amp;</span> <span class="n">x</span><span class="p">.</span><span class="n">Type</span> <span class="p">==</span> <span class="s">&quot;M1&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Przykład wykorzystania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">expiredDocuments</span> <span class="p">=</span> <span class="n">DataContext</span><span class="p">.</span><span class="n">Documents</span><span class="p">.</span><span class="n">Expired</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W ten sposób stworzyliśmy stereotyp, który możemy wykorzystywać zawsze w sytuacji kiedy mamy do czynienia z tym konkretnym zachowaniem. Jakie są zalety tego podejścia? Po pierwsze trzymamy się zasady DRY (Don&rsquo;t Repeat Yourself). Po drugie sądzę, że taki zapis jest o wiele bardziej czytelny i ułatwia późniejsze zrozumienie kontekstu, w jakim wykonywane są zapytania.</p>
+
+<p>Innym sposobem na rozwiązanie powyższego problemu jest naturalnie przeniesienie filtru bezpośrednio do kontekstu danych:<code>var data = DataContext.GetExpiredDocuments();</code>. Na czym jednak polega przewaga monkey patchingu? Po pierwsze nie jesteśmy twardo związani ze źródłem danych &ndash; napisany wcześniej stereotyp może być zastosowany dla dowolnej kolekcji, nawet takiej która powstała w wyniku deserializacji żądania HTTP. Po drugie rozwinięcie to można wstawić w dowolnym momencie tworzonego zapytania, z dowolnej encji posiadające odpowiednią relację.</p>
+
+<p>W rezultacie otrzymujemy rozwiązanie bardziej uniwersalne i podatne na zmiany.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-23T21:35:00+02:00" pubdate data-updated="true">Apr 23<span>rd</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/" title="Previous Post: Parę słów o HTMLu i CSSie">&laquo; Parę słów o HTMLu i CSSie</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/" title="Next Post: Zapowiedź Ruby 2.1 - generational heap">Zapowiedź Ruby 2.1 - generational heap &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

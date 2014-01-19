@@ -1,0 +1,329 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Garść pro tipów przydatnych podczas tworzenia aplikacji - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Garść Pro Tipów Przydatnych Podczas Tworzenia Aplikacji</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-26T22:49:00+02:00" pubdate data-updated="true">Jun 26<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
+
+<p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
+
+<h2>1. &ldquo;Jesteśmy jedną rodziną, mamy wspólne korzenie&rdquo;</h2>
+
+<p>Naturalną cechą aplikacji webowych rozwijanych w ramach środowiska .NET jest ich podział na wiele różnych projektów. Nie jest to wymóg, jednakże z reguły zdecydowanie pomaga w organizacji oraz w trakcie późniejszego wdrażania rozwiązań. To co jednak uznałem za warte przypomnienia to wzajemne powiązania pomiędzy projektami. Mówiąc zaś dokładniej, przydatność stworzenia wspólnej biblioteki-korzenia, dowiązywanej przez wszystkie pozostałe projekty w aplikacji.</p>
+
+<p>Ma to kilka prostych przyczyn. Po pierwsze zdaża się, że musimy zaimplementować pewną funkcjonalność w kilku bibliotekach, będących na podobnym poziomie zależności, których jednak nie możemy powiązać ze sobą np. ze względu na rekurencyjne zapętlenie zależności &ndash; tutaj wspólny &ldquo;korzeń&rdquo; okazuje się nieoceniony. Po drugie, w trakcie pracy z aplikacją nieraz powstaje chęć stworzenia własnego DSLa bądź zestawu rozszerzeń upraszczających pracę z daną platformą bądź językiem. Ileż to razy rodziła się ochota na dodanie <em>extension method</em>, której brakuje nam w istniejących już klasach .NET? Tutaj również możliwość współdzielenia tego typu funkcjonalności jest bardzo przydatna.</p>
+
+<p>Idea wspólnego &ldquo;korzenia&rdquo; przydaje się również kiedy mowa o klasach wyjątków. Dobrą praktyką w trakcie definiowania aplikacji jest wywoływanie własnych wyjątków, które mogą informować nie tylko o błędach w operacjach logicznych systemu, lecz również logice biznesowej jako takiej. Moim zdaniem wszystkie takie <em>customowe</em> wyjątki powinny mieć wspólną klasę bazową. Dzięki temu w późniejszych fragmentach aplikacji będziemy mogli bez problemu wychwytywać te z nich, które stworzyliśmy sami na potrzeby naszego systemu i odpowiednio na nie reagować &ndash; przekształać do postaci czytelnej dla końcowego użytkownika, logować itp.</p>
+
+<h2>2. Atomic frontend design</h2>
+
+<p>Atomic design to koncepcja projektowania elementów HTML w sposób uporządkowany na bazie kompozytów. Nieraz w życiu codziennym zdarza się nam określać komponenty strony w dość ogólny sposób, pozostawiając szczegóły implementacji na &ldquo;doprecyzowanie później&rdquo; ;) W rezultacie kończymy w morzu (lub raczej szambie) znaczników o mgliście oznaczonych brzegach. Ponieważ HTML na stronach może mieć bardzo rozrośniętą postać, którą jako programiści też będziemy musieli utrzymywać, warto zadbać też o ten aspekt aplikacji.</p>
+
+<p>Idea atomic designu skupia się własnie na wiązaniu elementów HTML w kompozyty, które z kolei są łączone ze sobą dalej w kolejne, bardziej abstrakcyjne struktury. Więcej szczegółów na ten temat możecie dowiedzieć się <a href="http://bradfrostweb.com/blog/post/atomic-web-design/">tutaj</a>. W praktyce warto poznać to podejście już teraz &ndash; w obecnej chwili widać wyłaniający się coraz mocniej trend, który w przyszłości może poskutować nowym standardem umożliwiającym definiowanie własnych znaczników HTML, mających bezpośrednie wsparcie ze strony silnika renderującego.</p>
+
+<p>Chcąc wspomóc developerów i przygotować współczesne aplikacje webowe do nadchodzących standardów, inżynierowie Google&#8217;a stworzyli projekt <a href="http://www.polymer-project.org/">polymer</a> (czerpiący m.in. z koncepcji atomic designu), którego zadaniem jest zbudować odpowiednią platformę abstrakcji z istniejących już rozwiązań: HTML, Javascriptu oraz CSS. Zgodnie z ich przewidywaniami wraz z rozwojem przeglądarek funkcje oferowane przez tą bibliotekę mają w przyszłości zostać zastąpione specjalizowanymi, natywnymi odpowiednikami, zaś zadaniem polymeru jest umożliwić obecnym aplikacjom kompatybilność z dopiero powstającymi technologiami. Ciekawostka: mimo, że AngularJS stanowi oddzielny projekt, zapowiedziano już że w kolejnych wersjach będzie on coraz bardziej integrowany z polymerem.</p>
+
+<h2>3. Stwórz własną platformę abstrakcji&hellip;</h2>
+
+<p>Kolejna kwestia wynika z prostej tendencji uzależniania logiki aplikacji od wykorzystywanych bibliotek. W praktyce skutkuje to twardym związaniem naszego systemu z konkretnymi rozwiązaniami &ndash; które w przyszłości mogą stracić wsparcie, okazać się przestarzałe lub niewystarczające do naszych potrzeb. Taka monolityczna budowa nie jest przychylna zmianom, a jak powszechnie wiadomo klienci lubią wpadać na nowe pomysłu i zmieniać swoje zdanie.</p>
+
+<p>Stąd też idealnym rozwiązaniem jest stworzenie klasycznej płaszczyzny abstrakcji, całkowicie izolującej naszą logikę biznesową, która stanowi jądro każdej aplikacji biznesowej, od zewnętrznych platform, realizowanych pośrednio jako obiekty proxy/adaptery. Piszę idealnym, w praktyce jednak rzadko takie rozwiązanie okazuje się w 100% możliwe. Warto jednak poświęcić mu trochę uwagi &ndash; również z perspektywy modularyzacji i możliwości testowania.</p>
+
+<h2>4. &hellip; ale nie przeginaj z warstwami</h2>
+
+<p>Pamiętaj, że każda dodatkowa wartwa abstrakcji z jednej strony umożliwia ci podzielenie problemu na prostsze, bardziej ogólne definicje (a ludzie z natury lubią pojmować świat ogólnikowo), z drugiej strony jednak stanowi jednocześnie kolejną barierę w optymalizacji.</p>
+
+<p>To co warto przypomnieć, to fakt, że tworzenie aplikacji to proces, w którym wymagania zmieniają się w czasie. Produkcja oprogramowania nie jest jednym z konkursów algorytmicznych, gdzie wszelkie bariery i wartości graniczne są niezmienne i podane z góry. To co dziś świetnie się sprawdza, jutro może okazać się niewystarczające.</p>
+
+<p>Ważnym czynnikiem jest odpowiednie zdefiniowanie problemu i dobór właściwych wzorców i rozwiązań. Jako programiści nieraz generalizujemy pewne problemy tak, aby dało się je rozwiązać przy pomocy istniejących technologii, kosztem rzeczywistej złożoności całego systemu. Dla zainteresowanych proponuję obejżeć <a href="http://www.infoq.com/presentations/8-lines-code-refactoring">wykład</a> Grega Younga na ten temat.</p>
+
+<p>Wielowarstwowe aplikacje stanowią pewien problem, kiedy przychodzi do optymalizacji. Nie oznacza to jednak, że budowa z podziałem na warstwy jest zła. Jest wygodna z punktu widzenia programisty i projektowania koncepcji rozwiązań dla problemów postawionych przed systemem. Z drugiej strony jednak każda aplikacja posiada pewne punkty zapalne &ndash; wymagające dużej wydajności &ndash; które będą wymagać niestandardowego trakowania, w tym też odejścia od wcześniej przyjętych koncepcji i zwrotu w stronę rozwiązań bardziej nisko poziomowych. Dobrze, aby aplikacja umożliwiała pewien sposób na osiągnięcie tego celu bez zaburzania reszty konstrukcji.</p>
+
+<p>Jednym z możliwych kompromisów jest wielopoziomowy caching. Zamiast przebijać sie przez kolejne płaszczyzny abstrakcji w celu możliwości operowania na bardziej niskopoziomowych mechanizmach, cache&#8217;ujemy uzykiwane wartości na poszczególnych warstwach. Wielopoziomowy cache umożliwia też przyrostowe skalowanie wydajności w zależności od potrzeb.</p>
+
+<h2>5. Kradnij&hellip;</h2>
+
+<p>&hellip; moc obliczeniową maszyn klienta. Jest to bardzo dobre podejście, ponieważ wykonywanie części logiki po stronie przeglądarki nie dość, że odciąża serwery, za które musimy płacić, to dodatkowo stanowi rozwiązanie o wiele bardziej skalowalne, ponieważ ogólna ilość dostępnej mocy obliczeniowej rośnie wraz z liczbą maszyn wysyłających żądania na serwer. Stąd też część obliczeń, takich jak renderowanie dynamicznego HTMLa, czy preprocesowanie modelu danych od razu do postaci przystępnej do obliczeń po stronie serwera, można wykonywać bezpośrednio w przeglądarce.</p>
+
+<h2>6. Oszukuj</h2>
+
+<p>Co mam przez to na myśli? Po pierwsze powtarzam: cache&#8217;uj dane. W świecie aplikacji na platformie .NET często jest to opcja marginalizowana. W wielu przypadkach dopuszczalne jest, aby użytkownik zobaczył <em>przybliżone</em> dane. A co jeżeli nie są one aktualne? <em>Keep calm and oj tam oj tam</em> ;)</p>
+
+<p>Problem, z którym się też spotkałem, to stosowanie <em>prymitywych</em> cache&#8217;ów w miejscach, w których ciężko określić górną granicę przyrostu danych. Tak, zwykły .NETowy słownik może wystarczy w twoim środowisku developerskim, ale w momencie, gdy za rok dane pompowane do niego na produkcji będą liczone w setkach tysięcy (lub więcej) obiektów, wszyscy na własne oczy zobaczą, że wyprodukowałeś trabanta w cenie porsche. Technologie sprawdzone na polu walki, takie jak Memcache i Redis są tutaj, gotowe cię wesprzeć. Korzystaj z tej możliwości.</p>
+
+<p>Po drugie pamiętaj o złotej zasadzie &ndash; czego user nie dotknie, tego sercu nie żal. Przykład-anegdota: swego czasu aplikacje na urządzenia Apple były podawane jako wzór szybko uruchamiających się programów. Aplikacja, która na innych systemach uruchamiała się w kilka sekund, na iPhone była gotowa w ułamku tego czasu. Na czym polegał sekret? Otóż w rzeczywistości to, co widział użytkownik, było w rzeczywistości zrzutem ekranu z działającej aplikacji, bez jakichkolwiek możliwości interakcji. Dzięki temu użytkownik miał wrażenie, że aplikacja uruchamia się niemal natychmiast. W rzeczywistości, zanim wykonał on jakąkolwiek akcję w UI, mijało parę sekund, w trakcie których program miał czas, aby się załadować i podstawić pod &ldquo;zaślepkę&rdquo; faktyczny interfejs użytkownika.</p>
+
+<p>Liczę na to, że lektura ta okazała się ciekawa i być może uda mi się w przyszłości opisać dalsze koncepty i przemyślenia.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-26T22:49:00+02:00" pubdate data-updated="true">Jun 26<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/free-talk/'>free talk</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/" title="Previous Post: Czego programiści .NET mogliby nauczyć się od Rubystów?">&laquo; Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/" title="Next Post: ServiceStack - alternatywa dla ASP.NET">ServiceStack - alternatywa dla ASP.NET &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

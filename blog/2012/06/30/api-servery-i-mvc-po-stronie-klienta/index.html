@@ -1,0 +1,316 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>API Servery i MVC po stronie klienta - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">API Servery I MVC Po Stronie Klienta</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-30T22:32:00+02:00" pubdate data-updated="true">Jun 30<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w stronę klienta. Sprawę potęguje fakt, że coraz więcej powstaje narzędzi ułatwiających te czynności, zaś duże firmy, takie jak Google, Twitter czy Facebook, promują przenoszenie kolejnych funkcjonalności do przeglądarki.</p>
+
+<p>Zacznijmy od tego, jak wygląda &ldquo;tradycyjny&rdquo; model działania aplikacji WWW.</p>
+
+<p>Serwer odbiera żądanie. Aby na nie odpowiedzieć, wykonuje wiele operacji takich jak mapowanie routingu, uwierzytelnianie, czy pobranie elementów z bazy. Po ich wykonaniu nadchodzi czas na proces przygotowania odpowiedzi. W obecnych czasach serwery nie serwują praktycznie żadnych statycznych stron HTML, zawartość jest przeważnie generowana dynamicznie i wypełniana na podstawie danych dla każdego żądania. Warto zauważyć, że tak wygenerowana strona może mieć dość spory rozmiar. W przypadku kolejnych żądań serwer powtarza wszystkie kroki, w wyniku zwracając kolejną stronę HTML, w większości przypadków bardzo podobną do poprzedniej (za sprawą wspólnego Layoutu oraz dołączanych skryptów i stylów).</p>
+
+<p>To tradycyjne podejście ma kilka zalet:</p>
+
+<ul>
+<li>Ponieważ większość logiki związanej z prezentacją generowana jest w postaci HTML po stronie serwera, maszyna klienta nie musi borykać się z ciężkimi skryptami. Jest to pewien plus w przypadku słabych maszyn czy starych przeglądarek, źle radzących sobie z javascriptem.</li>
+<li>Nie ma co ukrywać, że utrzymywanie kodu JS jest znacznie bardziej wymagające niż odpowiadającego mu kodu w innych językach wykorzystywanych po stronie serwera.</li>
+<li>Niektóre roboty internetowe ignorują pewne fragmenty adresów url lub nie wykrywają tych adresów w miejscach innych niż linki. Dodatkowo indeksery mogą mieć problemy z przetwarzaniem treści innych niż strony HTML. Z tego powodu tradycyjnie serwowane strony są łatwe do rozpoznawania i indeksowania.</li>
+</ul>
+
+
+<p>Na czym więc polega w skrócie budowa oparta o &ldquo;ciężkiego&rdquo; klienta i serwer API. Chodzi mianowicie o zrzucenie z serwera odpowiedzialności za generowanie stron HTML (które mogą być w rzeczywistości ładowane dynamicznie). Ma on odpowiadać jedynie za przesyłanie szablonów stron HTML, skryptów czy stylów oraz (co najważniejsze) udostępniać API pozwalające sterować logiką za pomocą żądań HTTP i zwracające surowe informacje (przekazywane przeważnie w formacie JSON), których prezentacją zajmą się skrypty po stronie klienta.</p>
+
+<p>Jakie zalety ma takie podejście?</p>
+
+<ul>
+<li>Zmniejszenie obciążenia serwera &ndash; jeżeli jesteśmy w stanie przesyłać niezbędne elementy prezentacji w postaci statycznych szablonów HTML, nasze serwery nie muszą ich generować w czasie rzeczywistym.</li>
+<li>Zmniejszenie rozmiaru przesyłanych danych &ndash; od kiedy nie musimy za każdym razem serwować widoku całej strony, a jedynie skupić się na prostych szablonach oraz danych w formacie JSON (który powoduje znacząco mniejszy narzut niż HTML), wykorzystywane przez nas pasmo jest znacznie mniejsze. Jest to dobra wiadomość zarówno dla hosta, jak i dla wielu użytkowników, którzy coraz częściej przeglądają internet poza domem korzystając ze swoich smartfonów.</li>
+<li>Dobra integracja z innymi usługami &ndash; od kiedy nasz serwer udostępnia informacje w formie API opartego o otwarte standardy, zarówno my jak i inni programiści możemy oprzeć na nim usługi inne niż standardowe strony WWW (jest to dobra wiadomość zwłaszcza dla twórców aplikacji na urządzenia mobilne).</li>
+<li>Single Page Application jako aplikacja desktopowa &ndash; dzięki możliwościom najnowszych przeglądarek jesteśmy w stanie szybko wzbogacić naszą aplikację o możliwość pracy offline, nawet kiedy użytkownik nie ma dostępu do Internetu.</li>
+</ul>
+
+
+<p>Oczywiście nie każdemu odpowiadają te rozwiązania i często można słyszeć głosy sprzeciwu. Ale ponieważ Internet udostępnia pole do otwartej dyskusji, postaram się wysunąć kilka kontrargumentów na najczęściej spotykane zarzuty.</p>
+
+<ul>
+<li>Co ze starszymi przeglądarkami? &ndash; częste pytanie, głównie ze względu na to, że wiele bajerów dostępnych w nowych przeglądarkach może słabo lub wcale nie działać na starszych. Oczywiście takie rzeczy jak wolno działający javascript można optymalizować, jednakże kiedy dochodzi się do granic, może pojawić się potrzeba dodania popupa <em>&ldquo;Przestań przeglądać Internet za pomocą kartofla&rdquo;</em> dla tych kilku użytkowników, którzy jeszcze nie wiedzą, że istnieją przeglądarki inne niż IE.</li>
+<li>Co ze słabszym sprzętem? &ndash; w dzisiejszych czasach praktycznie każdego stać na sprzęt spełniający wymagania większości stron działających na wydajnych przeglądarkach. Ta teza dotyczy również urządzeń mobilnych &ndash; większość smartfonów niewiele odstaje osiągami od desktopów sprzed kilku lat.</li>
+<li>A co, jeżeli ktoś ma wyłączoną obsługę JavaScriptu? &ndash; zdziwiłem się, gdy zobaczyłem to jako dość częsty argument w dyskusjach. Dla osób które nie widzą w tu nic absurdalnego, proponuję jednak przeczytać znowu to pytanie ze zrozumieniem, aż do skutku.</li>
+<li><em>&ldquo;It&rsquo;s fucking JavaScript&rdquo;</em> &ndash; tak, utrzymywanie dużej ilości kodu JS jest trudne, po przekroczeniu pewnego progu jestem w stanie przyznać, że to zadanie prawie niemożliwe. Na szczęście społeczność programistów JS jest dość pomysłowa i można znaleźć multum ułatwień pozwalających zachować prosty, czytelny i działający kod &ndash; począwszy od różnego typu platform, przez języki kompilowane do Javascriptu, a kończąc na frameworkach umożliwiających testy jednostkowe po stronie przeglądarki.</li>
+</ul>
+
+
+<p>Podsumowując, nowe podejście oparte na budowaniu aplikacji na zasadzie konstrukcji bogatych stron klienckich wspieranych przez serwery API może okazać się ciekawym i obiecującym rozwiązaniem. Zarówno dla twórców, poprzez zmniejszenie kosztów za pomocą odciążenia logiki serwerowej, jak i dla użytkowników, wzbogacając ich doświadczenia w korzystaniu ze stron oraz usprawniając pracę poza domem.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-30T22:32:00+02:00" pubdate data-updated="true">Jun 30<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/05/26/linq-sortowanie-po-nazwie-wasciwosci/" title="Previous Post: LINQ - sortowanie po nazwie właściwości">&laquo; LINQ - sortowanie po nazwie właściwości</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/" title="Next Post: Forwardowanie i streaming dużych plików przez WCF">Forwardowanie i streaming dużych plików przez WCF &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

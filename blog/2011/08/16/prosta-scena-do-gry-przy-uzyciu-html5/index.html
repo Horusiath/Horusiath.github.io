@@ -1,0 +1,429 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Prosta scena do gry przy użyciu Html5 i CoffeeScriptu - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="W dzisiejszym poście postaram się streścić (w postaci przykładu oczywiście ;) ) moje krótkie doznania związane z nauką Coffee Scriptu i jego &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2011/08/16/prosta-scena-do-gry-przy-uzyciu-html5">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Prosta Scena Do Gry Przy Użyciu Html5 I CoffeeScriptu</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-08-16T23:18:00+02:00" pubdate data-updated="true">Aug 16<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>W dzisiejszym poście postaram się streścić (w postaci przykładu oczywiście ;) ) moje krótkie doznania związane z nauką Coffee Scriptu i jego zastosowaniu w aplikacjach tworzonych przy pomocy Visual Studio.</p>
+
+<p>Zacznijmy od tego, czym jest CoffeeScript? Otóż jest to język skryptowy wysokiego poziomu (składnią przypominający Ruby&#8217;ego i po części Pythona), kompilowany bezpośrednio do JavaScriptu. Na jego plus dochodzi fakt, że nie odbiega on za daleko od samego .js, a przez to jest on wygodny do operowania zarówno na elementach strony jak i we współpracy z już istniejącymi bibliotekami .js (nie są przy tym wymagane żadne dodatkowe zabiegi). Dla osób, które o tym nie słyszały i nie miały wcześniej do czynienia polecam oficjalną stronę (link <a href="http://jashkenas.github.com/coffee-script/">tutaj</a>). Jest tam dokładny opis języka wraz z przykładami użycia i interaktywną konsolą, pokazującą na żywo jak wygląda napisany przez nas kod zaraz po skompilowaniu.</p>
+
+<p>Jak zamontować Coffee Script w aplikacji pisanej w Visual Studio? Jest wiele rozwiązań, ja przedstawię dwa, które uznałem za najprostsze do zrozumienia i najbardziej sensowne:
+&ndash; Używanie kompilatorów w czasie wykonania &ndash; jest to rozwiązanie dające sporą kontrolę i pewne pole do popisu, ale też bardziej obciążające maszynę. Istnieje wiele kompilatorów przygotowanych pod platformę .NET, osobiście mogę polecić <a href="https://github.com/abolibibelot/coffeescript-dotnet#readme">CoffeeScript.Net</a> (głównie ze względu na to, że z innymi kompilatorami nie miałem wiele do czynienia).
+&ndash; Można też ściągnąć stosowny template do Visual Studio (ja korzystam z tych zawartych w <a href="http://www.mindscapehq.com/products/web-workbench">Mindscape Web Workbench</a>). Generują one kod na bierząco w trakcie jego pisania &ndash; jest do preferowana przeze mnie opcja, ponieważ na bierząco możemy sprawdzać, czy nie popełniamy błędów a nasz kod się kompiluje. W takim wypadku wystarczy dodać do strony standardowy skrypt js, a jako źródło podać ścieżkę do pliku .coffee i zmienić jej rozszerzenie na .js.</p>
+
+<h2>Tworzymy obsługę sceny</h2>
+
+<p>W tym punkcie zacznijmy od stworzenia klasy, której zadaniem będzie rysowanie obiektów na scenie (w tym celu należy uprzednio stworzyć odpowiedni canvas) i wypełnianiu jej tła.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Graphics</span>
+</span><span class='line'>  <span class="nv">constructor: </span><span class="nf">(canvas) -&gt;</span>
+</span><span class='line'>      <span class="nv">can = </span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">canvas</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@ctx = </span><span class="nx">can</span><span class="p">.</span><span class="nx">getContext</span><span class="p">(</span><span class="s">&quot;2d&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@w = </span><span class="nx">can</span><span class="p">.</span><span class="nx">width</span>
+</span><span class='line'>      <span class="vi">@h = </span><span class="nx">can</span><span class="p">.</span><span class="nx">height</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">drawBack: </span><span class="nf">(r, g, b) -&gt;</span>
+</span><span class='line'>       <span class="vi">@ctx.fillStyle = </span><span class="s">&quot;rgb(</span><span class="si">#{</span><span class="nx">r</span><span class="si">}</span><span class="s">,</span><span class="si">#{</span><span class="nx">g</span><span class="si">}</span><span class="s">,</span><span class="si">#{</span><span class="nx">b</span><span class="si">}</span><span class="s">)&quot;</span>
+</span><span class='line'>       <span class="nx">@ctx</span><span class="p">.</span><span class="nx">fillRect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">@w</span><span class="p">,</span> <span class="nx">@h</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">drawRect: </span><span class="nf">(p) -&gt;</span>
+</span><span class='line'>      <span class="vi">@ctx.fillStyle = </span><span class="s">&quot;rgb(200, 200, 200)&quot;</span>
+</span><span class='line'>      <span class="nx">@ctx</span><span class="p">.</span><span class="nx">fillRect</span><span class="p">(</span><span class="nx">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Słowo wyjasnienia:</p>
+
+<ul>
+<li><code>constructor</code> &ndash; jak łatwo się domyślić reprezentuje on konstruktor naszej klasy. Przekazujemy do niego nazwę identyfikatora elementu <strong>Canvas</strong>, który wykorzystamy do renderowania. Symbol <code>@ </code>jest w JavaScript&#8217;cie zamieniany bezpośrednio na <strong>this</strong>. (należy z tym uważać, zwłaszcza podczas zagłębiania @ w funkcjach przekazywanych jako parametry).</li>
+<li><code>drawBack</code> &ndash; zamalowuje powierzchnię w tle kolorem o podanych w parametrach wartościach r, g, b. Wyrażenie <code>#{r}</code> (i podobne) są zamieniane na konkatencje (złączenie) całości wyrażenia do jednego stringa wraz z wypełnionymi wartościami zawartymi w zmiennej r.</li>
+<li><code>drawRect</code> &ndash; odpowiada za narysowanie prostokąta o parametrach przekazanych przez tablicę (wybrałem tablicę ze względu na prostotę, można ją zastąpić na wiele sposobów). Jak można się domyślić indeksy 0, 1, 2, 3 tablicy odpowiadają kolejno 0 &ndash; odległość lewego górnego rogu od lewej krawędzi canvy, 1 &ndash; odległości lewego górnego rogu od górnej krawędzi canvy, 2 &ndash; szerokości prostokątu, 3 &ndash; wysokości prostokątu.</li>
+</ul>
+
+
+<p>Kiedy już rozumiemy jak będzie wykonywane renderowanie elementów na scenie, przejdźmy do dalszych operacji.</p>
+
+<h2>Budowa animowanej sceny</h2>
+
+<p>Kolejnym krokiem będzie stworzenie klasy odpowiedzialnej za obsługę zdarzeń oraz pętli gry. Sposoby konstrukcji samej pętli są różne, polecam zapoznać się z <a href="http://nokarma.org/2011/02/02/javascript-game-development-the-game-loop/index.html">tym wpisem</a>. Autor dobrze i wyczerpująco tłumaczy zasady konstrukcji pętli gry w JavaScript&#8217;cie.</p>
+
+<p>Moje podejście postaram się wyjaśnić na poniższym kodzie:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Game</span>
+</span><span class='line'>  <span class="nv">constructor: </span><span class="nf">(canvas) -&gt;</span>
+</span><span class='line'>      <span class="vi">@w = </span><span class="nx">canvas</span><span class="p">.</span><span class="nx">width</span>
+</span><span class='line'>      <span class="vi">@h = </span><span class="nx">canvas</span><span class="p">.</span><span class="nx">height</span>
+</span><span class='line'>      <span class="vi">@g = </span><span class="k">new</span> <span class="nx">Graphics</span><span class="p">(</span><span class="nx">canvas</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@fps = </span><span class="mi">50</span>
+</span><span class='line'>      <span class="vi">@loop_id = </span><span class="kc">undefined</span>
+</span><span class='line'>      <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s">&quot;keydown&quot;</span><span class="p">,</span> <span class="nx">@update</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">update: </span><span class="nf">(evt) -&gt;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">38</span>        <span class="c1">#arrow down</span>
+</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">5</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">40</span>   <span class="c1">#arrow up</span>
+</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">5</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">37</span>   <span class="c1">#arrow left</span>
+</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">5</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">39</span>   <span class="c1">#arrow right</span>
+</span><span class='line'>          <span class="nx">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">5</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">draw: </span><span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nx">@g</span><span class="p">.</span><span class="nx">drawBack</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>      <span class="nx">@g</span><span class="p">.</span><span class="nx">drawRect</span><span class="p">(</span><span class="nx">p1</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">startGame: </span><span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nv">self = </span><span class="nx">@</span>
+</span><span class='line'>      <span class="vi">@loop_id = </span><span class="nx">setInterval</span><span class="p">((()</span> <span class="nf">-&gt;</span>
+</span><span class='line'>       <span class="nx">self</span><span class="p">.</span><span class="nx">draw</span><span class="p">()</span>
+</span><span class='line'>       <span class="p">),</span> <span class="mi">1000</span> <span class="o">/</span> <span class="nx">self</span><span class="p">.</span><span class="nx">fps</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">endGame: </span><span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">@loop_id</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Nieco wyjaśnień:
+&ndash; <code>constructor</code> &ndash; tutaj jak widzimy jednocześnie definiujemy stworzony przez nas uprzednio obiekt klasy Graphics, ale też dodatkowo dodajemy definiujemy listener (methoda <strong>update</strong>), który będzie zajmował się obsługą klawiatury na potrzeby okna przeglądarki. Pola naszej klasy:
+&ndash; <code>fps</code> &ndash; liczba cykli pętli / klatek na sekundę &ndash; jest to wartość orientacyjna, nasza przeglądarka wcale nie musi, a prawdopodobnie nawet nie będzie dotrzymywać zamierzonej przez nas wartości.
+&ndash; <code>loop_id</code> &ndash; uchwyt do metody wykonującej pętlę, niezbędny jeżeli będziemy chcieli ją zatrzymać.
+&ndash; <code>update</code> &ndash; prosta metoda obsługująca poruszanie naszego obiektu po planszy. Wartość p1[0] odpowiada ruchowi w poziomie, analogicznie p1[1] to ruch w pionie. wyrażenie <code>evt?.which</code> odpowiada zapisowi słownemu &ndash; sprawdź, czy obiekt <strong>evt</strong> istnieje, a jeżeli tak podaj wartość jego pola <strong>which</strong> (określa ono kod naciśniętego przycisku &ndash; znacznie więcej na ten temat można przeczytać <a href="http://unixpapa.com/js/key.html">tutaj</a>).
+&ndash; <code>draw</code> &ndash; wywołujemy tutaj kolejno metody do wypełniania tła kolorem czarnym, a następnie odrysowujemy nasz kształt (prostokąt) w pozycjach podanych przez tablicę.
+&ndash; <code>startGame</code> &ndash; ustawiamy cykliczne wykonywanie metody <code>draw </code>(w założeniu 50 klatek/sek. w praktyce będzie to inna wartość). Warto zauważyć, że aby wywołać metodę <strong>draw</strong> z bieżącego obiektu Game, zapisaliśmy uprzednio wartość this (w CoffeScript jej odpowiednikiem jest znak <code>@</code>) do osobnej zmiennej. Dzieje się tak dlatego, ponieważ po wejściu do funkcji obsługiwanej przez <code>setInterval</code>zmienia się kontekst wykonywanego bloku kodu, a co za tym idzie zmienna <code>this</code>/<code>@</code>wskazuje już na inny obiekt (w tym wypadku będzie to bodajże okno przeglądarki). Na koniec zapisujemy uchwyt do wykonywanej metody w zmiennej @loop_id.</p>
+
+<p>W praktyce to wszystko wystarczy, aby uruchomić podstawową scenę uwzględniającą animacje i reagującą na akcje wykonywane przez użytkownika na klawiaturze :) . Przykładowe uruchomienie sceny:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">p1 = </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">50</span><span class="p">]</span>    <span class="c1"># x, y, width, height</span>
+</span><span class='line'><span class="nx">$</span> <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="c1"># odpowiednik document.ready, wymaga dołączenia jquery</span>
+</span><span class='line'>  <span class="nv">game = </span><span class="k">new</span> <span class="nx">Game</span><span class="p">(</span><span class="s">&quot;arena&quot;</span><span class="p">)</span>   <span class="c1"># arena - canvas id</span>
+</span><span class='line'>  <span class="nx">game</span><span class="p">.</span><span class="nx">startGame</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Uwagi:
+&ndash; Z nieznanych mi przyczyn (nie ustaliłem jeszcze dokładnego powodu) javascript skompilowany z powyższego kodu może mieć problemy z uruchomieniem na przeglądarce Chrome. Firefox i Opera nie sprawiają tutaj większych problemów.
+&ndash; Istnieje sporo gotowych frameworków, które odciążają nas z konieczności konstruowania inteligentnych pętli gry. Jest to temat wart zbadania.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-08-16T23:18:00+02:00" pubdate data-updated="true">Aug 16<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2011/08/16/prosta-scena-do-gry-przy-uzyciu-html5/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2011/08/16/prosta-scena-do-gry-przy-uzyciu-html5/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/07/31/ninject-i-pierwsze-starcie-z-dependency/" title="Previous Post: Ninject i pierwsze starcie z Dependency Injection">&laquo; Ninject i pierwsze starcie z Dependency Injection</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/" title="Next Post: Programowanie GPGPU - Microsoft.Accelerator v2">Programowanie GPGPU - Microsoft.Accelerator v2 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,344 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Typy anonimowe a metody - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Witam, w dzisiejszym poście postaram się streścić ideę pomysłu, który jakiś czas temu przyszedł mi do głowy. Rozpatrzmy następujący przypadek: &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2011/02/09/typy-anonimowe-metody">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Typy Anonimowe a Metody</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-09T20:17:00+01:00" pubdate data-updated="true">Feb 9<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Witam, w dzisiejszym poście postaram się streścić ideę pomysłu, który jakiś czas temu przyszedł mi do głowy. Rozpatrzmy następujący przypadek:</p>
+
+<p>Załóżmy, że mamy zaimplementowaną relacyjną bazę danych i odwołujemy się do niej wykorzystując mapowania O\R oraz Linq do wydobywania rezultatów zapytań. W środowisku .Net jest to sytuacja dość częsta, okazuje się jednak, że nieraz nie chcemy pobierać wszystkich informacji zawartych w tabelach. W tym celu w zapytaniach Linq często stosuje się tzw. typy anonimowe. Umożliwiają one stworzenie listy obiektów, nie definiując uprzednio typu klasy, jakiego mają być dane obiekty. Jest to bardzo wygodne rozwiązanie, zawiera jednak 2 zasadnicze wady:</p>
+
+<ol>
+<li>pola\właściwości zainicjalizowane w ten sposób zawsze są typu readonly</li>
+<li>wewnątrz typów anonimowych nie można definiować metod</li>
+</ol>
+
+
+<p>Jak widać jest to spory ubytek w stosunku do np. popularnych klas anonimowych, jakie można spotkać w Javie. W dzisiejszym poście opiszę sposób na okrężne rozwiązanie 2 punktu.</p>
+
+<p>Niech za przykład posłuży nam tabela <strong>users</strong> wypełniona obiektami klasy <strong>Osoba</strong> zawierająca różne pola np.: identyfikator, imie, nazwisko, adres itp. W naszym problemie chcemy jednak ograniczyć się do wyboru 2 pól &ndash; imienia i nazwiska. W tym celu stosujemy typ anonimowy. Cała sytuacja jest opisana poniżej:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">items</span> <span class="p">=</span> <span class="p">(</span><span class="k">from</span> <span class="n">x</span> <span class="k">in</span> <span class="n">users</span>
+</span><span class='line'>      <span class="k">select</span> <span class="k">new</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">Name</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span>
+</span><span class='line'>          <span class="n">Surname</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span>
+</span><span class='line'>      <span class="p">}).</span><span class="n">ToList</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Rozwińmy jednak problem. Załóżmy, że chcemy mieć dostęp do metody, która w typ przypadku będzie zwracała stringa wypisującego imię i nazwisko danego użytkownika. Tutaj właśnie dochodzimy do sedna rozwiązania. Ponieważ w typach anonimowych można definiować wyłącznie obiekty. Obejściem jest&hellip; delegat! Wpierw zadeklarujemy delegata (możemy też wykorzystać któregoś z wbudowanych o ile będzie odpowiedni do potrzeb naszej funkcji):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="kt">string</span> <span class="nf">StringDelegate</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Teraz wystarczy już tylko dodać całość do wywołania obiektu typu anonimowego i przekazać np. za pomocą wyrażenia lambda ciało metody do wykonania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">new</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Name</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span>
+</span><span class='line'>  <span class="n">Surname</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span><span class="p">,</span>
+</span><span class='line'>  <span class="n">FullName</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StringDelegate</span><span class="p">(()=&gt;{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Format</span><span class="p">(</span><span class="s">&quot;{0} {1}&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Całość okazała się prosta do zaimplementowania. Teraz aby wywołać naszą metodę, wystarczy napisać (posługując się kodem napisanym poprzednio) <code>items[0].FullName()</code> :) .</p>
+
+<p>Na koniec rozpatrzmy kilka uwag:</p>
+
+<ul>
+<li><p>Należy pamiętać, że mimo wszystko wciąż mamy do czynienia z delegatem, zatem wywołując <i><b>FullName()</b></i> w rzeczywistości dochodzi do wywołania metody <i><b>FullName.Invoke()</b></i>. Nie myślcie więc, że w ten sposób można np. przeciążyć w typie anonimowym metodę ToString(). To rozwiązanie ma na celu przede wszystkim wygodę programisty.</p></li>
+<li><p>Jak widzimy na przykładzie, pobranie parametrów w metodzie jest wykonywane z obiektu x. Jest tak ponieważ definiując ciało wyrażenia lambda kompilator nie jest jeszcze w stanie rozpoznać składowych typu anonimowego. Wyrażenie jawne za pomocą this również nie jest możliwe. Możnaby się spytać, co się zatem stanie, gdybyśmy próbowali zmienic zawartość którejś ze składowych typu anonimowego. Odpowiedź jest prosta: nie skompilujemy takiego projektu, ponieważ składowe typów anonimowych są zawsze typu readonly i po zainicjowaniu nie można ich zmieniać :) .</p></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-09T20:17:00+01:00" pubdate data-updated="true">Feb 9<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2011/02/09/typy-anonimowe-metody/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2011/02/09/typy-anonimowe-metody/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/02/05/syntaxhighlighter/" title="Previous Post: Immutable string - czy na pewno?">&laquo; Immutable string - czy na pewno?</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/02/20/c-class-vs-struct/" title="Next Post: [C#] class vs. struct">[C#] class vs. struct &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

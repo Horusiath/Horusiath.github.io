@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: shell | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/shell/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[PowerShell okiem programisty .NET]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/05/17/powershell-okiem-programisty-net/"/>
+    <updated>2013-05-17T21:20:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/05/17/powershell-okiem-programisty-net</id>
+    <content type="html"><![CDATA[<p>Artykuł ten tworzę z dość prostego powodu. Wraz z mijającym czasem w każdym programiście rośnie opór oraz lenistwo wobec powtarzalnych czynności wykonywanych codziennie w pracy. Stąd też szukamy sposobów na zautomatyzowanie choć części z tych zadań. PowerShell może być jednym ze sposobów na osiągnięcie tego celu. Z tego powodu warto lepiej się z nim zapoznać.</p>
+
+<p>Zanim zacznę, chcę zaznaczyć, że nie jestem mistrzem PS. Postanowiłem jednak podzielić się swoimi doświadczeniami z punktu widzenia typowego programisty .NET i w miarę zwięźle pokazać, w jaki sposób przenieść niektóre z najpopularniejszych operacji występujących w tym świecie na ich odpowiedniki w PowerShellu. Zaczynajmy.</p>
+
+<p>Rzecz, którą nieraz warto zrobić przed rozpoczęciem właściwej pracy, to uruchomienie PowerShella w trybie administratora. Możemy to zrobić bezpośrednio z poziomu <strong>cmd.exe</strong> za pomocą komendy:<code>powershell &ldquo;Start-Process powershell -Verb runAs&rdquo;</code>.</p>
+
+<h3>Wypisanie textu na konsolę</h3>
+
+<p>C#:
+<code>c#
+System.Console.WriteLine("Hello world!");
+</code>
+PowerShell:
+``` powershell
+Write-Host &ldquo;Hello world!&rdquo;</p>
+
+<h1>lub krócej</h1>
+
+<p>&ldquo;Hello world!&rdquo;
+```</p>
+
+<h3>Zmienne</h3>
+
+<p>C#:
+<code>c#
+int a = 1, b = 2;
+var a = 1; var b = 2;
+</code>
+PowerShell:
+<code>powershell
+$a = 1
+$b = 2
+$a, $b = 1, 2    # Python-like
+</code></p>
+
+<h3>Tablice</h3>
+
+<p>C#:
+<code>c#
+var array = new object[] { 1, "text", 3.14 };
+var a = array[0];
+var iter = Enumerable.Range(1, 10);
+</code>
+PowerShell:
+<code>powershell
+$array = 1, "text", 3.14
+$array = @(1, "text", 3.14) # jawny zapis
+$a = $array[0]
+$iter = (1..10)
+</code></p>
+
+<h3>Słowniki</h3>
+
+<p>C#:
+``` c#
+var dictionary = new Dictionary&lt;string,string>
+{</p>
+
+<pre><code>{"key 1", "value 1"},
+{"key 2", "value 2"}
+</code></pre>
+
+<p>};
+dictionary[&ldquo;key 1&rdquo;]
+<code>
+PowerShell:
+</code> powershell
+$dictionary = @{&ldquo;key 1&rdquo; = &ldquo;value 1&rdquo;; &ldquo;key 2&rdquo; = &ldquo;value 2&rdquo;}
+$dictionary[&ldquo;key 1&rdquo;]
+```</p>
+
+<h3>Operatory logiczne, warunkowe i binarne</h3>
+
+<p>C#:
+<code>c#
+true == true    // równy
+true != false   // różny
+1 &gt; 0           // większy
+0 &lt; 1           // mniejszy
+1 &gt;= 0          // większy lub równy
+0 &lt;= 1          // mniejszy lub równy
+!true           // negacja
+true &amp;&amp; true    // koniunkcja (logiczny)
+true || false   // alternatywa (logiczny)
+1 ^ 1           // alternatywa wykluczająca
+1 | 1           // alternatywa (binarny)
+1 &amp; 1           // koniunkcja (binarny)
+</code>
+PowerShell:
+<code>powershell
+$True -eq $True    # równy
+$True -ne $False   # różny
+1 -gt 0            # większy
+0 -lt 1            # mniejszy
+1 -ge 0            # większy lub równy
+0 -le 1            # mniejszy lub równy
+-not $True         # negacja
+$True -and $True   # koniunkcja (logiczny)
+$True -or $False   # alternatywa (logiczny)
+$True -xor $False  # alternatywa wykluczająca (logiczny)
+1 -bxor 2          # alternatywa wykluczająca (binarny)
+1 -bor 1           # alternatywa (binarny)
+1 -band 1          # koniunkcja (binarny)
+</code></p>
+
+<h3>Instrukcje warunkowe</h3>
+
+<p>C#:
+``` c#
+if($a == true)
+{</p>
+
+<pre><code>Console.WriteLine("Statement 1");
+</code></pre>
+
+<p>}
+else if($b == true)
+{</p>
+
+<pre><code>Console.WriteLine("Statement 2");
+</code></pre>
+
+<p>}
+else
+{</p>
+
+<pre><code>Console.WriteLine("Statement 3");
+</code></pre>
+
+<p>}
+<code>
+PowerShell:
+</code> powershell
+If($a -eq $True) {</p>
+
+<pre><code>"Statement 1"
+</code></pre>
+
+<p>} ElseIf($b -eq $True) {</p>
+
+<pre><code>"Statement 2"
+</code></pre>
+
+<p>} Else {</p>
+
+<pre><code>"Statement 3"
+</code></pre>
+
+<p>}
+```</p>
+
+<h3>Pętle</h3>
+
+<p>C#:</p>
+
+<p>``` c#
+for(int i=0; i &lt; 10; i++)</p>
+
+<pre><code>Console.WriteLine(i);
+</code></pre>
+
+<p>foreach(var element in array)</p>
+
+<pre><code>Console.WriteLine(element);
+</code></pre>
+
+<p>while(i &lt; 10)</p>
+
+<pre><code>Console.WriteLine(i++);
+</code></pre>
+
+<p>do {</p>
+
+<pre><code>Console.WriteLine(i++);
+</code></pre>
+
+<p>} while(i &lt; 10);
+<code>
+PowerShell:
+</code> powershell
+for($i=1; $i -lt 10; $i++) {</p>
+
+<pre><code>Write-Host $i
+</code></pre>
+
+<p>}</p>
+
+<p>foreach($i in (1..10)) {</p>
+
+<pre><code>Write-Host $i
+</code></pre>
+
+<p>}</p>
+
+<p>while($i -lt 10) {</p>
+
+<pre><code>Write-Host $i
+$i++
+</code></pre>
+
+<p>}</p>
+
+<p>do {</p>
+
+<pre><code>Write-Host $i
+$i++
+</code></pre>
+
+<p>} while($i -lt 10)</p>
+
+<p>do {</p>
+
+<pre><code>Write-Host $i
+$i++
+</code></pre>
+
+<p>} until($i -eq 10)   # odpowiednik: do {} while(-not ($i -ne 10))
+```</p>
+
+<h3>Definicje własnych metod/funkcji</h3>
+
+<p>C#:
+``` c#
+// C# wymaga &ldquo;opakowania funkcji&rdquo; w klasę
+class A  <br/>
+{</p>
+
+<pre><code>public int Fib(int n = 1)
+{
+    if(n &lt; 2) return n;
+    return Fib(n - 2) + Fib(n - 1);
+}
+</code></pre>
+
+<p>}
+(new A()).Fib(10);    // wynik: 55
+<code>
+PowerShell:
+</code> powershell
+Function Fib($n = 1) {</p>
+
+<pre><code>if($n -lt 2) {
+    return $n
+}
+return ((Fib($n - 2)) + (Fib($n - 1)))
+</code></pre>
+
+<p>}
+Fib(10)    # wynik: 55
+```</p>
+
+<h3>Wywołania statycznych klas .NET</h3>
+
+<p>C#:
+<code>c#
+System.DateTime.Parse("10-01-2012");    // 1 Października 2012
+</code>
+PowerShell:
+<code>powershell
+</code></p>
+
+<h3>Tworzenie nowych obiektów za pomocą konstruktorów</h3>
+
+<p>C#:
+<code>c#
+var date = new DateTime(2012, 10, 1);    // 1 Października 2012
+</code>
+PowerShell (przestrzeń nazw System jest domyślnie zaimportowana):
+<code>powershell
+$date = New-Object DateTime(2012, 10, 1)   # 1 Października 2012
+</code></p>
+
+<h3>Kilka przydatnych cmdletów</h3>
+
+<p>Na koniec chciałbym pokazać kilka cmdletów, które nieraz ułatwiają pracę. Warto zauważyć, że nieraz cmdlet dostępny jest również poprzez alias (przeważnie więcej niż jeden). Niektóre z nich zostały tutaj przedstawione.
+``` powershell
+&ldquo;A = {0} hours {1} minutes&rdquo; -f 10, 20  # odpowiednik string.Format</p>
+
+<h1>tworzenie nowego pliku/katalogu</h1>
+
+<p>New-Item c:\files\new_file.txt -Type File  <br/>
+New-Item &ldquo;c:\directories&rdquo; -Type Directory  <br/>
+ni c:\files\new.txt -type file # skrótowy zapis</p>
+
+<h1>kopiujemy wszystkie pliki z c:\files do c:\directories</h1>
+
+<p>Copy-Item c:\files* c\directories  <br/>
+copy c:\files* c\directories    # skrótowy zapis
+cp c:\files* c\directories      # skrótowy zapis</p>
+
+<h1>usunięcie pliku lub katalogu</h1>
+
+<p>Remove-Item c:\files\new.txt  <br/>
+rm c:\files\new.txt    # alternatywa</p>
+
+<h1>przenoszenie plików lub folderów</h1>
+
+<p>Move-Item c:\files\old.txt c:\files2\
+move c:\files\old.txt c:\files2\    # skrótowy zapis
+mv c:\files\old.txt c:\files2\      # skrótowy zapis</p>
+
+<h1>pobranie zawartości pliku</h1>
+
+<p>Get-Content c:\files\file.txt</p>
+
+<h1>wpisanie tekstu do pliku</h1>
+
+<p>Set-Content file.txt &ldquo;file content&rdquo;
+&ldquo;file content&rdquo; | Out-File file.txt</p>
+
+<h1>sprawdzenie istnienia pliku lub folderu pasującego do podanego wzorca</h1>
+
+<p>Test-Path c:\files*.txt</p>
+
+<h1>wyszukanie linijki z pliku źródłowego, zawierającego szukaną frazę</h1>
+
+<p>Get-Content file.txt | Select-String &ldquo;fraza&rdquo;</p>
+
+<h1>zwaraca True, jeżeli znaleziono dopasowanie</h1>
+
+<p>Get-Content file.txt | Select-String &ldquo;fraza&rdquo; -quiet</p>
+
+<h1>rozróżnienie wielkości liter</h1>
+
+<p>Get-Content file.txt | Select-String &ldquo;fraza&rdquo; -casesensitive</p>
+
+<p>Get-Date    # pobieramy bierzącą datę z zegara systemowego: DateTime.Now
+Get-Date -displayhint date   # jak powyżej, ale pobieramy samą datę: DateTime.Today
+Get-Date -displayhist time   # analogicznie dla czasu</p>
+
+<h1>ustawia zegar systemowy na hh:mm:ss do przodu (w przykładzie 1h10m)</h1>
+
+<p>Set-Date -adjust 1:10:00</p>
+
+<h1>informacje o procesie</h1>
+
+<p>Get-Process process1, process2    # jawne wyliczenie szukanych nazw
+Get-Process proc<em>                 # szukanie wg. wzorca
+ps proc</em>                          # skrótowy zapis
+ps proc*</p>
+
+<h1>zakończ process(-y)</h1>
+
+<p>Stop-Process -processname process*   # zakończ procesy o nazwie zgodnej z wzorcem
+kill 3888          # skrótowy zapis, zakończ process o Id równym 3888
+```
+PS: W niektórych z powyższych komend wykorzystałem jeden z feature'ów PowerShella, którego wcześniej nie opisałem &ndash; <strong>pipeline operator</strong>. Jest on reprezentowany przez symbol <code>|</code> i służy do przekazywania wyniku jednej funkcji/polecenia jako wejścia do następnej.</p>
+]]></content>
+  </entry>
+  
+</feed>

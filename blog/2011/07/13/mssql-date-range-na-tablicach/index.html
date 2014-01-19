@@ -1,0 +1,382 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>[MSSQL] Date Range na tablicach rekurencyjnych - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Ostatnimi czasy dostałem do napisania zadanie związane z koniecznością stworzenia zapytania SQL (na potrzeby projektu budowanego w MSSQL Server 2008 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2011/07/13/mssql-date-range-na-tablicach">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">[MSSQL] Date Range Na Tablicach Rekurencyjnych</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-07-13T15:47:00+02:00" pubdate data-updated="true">Jul 13<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Ostatnimi czasy dostałem do napisania zadanie związane z koniecznością stworzenia zapytania SQL (na potrzeby projektu budowanego w MSSQL Server 2008), którego jedną z charakterystycznych cech była konieczność sprawdzenia warunku dla wszystkich dat z podanego zakresu. Z początku proste, zadanie to miało jednak kilka dodatkowych warunków:</p>
+
+<ol>
+<li>Nie wolno mi było tworzyć w systemie tablic pomocniczych (żadnych poleceń CREATE TABLE ani ALTER TABLE) &ndash; zapytanie miało być w domyśle wykorzystywane w wielu miejscach jednocześnie, a wcześniejsze stworzenie tablicy z danymi uznane było za nadmiarowość danych.</li>
+<li>Zapytanie miało zachowywać się właściwie, gdy jeden z parametrów (data końcowa) był NULLem &ndash; w takim przypadku pobieramy datę bieżącą.</li>
+<li>Zapytanie miało mieć parametr decydujący o tym, czy sprawdzane daty znajdują się w odstępach dziennych, tygodniowych czy miesięcznych.</li>
+<li>Całość miała być skonstruowana tak, aby zapytania można było użyć podczas generowania raportów RDL.</li>
+</ol>
+
+
+<p>Mając do tej pory małe doświadczenia z samym SQL-em zacząłem szybko zgłębiać temat. Ostatecznie powziąłem decyzję o wykorzystaniu ciekawego wynalazku &ndash; tablic rekurencyjnych. Ponieważ było to rozwiązanie dopuszczalne z punktu widzenia wymagań, postanowiłem stworzyć pomocniczą funkcję.</p>
+
+<p>Oto przykładowa implementacja rozwiązania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">FUNCTION</span> <span class="n">dbo</span><span class="p">.</span><span class="n">DateRange</span>
+</span><span class='line'><span class="p">(</span><span class="o">@</span><span class="n">start_date</span> <span class="n">datetime</span><span class="p">,</span>
+</span><span class='line'> <span class="o">@</span><span class="n">end_date</span> <span class="n">datetime</span><span class="p">,</span>
+</span><span class='line'> <span class="o">@</span><span class="n">unit</span> <span class="n">nvarchar</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+</span><span class='line'><span class="k">RETURNS</span>
+</span><span class='line'> <span class="o">@</span><span class="n">Dates</span> <span class="k">TABLE</span><span class="p">(</span><span class="k">data</span> <span class="n">datetime</span><span class="p">)</span>
+</span><span class='line'><span class="k">AS</span>
+</span><span class='line'><span class="k">BEGIN</span>
+</span><span class='line'>  <span class="k">WITH</span> <span class="n">cte</span> <span class="k">AS</span>
+</span><span class='line'>  <span class="p">(</span>
+</span><span class='line'>      <span class="k">SELECT</span> <span class="mi">1</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="k">AS</span> <span class="k">data</span>
+</span><span class='line'>      <span class="k">UNION</span> <span class="k">ALL</span>
+</span><span class='line'>      <span class="k">SELECT</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="k">CASE</span> <span class="o">@</span><span class="n">unit</span>
+</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;day&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
+</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;week&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
+</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;month&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
+</span><span class='line'>      <span class="k">END</span>
+</span><span class='line'>      <span class="k">FROM</span> <span class="n">cte</span>
+</span><span class='line'>      <span class="k">WHERE</span>
+</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;day&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
+</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
+</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span> <span class="k">OR</span>
+</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;week&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
+</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
+</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span> <span class="k">OR</span>
+</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;month&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
+</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
+</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">)</span>
+</span><span class='line'>  <span class="k">INSERT</span> <span class="k">INTO</span> <span class="o">@</span><span class="n">Dates</span> <span class="p">(</span><span class="k">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">SELECT</span> <span class="k">data</span> <span class="k">FROM</span> <span class="n">cte</span>
+</span><span class='line'>  <span class="k">OPTION</span> <span class="p">(</span><span class="n">MAXRECURSION</span> <span class="mi">32000</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">RETURN</span><span class="p">;</span>
+</span><span class='line'><span class="k">END</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widać, funkcja przyjmuje 3 parametry:</p>
+
+<ul>
+<li>datę początkową &ndash; w przypadku funkcji jest wymagana, lecz w samym zapytaniu można ją dostosować do swoich potrzeb.</li>
+<li>datę końcową &ndash; możliwe jest tu podanie wartości NULL, dla takiego przypadku pobieramy bieżącą datę.</li>
+<li>jednostkę &ndash; mowa tutaj o typie jednostek w jakich mierzymy przedziały (codziennie, w tygodniach, w miesiącach)</li>
+</ul>
+
+
+<p>Przykładowe wywołanie funkcji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">SELECT</span> <span class="k">data</span>
+</span><span class='line'><span class="k">FROM</span> <span class="n">dbo</span><span class="p">.</span><span class="n">DateRange</span><span class="p">(</span><span class="s1">&#39;2011-01-01&#39;</span><span class="p">,</span> <span class="k">NULL</span><span class="p">,</span> <span class="s1">&#39;month&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Dodatkowo warto zwrócić uwagę na opcję określającą maksymalny poziom rekurencji w generowanej tabeli. Nie jest do element obowiązkowy, niemniej warto się w ten sposób zabezpieczyć.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-07-13T15:47:00+02:00" pubdate data-updated="true">Jul 13<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/bazy-danych/'>bazy danych</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2011/07/13/mssql-date-range-na-tablicach/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2011/07/13/mssql-date-range-na-tablicach/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy/" title="Previous Post: Wyświetlanie stron aspx przy pomocy iframe i jquery ui dialog">&laquo; Wyświetlanie stron aspx przy pomocy iframe i jquery ui dialog</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/07/31/ninject-i-pierwsze-starcie-z-dependency/" title="Next Post: Ninject i pierwsze starcie z Dependency Injection">Ninject i pierwsze starcie z Dependency Injection &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

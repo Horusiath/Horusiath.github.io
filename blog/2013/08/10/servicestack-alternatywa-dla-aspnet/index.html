@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ServiceStack - alternatywa dla ASP.NET - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">ServiceStack - Alternatywa Dla ASP.NET</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-10T20:14:00+02:00" pubdate data-updated="true">Aug 10<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
+
+<ul>
+<li><a href="http://www.servicestack.net/">ServiceStack</a> &ndash; najbardziej znana alternatywa, o której opowiem więcej w dalszej części posta.</li>
+<li><a href="http://nancyfx.org/">Nancy</a>&ndash; drugi obok ServiceStack, najbardziej znany framework, czerpiący inspirację ze znanego frameworka Sinatra, napisanego w Rubym.</li>
+<li><a href="https://github.com/openrasta/openrasta/wiki/Why-Choose-OpenRasta">OpenRasta</a>&ndash; biblioteka stworzona z myślą o tworzeniu API opartego o zasoby.</li>
+<li><a href="http://amirrajan.net/Oak/">Oak</a> &ndash; framework mocno zainspirowany dynamiką bibliotek Ruby.</li>
+<li><a href="http://blog.markrendle.net/2012/06/01/simple-web/">Simple.Web</a> &ndash; micro framework twórcy znanego micro ORMa Simple.Data, który umieszczam również w ramach ciekawostki.</li>
+</ul>
+
+
+<p>Sądzę, że dość niewiele osób słyszało te nazwy (zwłaszcza ostatnie dwie). Ja jednak postanowiłem opowiedzieć i zachęcić do najpopularniejszego z tych rozwiązań, czyli ServiceStack.</p>
+
+<p>Co takiego otrzymujemy, decydując się na jego wykorzystanie?:</p>
+
+<ul>
+<li>Cały zestaw <em>extension methods</em> do wbudowanych typów .NET, przyspieszających pracę programistów.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Auto-mapping">Mechanizm mapowania obiektów</a> &ndash; podobny do AutoMappera, choć prostszy i bardziej ubogi.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Built-in-profiling">Profiler</a> wbudowany w środowisko.</li>
+<li><a href="http://fluentvalidation.codeplex.com/wikipage?title=CreatingAValidator">Zaawansowany mechanizm walidacji</a>, umożliwiający m.in. warunkową walidację poszczególnych pól.</li>
+<li>Mechanizm <a href="https://github.com/ServiceStack/ServiceStack/wiki/Authentication-and-authorization">autentykacji</a> i zarządzania dostępem oparty o role i uprawnienia z możliwością logowania poprzez OpenID.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/The-IoC-container">Kontener IoC</a> &ndash; również z możliwością podpięcia własnego.</li>
+<li>Minimalistyczny framework ORM (<a href="https://github.com/ServiceStack/ServiceStack.OrmLite">OrmLite</a>) &ndash; umożliwia on podłączenie do najpopularniejszych relacyjnych, baz danych. Naturalnie on również może być zastąpiony bardziej kompleksowym rozwiązaniem.</li>
+<li>Wiązania do rózniej maści usług logowania (np. NLog, Elmah, Log4Net, EventLog, Enterprise Lib.) i cache&#8217;owania (np. domyślny InMemory, Memcached, Redis, Azure lub Amazon Web Services).</li>
+<li>Bundlera plików JavaScript, CSS, LESS, SASS i CoffeeScript &ndash; chociaż trzeba przyznać, że jest to dość wyboista droga.</li>
+<li>Mechanizm do kolejkowania wiadomości &ndash; obecnie tylko za pośrednictwem Redisa. Trwają prace nad wprowadzeniem bindingów do ZeroMQ, RabbitMQ, Azure Service Bus oraz Amazon SQS.</li>
+<li>Gotowe SDK do aplikacji klienckich pod C#, Silverlight, JavaScript oraz Dart.</li>
+</ul>
+
+
+<p>Ale mówiąc o jego najbardziej kompleksowych zaletach:</p>
+
+<h2>Web services &amp; Content Negotiation</h2>
+
+<p>Jest to &ndash; moim zdaniem &ndash; najciekawsza cecha Service Stack. Tworząc dotychczasowe usługi sieciowe z wykorzystaniem standardowych bibliotek .NET musieliśmy uzależniać technologię, jaką zamierzaliśmy wykorzystać od formatu danych, jakiego się spodziewaliśmy. A więc tworząc serwisy wykorzystujące SOAP lub XML tworzyliśmy dla nich specjalne usługi w WCFie. Jeżeli chcielibyśmy, aby zwracały one dane w postaci JSON, prawdopodobnie większość z nas wykorzystałaby najnowsze podejście w postaci ASP.NET Web API, dla pozostałych formatów ASP.NET.</p>
+
+<p>Problemem takiego podejścia jest fakt, że za każdym z tych rozwiązań stoi osobna technologia, która nie jest kompatybilna z pozostałymi. Niezależnie od tego, co wybierzemy, nigdy nie otrzymamy kompletnego rozwiązania.</p>
+
+<p>Jak wygląda to w przypadku ServiceStack? To proste. Każdy z modułów naszej aplikacji może być zamknięty w ramach klas dziedziczących po wspólnej klasie <code>Service</code>(jednak wbrew pozorom nie mamy tu do czynienia z wzorcem MVC) &ndash; lub w razie potrzeby, którejś z jej klas bazowych bądź interfejsu <code>IService</code>. Każda metoda obsługująca żądanie pobiera w parametrze obiekt POCO (Plain Old Class Object) i zwraca inny obiekt POCO. Dopiero na poziomie frameworka rozwiązywany jest problem serializacji danego obiektu do końcowego formatu, który może być wnioskowany na podstawie nagłówka HTTP, zawartości URL bądź dowolnego innego warunku, jaki zdefiniujemy podczas konfiguracji. Rozwiązanie to znane jest jako <em>Content Negotiation</em>. Dzięki temu jedna klasa może pełnić rolę kontrolera ASP.NET, WebAPI i serwisu WCF w tym samym czasie!</p>
+
+<p>Domyślnie dysponujemy wbudowanymi serializatorami dla formatów: SOAP (1.1 oraz 1.2), XML, JSON, CSV i JSV. Dodatkowo w sieci można pobrać pluginy rozszerzające tą listę o niemal wszystkie formatery dostępne w świecie .NET, w tym też binarne. Jedna linijka kodu w konfiguracji nieraz wystarcza, aby wprowadzić dany format do naszej aplikacji. Warto zauważyć, że ta sama zasada panuje w przypadku dynamicznie generowanych stron HTML &ndash; po doinstalowaniu pluginu możemy generować strony w oparciu o składnię Razora oraz Markdown.</p>
+
+<h2>Wydajność</h2>
+
+<p>Twórcy ServiceStack zwracają szczególną uwagę na szybkość swojej platformy, w myśl powiedzenia: <i>&ldquo;We care about two things: speed and quality. And the quality we care about is speed&rdquo;</i>. Nie powinno więc dziwić, że większości wypadków framework ten przewyższa ASP.NET i WCF w kwestiach wydajnościowych. Wynika to z prostego faktu. Mamy tu do czynienia z inicjatywą open source, a w przedsięwzięciach tego typu dużą rolę odgrywa prostota. Nie ma tutaj miejsca na platformy typu Enterprise, z setkami warstw abstrakcji, pełnymi potworków typu <a href="http://ws.apache.org/xmlrpc/apidocs/org/apache/xmlrpc/server/RequestProcessorFactoryFactory.RequestSpecificProcessorFactoryFactory.html">RequestSpecificProcessorFactoryFactory</a>(tak, jest to wyraz mojego &ldquo;hejtu&rdquo; względem podejścia projektowego w Javie, ale fakt faktem problem ten dotyka również .NETu ;) ).</p>
+
+<p>Konkretne porównania i benchmarki można znaleźć <a href="https://github.com/ServiceStack/ServiceStack/wiki/Real-world-performance">tutaj</a>. I jak widać, nie chodzi tu o jakiś pomijalny zysk rzędu kilkunastu procent.</p>
+
+<h2>Testowalność</h2>
+
+<p>ServiceStack jest frameworkiem z natury bardzo zmodularyzowanym, umożliwiającym wymianę poszczególnych komponentów. To z kolei czyni go naturalnym kandydatem do wprowadzenia testów jednostkowych.</p>
+
+<p>Innym atutem jest podejście wymiany danych opartych na komunikatach (message-based design), które w wypadku ServiceStack są zwykłymi klasami POCO. Dzięki temu testując poszczególne moduły/usługi nie musimy przetwarzać wbudowanych we framework obiektów żądań i odpowiedzi. Zamiast tego mamy do czynienia ze standardowym zbiorem klas, zdefiniowanych przez nas samych, które z zewnątrz nie zdradzają zależności od używanego przez nas frameworka. Ponad to architektura sprawia, że najwygodniejszym podejściem jest budowa dużej ilości serwisów z małą ilością metod, co dodatkowo ułatwia zachowanie ziarnistości systemu.</p>
+
+<h2>Wieloplatformowość</h2>
+
+<p>Ostatnią wartą odnotowania cechą pozostaje fakt, że wybierając SS otrzymujemy w pełni funkcjonalny framework działający zarówno pod Windowsem jak i platformami linuxowymi. Wiem, że pod ASP również można programować w sposób pozwalający na postawienie aplikacji na Linuxie, ale jest to rozwiązanie niekompletne. Przykładowo, ServiceStack jest obecnie jedyną opcją pozwalającą na uruchomienie usług SOAP pod Mono.</p>
+
+<p>Nie oznacza to jednak, że decydując się na SS, musimy rezygnować z naszej dotychczasowej aplikacji napisanej w ASP.NET. Równie dobrze możemy uruchomić hosta ServiceStack wewnątrz Global.asax i używać go np. tylko jako zamiennika warstwy nośnej dla usług WCF.</p>
+
+<p>Całość doskonale wpisuje się w naturę technologii webowych, ich otwartość i multiplatformowość. Dodatkowo umożliwia ona optymalizację kosztów (hosting linuxowy jest średnio 5-krotnie tańszy niż porównywalny windowsowy) i otwiera nowe możliwości na rynku, który w przypadku .NET w ogromnej części składa się z aplikacji biznesowych.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-10T20:14:00+02:00" pubdate data-updated="true">Aug 10<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/servicestack/'>ServiceStack</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/" title="Previous Post: Garść pro tipów przydatnych podczas tworzenia aplikacji">&laquo; Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/" title="Next Post: O pomyłkach i wnioskach z pracy w ASP.NET MVC">O pomyłkach i wnioskach z pracy w ASP.NET MVC &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

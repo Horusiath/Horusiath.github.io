@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: silverlight | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/silverlight/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Silverlight - parametry inicjalizacyjne w HTML]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w/"/>
+    <updated>2011-03-10T23:45:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w</id>
+    <content type="html"><![CDATA[<p>W dzisiejszym poście opiszę krótko obsługę parametrów inicjalizacyjnych w aplikacjach silverlight znajdujących się na naszych stronach. Stanowią one wygodny sposób przekazywania pewnych wartości do aplikacji, gdyż jesteśmy w stanie zapisać je już na poziomie kodu html. Ale do rzeczy.</p>
+
+<p>Jeżeli przeglądaliście kiedyś stronę html z osadzoną na niej kontrolką silverlight, na pewno zauważyliście, że wewnątrz znaczników object zdefiniowane mamy różne parametry aplikacji. Wśród tych wygenerowanych domyślnie mamy m.in:</p>
+
+<ul>
+<li><strong>source</strong> &ndash; określa położenie pliku .xap zawierającego aplikację silverlight</li>
+<li><strong>onerror</strong> &ndash; określa reakcję na wystąpienie błędu w aplikacji</li>
+<li><strong>background</strong> &ndash; określa domyślny kolor tła</li>
+</ul>
+
+
+<p>Są oczywiście jeszcze inne, my skupimy się jednak na wykorzystaniu parametrów inicjalizacyjnych (<strong>InitParams</strong>). Ich sposób zapisu w kodzie html wygląda następująco:
+``` html
+&lt;param name=&ldquo;InitParams&rdquo; value=&ldquo;key1=value1,</p>
+
+<pre><code>  key2=value2,
+  key3=value3,
+  key4=value4" /&gt; 
+</code></pre>
+
+<p>```
+Ponieważ wszystkie nazwy parametrów są znaczące, nazwa name musi zawierać wartośc <strong>InitParams</strong>. Dzięki niej nasza aplikacja rozpozna, że ma do czynienia z odpowiednim typem parametrów, które będziemy mogli obsłużyć. Atrybut <strong>value</strong> parametru zawiera serię par klucz-wartość oddzielonych przecinkami, które potem będziemy w stanie odczytać i odpowiednio zapisać w naszej kontrolce.</p>
+
+<p>Teraz kiedy wykonalismy, co należało po stronie html, należy przejść do kodu po stronie aplikacji. Należy pamiętać, że zapisana przez nas lista par nie zostaje zapisana automatycznie w aplikacji. W rzeczywistości pary te zapisane są we właściwości <strong>InitParams</strong> obiektu <strong>StartupEventArgs</strong>, który jest przekazywany przez zdarzenie Startup aplikacji. Wydaje się to trochę zagmatwane, dlatego przejdźmy do rzeczy. Otwieramy plik <strong>App.xaml.cs</strong> (plik z kodem aplikacji, nie kontrolki użytkownika). W konstruktorze klasy dodajemy linijkę:
+<code>c#
+this.Startup += this.Application_Startup;
+</code>
+Ma tu miejsce oczywiście niejawne przypisanie delegata obsługującego metodę <strong>Application_Startup</strong> do zdarzenia <strong>Startup</strong> obiektu klasy <strong>App</strong> (który dziedziczy to zdarzenie po swojej klasie bazowej <strong>Application</strong>). Dalej opisujemy działanie powyższej metody:
+``` c#
+private void Application_Startup(object sender, StartupEventArgs e) {</p>
+
+<pre><code> if (e.InitParams != null) {
+      foreach (var para in e.InitParams) {
+            this.Resources.Add(para.Key, para.Value);
+      }
+ }
+ //poniższy kod jest generowany automatycznie
+ this.RootVisual = new MainPage();
+</code></pre>
+
+<p>}
+<code>
+Jak widać wpierw pobieramy tu pary klucz-wartość (dokładnie te same które zdefiniowaliśmy wewnątrz atrybutu __value__ parametru __InitParams__ w kodzie html), a następnie zapisujemy je wewnątrz słownika __Resources__ aplikacji. Stąd będziemy mieli do nich prosty dostęp. Aby nasza silverlight'owa kontrolka była w stanie pobrać te wartości, wystarczy wpisać poniższą linijkę wewnątrz naszej aplikacji:
+</code> c#
+var value = App.Current.Resources[key];
+```
+<strong>Value</strong> stanowi wartość zwracaną przez słownik dla danego klucza <strong>key</strong>. Jak się okazało, wykorzystanie parametrów inicjalizacyjnych jest proste i pozwala na przejżyste przekazywanie wartości za pośrednictwem kodu html.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Silverlight - detekcja krawędzi]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/02/25/silverlight-detekcja-krawedzi/"/>
+    <updated>2011-02-25T11:35:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/02/25/silverlight-detekcja-krawedzi</id>
+    <content type="html"><![CDATA[<p>W dzisiejszym poście postaram się opisać, w jaki sposób zaimplementować filtr obrazu służący do wykrywania krawędzi. W tym celu posłużymy się implementacją filtru Sobela (jest to jeden z najpopularniejszych filtrów służących temu celowi). Ale po kolei. Najpierw ustalmy plan, według którego będziemy przygotowywać obraz do obróbki:</p>
+
+<ul>
+<li>Po pierwsze potrzebna nam będzie klasa umożliwiającą odwołanie się do pojedyńczych pixeli obrazu. W Windows Forms i WPF nie ma z tym większego problemu (możliwe są operacje wskaźnikowe), o tyle tutaj konieczne jest wykorzystanie innej metody. W tym celu posłużymy się klasą <strong>WriteableBitmap</strong>, która jest dostępna od 3 edycji Silverlighta.</li>
+<li>Po drugie, nasz obraz wstępnie przetworzymy na inny widoczny w skali szarości. Uprości do budowę filtru przy możliwych do zaakceptowania stratach informacji.</li>
+</ul>
+
+
+<p>Na wstępie warto wspomieć co nieco o samej klasie <strong>WriteableBitmap</strong>. Wybrałem ją, ponieważ udostępnia ona pełną kolekcję pixeli składających się na obraz w postaci prostej właściwości Pixels, zwracającej tablicę typu int. 4 bajty składające się na pixel to kolejno: BGRA. Dzięki temu możemy szybko iterować po kolejnych pixelach obrazu. Jest to wygodne rozwiązanie.</p>
+
+<p>Podczas pisania filtru Sobela przyjąłem, że każdorazowo przekazywana do niego bitmapa będzie zawierała obraz w skali szarości. Pokażę tutaj krótki przykład pętli zamieniającej zakres kolorów:
+``` c#
+for (int i = 0; i &lt; bmp.PixelHeight * bmp.PixelWidth; ++i) {</p>
+
+<pre><code> int pix = bmp.Pixels[i];
+
+ var t = BitConverter.GetBytes(pix);
+ byte p = (byte)(r * t[2] + g * t[1] + b * t[0]);
+ int pixel = BitConverter.ToInt32(new byte[] { p, p, p, 255 }, 0);
+
+ bmp.Pixels[i] = pixel;
+</code></pre>
+
+<p>}
+```
+Zmienne <code>r</code>, <code>g</code> i <code>b</code> prezentują odpowienio wagi, których używamy w każdej składowej przy obliczaniu odcienia szarości. Ich wartości mogą być różne, dlatego też ich tu nie podaję. Chętni sami zapoznają się z tym tematem.</p>
+
+<p>Teraz pola na implementację samego filtru wykrywania krawędzi. Z dokładniejszym opisem jego działania można zapoznać się <a href="http://en.wikipedia.org/wiki/Sobel_operator">tutaj</a>. Ważną częścią filtru są dwie macierze, które będziemy nakładać na każdy pixel oraz jego otoczenie. Oto jak wygląda ich implementacja:
+``` c#
+private readonly int[,] _xk = new int[,]</p>
+
+<pre><code>                                             {    
+            { -1,  0,  1 },
+            { -2,  0,  2 },
+            { -1,  0,  1 }
+                                             };
+</code></pre>
+
+<p>private readonly int[,] _yk = new int[,]</p>
+
+<pre><code>                                             {    
+            {  1,  2,  1 },
+            {  0,  0,  0 },
+            { -1, -2, -1 }
+                                             };
+</code></pre>
+
+<p><code>
+Mając tak zdefiniowane struktury, wystarczy już tylko stworzyć pętle iterujące po kolumnach i wierszach pixeli. Kod realizujący to zadanie wygląda następująco:
+</code> c#
+WriteableBitmap output = new WriteableBitmap(</p>
+
+<pre><code> bmp.PixelWidth, bmp.PixelHeight);
+</code></pre>
+
+<p>byte g;
+double gx, gy, max = 0;
+for (int i = 1; i &lt; bmp.PixelHeight-1; i++){</p>
+
+<pre><code> for (int j = 1; j &lt; bmp.PixelWidth-1; j++){
+      gx = gy = 0;
+      for (int k = -1; k &lt; 2; k++){
+            for (int l = -1; l &lt; 2; l++){
+                 double pix = 
+                      BitConverter.GetBytes(
+                      bmp.Pixels[(i+k)*bmp.PixelWidth + j + l])[0];
+                 gx += pix*_xk[k+1, l+1];
+                 gy += pix*_yk[k+1, l+1];
+            }
+      }
+      g = (byte)Math.Min(Math.Sqrt(gx * gx + gy * gy), 255);
+      output.Pixels[bmp.PixelWidth * i + j] = 
+            BitConverter.ToInt32(new byte[] {g, g, g, 255}, 0);
+ }
+</code></pre>
+
+<p>}
+```
+Jak widać nie iterujemy po wszystkich pixelach, lecz pozostawiamy &ldquo;obramowanie&rdquo; grubości 1 pixela wzdłuż wszystkich boków obrazu. Jest to konieczne, gdyż w przeciwnym razie nie moglibyśmy przyłożyć macierzy X i Y do pixeli brzegowych. Z tego samego powodu potrzebne jest rozróżnienie wierszy i kolumn (mimo że właściwość Pixels udostępnia nam tablicę 1-wymiarową).</p>
+
+<p>Dodatkowe słowo wyjaśnienia &ndash; w tym przykładzie posługuję się <strong>BitConverter</strong>em, aby odczytywać wartości konkretnych składowych pixela oraz składać je w pixel. Jest to rozwiązanie czytelne, dlatego warto je tu przedstawić.</p>
+
+<p>PS: nie badałem szybkości działania tego rozwiązania na dużych obrazach. W moim projekcie posługuję się obrazami uzyskiwanymi z kamerki internetowej 1,2Mpx. W takich warunkach szybkość działania jest absolutnie wystarczająca.</p>
+]]></content>
+  </entry>
+  
+</feed>

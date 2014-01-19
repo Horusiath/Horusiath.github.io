@@ -1,0 +1,624 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: wzorce projektowe | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/wzorce-projektowe/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[O pomyłkach i wnioskach z pracy w ASP.NET MVC]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
+    <updated>2013-10-20T09:49:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
+    <content type="html"><![CDATA[<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
+
+<p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
+
+<h2>Twoja encja ≠ Twój model</h2>
+
+<p>Zasadniczym błędem (lub raczej skrótem myślowym) jest założenie, że każda klasa mapowana przez ORM na tabele może służyć jako model przekazywany bezpośrednio do widoku. Nie znaczy to, że jest to nie możliwe, jednak opcja ta jest z reguły nadużywana. Wynika to poniekąd ze stylu programowania wyuczonego z tutoriali z cyklu &ldquo;wyklep CRUDa w 5 min.&rdquo;. Piękne i proste, jednak nie mające wiele wspólnego z problemami dnia codziennego. Z drugiej strony jest to wina samego lenistwa programistów oraz przeświadczenia, że faza projektowania z rozpiską architektury chociażby na kartce papieru jest tylko dla kobiet i leszczy ;)</p>
+
+<p>Pytanie brzmi: kiedy należałoby porzucić modelowanie z encji na rzecz dedykowanych klas POCO? Prawda jest taka, że zależy to od przypadku i wymaga odrobiny doświadczenia.</p>
+
+<ul>
+<li>Jedną z podpowiedzi może być poziom zagłębienia zależności. Im jest on głębszy, tym bardziej wykorzystywana przez nas klasa odbiega strukturą od modelu wymaganego przez widok. Przykładowo już 2 poziom zagłębienia np. <code>Model.Products.SelectMany(p => p.Orders)</code> może świadczyć o tym, że dana encja nie jest właściwym kandydatem i powinna zostać zmapowana na dedykowaną do tego celu klasę.</li>
+<li>Innym przykładem może być sytuacja, w której nasz model wykazuje pewien związek z regułami biznesowymi. Przykładowo częstym sposobem reprezentacji okresu czasu powiązanego z danym obiektem jest dodanie do modelu dwóch pól określających granice czasowe. W tym momencie pojawia się jednak pewien dysonans między definicją biznesową (okres czasu jest pojedynczym obiektem) a rzeczywistą implementacją (okres czasu to dwa generyczne pola dat). Jeżeli logika biznesowa silnie bazuje na danej definicji np. przedział czasowy często pojawia się w kontekście wykonywanych operacji, wtedy możliwe, że lepiej byłoby wyodrębnić ją do osobnej klasy.</li>
+<li>Jak powszechnie wiadomo, we współczesnym świecie aplikacji WWW wymagania klientów są jednymi z najbardziej zmiennych elementów systemu. Możliwość oddzielenia modeli od encji wspiera ten trend, ponieważ o ile encje są powiązane ze schematem bazy danych (przez co są znacznie mniej podatne na zmiany ze względu na konieczność utrzymania spójności z istniejącymi danymi), o tyle modele wykorzystywane przez nas w aplikacji mogą być swobodnie modelowane do naszych potrzeb.</li>
+</ul>
+
+
+<h2>Twój ViewData = Twój Model</h2>
+
+<p>W przypadku niektórych frameworków model jest zdefiniowany w sposób jasny i jednoznaczny. W przypadku ASP.NET MVC nie jest jednak tak łatwo, ponieważ otrzymujemy tutaj więcej niż jeden sposób dostarczenia danych do widoku. Mowa tu oczywiście o ViewData. Wg. mnie obiekt ten, jakkolwiek przydatny, jest podstawowym złamaniem wzorca MVC w ASP.NET MVC. Dlaczego? Ponieważ &nbsp;prawda wygląda tak, że niezależnie od zdefiniowanych przez ciebie klas, prawdziwy model ma zawsze tylko jeden typ: <a href="http://msdn.microsoft.com/en-us/library/system.web.mvc.viewdatadictionary(v=vs.108">ViewDataDictionary</a>.aspx).</p>
+
+<p>Czy to źle? Niekoniecznie, zależy od przyjętego podejścia. Co z tego wynika? W przypadku modeli zwracanych przez formularze zazwyczaj przyjmuje się, że generyczny model powinien zawierać tylko te dane, które zostały wprowadzone przez użytkownika. Tzn. że informacje takie jak opcja wybrana przez użytkownika z listy powinna być częścią modelu podczas gdy sama lista dostępnych opcji powinna być przekazywana za pośrednictwem ViewBag/ViewData. Naturalnie w przypadku, gdy parsujemy model do postaci JSON przekazywanej do klienta, ta zasada nie dotyczy.</p>
+
+<h2>Nic nie znaczące Error Messages</h2>
+
+<p>Jednymi ze gorszych chwil w życiu programisty, są sytuacje, kiedy trzeba obsłużyć zgłoszenie o błędzie w aplikacji. Zdarza się, że zaglądamy wtedy do logów (o ile taką informację zalogowaliśmy ;) ), aby odnaleźć jakieś przydatne informacje, które pozwolą nam zidentyfikować naturę problemu. Jakże wielkie jest rozczarowanie, gdy jedynym hintem jaki wtedy otrzymujemy jest: <code>Object reference not set to an instance of an object.</code> Bardzo rzeczowa i jednoznaczna informacja wśród kilkuset linii kodu wymagających zbadania.</p>
+
+<p>Innym ciężkim przypadkiem jest logowanie niewystarczającej ilości informacji. Przykład (blok try-catch jest czysto poglądowy):
+``` c#
+try
+{</p>
+
+<pre><code>...
+var product = productRepository.GetById(id);
+if(product.Status != ProductStatus.Finished)
+    throw new InvalidStatusException("Provided product has invalid status");
+...
+</code></pre>
+
+<p>} catch(Exception e) {</p>
+
+<pre><code>    logger.Log(e.Message);
+</code></pre>
+
+<p>}
+```
+Co jest złego w tym przypadku? Wyobraźmy sobie, że dostajemy zgłoszenienie, o błędzie a w logach jedyną informacją jest: <code>Provided product has invalid status</code>. Czy wiemy o jakim statusie mowa? Czy wiemy o jaki produkt chodzi? Nie mamy żadnych informacji pozwalających zidentyfikować dany przypadek, mimo że wszystko co potrzebne mamy 2 linijki wyżej w kodzie źródłowym naszej aplikacji.</p>
+
+<p>Stąd mój apel: nie bądź leniwcem, minuta pracy teraz pozwoli ci zaoszczędzić godziny problemów później.</p>
+
+<h2>Too thin controllers, too fat services</h2>
+
+<p><em>Fat models, thin controllers</em> jest zwrotem często używanym w świecie MVC. Często jednak wynikiem utrzymania tej reguły jest zjawisko, które sam określam jako papierowe kontrolery. Weźmy na przykład następującą akcję MVC:
+``` c#
+[HttpPost]
+public void ToggleUserBan(bool activate)
+{</p>
+
+<pre><code>this.userService.ToggleUserBan(activate);
+</code></pre>
+
+<p>}
+<code>
+Na czym polega błąd? Prawdopodobnie metoda ToggleUserBan w serwisie jest przypadkiem zbyt szczegółowym. Daje to podstawy do przypuszczenia, że architektura aplikacji w którymś momencie się posypała. Zajrzyjmy więc do naszego hipotetycznego IUserService:
+</code> c#
+interface IUserService {</p>
+
+<pre><code>void ToggleUserBan(bool flag);
+IEnumerable&lt;User&gt; GetAllUsers();
+IEnumerable&lt;User&gt; GetActiveUsers();
+IEnumerable&lt;User&gt; GetBannedUsers();
+// ...kolejne 70 metod
+</code></pre>
+
+<p>}
+```
+Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do czynienia to nic innego, jak zwykłe zamiatanie brudu pod dywan. Pseudorozwiązanie polegające na przeniesieniu proceduralnego makaronu w miejsce, w które rzadziej się zagląda. Jest to częsty rezultat braku rewizji kodu i testów jednostkowych, oraz samowoli programistów.</p>
+
+<h2>Garść innych porad</h2>
+
+<ul>
+<li>unikaj static classes &ndash; utrudniają one modularyzację systemu i wprowadzają twarde powiązania, z których bardzo ciężko jest potem zrezygnować. Extension methods są w zasadzie jedynym zastosowaniem dla statycznych klas, dla jakich sam znajduję użytek.</li>
+<li>unikaj partial classes &ndash; dopuszczalne tylko w wypadku, gdy rozszerzasz klasę generowaną przez zewnętrzne narzędzia (co swoją drogą samo w sobie jest złym pomysłem ale o tym może kiedy indziej ;) )</li>
+<li>w przypadku zmiennych używaj nazw, które pozwalają określić ich typ i przeznaczenie &ndash; różnego rodzaju skróty oszczędzają dosłownie kilka sekund podczas pisania tylko po to, aby w przyszłości przedłużyć rozszyfrowywanie kodu przez kogoś innego o kilka minut. Pamiętaj, że w życiu programisty kod czyta się częściej niż pisze.</li>
+<li>podczas zwracania kolekcji zwracaj najmniejszy interface, który umożliwia wykonanie zadania &ndash; nie ma sensu wymagać aby argument był listą, jeżeli jedynym wykonywanym na nim działaniem jest foreach</li>
+<li>jeżeli zwracasz string lub kolekcje nigdy nie zwracaj nulli &ndash; zawsze używaj string.Empty lub Enumerable.Empty&lt;></li>
+<li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Garść pro tipów przydatnych podczas tworzenia aplikacji]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
+    <updated>2013-06-26T22:49:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
+    <content type="html"><![CDATA[<p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
+
+<p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
+
+<h2>1. &ldquo;Jesteśmy jedną rodziną, mamy wspólne korzenie&rdquo;</h2>
+
+<p>Naturalną cechą aplikacji webowych rozwijanych w ramach środowiska .NET jest ich podział na wiele różnych projektów. Nie jest to wymóg, jednakże z reguły zdecydowanie pomaga w organizacji oraz w trakcie późniejszego wdrażania rozwiązań. To co jednak uznałem za warte przypomnienia to wzajemne powiązania pomiędzy projektami. Mówiąc zaś dokładniej, przydatność stworzenia wspólnej biblioteki-korzenia, dowiązywanej przez wszystkie pozostałe projekty w aplikacji.</p>
+
+<p>Ma to kilka prostych przyczyn. Po pierwsze zdaża się, że musimy zaimplementować pewną funkcjonalność w kilku bibliotekach, będących na podobnym poziomie zależności, których jednak nie możemy powiązać ze sobą np. ze względu na rekurencyjne zapętlenie zależności &ndash; tutaj wspólny &ldquo;korzeń&rdquo; okazuje się nieoceniony. Po drugie, w trakcie pracy z aplikacją nieraz powstaje chęć stworzenia własnego DSLa bądź zestawu rozszerzeń upraszczających pracę z daną platformą bądź językiem. Ileż to razy rodziła się ochota na dodanie <em>extension method</em>, której brakuje nam w istniejących już klasach .NET? Tutaj również możliwość współdzielenia tego typu funkcjonalności jest bardzo przydatna.</p>
+
+<p>Idea wspólnego &ldquo;korzenia&rdquo; przydaje się również kiedy mowa o klasach wyjątków. Dobrą praktyką w trakcie definiowania aplikacji jest wywoływanie własnych wyjątków, które mogą informować nie tylko o błędach w operacjach logicznych systemu, lecz również logice biznesowej jako takiej. Moim zdaniem wszystkie takie <em>customowe</em> wyjątki powinny mieć wspólną klasę bazową. Dzięki temu w późniejszych fragmentach aplikacji będziemy mogli bez problemu wychwytywać te z nich, które stworzyliśmy sami na potrzeby naszego systemu i odpowiednio na nie reagować &ndash; przekształać do postaci czytelnej dla końcowego użytkownika, logować itp.</p>
+
+<h2>2. Atomic frontend design</h2>
+
+<p>Atomic design to koncepcja projektowania elementów HTML w sposób uporządkowany na bazie kompozytów. Nieraz w życiu codziennym zdarza się nam określać komponenty strony w dość ogólny sposób, pozostawiając szczegóły implementacji na &ldquo;doprecyzowanie później&rdquo; ;) W rezultacie kończymy w morzu (lub raczej szambie) znaczników o mgliście oznaczonych brzegach. Ponieważ HTML na stronach może mieć bardzo rozrośniętą postać, którą jako programiści też będziemy musieli utrzymywać, warto zadbać też o ten aspekt aplikacji.</p>
+
+<p>Idea atomic designu skupia się własnie na wiązaniu elementów HTML w kompozyty, które z kolei są łączone ze sobą dalej w kolejne, bardziej abstrakcyjne struktury. Więcej szczegółów na ten temat możecie dowiedzieć się <a href="http://bradfrostweb.com/blog/post/atomic-web-design/">tutaj</a>. W praktyce warto poznać to podejście już teraz &ndash; w obecnej chwili widać wyłaniający się coraz mocniej trend, który w przyszłości może poskutować nowym standardem umożliwiającym definiowanie własnych znaczników HTML, mających bezpośrednie wsparcie ze strony silnika renderującego.</p>
+
+<p>Chcąc wspomóc developerów i przygotować współczesne aplikacje webowe do nadchodzących standardów, inżynierowie Google'a stworzyli projekt <a href="http://www.polymer-project.org/">polymer</a> (czerpiący m.in. z koncepcji atomic designu), którego zadaniem jest zbudować odpowiednią platformę abstrakcji z istniejących już rozwiązań: HTML, Javascriptu oraz CSS. Zgodnie z ich przewidywaniami wraz z rozwojem przeglądarek funkcje oferowane przez tą bibliotekę mają w przyszłości zostać zastąpione specjalizowanymi, natywnymi odpowiednikami, zaś zadaniem polymeru jest umożliwić obecnym aplikacjom kompatybilność z dopiero powstającymi technologiami. Ciekawostka: mimo, że AngularJS stanowi oddzielny projekt, zapowiedziano już że w kolejnych wersjach będzie on coraz bardziej integrowany z polymerem.</p>
+
+<h2>3. Stwórz własną platformę abstrakcji&hellip;</h2>
+
+<p>Kolejna kwestia wynika z prostej tendencji uzależniania logiki aplikacji od wykorzystywanych bibliotek. W praktyce skutkuje to twardym związaniem naszego systemu z konkretnymi rozwiązaniami &ndash; które w przyszłości mogą stracić wsparcie, okazać się przestarzałe lub niewystarczające do naszych potrzeb. Taka monolityczna budowa nie jest przychylna zmianom, a jak powszechnie wiadomo klienci lubią wpadać na nowe pomysłu i zmieniać swoje zdanie.</p>
+
+<p>Stąd też idealnym rozwiązaniem jest stworzenie klasycznej płaszczyzny abstrakcji, całkowicie izolującej naszą logikę biznesową, która stanowi jądro każdej aplikacji biznesowej, od zewnętrznych platform, realizowanych pośrednio jako obiekty proxy/adaptery. Piszę idealnym, w praktyce jednak rzadko takie rozwiązanie okazuje się w 100% możliwe. Warto jednak poświęcić mu trochę uwagi &ndash; również z perspektywy modularyzacji i możliwości testowania.</p>
+
+<h2>4. &hellip; ale nie przeginaj z warstwami</h2>
+
+<p>Pamiętaj, że każda dodatkowa wartwa abstrakcji z jednej strony umożliwia ci podzielenie problemu na prostsze, bardziej ogólne definicje (a ludzie z natury lubią pojmować świat ogólnikowo), z drugiej strony jednak stanowi jednocześnie kolejną barierę w optymalizacji.</p>
+
+<p>To co warto przypomnieć, to fakt, że tworzenie aplikacji to proces, w którym wymagania zmieniają się w czasie. Produkcja oprogramowania nie jest jednym z konkursów algorytmicznych, gdzie wszelkie bariery i wartości graniczne są niezmienne i podane z góry. To co dziś świetnie się sprawdza, jutro może okazać się niewystarczające.</p>
+
+<p>Ważnym czynnikiem jest odpowiednie zdefiniowanie problemu i dobór właściwych wzorców i rozwiązań. Jako programiści nieraz generalizujemy pewne problemy tak, aby dało się je rozwiązać przy pomocy istniejących technologii, kosztem rzeczywistej złożoności całego systemu. Dla zainteresowanych proponuję obejżeć <a href="http://www.infoq.com/presentations/8-lines-code-refactoring">wykład</a> Grega Younga na ten temat.</p>
+
+<p>Wielowarstwowe aplikacje stanowią pewien problem, kiedy przychodzi do optymalizacji. Nie oznacza to jednak, że budowa z podziałem na warstwy jest zła. Jest wygodna z punktu widzenia programisty i projektowania koncepcji rozwiązań dla problemów postawionych przed systemem. Z drugiej strony jednak każda aplikacja posiada pewne punkty zapalne &ndash; wymagające dużej wydajności &ndash; które będą wymagać niestandardowego trakowania, w tym też odejścia od wcześniej przyjętych koncepcji i zwrotu w stronę rozwiązań bardziej nisko poziomowych. Dobrze, aby aplikacja umożliwiała pewien sposób na osiągnięcie tego celu bez zaburzania reszty konstrukcji.</p>
+
+<p>Jednym z możliwych kompromisów jest wielopoziomowy caching. Zamiast przebijać sie przez kolejne płaszczyzny abstrakcji w celu możliwości operowania na bardziej niskopoziomowych mechanizmach, cache'ujemy uzykiwane wartości na poszczególnych warstwach. Wielopoziomowy cache umożliwia też przyrostowe skalowanie wydajności w zależności od potrzeb.</p>
+
+<h2>5. Kradnij&hellip;</h2>
+
+<p>&hellip; moc obliczeniową maszyn klienta. Jest to bardzo dobre podejście, ponieważ wykonywanie części logiki po stronie przeglądarki nie dość, że odciąża serwery, za które musimy płacić, to dodatkowo stanowi rozwiązanie o wiele bardziej skalowalne, ponieważ ogólna ilość dostępnej mocy obliczeniowej rośnie wraz z liczbą maszyn wysyłających żądania na serwer. Stąd też część obliczeń, takich jak renderowanie dynamicznego HTMLa, czy preprocesowanie modelu danych od razu do postaci przystępnej do obliczeń po stronie serwera, można wykonywać bezpośrednio w przeglądarce.</p>
+
+<h2>6. Oszukuj</h2>
+
+<p>Co mam przez to na myśli? Po pierwsze powtarzam: cache'uj dane. W świecie aplikacji na platformie .NET często jest to opcja marginalizowana. W wielu przypadkach dopuszczalne jest, aby użytkownik zobaczył <em>przybliżone</em> dane. A co jeżeli nie są one aktualne? <em>Keep calm and oj tam oj tam</em> ;)</p>
+
+<p>Problem, z którym się też spotkałem, to stosowanie <em>prymitywych</em> cache'ów w miejscach, w których ciężko określić górną granicę przyrostu danych. Tak, zwykły .NETowy słownik może wystarczy w twoim środowisku developerskim, ale w momencie, gdy za rok dane pompowane do niego na produkcji będą liczone w setkach tysięcy (lub więcej) obiektów, wszyscy na własne oczy zobaczą, że wyprodukowałeś trabanta w cenie porsche. Technologie sprawdzone na polu walki, takie jak Memcache i Redis są tutaj, gotowe cię wesprzeć. Korzystaj z tej możliwości.</p>
+
+<p>Po drugie pamiętaj o złotej zasadzie &ndash; czego user nie dotknie, tego sercu nie żal. Przykład-anegdota: swego czasu aplikacje na urządzenia Apple były podawane jako wzór szybko uruchamiających się programów. Aplikacja, która na innych systemach uruchamiała się w kilka sekund, na iPhone była gotowa w ułamku tego czasu. Na czym polegał sekret? Otóż w rzeczywistości to, co widział użytkownik, było w rzeczywistości zrzutem ekranu z działającej aplikacji, bez jakichkolwiek możliwości interakcji. Dzięki temu użytkownik miał wrażenie, że aplikacja uruchamia się niemal natychmiast. W rzeczywistości, zanim wykonał on jakąkolwiek akcję w UI, mijało parę sekund, w trakcie których program miał czas, aby się załadować i podstawić pod &ldquo;zaślepkę&rdquo; faktyczny interfejs użytkownika.</p>
+
+<p>Liczę na to, że lektura ta okazała się ciekawa i być może uda mi się w przyszłości opisać dalsze koncepty i przemyślenia.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[O redundancji w wyrażeniach LINQ]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/"/>
+    <updated>2013-04-23T21:35:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq</id>
+    <content type="html"><![CDATA[<p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
+
+<h2>Przykład</h2>
+
+<p>Weźmy pod uwagę następujący przykład &ndash; otrzymaliśmy dokumentację, w której opisana jest pewna encja. Może ona mieć następującą postać:
+``` c#
+public class Document
+{</p>
+
+<pre><code>public DateTime CreateDate { get; set; }
+public string Type { get; set; }
+</code></pre>
+
+<p>   // .. reszta implementacji
+}
+<code>
+W ramach logiki biznesowej wykonywanej na encjach tej klasy stworzone zostało pojęcie przeterminowania - z dalszej części dokumentacji dowiadujemy się, że za przeterminowane uznajemy te encje, w których data utworzenia jest starsza niż X dni (X może być dowolne np. ustawione w konfiguracji systemu) zaś typ przybiera konkretną wartość. Bez trudu zawężamy więc wyniki za pomocą zapytania:
+</code> c#
+var x = .. pobieramy X
+var documents = DataContext.Documents</p>
+
+<pre><code>    .Where(x =&gt; x.CreateDate.AddDays(x) &lt; DateTime.Now &amp;&amp; x.Type == "M1");
+</code></pre>
+
+<p>```
+Niestety w późniejszym czasie słowo &ldquo;przeterminowany&rdquo; pojawia się w tym kontekscie jeszcze kilka razy w różnych miejsach aplikacji. Co robimy? W większości spotkanych przeze mnie przypadków piszemy klauzulę <code>Where(&hellip;)</code> ponownie. Ale czy na pewno?</p>
+
+<h2>Inne podejście</h2>
+
+<p>Rozwiązaniem powyżej sytuacji może być stary dobry <em>monkey patching</em>, reprezentowany w C# przez mechanizm extension methods. Z jego użyciem moglibyśmy rozwiązać ten problem w następujący sposób:
+``` c#
+public static int X { get {&hellip;} }
+/// <summary>
+/// Słowo komentarza od ojca dyrektora.
+/// </summary>
+public static IQueryable<Document> Expired(this IQueryable<Document> data)
+{</p>
+
+<pre><code>var x = X;
+return data.Where(x =&gt; x.CreateDate.AddDays(x) &lt; DateTime.Now &amp;&amp; x.Type == "M1");
+</code></pre>
+
+<p>}
+<code>
+Przykład wykorzystania:
+</code> c#
+var expiredDocuments = DataContext.Documents.Expired();
+```
+W ten sposób stworzyliśmy stereotyp, który możemy wykorzystywać zawsze w sytuacji kiedy mamy do czynienia z tym konkretnym zachowaniem. Jakie są zalety tego podejścia? Po pierwsze trzymamy się zasady DRY (Don&rsquo;t Repeat Yourself). Po drugie sądzę, że taki zapis jest o wiele bardziej czytelny i ułatwia późniejsze zrozumienie kontekstu, w jakim wykonywane są zapytania.</p>
+
+<p>Innym sposobem na rozwiązanie powyższego problemu jest naturalnie przeniesienie filtru bezpośrednio do kontekstu danych:<code>var data = DataContext.GetExpiredDocuments();</code>. Na czym jednak polega przewaga monkey patchingu? Po pierwsze nie jesteśmy twardo związani ze źródłem danych &ndash; napisany wcześniej stereotyp może być zastosowany dla dowolnej kolekcji, nawet takiej która powstała w wyniku deserializacji żądania HTTP. Po drugie rozwinięcie to można wstawić w dowolnym momencie tworzonego zapytania, z dowolnej encji posiadające odpowiednią relację.</p>
+
+<p>W rezultacie otrzymujemy rozwiązanie bardziej uniwersalne i podatne na zmiany.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Javascript a wzorce projektowe]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe/"/>
+    <updated>2013-02-23T19:01:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe</id>
+    <content type="html"><![CDATA[<p>Założę się, że wiele osób czytając ten tytuł puknie się w głowę. I owszem w wielu sytuacjach wzorce nie są niezbędne do tworzenia przejrzystych i dobrze rozwijalnych skryptów. Do czasu. Dokładnie do momentu gdy nasz skrypt zaczyna mieć więcej niż kilkadziesiąt linijek.</p>
+
+<p>W zależności od języka programowania, pisany przez nas kod może mieć mniejszą lub większą przejrzystość. Niektóre języki takie jak Haskel, są z natury bardzo klarowne i skupiają się na istocie rzeczy. Inne, jak właśnie Javascript, dają programiście olbrzymie możliwość zrobienia czegoś na pierdyliard sposobów, co nie oznacza, że każdy sposób jest poprawny. Jakby tego było mało, javascriptowe JITy są wstanie przełknąć nawet bardzo niezdarny kod. Dlatego właśnie dyscyplina samego programisty oraz stosowanie wzorców jest tym bardziej istotne.</p>
+
+<p>O tradycyjnych wzorcach &ndash; strategiach, obserwatorach etc. &ndash; napisano całą masę artykułów. Dlatego też poniżej postaram się przedstawić kilka mniej znanych, skupiając się szczególnie na tych, które są istotne z punktu widzenia JS, przez wzgląd na możliwości jakie daje oraz brakujących konstrukcji dostępnych w innych językach, których tutaj brakuje &ndash; w gruncie rzeczy czym są wzorce projektowe, jeżeli nie powszechnymi sposobami na obejście braków odpowiednich konstruktów w danym języku programowania?</p>
+
+<h2>Funkcje natychmiastowe</h2>
+
+<p>Mechanizm funkcji natychmiastowych (<strong>immediate functions</strong>) jest jedną z podstawowych sztuczek językowych wykorzystywanych w Javascriptcie. Ponieważ wiedza ta stanowi fundament innych wzorców, przedstawię go poniżej.
+``` js
+var immediateValue = (function(){</p>
+
+<pre><code>// wykonujemy jakąś operację i zwracamy wartosć
+    return x;
+})();
+
+// określamy zewnętrzne obiekty, które wywołujemy wewnątrz funkcji
+var module = (function(window, document){
+// wykonujemy jakąś operację
+return module;
+</code></pre>
+
+<p>})(window, document);
+```
+Jak widzimy całość polega na jednoczesnym zdefiniowaniu funkcji i jej wykonaniu. Jakie są zalety tego podejścia?:</p>
+
+<ul>
+<li>Możemy w ten sposób budować moduły &ndash; ponieważ zawartość funkcji powoduje stworzenie nowego zakresu (scope &ndash; chociaż z tym ze względów wydajnościowych nie należy przeginać), wszystkie zmienne lokalne użyte w funkcji-module nie są widoczne spoza niej, dopóki programista jawnie nie określi inaczej.</li>
+<li>Przekazując parametry do takiej funkcji możemy jawnie określić zależności pomiędzy operacjami/obiektami używanymi wewnątrz funkcji ze światem zewnętrznym.</li>
+</ul>
+
+
+<h2>Modularyzacja</h2>
+
+<p>Jest to dość często poruszany problem (sam nieraz o nim wspominałem), ponieważ JS jako tako sam nie umożliwia definiowania pakietów ani przestrzeni nazw. Stąd też pierwszym zaprezentowanym przeze mnie wzorcem będzie <strong>namespace</strong>. Ponieważ przykładowy kod umieściłem i opisałem w jednym z poprzednich <a href="http://horusiath.blogspot.com/2012/09/javascript-porady-i-uwagi.html">postów</a>, gwoli przypomnienia umieszczę tutaj przykładowy kod takiego rozwiązania.
+``` js
+window.namespace = function (path, root) {</p>
+
+<pre><code>var parent = root || window;
+var modules = path.split(".");
+for (var i = 0; i &lt; modules.length; i++) {
+    var module = modules[i];
+    parent[module] = (parent[module] || {});
+    parent = parent[module];
+}
+return parent;
+</code></pre>
+
+<p>};
+```</p>
+
+<h2>Cache'owanie funkcji</h2>
+
+<p>Ze względu na silniki starszych przeglądarek i chęć ograniczenia skomplikowanych operacji wiele bibliotek oferuje mniej lub bardziej wyrafinowane mechanizmy służące cache'owaniu danych. Javascript przychodzi tutaj z pomocą, pozwalając na zastosowanie tej techniki niemal dla dowolnej funkcji. Mowa tutaj o wzorcu <strong>memoization</strong>. Wykorzystuje on dwa podstawowe fakty dotyczące tego języka:</p>
+
+<ol>
+<li>Każda funkcja jest jednocześnie pełnoprawnym obiektem.</li>
+<li>Każdy obiekt może pełnić funkcje słownika &ndash; a co za tym idzie można wykorzystać go do dynamicznego przydzielania nowych właściwości i hashy.</li>
+</ol>
+
+
+<p>Poniższy kod przedstawia najprostszą implementację tego zachowania:
+``` js
+var memoizedFunction = (function(){</p>
+
+<pre><code>// parametr {value} stanowi jednocześnie klucz w naszym cache'u
+function fn(value){
+    // sprawdzmy, czy parametr został wcześniej zapamiętany
+    if(fn._cache[value]){
+        return fn._cache[value];
+    }else{
+        // zapamiętywanie wywołania funkcji
+        var result = doSomething(value); 
+        fn._cache[value] = result;
+        return result;
+    }
+}
+fn._cache = {};
+return fn;
+</code></pre>
+
+<p>})();
+```
+Należy zwrócić uwagę na fakt, że parametr przekazywany do funkcji w tej implementacji stanowi jednocześnie wartość cache'owanego klucza, a sam wzorzec musi implementować funkcje deteministyczne (tzn. takie które dla tego samego parametru wejściowego zwracają zawsze tą samą wartość/wykonują tę samą operacje). Stąd też dobrze, jeżeli maksymalna możliwa liczba przekazywanych parametrów jest znana &ndash; w sytuacjach skrajnych mogłoby dojść do tego, że cache zacząłby zajmować ogromną ilość pamięci. W takim wypadku trzeba dodatkowo zaimplementować dodatkowo mechanizm odśmiecania lub okresowego czyszczenia cache'u.</p>
+
+<p>Prawidłowe działanie funkcji w dużej mierze zależy od typu przekazywanego parametru &ndash; ze względu na to, że Javascript bywa dość nieprzewidywalny, najlepiej jest trzymać się typów prostych: String, Number, Boolean. W praktyce jednak wszystko to jednak zależy od twojej znajomości tricków i pułapek tego języka.</p>
+
+<p>Gdzie przydaje się powyższy wzorzec? Kilka przykładów:</p>
+
+<ul>
+<li>W wywołaniach do serwera np. jeżeli dla podanego adresu URL zwracana wartość jest stała, możemy użyć go w postaci klucza i zapamiętać zwracaną wartość. W ten sposób zmniejszymy czas i ilość requestów na serwer potrzebnych do skończenia danej operacji.</li>
+<li>Inne funkcje o stałych kluczach, ale jednocześnie wykonujące złożone obliczenia np. w mechanizmach bindowania danych do modelu DOM przeglądarki.</li>
+</ul>
+
+
+<h2>Dependency Injection</h2>
+
+<p>Pojęcie to jest ostatnio dość często używane, również ze względu na rosnącą popularność frameworków MVC. W Javascriptcie zostało ono użyte po raz pierwszy w dużej skali wraz z nadejściem <a href="http://angularjs.org/">AngularJS</a>. Jednakże, jeżeli chcielibyśmy, możemy zaimplementować kontener <strong>Inversion of Control</strong> dla własnych potrzeb.</p>
+
+<p>W pierwszej kolejności zdefiniujmy kontener IoC.
+``` js
+// kontener IoC
+var DependencyResolver = function(){</p>
+
+<pre><code>var self = this,
+// regex użyty do wyciągania nazw zależności z konstruktora
+ARG_REGEX = /^function\s*[^\(]*\(\s*([^\)]*)\)/m,
+dependencies = {};
+
+// funkcja rejestrująca typ w kontenerze
+this.register = function(key, type){
+    dependencies[key] = type;
+};
+
+// zwraca instancję obiektu identyfikowanego po podanym kluczu 
+this.resolve = function(key){ ... };
+
+// rozwiązujemy podane zależności podane w postaci listy kluczy
+// dla dependency resolvera do postaci tablicy gotowych obiektów
+function resolveDependencies(args){ ... };
+</code></pre>
+
+<p>};
+```
+&ldquo;Klasa&rdquo; ta udostępnia dwie metody:</p>
+
+<ul>
+<li><code>register(key, type)</code> &ndash; rejestruje podaną wartość/funkcję konstruktora pod podanym kluczem.</li>
+<li><code>resolve(key)</code> &ndash; tworzy typ zgodnie z zarejestrowaną wcześniej nazwą.</li>
+</ul>
+
+
+<p>Niestety javascript nie przechowuje informacji na temat typów parametrów pobieranych przez funkcję. Stąd też twórcy AngularJS postanowili zbudować następującą konwencję &ndash; w momencie, gdy przy próbie utworzenia obiektu pojawiaja się problem z określeniem typu argumentów przekazywanych do konstruktora, przyjmuje się, że nazwy parametrów są kluczami dla wartosci zarejestrowanych w kontenerze IoC. Jak to wygląda w praktyce? Ilustruje to następujący kod:
+``` js
+// budujemy kontener
+var resolver = new DependencyResolver();
+resolver.register(&lsquo;valueA&rsquo;, 1); // rejestrujemy 1 dla klucza &lsquo;valueA&rsquo;
+resolver.register(&lsquo;valueB&rsquo;, MyClass1); // rejestrujemy &ldquo;klasę&rdquo; dla klucza &lsquo;valueB&rsquo;</p>
+
+<p>// tworzymy nową &ldquo;klasę&rdquo; i rejestrujemy ją jako &lsquo;valueC&rsquo;
+var MyClass2 = function(valueA, valueB) {</p>
+
+<pre><code>// kontener wygeneruje opowiednie wartosci sugerując się nazwami parametrów
+</code></pre>
+
+<p>}
+resolver.register(&lsquo;valueC&rsquo;, MyClass2);</p>
+
+<p>// tworzymy obiekt
+resolver.resolve(&lsquo;valueC&rsquo;); // profit ;)
+<code>
+Ciało metody resolve przedstawia się w takim wypadku następująco:
+</code> js
+this.resolve = function(key){</p>
+
+<pre><code>var type = dependencies[key];
+
+// jeżeli zarejestrowany typ jest funkcją/konstruktorem
+// musimy rozwiązać listę parametrów podanych do dokonstruktora
+if(typeof type === 'function'){
+
+    // wyciągamy listę wartości przyjmowanych przez konstruktor
+    var args = ARG_REGEX.exec(type.toString())[1].split(',');
+    // zamieniamy je na właściwe obiekty
+    var resolvedArgs = resolveDependencies(args);
+
+    // tworzymy nową instancję danego typu
+    var instance = new type();
+    type.prototype.constructor.apply(instance, resolvedArgs);
+    return instance;
+} else {
+    // jeżeli typ jest typem prostym wystarczy go zwrócić
+    return type;
+}
+</code></pre>
+
+<p>};
+<code>
+Natomiast brakujące ciało metody resolveDependencies:
+</code> js
+function resolveDependencies(args){</p>
+
+<pre><code>var resolvedArgs = [];
+for(var i=0; i &lt; args.length; i++){
+    var dependency = args[i].trim();
+    if(dependency !== ''){
+        var resolved = self.resolve(dependency);
+        resolvedArgs.push(resolved);
+    }
+}
+return resolvedArgs;
+</code></pre>
+
+<p>};
+<code>
+Oczywiście powyższy kod nie określa kwestii czasu życia obiektu, którą kontenery IoC przeważnie rozwiązują. Jednakże jaki problem tkwi w powyższym rozwiązaniu? Otóż w momencie minimalizacji danego skryptu cała nasza wiedza o nazewnictwie parametrów funkcji znika (zostają one zastąpione krótkimi - z reguły jednoliterowymi aliasami). Niestety ale nie da się tego rozwiązać w elegancki sposób. W przypadku AngularJS zdefiniowana została specjalna właściwość $inject, którą dodajemy własnoręcznie do danej klasy, a która definiuje tablicę kluczy-parametrów, dzięki którym możliwe jest rozwiązanie zależności przez kontener. W takim wypadku w powyższej implementacji wystarczy dodać drobne usprawnienie:
+</code> js
+this.resolve = function(key){</p>
+
+<pre><code>...
+var args = type.$inject || ARG_REGEX.exec(type.toString())[1].split(',');
+...
+</code></pre>
+
+<p>}
+<code>
+, natomiast, w samej zdefiniowanej klasie:
+</code> js
+var MyClass = function(valueA, valueB){ &hellip; }
+MyClass.$inject = [&lsquo;valueA&rsquo;, &lsquo;valueB&rsquo;];
+```
+Dlaczego ten mechanizm się przydaje? Odpowiedź jest dokładnie taka sama jak w przypadku DI po stronie serwera: modularyzacja projektu, spójny sposób i kontrola nad konstrukcją obiektów. Całość jest wprost nieoceniona, kiedy po stronie klienta wykonywany jest bardziej zaawansowany wycinek logiki. A do tego te wsparcie dla testów jednostkowych.</p>
+
+<p>P.S.: Jestem zdania, że w każdym projekcie z większą ilością Javascriptu testy jednostkowe są nieocenione. Po pierwsze w tym języku wyjątkowo łatwo o błędy i niezdarny kod, a TDD oraz BDD rozwiązują oba te problemy. Po drugie jesteśmy po stronie klienta. Chcesz sprawdzić czy logika do kontrolek User Interface i wyświetlanie strony działa prawidłowo? Gratulacje &ndash; jesteś po właściwej stronie kabla.</p>
+
+<h2>Dziedziczenie</h2>
+
+<p>Pomimo, że Javascript jest językiem obiektowym, nie definiuje jednak mechanizmu dziedziczenia w sposób znany nam z innych języków. Na szczęście jego możliwości pozwalają nam na wykonanie takiego mechanizmu w postaci wzorca <strong>extend</strong> (<em>powered by CoffeScript ;)</em> ).
+``` js
+var extend = function(childPrototype, superPrototype){</p>
+
+<pre><code>// dziedziczenie składowych
+for(var property in superPrototype){ 
+    // iterujemy po wszystkich składowych rodzica
+    if(superPrototype.hasOwnProperty(property)){
+        childPrototype[property] = superPrototype[property]
+    }
+}
+
+// dziedziczenie konstruktora
+function ctor(){
+    this.constructor = childPrototype;
+}
+ctor.prototype = superPrototype.prototype;
+childPrototype.prototype = new ctor();
+
+// definiujemy dostęp do "klasy bazowej"
+childPrototype.__super__ = superPrototype.prototype;
+return childPrototype;
+</code></pre>
+
+<p>};
+<code>
+Niestety, jeżeli chcemy mieć dostęp do "wirtualizacji" metod w klasach pochodnych, musimy to wykonywać w dość krzywy sposób. Przykład poniżej.
+</code> js
+// klasa bazowa
+var Parent = (function(){</p>
+
+<pre><code>function Parent(firstName){
+    this.firstName = firstName;
+}
+// definiujemy "wirtualną" metodę
+Parent.prototype.show = function(){
+    return "Base: "+this.firstName;
+};
+return Parent;
+</code></pre>
+
+<p>})();</p>
+
+<p>// klasa pochodna
+var Child = (function(BaseType){</p>
+
+<pre><code>extend(Child, BaseType); // określamy warunki dziedziczenia
+
+function Child(firstName, lastName){
+    // wywołujemy konstruktor z klasy bazowej
+    Child.__super__.constructor.call(this, firstName);
+    this.lastName = lastName;
+}
+// "nadpisujemy" metodę z klasy bazowej
+Child.prototype.show = function(){
+    // wewnątrz nadpisanej metody wywołujemy jej bazową postać
+    var baseMessage = Child.__super__.show.call(this);
+    return "Inherited: "+this.lastName + " with " + baseMessage; 
+};
+return Child;
+</code></pre>
+
+<p>})(Parent); // przekazujemy klasę bazową mechanizmem funkcji natychmiastowej
+```
+Jak widać, nie jest to technika przejrzysta, głównie ze względu na obejścia, jakie trzeba wykonać, aby uzyskać dostęp do wywołań metod nadpisywanych z klas bazowych.</p>
+
+<p>Kiedy jest to przydatne? Szczerze umieściłem to jako ciekawostkę, ponieważ o ile o korzyściach dziedziczenia i wirtualizacji wie chyba każdy, kto miał do czynienia z programowaniem obiektowym, to forma, w jakiej jest to podane w Javascriptcie może okazać się ciężka do przełknięcia. Z tego powodu polecam tutaj języki kompilowane do Javascriptu np. CoffeeScript lub TypeScript, które rozwiązują ten problem za nas.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Javascript - porady i uwagi]]></title>
+    <link href="http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi/"/>
+    <updated>2012-09-09T15:16:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi</id>
+    <content type="html"><![CDATA[<p>Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z kodem JavaScriptu, z jakim przyszło mi się spotykać w pracy i na uczelni. Zauważyłem, że wiele osób skupia się na logice serwerowej, trzymając się wielu kanonów określających jak powinno się pisać czysty i rozwijalny kod. Z drugiej strony jednocześnie traktują one skrypty JS po macoszemu, jako coś przez co trzeba jakoś przebrnąć.</p>
+
+<p>Nie ma co ukrywać, że utrzymanie przejrzystości i rozszerzalności modułów w JavaScriptcie jest o wiele trudniejsze niż w standardowych językach wykonywanych po stronie serwera. Dlatego właśnie uważam, że tym bardziej wymagają one uwagi i wkładu w zachowanie jakości. Poniżej przedstawię kilka uwag/wskazówek dla programistów, którzy chcieliby poprawić jakość pisanego kodu.</p>
+
+<h2>1. Zapoznaj się z <a href="http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml">Google Style Guide</a></h2>
+
+<p>Myślę, że to powinien być pierwszy krok dla każdego programisty frontendowego (i nie tylko). W każdym języku istnieją pewne konwencje i złote rady i JS nie jest tu żadnym wyjątkiem. Poradnik Google'a to nic innego jak zbiór powszechnie wypracowanych, przemyślanych zasad, którymi warto kierować się w trakcie pisania aplikacji WWW. Część z moich dalszych uwag będzie też rozwinięciem punktów z tego podręcznika.</p>
+
+<h2>2. Zamykaj skrypty we własnych zakresach (scopes)</h2>
+
+<p>Ten punkt dotyczy częstej sytuacji w której tworząc skrypty do aplikacji często definiujemy wiele zmiennych i funkcji globalnych o tymczasowym zastosowaniu. Tworzy to całą masę śmieciowego kodu, który jest dostępny w innych częściach aplikacji i w przyszłości może poskutkować zmniejszeniem czytelności, kłopotami z dalszą rozwijalnością kodu i zwiększeniem ryzyka powstawania błędów.</p>
+
+<p>Rozwiązaniem tego problemu jest posłużenie się wzorcem funkcji natychmiastowych (wykonywanych natychmiast po ich zdefiniowaniu). Poniżej zaprezentowałem przykład obrazujący to rozwiązanie:
+``` js</p>
+
+<script type="text/javascript">
+(function (window, $) {
+    'use strict';
+
+    var someVariable;
+    // reszta kodu
+})(window, $);
+</script>
+
+
+<p>```
+Utworzyliśmy w ten sposób odrębny zakres (<em>scope</em>), w którym wykonywane są funkcje skryptu. Oznacza to m.in., że zadeklarowana w przykładzie zmienna <em>someVariable</em> nie będzie widoczna przez inne skrypty spoza tego zakresu. Wpis <em>&lsquo;use strict&rsquo;</em> jest pomijany przez starsze przeglądarki, zaś w nowszych sprawia, że pisany kod będzie znacznie bardziej restrykcyjnie traktowany przez kompilator, przez co łatwiej można w nim wyłapać błędy i niejasności. Więcej na ten temat można przeczytać <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Functions_and_function_scope/Strict_mode?redirectlocale=en-US&amp;amp;redirectslug=JavaScript%2FStrict_mode">tutaj</a>.</p>
+
+<p>Można się zatem zapytać, po co w argumentach funkcji umieszczone są redefinicje zmiennych <em>window </em>i<em> jQuery</em>? Odpowiedź jest prosta: przejrzystość. Podając jawnie globalne typy z innych bibliotek i zmiennych środowiskowych możemy w mgnieniu oka określić powiązania pomiędzy naszym skryptem, a zewnętrznymi modułami.</p>
+
+<h2>3. Organizuj zmienne globalne w modułach/przestrzeniach nazw</h2>
+
+<p>Kolejnym krokiem w stronę dobrej organizacji kodu jest wykorzystanie powszechnie stosowanej w językach <em>server-side</em> opcji cięcia kodu w moduły i przestrzenie nazw. Może się to wydawać mało zrozumiałe, ponieważ JavaScript nie definiuje jawnie takich konstrukcji językowych. Jednakże możliwości tego języka są praktycznie nieograniczone, co daje nam możliwość rozwiązania tego problemu w inny sposób.</p>
+
+<p>Pierwsza propozycja przedstawiona jest poniżej. Osobiście nie polecam jej, jednakże w przypadku, gdy mamy niewiele modułów w naszej aplikacji, może się okazać wystarczająca.
+<code>js
+var MyModule = (window.MyModule = window.MyModule || {});
+var MySubModule = (MyModule.MySubModule = MyModule.MySubModule || {});
+</code>
+Jest to prosta konstrukcja językowa wydobywająca moduł (reprezentowany w praktyce przez obiekt) z tzw. korzenia (<em>root</em> &ndash; w tym wypadku zmienna <em>window</em>) lub tworząca go w przypadku, gdy dany moduł nie został jeszcze utworzony. Zwrócony obiekt służy następnie jako uchwyt dla pozostałych definiowanych przez nas funkcji i zmiennych.</p>
+
+<p>Innym rozwiązaniem jest stworzenie predefiniowanej metody pozwalającej wydobywać/tworzyć moduły na zawołanie, wraz z zachowaniem ich hierarchii. Ten prosty wzorzec, nazywany jak nie ciężko się domyślić przestrzenią nazw (<em>namespace</em>), może być sprowadzony do postaci pojedyńczej funkcji:
+``` js
+window.namespace = function (path, root) {</p>
+
+<pre><code>var parent = root || window;    // jeżeli nie podaliśmy korzenia, korzystamy z obiektu okna
+var modules = path.split(".");
+for (var i = 0; i &lt; modules.length; i++) {
+    var module = modules[i];
+    parent[module] = (parent[module] || {});
+    parent = parent[module];
+}
+return parent;
+</code></pre>
+
+<p>};
+```
+Tak zdefiniowana funkcja pozwala nam pobierać lub tworzyć hierarchie modułów na żądanie. Przykładowe użycie może wyglądać następująco: <code>var regexes = namespace(&lsquo;System.Text.RegularExpressions&rsquo;);</code></p>
+
+<h2>4. Komunikuj się poprzez obiekty</h2>
+
+<p>Jest to dość wieloznaczne stwierdzenie, w praktyce jednak chodzi o prostą ideę: wykorzystanie proxy w komunikacji z zewnętrznymi serwisami, a nawet między różnymi modułami. Jest to wygodny sposób zachowanie luźnych powiązań.</p>
+
+<p>W ramach przykładu załóżmy, że wykorzystujemy obiekt pośredniczący w obsłudze żądań ajaxowych z różnych modułów naszej aplikacji. Niestety z jakiegoś powodu biblioteka jQuery, z której korzystaliśmy do obsługi tych wywołań, generuje błędy lub posiada zbyt ubogie funkcje. Dzięki wykorzystaniu proxy możemy ją zamienić na inną (lub napisać własną) bez potrzeby przepisywania kodu we wszystkich miejscach, które do tej pory wykorzystywały ją do komunikacji.</p>
+
+<p>Kolejną wynikającą z tego zaletą jest możliwość przeprowadzania testów jednostkowych dla skryptów klienckich. Nie ma przecież żadnych przeciwwskazań, aby stworzyć mocki, które będziemy mogli podstawiać w miejsce obiektu komunikatora.</p>
+
+<p>Innym zastosowaniem takiego rozwiązania jest możliwość reagowania na nadchodzące wiadomości w bardziej wyrafinowany sposób. Zastanówcie się, jak do tej pory reagowaliście, jeżeli w odpowiedzi na wasze żądanie na serwer zamiast upragnionego JSONa dostawaliście stringa zawierającego stronę z błędem? Oczywiście należałoby jakoś powiadomić użytkownika o wystąpieniu błędu lub wywołać odpowiednią reakcję systemu. To z kolei wiąże się z koniecznością każdorazowego sprawdzenia, czy zwrócona wiadomość jest prawidłowa. Wykorzystując interfejs pośredniczący moglibyśmy odpowiednio reagować na takie sytuacje <strong>zanim </strong>wiadomość zostanie przekazana dalej do oczekujących na nią elementów, a nawet za pomocą wzorca Publish/Subscribe tworzyć listy obiektów oczekujących i reagujących na konkretne rodzaje komunikatów.</p>
+
+<h2>5. Dokumentuj skrypty</h2>
+
+<p>Może to zabrzmi dziwnie, ale taka jest prawda. Kiedy rozwijasz duże aplikacje, bardzo możliwe że na przestrzeni miesięcy będziesz musiał wrócić do dawno nie oglądanego kodu lub twoja praca zostanie odziedziczona przez innego programistę, który nie ma zielonego pojęcia o tym co i jak działa. Z tego powodu w momencie, gdy skrypty nie są okraszone stosownymi komentarzami, ilość WTFów/min. znacznie wzrasta. Nie powinniśmy się przejmować wzrostem rozmiaru plików JS, ponieważ niemal każdy minifier załatwi ten problem za nas. Warto przyjąć sobie jakiś konkretny format pisania komentarzy, a w tej dziedzinie standardem wydaje się <a href="http://en.wikipedia.org/wiki/JSDoc">JSDoc</a>.</p>
+
+<h2>6. Minimalizuj skrypty</h2>
+
+<p>Kolejna sprawa, która powinna być dość oczywista w praktyce, często jest jednak pomijana. Minimalizowanie skryptów oraz styli pozwala nawet kilkukrotnie zmniejszyć rozmiar wymaganych do pobrania plików. Jak wiadomo im mniejszy rozmiar, tym mniej danych trzeba przesłać przez sieć i tym szybciej dana strona zostanie załadowana. Ma to znaczenie zwłaszcza dla użytkowników korzystających z urządzeń mobilnych, które często są wykorzystywane w otwartych obszarach np. miejskich hot-spotach, gdzie udźwig łącza stanowi pewien problem.</p>
+
+<p>Innym dobrym pomysłem jest łączenie wielu plików ze skryptami do jednego pliku. Znowu wynika to z faktu, że większa ilość plików wymaga wygenerowanie przez przeglądarkę większej ilości zapytań. W przypadku gdy przeglądarka klienta lub serwer hostujący nie obsługują protokołu <a href="https://sites.google.com/a/chromium.org/dev/spdy/spdy-whitepaper">SPDY</a>, oznacza to, że każdy żądany zasób będzie wymagał ustanowienia nowego połączenia TCP, co jest dość kosztowne i negatywnie przekłada się na czas transmisji, zwłaszcza na dużych dystansach między klientem a serwerem. Z tego powodu wskazane jest zarówno łączenie jak i minimalizacja skryptów i stylów w środowisku produkcyjnym.</p>
+
+<h2>7. Testuj skrypty</h2>
+
+<p>Nie jest chyba dla nikogo niespodzianką, że w życiu programisty dużą część czasu poświęca się nie tylko na pisaniu kodu, ale również na sprawdzeniu jego poprawności. Aby zautomatyzować ten proces, powstało wiele frameworków umożliwiających przeprowadzanie szybkich testów. Ponieważ w dzisiejszych aplikacjach webowych coraz większa część logiki zaczyna być wykonywana po stronie klienta, dobrą praktyką jest przygotowywanie testów również dla skryptów JS. Zalet tego podejścia jest sporo, warto wymienić chociaż kilka z nich:</p>
+
+<ul>
+<li>Przeprowadzanie testów jednostkowych wymusza budowanie modularnych aplikacji opartych o luźne powiązania między obiektami. Jest to bardzo dobra metodyka programowania i pomaga poprawić czytelność oraz jakość pisanego kodu.</li>
+<li>Od kiedy JavaScript umożliwia nam zdalne wywoływanie zdarzeń związanych z akcjami użytkownika, możliwe jest również przynajmniej częściowe zautomatyzowanie testów wymagających podejmowania działań po stronie klienta.</li>
+<li>W przypadku scalania i minimalizacji skryptów (zwłaszcza tych wykorzystujących niezminimalizowane biblioteki zewnętrzne do developingu i zminimalizowane w środowisku produkcyjnym) nigdy nie możemy mieć 100% pewności, że nasz scalony/zminimalizowany skrypt będzie dalej działał dokładnie tak jak sprawdzaliśmy.</li>
+</ul>
+
+
+<p>Środowisk do testów javascriptowych jest dość sporo. Osobiście mogę polecić <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, framework bazujący na rozwiązaniach znanych dla programistów Ruby z RSpeca. Jest łatwy do nauki i wprowadzenia w naszej aplikacji, a jednocześnie daje nam dużą swobodę w tworzeniu własnych rozwiązań.</p>
+]]></content>
+  </entry>
+  
+</feed>

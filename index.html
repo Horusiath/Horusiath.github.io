@@ -1,1 +1,1540 @@
-My Octopress Page is coming soon &hellip;
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Od ostatniego posta minęło trochę czasu, było to jednak związane z ambitnymi zmianami jakie od dawna planowałem wobec bloga. Mój poprzedni blog &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/01/12/przenosiny/">Przenosiny</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-12T23:03:00+01:00" pubdate data-updated="true">Jan 12<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Od ostatniego posta minęło trochę czasu, było to jednak związane z ambitnymi zmianami jakie od dawna planowałem wobec bloga. <a href="http://horusiath.blogspot.com">Mój poprzedni blog</a> naprawdę dawał się już we znaki, głównie przez rozrośnięty i archaiczny silnik, który sprawiał naprawdę sporo kłopotów kiedy przychodziło do odrobiny bardziej zaawansowanej konfiguracji.</p>
+
+<p>Chciałem zamienić swojego bloga w coś prostego w obsłudze, a jednocześnie dającego możliwości sporej personalizacji. Po drodze szukałem różnych rozwiązań. W praktyce wziąłem pod uwagę 3 z nich:</p>
+
+<ol>
+<li>Wordpress &ndash; ta opcja odpadła relatywnie szybko, z podobnych przyczyn dla jakich nie lubiłem bloggera. Dodatkowym argumentem były znalezione w Internecie opinie innych programistów, którzy określali WP jako silnik zbyt rozdmuchany względem swoich nowszych konkurentów.</li>
+<li><a href="https://ghost.org/">Ghost</a> &ndash; początkowo był to dość poważny kandydat. Projekt ufundowany przez Kickstarter, w momencie kiedy zwróciłem na niego swoją uwagę, dobijał właśnie wersji 0.3.3. Oparty o platformę node.js, z dość aktywną społecznością jak na tak młode środowisko, gotowym forum dla szukających pomocy oraz kilkoma drobniejszymi smaczkami, jak chociażby obsługą Markdown jako domyślnego formatu pisania postów &ndash; którego to i tak używam przy codziennym pisaniu dokumentów. Niestety we znaki dała się znać jego niedojżałość, zwłaszcza w momencie, gdy musiałem wykorzystać inne niż domyślna kompozycje, dorzucić kilka własnych skryptów, czy postawić całość na <a href="https://www.heroku.com/">heroku</a> (bo właśnie takiego hosta zamierzałem użyć). Ostatecznie uznałem, że nie potrzebuję wbudowanego edytora z funkcją life preview i do tej pory nie rozumiem dlaczego silnik blogowy &ndash; który można w uproszeniu sprowadzić do generatora statycznych stron WWW &ndash; wymaga obowiązkowej bazy danych.</li>
+<li><a href="http://octopress.org/">Octopress</a> &ndash; mój ostateczny wybór padł na chyba najprostszą dostępną opcję na rynku. Statyczny generator stron, z domyślną obsługą formatowania dokumentów w markdown, świetnym wbudowanym kolorowaniem pisowni skryptów, oraz możliwością update&#8217;ów bezpośrednio z Gita. Do tego hosting bezpośrednio przez <a href="http://pages.github.com/">Github Pages</a>, bez żadnych specjalnych ceremonii, tak jakby było to dowolne inne repozytorium. Żadnych baz danych, uwierzytelniania dla strony obsługiwanej przez 1 osobę, czy wbudowanych edytorów. Po prostu KISS ;)</li>
+</ol>
+
+
+<h2>Co dalej?</h2>
+
+<p>Postanowiłem, że wraz z pozostałymi zmianami zmienię nieco samą ideę bloga. O ile przeniosłem większość starych wpisów, o tyle <strong>chciałem aby wszystkie kolejne posty były umieszczane po angielsku</strong>. Jest to decyzja ze względów praktycznych &ndash; większość programistów (w tym ja), kiedy napotyka jakiś problem, nie traci czasu na informacji w polskiej blogosferze, zamiast tego od razu sięgając do anglojęzycznych źródeł. Dodatkowo jest to dla mnie pewnego rodzaju wyzwanie oraz szansa na popracowanie nad językiem. Co do pozostałych problemów (statystyki, komentarze, itp.), wiele rzeczy wciąż czeka na dokończenie i może minąć nieco czasu, żeby postawić wszystko na nogi.</p>
+
+<p>Podsumowując, witam na moim odświeżonym blogu w nowej formule.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O Pomyłkach I Wnioskach Z Pracy W ASP.NET MVC</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-20T09:49:00+02:00" pubdate data-updated="true">Oct 20<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
+
+<p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
+
+<h2>Twoja encja ≠ Twój model</h2>
+
+<p>Zasadniczym błędem (lub raczej skrótem myślowym) jest założenie, że każda klasa mapowana przez ORM na tabele może służyć jako model przekazywany bezpośrednio do widoku. Nie znaczy to, że jest to nie możliwe, jednak opcja ta jest z reguły nadużywana. Wynika to poniekąd ze stylu programowania wyuczonego z tutoriali z cyklu &ldquo;wyklep CRUDa w 5 min.&rdquo;. Piękne i proste, jednak nie mające wiele wspólnego z problemami dnia codziennego. Z drugiej strony jest to wina samego lenistwa programistów oraz przeświadczenia, że faza projektowania z rozpiską architektury chociażby na kartce papieru jest tylko dla kobiet i leszczy ;)</p>
+
+<p>Pytanie brzmi: kiedy należałoby porzucić modelowanie z encji na rzecz dedykowanych klas POCO? Prawda jest taka, że zależy to od przypadku i wymaga odrobiny doświadczenia.</p>
+
+<ul>
+<li>Jedną z podpowiedzi może być poziom zagłębienia zależności. Im jest on głębszy, tym bardziej wykorzystywana przez nas klasa odbiega strukturą od modelu wymaganego przez widok. Przykładowo już 2 poziom zagłębienia np. <code>Model.Products.SelectMany(p => p.Orders)</code> może świadczyć o tym, że dana encja nie jest właściwym kandydatem i powinna zostać zmapowana na dedykowaną do tego celu klasę.</li>
+<li>Innym przykładem może być sytuacja, w której nasz model wykazuje pewien związek z regułami biznesowymi. Przykładowo częstym sposobem reprezentacji okresu czasu powiązanego z danym obiektem jest dodanie do modelu dwóch pól określających granice czasowe. W tym momencie pojawia się jednak pewien dysonans między definicją biznesową (okres czasu jest pojedynczym obiektem) a rzeczywistą implementacją (okres czasu to dwa generyczne pola dat). Jeżeli logika biznesowa silnie bazuje na danej definicji np. przedział czasowy często pojawia się w kontekście wykonywanych operacji, wtedy możliwe, że lepiej byłoby wyodrębnić ją do osobnej klasy.</li>
+<li>Jak powszechnie wiadomo, we współczesnym świecie aplikacji WWW wymagania klientów są jednymi z najbardziej zmiennych elementów systemu. Możliwość oddzielenia modeli od encji wspiera ten trend, ponieważ o ile encje są powiązane ze schematem bazy danych (przez co są znacznie mniej podatne na zmiany ze względu na konieczność utrzymania spójności z istniejącymi danymi), o tyle modele wykorzystywane przez nas w aplikacji mogą być swobodnie modelowane do naszych potrzeb.</li>
+</ul>
+
+
+<h2>Twój ViewData = Twój Model</h2>
+
+<p>W przypadku niektórych frameworków model jest zdefiniowany w sposób jasny i jednoznaczny. W przypadku ASP.NET MVC nie jest jednak tak łatwo, ponieważ otrzymujemy tutaj więcej niż jeden sposób dostarczenia danych do widoku. Mowa tu oczywiście o ViewData. Wg. mnie obiekt ten, jakkolwiek przydatny, jest podstawowym złamaniem wzorca MVC w ASP.NET MVC. Dlaczego? Ponieważ &nbsp;prawda wygląda tak, że niezależnie od zdefiniowanych przez ciebie klas, prawdziwy model ma zawsze tylko jeden typ: <a href="http://msdn.microsoft.com/en-us/library/system.web.mvc.viewdatadictionary(v=vs.108">ViewDataDictionary</a>.aspx).</p>
+
+<p>Czy to źle? Niekoniecznie, zależy od przyjętego podejścia. Co z tego wynika? W przypadku modeli zwracanych przez formularze zazwyczaj przyjmuje się, że generyczny model powinien zawierać tylko te dane, które zostały wprowadzone przez użytkownika. Tzn. że informacje takie jak opcja wybrana przez użytkownika z listy powinna być częścią modelu podczas gdy sama lista dostępnych opcji powinna być przekazywana za pośrednictwem ViewBag/ViewData. Naturalnie w przypadku, gdy parsujemy model do postaci JSON przekazywanej do klienta, ta zasada nie dotyczy.</p>
+
+<h2>Nic nie znaczące Error Messages</h2>
+
+<p>Jednymi ze gorszych chwil w życiu programisty, są sytuacje, kiedy trzeba obsłużyć zgłoszenie o błędzie w aplikacji. Zdarza się, że zaglądamy wtedy do logów (o ile taką informację zalogowaliśmy ;) ), aby odnaleźć jakieś przydatne informacje, które pozwolą nam zidentyfikować naturę problemu. Jakże wielkie jest rozczarowanie, gdy jedynym hintem jaki wtedy otrzymujemy jest: <code>Object reference not set to an instance of an object.</code> Bardzo rzeczowa i jednoznaczna informacja wśród kilkuset linii kodu wymagających zbadania.</p>
+
+<p>Innym ciężkim przypadkiem jest logowanie niewystarczającej ilości informacji. Przykład (blok try-catch jest czysto poglądowy):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">try</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="p">...</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">product</span> <span class="p">=</span> <span class="n">productRepository</span><span class="p">.</span><span class="n">GetById</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="n">product</span><span class="p">.</span><span class="n">Status</span> <span class="p">!=</span> <span class="n">ProductStatus</span><span class="p">.</span><span class="n">Finished</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidStatusException</span><span class="p">(</span><span class="s">&quot;Provided product has invalid status&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">...</span>
+</span><span class='line'><span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">logger</span><span class="p">.</span><span class="n">Log</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Co jest złego w tym przypadku? Wyobraźmy sobie, że dostajemy zgłoszenienie, o błędzie a w logach jedyną informacją jest: <code>Provided product has invalid status</code>. Czy wiemy o jakim statusie mowa? Czy wiemy o jaki produkt chodzi? Nie mamy żadnych informacji pozwalających zidentyfikować dany przypadek, mimo że wszystko co potrzebne mamy 2 linijki wyżej w kodzie źródłowym naszej aplikacji.</p>
+
+<p>Stąd mój apel: nie bądź leniwcem, minuta pracy teraz pozwoli ci zaoszczędzić godziny problemów później.</p>
+
+<h2>Too thin controllers, too fat services</h2>
+
+<p><em>Fat models, thin controllers</em> jest zwrotem często używanym w świecie MVC. Często jednak wynikiem utrzymania tej reguły jest zjawisko, które sam określam jako papierowe kontrolery. Weźmy na przykład następującą akcję MVC:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[HttpPost]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">ToggleUserBan</span><span class="p">(</span><span class="kt">bool</span> <span class="n">activate</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="n">userService</span><span class="p">.</span><span class="n">ToggleUserBan</span><span class="p">(</span><span class="n">activate</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Na czym polega błąd? Prawdopodobnie metoda ToggleUserBan w serwisie jest przypadkiem zbyt szczegółowym. Daje to podstawy do przypuszczenia, że architektura aplikacji w którymś momencie się posypała. Zajrzyjmy więc do naszego hipotetycznego IUserService:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">interface</span> <span class="n">IUserService</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">void</span> <span class="nf">ToggleUserBan</span><span class="p">(</span><span class="kt">bool</span> <span class="n">flag</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetAllUsers</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetActiveUsers</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetBannedUsers</span><span class="p">();</span>
+</span><span class='line'>  <span class="c1">// ...kolejne 70 metod</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do czynienia to nic innego, jak zwykłe zamiatanie brudu pod dywan. Pseudorozwiązanie polegające na przeniesieniu proceduralnego makaronu w miejsce, w które rzadziej się zagląda. Jest to częsty rezultat braku rewizji kodu i testów jednostkowych, oraz samowoli programistów.</p>
+
+<h2>Garść innych porad</h2>
+
+<ul>
+<li>unikaj static classes &ndash; utrudniają one modularyzację systemu i wprowadzają twarde powiązania, z których bardzo ciężko jest potem zrezygnować. Extension methods są w zasadzie jedynym zastosowaniem dla statycznych klas, dla jakich sam znajduję użytek.</li>
+<li>unikaj partial classes &ndash; dopuszczalne tylko w wypadku, gdy rozszerzasz klasę generowaną przez zewnętrzne narzędzia (co swoją drogą samo w sobie jest złym pomysłem ale o tym może kiedy indziej ;) )</li>
+<li>w przypadku zmiennych używaj nazw, które pozwalają określić ich typ i przeznaczenie &ndash; różnego rodzaju skróty oszczędzają dosłownie kilka sekund podczas pisania tylko po to, aby w przyszłości przedłużyć rozszyfrowywanie kodu przez kogoś innego o kilka minut. Pamiętaj, że w życiu programisty kod czyta się częściej niż pisze.</li>
+<li>podczas zwracania kolekcji zwracaj najmniejszy interface, który umożliwia wykonanie zadania &ndash; nie ma sensu wymagać aby argument był listą, jeżeli jedynym wykonywanym na nim działaniem jest foreach</li>
+<li>jeżeli zwracasz string lub kolekcje nigdy nie zwracaj nulli &ndash; zawsze używaj string.Empty lub Enumerable.Empty&lt;></li>
+<li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - Alternatywa Dla ASP.NET</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-10T20:14:00+02:00" pubdate data-updated="true">Aug 10<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
+
+<ul>
+<li><a href="http://www.servicestack.net/">ServiceStack</a> &ndash; najbardziej znana alternatywa, o której opowiem więcej w dalszej części posta.</li>
+<li><a href="http://nancyfx.org/">Nancy</a>&ndash; drugi obok ServiceStack, najbardziej znany framework, czerpiący inspirację ze znanego frameworka Sinatra, napisanego w Rubym.</li>
+<li><a href="https://github.com/openrasta/openrasta/wiki/Why-Choose-OpenRasta">OpenRasta</a>&ndash; biblioteka stworzona z myślą o tworzeniu API opartego o zasoby.</li>
+<li><a href="http://amirrajan.net/Oak/">Oak</a> &ndash; framework mocno zainspirowany dynamiką bibliotek Ruby.</li>
+<li><a href="http://blog.markrendle.net/2012/06/01/simple-web/">Simple.Web</a> &ndash; micro framework twórcy znanego micro ORMa Simple.Data, który umieszczam również w ramach ciekawostki.</li>
+</ul>
+
+
+<p>Sądzę, że dość niewiele osób słyszało te nazwy (zwłaszcza ostatnie dwie). Ja jednak postanowiłem opowiedzieć i zachęcić do najpopularniejszego z tych rozwiązań, czyli ServiceStack.</p>
+
+<p>Co takiego otrzymujemy, decydując się na jego wykorzystanie?:</p>
+
+<ul>
+<li>Cały zestaw <em>extension methods</em> do wbudowanych typów .NET, przyspieszających pracę programistów.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Auto-mapping">Mechanizm mapowania obiektów</a> &ndash; podobny do AutoMappera, choć prostszy i bardziej ubogi.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Built-in-profiling">Profiler</a> wbudowany w środowisko.</li>
+<li><a href="http://fluentvalidation.codeplex.com/wikipage?title=CreatingAValidator">Zaawansowany mechanizm walidacji</a>, umożliwiający m.in. warunkową walidację poszczególnych pól.</li>
+<li>Mechanizm <a href="https://github.com/ServiceStack/ServiceStack/wiki/Authentication-and-authorization">autentykacji</a> i zarządzania dostępem oparty o role i uprawnienia z możliwością logowania poprzez OpenID.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/The-IoC-container">Kontener IoC</a> &ndash; również z możliwością podpięcia własnego.</li>
+<li>Minimalistyczny framework ORM (<a href="https://github.com/ServiceStack/ServiceStack.OrmLite">OrmLite</a>) &ndash; umożliwia on podłączenie do najpopularniejszych relacyjnych, baz danych. Naturalnie on również może być zastąpiony bardziej kompleksowym rozwiązaniem.</li>
+<li>Wiązania do rózniej maści usług logowania (np. NLog, Elmah, Log4Net, EventLog, Enterprise Lib.) i cache&#8217;owania (np. domyślny InMemory, Memcached, Redis, Azure lub Amazon Web Services).</li>
+<li>Bundlera plików JavaScript, CSS, LESS, SASS i CoffeeScript &ndash; chociaż trzeba przyznać, że jest to dość wyboista droga.</li>
+<li>Mechanizm do kolejkowania wiadomości &ndash; obecnie tylko za pośrednictwem Redisa. Trwają prace nad wprowadzeniem bindingów do ZeroMQ, RabbitMQ, Azure Service Bus oraz Amazon SQS.</li>
+<li>Gotowe SDK do aplikacji klienckich pod C#, Silverlight, JavaScript oraz Dart.</li>
+</ul>
+
+
+<p>Ale mówiąc o jego najbardziej kompleksowych zaletach:</p>
+
+<h2>Web services &amp; Content Negotiation</h2>
+
+<p>Jest to &ndash; moim zdaniem &ndash; najciekawsza cecha Service Stack. Tworząc dotychczasowe usługi sieciowe z wykorzystaniem standardowych bibliotek .NET musieliśmy uzależniać technologię, jaką zamierzaliśmy wykorzystać od formatu danych, jakiego się spodziewaliśmy. A więc tworząc serwisy wykorzystujące SOAP lub XML tworzyliśmy dla nich specjalne usługi w WCFie. Jeżeli chcielibyśmy, aby zwracały one dane w postaci JSON, prawdopodobnie większość z nas wykorzystałaby najnowsze podejście w postaci ASP.NET Web API, dla pozostałych formatów ASP.NET.</p>
+
+<p>Problemem takiego podejścia jest fakt, że za każdym z tych rozwiązań stoi osobna technologia, która nie jest kompatybilna z pozostałymi. Niezależnie od tego, co wybierzemy, nigdy nie otrzymamy kompletnego rozwiązania.</p>
+
+<p>Jak wygląda to w przypadku ServiceStack? To proste. Każdy z modułów naszej aplikacji może być zamknięty w ramach klas dziedziczących po wspólnej klasie <code>Service</code>(jednak wbrew pozorom nie mamy tu do czynienia z wzorcem MVC) &ndash; lub w razie potrzeby, którejś z jej klas bazowych bądź interfejsu <code>IService</code>. Każda metoda obsługująca żądanie pobiera w parametrze obiekt POCO (Plain Old Class Object) i zwraca inny obiekt POCO. Dopiero na poziomie frameworka rozwiązywany jest problem serializacji danego obiektu do końcowego formatu, który może być wnioskowany na podstawie nagłówka HTTP, zawartości URL bądź dowolnego innego warunku, jaki zdefiniujemy podczas konfiguracji. Rozwiązanie to znane jest jako <em>Content Negotiation</em>. Dzięki temu jedna klasa może pełnić rolę kontrolera ASP.NET, WebAPI i serwisu WCF w tym samym czasie!</p>
+
+<p>Domyślnie dysponujemy wbudowanymi serializatorami dla formatów: SOAP (1.1 oraz 1.2), XML, JSON, CSV i JSV. Dodatkowo w sieci można pobrać pluginy rozszerzające tą listę o niemal wszystkie formatery dostępne w świecie .NET, w tym też binarne. Jedna linijka kodu w konfiguracji nieraz wystarcza, aby wprowadzić dany format do naszej aplikacji. Warto zauważyć, że ta sama zasada panuje w przypadku dynamicznie generowanych stron HTML &ndash; po doinstalowaniu pluginu możemy generować strony w oparciu o składnię Razora oraz Markdown.</p>
+
+<h2>Wydajność</h2>
+
+<p>Twórcy ServiceStack zwracają szczególną uwagę na szybkość swojej platformy, w myśl powiedzenia: <i>&ldquo;We care about two things: speed and quality. And the quality we care about is speed&rdquo;</i>. Nie powinno więc dziwić, że większości wypadków framework ten przewyższa ASP.NET i WCF w kwestiach wydajnościowych. Wynika to z prostego faktu. Mamy tu do czynienia z inicjatywą open source, a w przedsięwzięciach tego typu dużą rolę odgrywa prostota. Nie ma tutaj miejsca na platformy typu Enterprise, z setkami warstw abstrakcji, pełnymi potworków typu <a href="http://ws.apache.org/xmlrpc/apidocs/org/apache/xmlrpc/server/RequestProcessorFactoryFactory.RequestSpecificProcessorFactoryFactory.html">RequestSpecificProcessorFactoryFactory</a>(tak, jest to wyraz mojego &ldquo;hejtu&rdquo; względem podejścia projektowego w Javie, ale fakt faktem problem ten dotyka również .NETu ;) ).</p>
+
+<p>Konkretne porównania i benchmarki można znaleźć <a href="https://github.com/ServiceStack/ServiceStack/wiki/Real-world-performance">tutaj</a>. I jak widać, nie chodzi tu o jakiś pomijalny zysk rzędu kilkunastu procent.</p>
+
+<h2>Testowalność</h2>
+
+<p>ServiceStack jest frameworkiem z natury bardzo zmodularyzowanym, umożliwiającym wymianę poszczególnych komponentów. To z kolei czyni go naturalnym kandydatem do wprowadzenia testów jednostkowych.</p>
+
+<p>Innym atutem jest podejście wymiany danych opartych na komunikatach (message-based design), które w wypadku ServiceStack są zwykłymi klasami POCO. Dzięki temu testując poszczególne moduły/usługi nie musimy przetwarzać wbudowanych we framework obiektów żądań i odpowiedzi. Zamiast tego mamy do czynienia ze standardowym zbiorem klas, zdefiniowanych przez nas samych, które z zewnątrz nie zdradzają zależności od używanego przez nas frameworka. Ponad to architektura sprawia, że najwygodniejszym podejściem jest budowa dużej ilości serwisów z małą ilością metod, co dodatkowo ułatwia zachowanie ziarnistości systemu.</p>
+
+<h2>Wieloplatformowość</h2>
+
+<p>Ostatnią wartą odnotowania cechą pozostaje fakt, że wybierając SS otrzymujemy w pełni funkcjonalny framework działający zarówno pod Windowsem jak i platformami linuxowymi. Wiem, że pod ASP również można programować w sposób pozwalający na postawienie aplikacji na Linuxie, ale jest to rozwiązanie niekompletne. Przykładowo, ServiceStack jest obecnie jedyną opcją pozwalającą na uruchomienie usług SOAP pod Mono.</p>
+
+<p>Nie oznacza to jednak, że decydując się na SS, musimy rezygnować z naszej dotychczasowej aplikacji napisanej w ASP.NET. Równie dobrze możemy uruchomić hosta ServiceStack wewnątrz Global.asax i używać go np. tylko jako zamiennika warstwy nośnej dla usług WCF.</p>
+
+<p>Całość doskonale wpisuje się w naturę technologii webowych, ich otwartość i multiplatformowość. Dodatkowo umożliwia ona optymalizację kosztów (hosting linuxowy jest średnio 5-krotnie tańszy niż porównywalny windowsowy) i otwiera nowe możliwości na rynku, który w przypadku .NET w ogromnej części składa się z aplikacji biznesowych.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść Pro Tipów Przydatnych Podczas Tworzenia Aplikacji</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-26T22:49:00+02:00" pubdate data-updated="true">Jun 26<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
+
+<p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
+
+<h2>1. &ldquo;Jesteśmy jedną rodziną, mamy wspólne korzenie&rdquo;</h2>
+
+<p>Naturalną cechą aplikacji webowych rozwijanych w ramach środowiska .NET jest ich podział na wiele różnych projektów. Nie jest to wymóg, jednakże z reguły zdecydowanie pomaga w organizacji oraz w trakcie późniejszego wdrażania rozwiązań. To co jednak uznałem za warte przypomnienia to wzajemne powiązania pomiędzy projektami. Mówiąc zaś dokładniej, przydatność stworzenia wspólnej biblioteki-korzenia, dowiązywanej przez wszystkie pozostałe projekty w aplikacji.</p>
+
+<p>Ma to kilka prostych przyczyn. Po pierwsze zdaża się, że musimy zaimplementować pewną funkcjonalność w kilku bibliotekach, będących na podobnym poziomie zależności, których jednak nie możemy powiązać ze sobą np. ze względu na rekurencyjne zapętlenie zależności &ndash; tutaj wspólny &ldquo;korzeń&rdquo; okazuje się nieoceniony. Po drugie, w trakcie pracy z aplikacją nieraz powstaje chęć stworzenia własnego DSLa bądź zestawu rozszerzeń upraszczających pracę z daną platformą bądź językiem. Ileż to razy rodziła się ochota na dodanie <em>extension method</em>, której brakuje nam w istniejących już klasach .NET? Tutaj również możliwość współdzielenia tego typu funkcjonalności jest bardzo przydatna.</p>
+
+<p>Idea wspólnego &ldquo;korzenia&rdquo; przydaje się również kiedy mowa o klasach wyjątków. Dobrą praktyką w trakcie definiowania aplikacji jest wywoływanie własnych wyjątków, które mogą informować nie tylko o błędach w operacjach logicznych systemu, lecz również logice biznesowej jako takiej. Moim zdaniem wszystkie takie <em>customowe</em> wyjątki powinny mieć wspólną klasę bazową. Dzięki temu w późniejszych fragmentach aplikacji będziemy mogli bez problemu wychwytywać te z nich, które stworzyliśmy sami na potrzeby naszego systemu i odpowiednio na nie reagować &ndash; przekształać do postaci czytelnej dla końcowego użytkownika, logować itp.</p>
+
+<h2>2. Atomic frontend design</h2>
+
+<p>Atomic design to koncepcja projektowania elementów HTML w sposób uporządkowany na bazie kompozytów. Nieraz w życiu codziennym zdarza się nam określać komponenty strony w dość ogólny sposób, pozostawiając szczegóły implementacji na &ldquo;doprecyzowanie później&rdquo; ;) W rezultacie kończymy w morzu (lub raczej szambie) znaczników o mgliście oznaczonych brzegach. Ponieważ HTML na stronach może mieć bardzo rozrośniętą postać, którą jako programiści też będziemy musieli utrzymywać, warto zadbać też o ten aspekt aplikacji.</p>
+
+<p>Idea atomic designu skupia się własnie na wiązaniu elementów HTML w kompozyty, które z kolei są łączone ze sobą dalej w kolejne, bardziej abstrakcyjne struktury. Więcej szczegółów na ten temat możecie dowiedzieć się <a href="http://bradfrostweb.com/blog/post/atomic-web-design/">tutaj</a>. W praktyce warto poznać to podejście już teraz &ndash; w obecnej chwili widać wyłaniający się coraz mocniej trend, który w przyszłości może poskutować nowym standardem umożliwiającym definiowanie własnych znaczników HTML, mających bezpośrednie wsparcie ze strony silnika renderującego.</p>
+
+<p>Chcąc wspomóc developerów i przygotować współczesne aplikacje webowe do nadchodzących standardów, inżynierowie Google&#8217;a stworzyli projekt <a href="http://www.polymer-project.org/">polymer</a> (czerpiący m.in. z koncepcji atomic designu), którego zadaniem jest zbudować odpowiednią platformę abstrakcji z istniejących już rozwiązań: HTML, Javascriptu oraz CSS. Zgodnie z ich przewidywaniami wraz z rozwojem przeglądarek funkcje oferowane przez tą bibliotekę mają w przyszłości zostać zastąpione specjalizowanymi, natywnymi odpowiednikami, zaś zadaniem polymeru jest umożliwić obecnym aplikacjom kompatybilność z dopiero powstającymi technologiami. Ciekawostka: mimo, że AngularJS stanowi oddzielny projekt, zapowiedziano już że w kolejnych wersjach będzie on coraz bardziej integrowany z polymerem.</p>
+
+<h2>3. Stwórz własną platformę abstrakcji&hellip;</h2>
+
+<p>Kolejna kwestia wynika z prostej tendencji uzależniania logiki aplikacji od wykorzystywanych bibliotek. W praktyce skutkuje to twardym związaniem naszego systemu z konkretnymi rozwiązaniami &ndash; które w przyszłości mogą stracić wsparcie, okazać się przestarzałe lub niewystarczające do naszych potrzeb. Taka monolityczna budowa nie jest przychylna zmianom, a jak powszechnie wiadomo klienci lubią wpadać na nowe pomysłu i zmieniać swoje zdanie.</p>
+
+<p>Stąd też idealnym rozwiązaniem jest stworzenie klasycznej płaszczyzny abstrakcji, całkowicie izolującej naszą logikę biznesową, która stanowi jądro każdej aplikacji biznesowej, od zewnętrznych platform, realizowanych pośrednio jako obiekty proxy/adaptery. Piszę idealnym, w praktyce jednak rzadko takie rozwiązanie okazuje się w 100% możliwe. Warto jednak poświęcić mu trochę uwagi &ndash; również z perspektywy modularyzacji i możliwości testowania.</p>
+
+<h2>4. &hellip; ale nie przeginaj z warstwami</h2>
+
+<p>Pamiętaj, że każda dodatkowa wartwa abstrakcji z jednej strony umożliwia ci podzielenie problemu na prostsze, bardziej ogólne definicje (a ludzie z natury lubią pojmować świat ogólnikowo), z drugiej strony jednak stanowi jednocześnie kolejną barierę w optymalizacji.</p>
+
+<p>To co warto przypomnieć, to fakt, że tworzenie aplikacji to proces, w którym wymagania zmieniają się w czasie. Produkcja oprogramowania nie jest jednym z konkursów algorytmicznych, gdzie wszelkie bariery i wartości graniczne są niezmienne i podane z góry. To co dziś świetnie się sprawdza, jutro może okazać się niewystarczające.</p>
+
+<p>Ważnym czynnikiem jest odpowiednie zdefiniowanie problemu i dobór właściwych wzorców i rozwiązań. Jako programiści nieraz generalizujemy pewne problemy tak, aby dało się je rozwiązać przy pomocy istniejących technologii, kosztem rzeczywistej złożoności całego systemu. Dla zainteresowanych proponuję obejżeć <a href="http://www.infoq.com/presentations/8-lines-code-refactoring">wykład</a> Grega Younga na ten temat.</p>
+
+<p>Wielowarstwowe aplikacje stanowią pewien problem, kiedy przychodzi do optymalizacji. Nie oznacza to jednak, że budowa z podziałem na warstwy jest zła. Jest wygodna z punktu widzenia programisty i projektowania koncepcji rozwiązań dla problemów postawionych przed systemem. Z drugiej strony jednak każda aplikacja posiada pewne punkty zapalne &ndash; wymagające dużej wydajności &ndash; które będą wymagać niestandardowego trakowania, w tym też odejścia od wcześniej przyjętych koncepcji i zwrotu w stronę rozwiązań bardziej nisko poziomowych. Dobrze, aby aplikacja umożliwiała pewien sposób na osiągnięcie tego celu bez zaburzania reszty konstrukcji.</p>
+
+<p>Jednym z możliwych kompromisów jest wielopoziomowy caching. Zamiast przebijać sie przez kolejne płaszczyzny abstrakcji w celu możliwości operowania na bardziej niskopoziomowych mechanizmach, cache&#8217;ujemy uzykiwane wartości na poszczególnych warstwach. Wielopoziomowy cache umożliwia też przyrostowe skalowanie wydajności w zależności od potrzeb.</p>
+
+<h2>5. Kradnij&hellip;</h2>
+
+<p>&hellip; moc obliczeniową maszyn klienta. Jest to bardzo dobre podejście, ponieważ wykonywanie części logiki po stronie przeglądarki nie dość, że odciąża serwery, za które musimy płacić, to dodatkowo stanowi rozwiązanie o wiele bardziej skalowalne, ponieważ ogólna ilość dostępnej mocy obliczeniowej rośnie wraz z liczbą maszyn wysyłających żądania na serwer. Stąd też część obliczeń, takich jak renderowanie dynamicznego HTMLa, czy preprocesowanie modelu danych od razu do postaci przystępnej do obliczeń po stronie serwera, można wykonywać bezpośrednio w przeglądarce.</p>
+
+<h2>6. Oszukuj</h2>
+
+<p>Co mam przez to na myśli? Po pierwsze powtarzam: cache&#8217;uj dane. W świecie aplikacji na platformie .NET często jest to opcja marginalizowana. W wielu przypadkach dopuszczalne jest, aby użytkownik zobaczył <em>przybliżone</em> dane. A co jeżeli nie są one aktualne? <em>Keep calm and oj tam oj tam</em> ;)</p>
+
+<p>Problem, z którym się też spotkałem, to stosowanie <em>prymitywych</em> cache&#8217;ów w miejscach, w których ciężko określić górną granicę przyrostu danych. Tak, zwykły .NETowy słownik może wystarczy w twoim środowisku developerskim, ale w momencie, gdy za rok dane pompowane do niego na produkcji będą liczone w setkach tysięcy (lub więcej) obiektów, wszyscy na własne oczy zobaczą, że wyprodukowałeś trabanta w cenie porsche. Technologie sprawdzone na polu walki, takie jak Memcache i Redis są tutaj, gotowe cię wesprzeć. Korzystaj z tej możliwości.</p>
+
+<p>Po drugie pamiętaj o złotej zasadzie &ndash; czego user nie dotknie, tego sercu nie żal. Przykład-anegdota: swego czasu aplikacje na urządzenia Apple były podawane jako wzór szybko uruchamiających się programów. Aplikacja, która na innych systemach uruchamiała się w kilka sekund, na iPhone była gotowa w ułamku tego czasu. Na czym polegał sekret? Otóż w rzeczywistości to, co widział użytkownik, było w rzeczywistości zrzutem ekranu z działającej aplikacji, bez jakichkolwiek możliwości interakcji. Dzięki temu użytkownik miał wrażenie, że aplikacja uruchamia się niemal natychmiast. W rzeczywistości, zanim wykonał on jakąkolwiek akcję w UI, mijało parę sekund, w trakcie których program miał czas, aby się załadować i podstawić pod &ldquo;zaślepkę&rdquo; faktyczny interfejs użytkownika.</p>
+
+<p>Liczę na to, że lektura ta okazała się ciekawa i być może uda mi się w przyszłości opisać dalsze koncepty i przemyślenia.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego Programiści .NET Mogliby Nauczyć Się Od Rubystów?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-16T12:28:00+02:00" pubdate data-updated="true">Jun 16<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>.NET był wybraną przeze mnie technologią niemal od początku mojej przygody z programowaniem. Uważam jednak, że programista nie powinien się zamykać w jednej szyfladce i poznawać szerokie spectrum technologii. Porównywać je i znać wady oraz zalety każdej z nich. Ostatecznie zaś umieć dobrać właściwą technologię do rozwiązania napotykanych problemów &ndash; nie odwrotnie ;)</p>
+
+<p>Stąd też pytanie w temacie. Czy faktycznie programiści .NET mogą nauczyć się czegoś ze środowiska Ruby, języka, który ostatnimi czasy zbiera niemało batów (głównie związanych z wydajnością oraz bezpieczeństwem jego najpopularniejszej platformy, RoRa)? Otóż jak się okazuje całkiem sporo, nawet pomimo już istniejącego trendu absorbowania do platformy .NET sporej ilości rozwiązań napotykanych w konkurencyjnych gałęziach. Poniżej postaram się wymienić te, które moim zdaniem są warte odnotowania.</p>
+
+<h2>1. Przestań polegać na swoim IDE</h2>
+
+<p>Nie da się tego ukryć &ndash; Visual Studio jest jednym z najlepszych, o ile nie najlepszym IDE, z jakim programista może mieć obecnie przyjemność pracować. Ma to jednak pewną cenę. W pewnym momencie zaczynamy polegać na swoim IDE w stopniu większym, niż na własnych umiejętnościach. Co gorsza przenosi się to bezpośrednio na tworzone biblioteki (przykład&hellip; Entity Framework &ndash; czy ktoś próbował kiedyś stworzyć model edmx bez pomocy wizarda wbudowanego w Visual Studio?). Jeżeli nie możesz sprawnie korzystać z biblioteki bez wsparcia swojego IDE, oznacza to, że jest ona zbyt skomplikowana i najzwyczajniej w świecie zepsuta.</p>
+
+<p>W przypadku Ruby&#8217;ego, narzędzie pracy jest kwestią gustu. Jednakże kiedy pierwszy raz przyszło mi pracować z teamem RoR każde z nich w porównaniu do Visual Studio wygląda jak notatnik z kolorowaniem składni. Żadnego zaawansowanego refactoringu, intellisense, nawigacji między plikami w projekcie, generowania buildów. Co było w tym najzabawniejsze? Po 2 tygodniach wcale mi tego nie brakowało. Przysłowiowy notatnik + konsola całkowicie wystarczały do pracy, zaś narzędzia są skonstruowane tak, aby programista był sobie w stanie poradzić ze wszystkim zaraz po zainstalowaniu interpretera.</p>
+
+<h2>2. Debuger jest opcją, nie obowiązkiem</h2>
+
+<p>W świecie .NET jest to dziwna opinia. Wielu programistów wykorzystuje go jako normalne narzędzie pracy służące sprawdzeniu, czy aplikacja działa poprawnie. Dodatkowo sam Visual Studio ułatwia takie podejście. Jako programista Ruby nigdy nie musiałem skorzystać z debuggera &ndash; prawdę mówiąc, nigdy go nie zainstalowałem. Nie oznacza to oczywiście, że kod napisany w Rubym jest zawsze właściwy. Wynika to z innego podejścia. W tym środowisku standardem jest pisanie unit testów do weryfikacji każdej bardziej złożonej części systemu. Dzięki temu testy w Rubym są domyślnym <strong>must have</strong> przy każdym projekcie.</p>
+
+<h2>3. Nie bój się eksperymentować</h2>
+
+<p>To co najbardziej spodobało mi się we współpracy z programistami Ruby, to otwartość na nowinki, chęć wypróbowania innych podejść. Wiąże się z tym pewne ryzyko, ale również określony zysk. Tutaj powstaje pewien problem &ndash; ryzyko w skostniałym świecie aplikacji biznesowych z reguły jest czymś nie do przyjęcia. Dodatkowym hamulcem jest tutaj fakt, że wielu starszych programistów ze środowiska .NET nieprzychylnie patrzy na rozwiązania open source (w końcu kogo wtedy pociągnąć do odpowiedzialności?) oraz ogólnie technologiom spoza kółka Microsoftu.</p>
+
+<p>Nie należy bać się zmian. Nawet jeżeli ryzyko jest nieakceptowalne w aplikacjach dla klientów zewnętrznych, wciąż możemy wprowadzać drobne zmiany dla systemów używanych wewnątrz firmy oraz wypróbowywać tam nowe podejścia. Z jednej strony może to przełożyć się na zysk w przyszłości, z drugiej działa to jak magnes na programistów-pasjonatów, a takich nigdy nie ma za wielu, prawda? ;)</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/05/17/powershell-okiem-programisty-net/">PowerShell Okiem Programisty .NET</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-17T21:20:00+02:00" pubdate data-updated="true">May 17<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Artykuł ten tworzę z dość prostego powodu. Wraz z mijającym czasem w każdym programiście rośnie opór oraz lenistwo wobec powtarzalnych czynności wykonywanych codziennie w pracy. Stąd też szukamy sposobów na zautomatyzowanie choć części z tych zadań. PowerShell może być jednym ze sposobów na osiągnięcie tego celu. Z tego powodu warto lepiej się z nim zapoznać.</p>
+
+<p>Zanim zacznę, chcę zaznaczyć, że nie jestem mistrzem PS. Postanowiłem jednak podzielić się swoimi doświadczeniami z punktu widzenia typowego programisty .NET i w miarę zwięźle pokazać, w jaki sposób przenieść niektóre z najpopularniejszych operacji występujących w tym świecie na ich odpowiedniki w PowerShellu. Zaczynajmy.</p>
+
+<p>Rzecz, którą nieraz warto zrobić przed rozpoczęciem właściwej pracy, to uruchomienie PowerShella w trybie administratora. Możemy to zrobić bezpośrednio z poziomu <strong>cmd.exe</strong> za pomocą komendy:<code>powershell &ldquo;Start-Process powershell -Verb runAs&rdquo;</code>.</p>
+
+<h3>Wypisanie textu na konsolę</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">System</span><span class="p">.</span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Hello world!&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nb">Write-Host</span> <span class="s2">&quot;Hello world!&quot;</span>
+</span><span class='line'><span class="c"># lub krócej</span>
+</span><span class='line'><span class="s2">&quot;Hello world!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Zmienne</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">int</span> <span class="n">a</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span> <span class="n">b</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="kt">var</span> <span class="n">b</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$a</span> <span class="p">=</span> <span class="n">1</span>
+</span><span class='line'><span class="nv">$b</span> <span class="p">=</span> <span class="n">2</span>
+</span><span class='line'><span class="nv">$a</span><span class="p">,</span> <span class="nv">$b</span> <span class="p">=</span> <span class="n">1</span><span class="p">,</span> <span class="n">2</span>    <span class="c"># Python-like</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Tablice</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">array</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span> <span class="m">1</span><span class="p">,</span> <span class="s">&quot;text&quot;</span><span class="p">,</span> <span class="m">3.14</span> <span class="p">};</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="n">array</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">iter</span> <span class="p">=</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$array</span> <span class="p">=</span> <span class="n">1</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">3</span><span class="p">.</span><span class="n">14</span>
+</span><span class='line'><span class="nv">$array</span> <span class="p">=</span> <span class="err">@</span><span class="p">(</span><span class="n">1</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">3</span><span class="p">.</span><span class="n">14</span><span class="p">)</span> <span class="c"># jawny zapis</span>
+</span><span class='line'><span class="nv">$a</span> <span class="p">=</span> <span class="nv">$array</span><span class="p">[</span><span class="n">0</span><span class="p">]</span>
+</span><span class='line'><span class="nv">$iter</span> <span class="p">=</span> <span class="p">(</span><span class="n">1</span><span class="p">..</span><span class="n">10</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Słowniki</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">dictionary</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="kt">string</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="p">{</span><span class="s">&quot;key 1&quot;</span><span class="p">,</span> <span class="s">&quot;value 1&quot;</span><span class="p">},</span>
+</span><span class='line'>  <span class="p">{</span><span class="s">&quot;key 2&quot;</span><span class="p">,</span> <span class="s">&quot;value 2&quot;</span><span class="p">}</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="n">dictionary</span><span class="p">[</span><span class="s">&quot;key 1&quot;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$dictionary</span> <span class="p">=</span> <span class="err">@</span><span class="p">{</span><span class="s2">&quot;key 1&quot;</span> <span class="p">=</span> <span class="s2">&quot;value 1&quot;</span><span class="err">;</span> <span class="s2">&quot;key 2&quot;</span> <span class="p">=</span> <span class="s2">&quot;value 2&quot;</span><span class="p">}</span>
+</span><span class='line'><span class="nv">$dictionary</span><span class="p">[</span><span class="s2">&quot;key 1&quot;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Operatory logiczne, warunkowe i binarne</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">true</span> <span class="p">==</span> <span class="k">true</span>    <span class="c1">// równy</span>
+</span><span class='line'><span class="k">true</span> <span class="p">!=</span> <span class="k">false</span>   <span class="c1">// różny</span>
+</span><span class='line'><span class="m">1</span> <span class="p">&gt;</span> <span class="m">0</span>           <span class="c1">// większy</span>
+</span><span class='line'><span class="m">0</span> <span class="p">&lt;</span> <span class="m">1</span>           <span class="c1">// mniejszy</span>
+</span><span class='line'><span class="m">1</span> <span class="p">&gt;=</span> <span class="m">0</span>          <span class="c1">// większy lub równy</span>
+</span><span class='line'><span class="m">0</span> <span class="p">&lt;=</span> <span class="m">1</span>          <span class="c1">// mniejszy lub równy</span>
+</span><span class='line'><span class="p">!</span><span class="k">true</span>           <span class="c1">// negacja</span>
+</span><span class='line'><span class="k">true</span> <span class="p">&amp;&amp;</span> <span class="k">true</span>    <span class="c1">// koniunkcja (logiczny)</span>
+</span><span class='line'><span class="k">true</span> <span class="p">||</span> <span class="k">false</span>   <span class="c1">// alternatywa (logiczny)</span>
+</span><span class='line'><span class="m">1</span> <span class="p">^</span> <span class="m">1</span>           <span class="c1">// alternatywa wykluczająca </span>
+</span><span class='line'><span class="m">1</span> <span class="p">|</span> <span class="m">1</span>           <span class="c1">// alternatywa (binarny)</span>
+</span><span class='line'><span class="m">1</span> <span class="p">&amp;</span> <span class="m">1</span>           <span class="c1">// koniunkcja (binarny)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$True</span> <span class="o">-eq</span> <span class="nv">$True</span>    <span class="c"># równy</span>
+</span><span class='line'><span class="nv">$True</span> <span class="o">-ne</span> <span class="nv">$False</span>   <span class="c"># różny</span>
+</span><span class='line'><span class="n">1</span> <span class="o">-gt</span> <span class="n">0</span>            <span class="c"># większy</span>
+</span><span class='line'><span class="n">0</span> <span class="o">-lt</span> <span class="n">1</span>            <span class="c"># mniejszy </span>
+</span><span class='line'><span class="n">1</span> <span class="o">-ge</span> <span class="n">0</span>            <span class="c"># większy lub równy</span>
+</span><span class='line'><span class="n">0</span> <span class="o">-le</span> <span class="n">1</span>            <span class="c"># mniejszy lub równy</span>
+</span><span class='line'><span class="o">-not</span> <span class="nv">$True</span>         <span class="c"># negacja</span>
+</span><span class='line'><span class="nv">$True</span> <span class="o">-and</span> <span class="nv">$True</span>   <span class="c"># koniunkcja (logiczny)</span>
+</span><span class='line'><span class="nv">$True</span> <span class="o">-or</span> <span class="nv">$False</span>   <span class="c"># alternatywa (logiczny)</span>
+</span><span class='line'><span class="nv">$True</span> <span class="n">-xor</span> <span class="nv">$False</span>  <span class="c"># alternatywa wykluczająca (logiczny)</span>
+</span><span class='line'><span class="n">1</span> <span class="o">-bxor</span> <span class="n">2</span>          <span class="c"># alternatywa wykluczająca (binarny)</span>
+</span><span class='line'><span class="n">1</span> <span class="o">-bor</span> <span class="n">1</span>           <span class="c"># alternatywa (binarny)</span>
+</span><span class='line'><span class="n">1</span> <span class="o">-band</span> <span class="n">1</span>          <span class="c"># koniunkcja (binarny)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Instrukcje warunkowe</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">if</span><span class="p">(</span><span class="err">$</span><span class="n">a</span> <span class="p">==</span> <span class="k">true</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Statement 1&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">else</span> <span class="nf">if</span><span class="p">(</span><span class="err">$</span><span class="n">b</span> <span class="p">==</span> <span class="k">true</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Statement 2&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">else</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Statement 3&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="k">If</span><span class="p">(</span><span class="nv">$a</span> <span class="o">-eq</span> <span class="nv">$True</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="s2">&quot;Statement 1&quot;</span>
+</span><span class='line'><span class="p">}</span> <span class="k">ElseIf</span><span class="p">(</span><span class="nv">$b</span> <span class="o">-eq</span> <span class="nv">$True</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="s2">&quot;Statement 2&quot;</span>
+</span><span class='line'><span class="p">}</span> <span class="k">Else</span> <span class="p">{</span>
+</span><span class='line'>  <span class="s2">&quot;Statement 3&quot;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Pętle</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">=</span><span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">foreach</span><span class="p">(</span><span class="kt">var</span> <span class="n">element</span> <span class="k">in</span> <span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">element</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i</span><span class="p">++);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i</span><span class="p">++);</span>
+</span><span class='line'><span class="p">}</span> <span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="k">for</span><span class="p">(</span><span class="nv">$i</span><span class="p">=</span><span class="n">1</span><span class="err">;</span> <span class="nv">$i</span> <span class="o">-lt</span> <span class="n">10</span><span class="err">;</span> <span class="nv">$i</span><span class="p">++)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">foreach</span><span class="p">(</span><span class="nv">$i</span> <span class="k">in</span> <span class="p">(</span><span class="n">1</span><span class="p">..</span><span class="n">10</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">while</span><span class="p">(</span><span class="nv">$i</span> <span class="o">-lt</span> <span class="n">10</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'>  <span class="nv">$i</span><span class="p">++</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'>  <span class="nv">$i</span><span class="p">++</span>
+</span><span class='line'><span class="p">}</span> <span class="k">while</span><span class="p">(</span><span class="nv">$i</span> <span class="o">-lt</span> <span class="n">10</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'>  <span class="nv">$i</span><span class="p">++</span>
+</span><span class='line'><span class="p">}</span> <span class="k">until</span><span class="p">(</span><span class="nv">$i</span> <span class="o">-eq</span> <span class="n">10</span><span class="p">)</span>   <span class="c"># odpowiednik: do {} while(-not ($i -ne 10))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Definicje własnych metod/funkcji</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="c1">// C# wymaga &quot;opakowania funkcji&quot; w klasę</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">A</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">public</span> <span class="kt">int</span> <span class="nf">Fib</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span> <span class="p">=</span> <span class="m">1</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="n">n</span> <span class="p">&lt;</span> <span class="m">2</span><span class="p">)</span> <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nf">Fib</span><span class="p">(</span><span class="n">n</span> <span class="p">-</span> <span class="m">2</span><span class="p">)</span> <span class="p">+</span> <span class="n">Fib</span><span class="p">(</span><span class="n">n</span> <span class="p">-</span> <span class="m">1</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="p">(</span><span class="k">new</span> <span class="n">A</span><span class="p">()).</span><span class="n">Fib</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>    <span class="c1">// wynik: 55</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="k">Function</span> <span class="n">Fib</span><span class="p">(</span><span class="nv">$n</span> <span class="p">=</span> <span class="n">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="nv">$n</span> <span class="o">-lt</span> <span class="n">2</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nv">$n</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="p">((</span><span class="n">Fib</span><span class="p">(</span><span class="nv">$n</span> <span class="p">-</span> <span class="n">2</span><span class="p">))</span> <span class="p">+</span> <span class="p">(</span><span class="n">Fib</span><span class="p">(</span><span class="nv">$n</span> <span class="p">-</span> <span class="n">1</span><span class="p">)))</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="n">Fib</span><span class="p">(</span><span class="n">10</span><span class="p">)</span>    <span class="c"># wynik: 55</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Wywołania statycznych klas .NET</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">System</span><span class="p">.</span><span class="n">DateTime</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="s">&quot;10-01-2012&quot;</span><span class="p">);</span>    <span class="c1">// 1 Października 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="no">[System.DateTime]</span><span class="err">::</span><span class="n">Parse</span><span class="p">(</span><span class="s2">&quot;10-01-2012&quot;</span><span class="p">)</span><span class="err">;</span>   <span class="c"># 1 Października 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Tworzenie nowych obiektów za pomocą konstruktorów</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">date</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DateTime</span><span class="p">(</span><span class="m">2012</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">1</span><span class="p">);</span>    <span class="c1">// 1 Października 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell (przestrzeń nazw System jest domyślnie zaimportowana):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$date</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">DateTime</span><span class="p">(</span><span class="n">2012</span><span class="p">,</span> <span class="n">10</span><span class="p">,</span> <span class="n">1</span><span class="p">)</span>   <span class="c"># 1 Października 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Kilka przydatnych cmdletów</h3>
+
+<p>Na koniec chciałbym pokazać kilka cmdletów, które nieraz ułatwiają pracę. Warto zauważyć, że nieraz cmdlet dostępny jest również poprzez alias (przeważnie więcej niż jeden). Niektóre z nich zostały tutaj przedstawione.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="s2">&quot;A = {0} hours {1} minutes&quot;</span> <span class="o">-f</span> <span class="n">10</span><span class="p">,</span> <span class="n">20</span>  <span class="c"># odpowiednik string.Format</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">#tworzenie nowego pliku/katalogu</span>
+</span><span class='line'><span class="nb">New-Item</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">new_file</span><span class="p">.</span><span class="n">txt</span> <span class="n">-Type</span> <span class="n">File</span>
+</span><span class='line'><span class="nb">New-Item</span> <span class="s2">&quot;c:\directories&quot;</span> <span class="n">-Type</span> <span class="n">Directory</span>
+</span><span class='line'><span class="n">ni</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">new</span><span class="p">.</span><span class="n">txt</span> <span class="n">-type</span> <span class="n">file</span> <span class="c"># skrótowy zapis</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># kopiujemy wszystkie pliki z c:\files do c:\directories</span>
+</span><span class='line'><span class="nb">Copy-Item</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\*</span> <span class="n">c</span><span class="p">\</span><span class="n">directories</span>
+</span><span class='line'><span class="n">copy</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\*</span> <span class="n">c</span><span class="p">\</span><span class="n">directories</span>    <span class="c"># skrótowy zapis</span>
+</span><span class='line'><span class="n">cp</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\*</span> <span class="n">c</span><span class="p">\</span><span class="n">directories</span>      <span class="c"># skrótowy zapis</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># usunięcie pliku lub katalogu</span>
+</span><span class='line'><span class="nb">Remove-Item</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">new</span><span class="p">.</span><span class="n">txt</span>
+</span><span class='line'><span class="n">rm</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">new</span><span class="p">.</span><span class="n">txt</span>    <span class="c"># alternatywa</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># przenoszenie plików lub folderów</span>
+</span><span class='line'><span class="nb">Move-Item</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">old</span><span class="p">.</span><span class="n">txt</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files2</span><span class="p">\</span>
+</span><span class='line'><span class="n">move</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">old</span><span class="p">.</span><span class="n">txt</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files2</span><span class="p">\</span>    <span class="c"># skrótowy zapis</span>
+</span><span class='line'><span class="n">mv</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">old</span><span class="p">.</span><span class="n">txt</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files2</span><span class="p">\</span>      <span class="c"># skrótowy zapis</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># pobranie zawartości pliku</span>
+</span><span class='line'><span class="nb">Get-Content</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">file</span><span class="p">.</span><span class="n">txt</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># wpisanie tekstu do pliku</span>
+</span><span class='line'><span class="nb">Set-Content</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span> <span class="s2">&quot;file content&quot;</span>
+</span><span class='line'><span class="s2">&quot;file content&quot;</span> <span class="p">|</span> <span class="nb">Out-File</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># sprawdzenie istnienia pliku lub folderu pasującego do podanego wzorca</span>
+</span><span class='line'><span class="nb">Test-Path</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\*.</span><span class="n">txt</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># wyszukanie linijki z pliku źródłowego, zawierającego szukaną frazę</span>
+</span><span class='line'><span class="nb">Get-Content</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span> <span class="p">|</span> <span class="nb">Select-String</span> <span class="s2">&quot;fraza&quot;</span>
+</span><span class='line'><span class="c"># zwaraca True, jeżeli znaleziono dopasowanie</span>
+</span><span class='line'><span class="nb">Get-Content</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span> <span class="p">|</span> <span class="nb">Select-String</span> <span class="s2">&quot;fraza&quot;</span> <span class="n">-quiet</span>
+</span><span class='line'><span class="c"># rozróżnienie wielkości liter</span>
+</span><span class='line'><span class="nb">Get-Content</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span> <span class="p">|</span> <span class="nb">Select-String</span> <span class="s2">&quot;fraza&quot;</span> <span class="o">-casesensitive</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">Get-Date</span>    <span class="c"># pobieramy bierzącą datę z zegara systemowego: DateTime.Now</span>
+</span><span class='line'><span class="nb">Get-Date</span> <span class="n">-displayhint</span> <span class="n">date</span>   <span class="c"># jak powyżej, ale pobieramy samą datę: DateTime.Today</span>
+</span><span class='line'><span class="nb">Get-Date</span> <span class="n">-displayhist</span> <span class="n">time</span>   <span class="c"># analogicznie dla czasu</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># ustawia zegar systemowy na hh:mm:ss do przodu (w przykładzie 1h10m)</span>
+</span><span class='line'><span class="nb">Set-Date</span> <span class="n">-adjust</span> <span class="n">1</span><span class="err">:</span><span class="n">10</span><span class="err">:</span><span class="n">00</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># informacje o procesie</span>
+</span><span class='line'><span class="nb">Get-Process</span> <span class="n">process1</span><span class="p">,</span> <span class="n">process2</span>    <span class="c"># jawne wyliczenie szukanych nazw</span>
+</span><span class='line'><span class="nb">Get-Process</span> <span class="n">proc</span><span class="p">*</span>                 <span class="c"># szukanie wg. wzorca</span>
+</span><span class='line'><span class="n">ps</span> <span class="n">proc</span><span class="p">*</span>                          <span class="c"># skrótowy zapis</span>
+</span><span class='line'><span class="n">ps</span> <span class="n">proc</span><span class="p">*</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># zakończ process(-y)</span>
+</span><span class='line'><span class="nb">Stop-Process</span> <span class="n">-processname</span> <span class="k">process</span><span class="p">*</span>   <span class="c"># zakończ procesy o nazwie zgodnej z wzorcem</span>
+</span><span class='line'><span class="n">kill</span> <span class="n">3888</span>          <span class="c"># skrótowy zapis, zakończ process o Id równym 3888</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PS: W niektórych z powyższych komend wykorzystałem jeden z feature&#8217;ów PowerShella, którego wcześniej nie opisałem &ndash; <strong>pipeline operator</strong>. Jest on reprezentowany przez symbol <code>|</code> i służy do przekazywania wyniku jednej funkcji/polecenia jako wejścia do następnej.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/">Zapowiedź Ruby 2.1 - Generational Heap</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-14T20:02:00+02:00" pubdate data-updated="true">May 14<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Nie minęło wiele czasu od wydania Ruby&#8217;ego w wersji 2.0, a już pojawiła się ciekawa nowinka &ndash; od wersji 2.1 MRI ma wspierać generacje na zarządzanej stercie. Była to dla mnie wiadomość o tyle ciekawsza, że do tej pory sądziłem, że nie jest to możliwe bez zerwania kompatybilności z niskopoziomowymi rozszerzeniami języka C, które znajdują się w niektórych bibliotekach &ndash; tymczasem zapewniono, że żadna tego typu sytuacja nie będzie mieć miejsca.</p>
+
+<h2>Generacje w Rubym (MRI)</h2>
+
+<p>Jak więc ma wyglądać nowy mechanizm GC? Do tej pory wiadomo niewiele, dlatego postaram się podzielić szczegółami, które udało mi się zebrać. Nowy garbage collector nosi nazwę <strong>RGenGC</strong> i domyślnie będzie dzielił stertę na dwie generacje &ndash; często odśmiecana przestrzeń niewielkiego rozmiaru dla obiektów krótkotrwałych (obiekty tworzone w zakresach lokalnych metod często kończą tu swój żywot) oraz przestrzeń obiektów długotrwałych, awansowanych z pierwszej generacji.</p>
+
+<p>Dotychczasowym problemem była konieczność zmiany adresów obiektów, związana z przenoszeniem obiektu pomiędzy generacjami. O ile MRI mogłoby śledzić takie &ldquo;ruchome&rdquo; instancje, o tyle rozszerzenia napisane w języku C nie są w stanie tego zrobić (wewnętrznie referencje na obiekty w Rubym są po prostu zwykłymi wskaźnikami). Jak rozwiązano ten problem? Postanowiono podzielić referencje na obiekty na dwie klasy:</p>
+
+<ul>
+<li>Lśniące (<em>shiny</em>) &ndash; obiekty z takimi referencjami mogą być swobodnie śledzone i przenoszone pomiędzy generacjami zarządzanej sterty.</li>
+<li>Ciemne (<em>shady</em>) &ndash; w momencie, kiedy jakiś obiekt zostanie wykorzystany z poziomu C, zostaje on przypisany do tej klasy. Obiekty tego typu nie mogą być przenoszone ani zebrane przez kolektor, dopóki są wykorzystywane przez kod niezarządzany.</li>
+</ul>
+
+
+<p>Przypomina to znane z innych środowisk mechanizmy współpracy pomiędzy kodem wysoko- i niskopoziomowym (w .NET takie &ldquo;nieprzenaszalne&rdquo; obiekty noszą nazwę <em>pinned objects</em>).</p>
+
+<p>Jaki ma to wpływ na wydajność? Dotychczas nie stworzono oficjalnych benchmarków, nieoficjalnie mówi się o kilku procentowej poprawie względem poprzedniego rozwiązania. Należy jednak pamiętać, że prace wciąż trwają i wiele może się jeszcze zmienić.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/">O Redundancji W Wyrażeniach LINQ</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-23T21:35:00+02:00" pubdate data-updated="true">Apr 23<span>rd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
+
+<h2>Przykład</h2>
+
+<p>Weźmy pod uwagę następujący przykład &ndash; otrzymaliśmy dokumentację, w której opisana jest pewna encja. Może ona mieć następującą postać:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Document</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">public</span> <span class="n">DateTime</span> <span class="n">CreateDate</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">public</span> <span class="kt">string</span> <span class="n">Type</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="c1">// .. reszta implementacji</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W ramach logiki biznesowej wykonywanej na encjach tej klasy stworzone zostało pojęcie przeterminowania &ndash; z dalszej części dokumentacji dowiadujemy się, że za przeterminowane uznajemy te encje, w których data utworzenia jest starsza niż X dni (X może być dowolne np. ustawione w konfiguracji systemu) zaś typ przybiera konkretną wartość. Bez trudu zawężamy więc wyniki za pomocą zapytania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">x</span> <span class="p">=</span> <span class="p">..</span> <span class="n">pobieramy</span> <span class="n">X</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">documents</span> <span class="p">=</span> <span class="n">DataContext</span><span class="p">.</span><span class="n">Documents</span>
+</span><span class='line'>        <span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">CreateDate</span><span class="p">.</span><span class="n">AddDays</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">&lt;</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span> <span class="p">&amp;&amp;</span> <span class="n">x</span><span class="p">.</span><span class="n">Type</span> <span class="p">==</span> <span class="s">&quot;M1&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Niestety w późniejszym czasie słowo &ldquo;przeterminowany&rdquo; pojawia się w tym kontekscie jeszcze kilka razy w różnych miejsach aplikacji. Co robimy? W większości spotkanych przeze mnie przypadków piszemy klauzulę <code>Where(&hellip;)</code> ponownie. Ale czy na pewno?</p>
+
+<h2>Inne podejście</h2>
+
+<p>Rozwiązaniem powyżej sytuacji może być stary dobry <em>monkey patching</em>, reprezentowany w C# przez mechanizm extension methods. Z jego użyciem moglibyśmy rozwiązać ten problem w następujący sposób:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="n">X</span> <span class="p">{</span> <span class="k">get</span> <span class="p">{...}</span> <span class="p">}</span>
+</span><span class='line'><span class="c1">/// &lt;summary&gt;</span>
+</span><span class='line'><span class="c1">/// Słowo komentarza od ojca dyrektora.</span>
+</span><span class='line'><span class="c1">/// &lt;/summary&gt;</span>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">Document</span><span class="p">&gt;</span> <span class="n">Expired</span><span class="p">(</span><span class="k">this</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">Document</span><span class="p">&gt;</span> <span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">x</span> <span class="p">=</span> <span class="n">X</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">data</span><span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">CreateDate</span><span class="p">.</span><span class="n">AddDays</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">&lt;</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span> <span class="p">&amp;&amp;</span> <span class="n">x</span><span class="p">.</span><span class="n">Type</span> <span class="p">==</span> <span class="s">&quot;M1&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Przykład wykorzystania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">expiredDocuments</span> <span class="p">=</span> <span class="n">DataContext</span><span class="p">.</span><span class="n">Documents</span><span class="p">.</span><span class="n">Expired</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W ten sposób stworzyliśmy stereotyp, który możemy wykorzystywać zawsze w sytuacji kiedy mamy do czynienia z tym konkretnym zachowaniem. Jakie są zalety tego podejścia? Po pierwsze trzymamy się zasady DRY (Don&rsquo;t Repeat Yourself). Po drugie sądzę, że taki zapis jest o wiele bardziej czytelny i ułatwia późniejsze zrozumienie kontekstu, w jakim wykonywane są zapytania.</p>
+
+<p>Innym sposobem na rozwiązanie powyższego problemu jest naturalnie przeniesienie filtru bezpośrednio do kontekstu danych:<code>var data = DataContext.GetExpiredDocuments();</code>. Na czym jednak polega przewaga monkey patchingu? Po pierwsze nie jesteśmy twardo związani ze źródłem danych &ndash; napisany wcześniej stereotyp może być zastosowany dla dowolnej kolekcji, nawet takiej która powstała w wyniku deserializacji żądania HTTP. Po drugie rozwinięcie to można wstawić w dowolnym momencie tworzonego zapytania, z dowolnej encji posiadające odpowiednią relację.</p>
+
+<p>W rezultacie otrzymujemy rozwiązanie bardziej uniwersalne i podatne na zmiany.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/">Parę Słów O HTMLu I CSSie</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-21T08:45:00+02:00" pubdate data-updated="true">Apr 21<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie codziennej pracy. Część z nich cieszy się już sporą popularnością w świecie web developerów innych środowisk, zaś w świecie .NET stawiają swoje pierwsze kroki.</p>
+
+<p>Zanim zacznę właściwą część postu, chcę wszystkim przypomnieć o <a href="http://visualstudiogallery.msdn.microsoft.com/6ed4c78f-a23e-49ad-b5fd-369af0c2107f">Web Essentials</a>. Jest to absolutny <em>must have</em> jeżeli chodzi o web development w VS2012. Wiele z feature&#8217;ów opisywanych przeze mnie dalej jest już wbudowanych w to rozszerzenie.</p>
+
+<h2>Zen Coding</h2>
+
+<p>Jeżeli chodzi o kwestie tworzenia szablonów dynamicznych stron HTML, możemy podzielić programistów na dwie grupy. Pierwsza z nich to szczęściarze, mogący budować szablonych za pomocą czytelnych, przejżystych notacji (np. <a href="http://haml.info/">HAML</a> lub <a href="http://jade-lang.com/">Jade</a>). Druga (czyli reszta ;) ) to osoby zmuszane do osadzania dynamicznego kodu w otoczce pseudo-HTML. Z myślą o tej drugiej grupie powstał standard znany powszechnie jako Zen Coding. O co w nim chodzi? Załóżmy, że chcielibyśmy stworzyć kod HTML w następującej postaci:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;container&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;p&gt;</span>Menu<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;menu&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Nie jestem chyba jedyną osobą, która uważa, że pisanie czegoś takiego z palca to strata czasu? Z pomocą ZenCoding możemy to uprościć do następującej postaci:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>#container&gt;p{Menu}+ul.menu&gt;(li&gt;a)*5
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W przypadku Web Essentials dla VS2012 jedyne co musimy zrobić, to umieścić takie wyrażenie w nowej linii oraz nacisnąć Tab (natychmiast po końcu wyrażenia bez spacji), aby wygenerować wynikowy HTML.</p>
+
+<h2>Prekompilowany CSS</h2>
+
+<p>Do niedawna była to jeszcze nowinka. Jednakże zalety notacji takich jak <a href="http://lesscss.org/">LESS</a> czy <a href="http://sass-lang.com/">SASS</a> szybko zapewniły im właściwe miejsce. Zastanówmy się, dlaczego warto z nich korzystać?</p>
+
+<ul>
+<li>Przyswajalność &ndash; że nauka nowej notacji zajmuje kilka godzin/dni.</li>
+<li>Usunięcie powtarzalności kodu &ndash; stosując zmienne, wartości wyliczane oraz zagłębione style, mozemy osiągnąć nasz cel szybciej oraz bez konieczności kopiowania tych samych linijek. W dodatku powstały w ten sposób kod jest bardziej podatny na zmiany niż jego statyczny odpowiednik.</li>
+<li>Hierarchizacja &ndash; stosowanie importów jest kolejnym krokiem usuwajacym powtarzalny kod, jak również umożliwia podział kodu CSS na konkretne jednostki odpowiedzialności. Pozwala również w pewnym stopniu usunąć konieczność łączenia plików CSS za pomocą bundlerów.</li>
+<li>Rozmiar &ndash; narzędzia takie jak Web Essentials automatycznie kompilują pliki .less do kodu CSS podczas zapisu zmian w pliku. Dodatkowo są w stanie skompilować je osobno do postaci z wcięciami (czytelnej dla developera) oraz zminimalizowanej (pozbawionej białych znaków) &ndash; doskonałej do zastosowania w środowisku produkcyjnym.</li>
+</ul>
+
+
+<p>W skrócie pozwala nam wprowadzić odrobinę porządku i organizacji w dziedzinę, która do tej pory jest powszechnie uważana za żmudną, powtarzalną i chaotyczną.</p>
+
+<h2>Palety barw</h2>
+
+<p>Nie ma co ukrywać. Programista nie jest artystą-grafikiem i nie powinno się oczekiwać od niego estetyki i twórczości na poziomie zawodowego designera. Czasem jednak okazuje się, że gotowy layout wykorzystywany na naszej stronie jest niewystarczający i musimy skombinować na szybko &ldquo;coś własnego&rdquo;, czy to w formie dodatkowego stylu czy motywu do odznaczenia części strony.</p>
+
+<p>W takim wypadku z pomocą przychodzi <a href="https://kuler.adobe.com/">Adobe Kuler</a>. Umożliwia on dostosowanie istniejącego lub zdefiniowanie własnego motywu kolorystycznego do wykorzystania na stronie zgodnie z powszechnymi regułami rządzącymi zasadami kompozycji barw.</p>
+
+<h2>CSS &ndash; czy wiesz z czego korzystasz?</h2>
+
+<p>Czy tworząc plik CSS zastanawialiście się, jak duża część opisanych przez was reguł faktycznie jest wykorzystywana na stronie? Chrome umożliwia sprawdzenie tego w dość prosty sposób. Wystarczy z poziomu Developer Tools uruchomić Audyt na zakładce o tej samej nazwie. Po kilku sekundach jesteśmy w stanie zauważyć coś w ten deseń:</p>
+
+<div class="separator" style="clear: both; text-align: center;"><a href="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s1600/chrome-devtool.jpg" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="150" src="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s320/chrome-devtool.jpg" width="320" /></a></div>
+
+
+<p>Jaki wynik osiągacie na swojej stronie? ;) Powiem szczerze, że wykorzystywanie około 40% dołączonych reguł można uznać za wysoki wynik.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/20/niska-wydajnosc-rubyego-studium/">Niska Wydajność Ruby&#8217;ego - Studium Porównawcze</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-20T23:42:00+01:00" pubdate data-updated="true">Mar 20<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego dopasowania języka do zbioru metodyk i stosu technologicznego nastawionego na maksymalizację wydajności pracy programisty. Stanowią one &ldquo;wylęgarnię&rdquo; nowatorskich praktyk, które nieraz przenikają dalej i zostają zaadaptowane przez inne środowiska. Wystarczy podać kilka przykładów ze środowiska .NET: migracje w najnowszym EF4.3+, kierunek w jakim zmierza cały ASP.NET MVC czy dynamizacja języka C# &ndash; myśleliście, że idea stojąca za LINQ to nowatorski pomysł? ;) .</p>
+
+<p>Niestety za każym razem, kiedy mowa o Rubym, powracają kwestie jego wydajności. Jest to pięta achillesowa tego języka, powtarzana jak mantra w kolejnych dyskusjach programistów. Na czym jednak polegają te problemy? W tym postcie postaram się je opisać (w odniesieniu do najpopularniejszego kompilatora Ruby&#8217;ego &ndash; MRI) oraz opowiedzieć o rozwiązaniach, jakie zostały zaadaptowane w innych językach. Ponieważ moje obserwacje będę porównywał do innych implementacji, w tym Javy, C#, Pythona i różnych wirtualnych maszyn JavaScriptu, liczę że każdy będzie mógł wynieść z tego jakąś przydatną wiedzę.</p>
+
+<h2>Garbage Collector</h2>
+
+<p>Ten wątek musiał się tu pojawić, dlatego też postanowiłem zacząć właśnie od niego. Rozdział ten będzie dość trudny do przełknięcia dla osób, które z teorią stojącą za językami programowania nigdy nie miały do czynienia. Zanim przejdą one dalej, proponuję zaznajomić się z <a href="http://en.wikipedia.org/wiki/Garbage_collection_(computer_science">tym wpisem</a>) na Wikipedii.</p>
+
+<p>W dużym skrócie, Garbage collector w MRI wykorzystuje (podobnie jak wszystkie najpopularniejsze współcześnie maszyny wirtualne) algorytm <em>mark and sweep</em>. Jest to jednak pojęcie bardzo szerokie. Zagłębiając się w detale, dochodzimy do pewnych różnic.</p>
+
+<h3>Podział zarządzanego stosu</h3>
+
+<p>Większość programistów Javy i .NET zapewne kojarzy, że zarządzana sterta występująca w tych językach nie jest strukturą jednolitą, lecz jest podzielona na wiele przestrzeni (mowa tu o generacjach, ale nie tylko). I tak w przypadku .NET &ndash; na przykładzie SGena używanego w Mono, a świetnie opisanego <a href="http://www.mono-project.com/Generational_GC">tutaj</a> mamy do czynienia z podziałem sterty na kilka zbiorów:</p>
+
+<ul>
+<li><strong>Generacje</strong> &ndash; Zazwyczaj istnieją dwie lub więcej. Pierwszą jest <strong>żłobek</strong> (<em>nursery</em>). Ten zbiór jest relatywnie mały (domyślnie 4MB dla SGena, &frac12; pamięci cache L2 dla Pythona made by PyPy) i często czyszczony. Jest sprawny głównie ze względu na fakt, że większość obiektów przechowywanych na stercie ma stosunkowo krótki czas istnienia (np. zmienne lokalne funkcji/metod, które są niepotrzebne poza zakresem danej metody). Obiekty bardziej długowieczne przenoszone są na sterty kolejnych generacji. W rezultacie pamięć jest czyszczona częściej, jednak liczy się tutaj rozmiar przeszukiwanej pamięci (żłobek jest mały, przez co jego znakowanie i czyszczenie trwa bardzo krótko).</li>
+<li><strong>Przestrzeń dużych obiektów</strong> &ndash; ponieważ naprawdę duże obiekty są dość ciężkie do alokacji (znalezienie na stercie jednolitego bloku pamięci nie zajętego przez inne obiekty może być wyzwaniem), są one rozpatrywane osobno, zarówno na wirtualnych maszynach Javy jak i .NETu (tak w przypadku Mono jak i M$).</li>
+<li><strong>Łańcuchy znaków (string)</strong> &ndash; tekst jest również traktowany w specjalny sposób. Przykładowo wpisując w dwóch różnych miejscach w kodzie <em>&ldquo;ala ma kota&rdquo;</em> w praktyce definiujemy ten łańcuch znaków tylko raz, tworząc do niego dwie referencje. Ta zasada dotyczy zarówno Javy, .NETu, Pythona oraz najnowszych silników JavaScriptu. Ruby nie implementuje tej funkcjonalności &ndash; moim zdaniem na przeszkodzie stoi tutaj natura stringów w tym języku, które zgodnie ze specyfikacją mogą być mutowalne.</li>
+</ul>
+
+
+<p>Niestety w Rubym brakuje podziału sterty na generacje, przez co jest ona błyskawicznie zapychana obiektami o krótkim czasie życia, zaś &ldquo;sprzątnięcie&rdquo; całej sterty zajmuje sporo czasu. W chwili obecnej nie jest to możliwe, ponieważ GC w MRI nie implementuje przenoszenia obiektów wewnątrz sterty (dlaczego tak jest opowiem dalej).</p>
+
+<h3>Co znajduje się na stosie</h3>
+
+<p>W przypadku <strong>Javy</strong> sprawa podziału alokacji pomiędzy stos i stertę wygląda stosunkowo prosto: typy natywne i referencje na obiekty lądują na stosie, a reszta (obiekty klas) na stertę. W przypadku <strong>C#</strong> jest to trochę bardziej skomplikowane, ponieważ na stosie mogą wylądować również obiekty-struktury (<em>struct</em>) oraz obiekty utworzone za pomocą słowa kluczowego <strong>stackallock</strong>.</p>
+
+<p>Pomiędzy GC Javy (oraz javascriptowym V8) a Mono istnieje dodatkowa różnica: dwa pierwsze stosują tzw. precyzyjne wskaźniki, tzn. podczas przechodzenia po stosie przez marker (uruchamiany przez GC w pierwszej fazie pracy i służący oznaczeniu obiektów, które trzeba sprzątnąć) natrafiając na wartości od razu wie, czy są one wartościami czy referencjami na obiekty znajdujące się na stercie. Przykładowo maszyna wirtualna JavaScriptu z Chroma używa do tego specjalnego bitu określającego czy dana wartość jest referencją (stąd na V8 w wersji 32-bitowej liczby całkowite są wewnętrznie składowane jako wartości <em>31-bitowe</em>). Niestety SGen Mono musi za każdym razem sprawdzić (a w razie wątpliwości założyć z góry), czy taka wartość wskazuje adres na stercie.</p>
+
+<p>W przypadku Ruby&#8217;ego sprawa wygląda częściowo prościej: w tym języku nie istnieją typy wartościowe, zatem wszystkie wartości (w tym liczby oraz flagi logiczne) są reprezentowane przez obiekty składowane na zarządzanej stercie. To sprawia, że czas dostępu do nich jest dłuższy.</p>
+
+<p>Inna niespodzianka, jaką szykuje nam Ruby, sięga jeszcze dalej. Interpreter MRI (do nadejścia wersji 1.9) konstruował kod Ruby&#8217;ego przez pośrednią translację do <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">drzewa AST</a>. Jednakże chcąc zapewnić programistom &ldquo;pełnię władzy&rdquo; nad kodem, tak stworzone drzewo było składowane w postaci struktur Ruby&#8217;ego na jego zarządzanej stercie! Oznacza to, że cały aktualnie wykonywany kod jest reprezentowany przez faktycznie istniejące drzewo obiektów, zajmujące ogromną ilość pamięci.</p>
+
+<h3>Jak zarządzana jest sterta: .NET Mono</h3>
+
+<p>Kolejne zestawienie z Mono. Mówiąc dość ogólnie sterta jest podzielona na tak zwane bloki, one z kolei na sloty. Podczas oznaczania obiektów na stercie dzielimy je na 3 typy:</p>
+
+<ul>
+<li><strong>Root objects</strong> &ndash; są to obiekty, do których znaleziono referencje na stosie i które nie powinny zostać usunięte.</li>
+<li><strong>Garbage </strong>&ndash; a zatem obiekty-śmieci oraz puste przestrzenie, które mogą zostać realokowane pod nowe obiekty.</li>
+<li><strong>Pinned objects</strong> &ndash; specjalny rodzaj tzw. przypiętych obiektów. Są to obszary pamięci wyjęte spoza kontroli zarządzanej sterty, a więc np. struktury z języka C, na które mamy referencje z poziomu P/Invoke oraz obiekty przypięte ręcznie w zakresach <strong>unsafe</strong> (za pomocą słowa kluczowego <strong>fixed</strong>). W Mono do tej listy dochodzą również te adresy, które zostały znalezione na stosie, ale nie koniecznie wskazują na obiekty. Ze względów bezpieczeństwa takich obiektów nie można odśmiecać.</li>
+</ul>
+
+
+<p>Z punktu widzenia Garbage Collectora najbardziej upierdliwe są pinned objects. Dlaczego? Otóż w trakcie odśmiecania pamięci GC zostawia &ldquo;dziury&rdquo; pustych przestrzeni, które mogą posłużyć w przyszłości do zaalokowania nowych obiektów. Niestety te dziury powodują fragmentację pamięci. Co z tego, że mamy 10 luk po 100 bajtów, jeżeli potrzebujemy stworzyć obiekt rozmiaru 200B? Dlatego też GC w Mono został wyposażony w opcję realokacji obiektów &ndash; umożliwia to przesunięcie położenia obiektów w pamięci tak, aby złączyć luki powstałe po odśmiecaniu w 1 ciągły blok w pamięci.</p>
+
+<h3>Jak zarządzana jest sterta: Ruby</h3>
+
+<p>Z punktu widzenia MRI sterta również jest podzielona na komórki, które są reprezentowane w pamięci jako zwykłe struktury C (dokładna nazwa to <em>struct VALUE</em>).</p>
+
+<p>Ciekawostką jest sposób znajdowania pustych fragmentów na stercie służących pod przyszłe alokacje obiektów. Do wersji 2.0 (a więc we wszystkich obecnie używanych) mamy do czynienia ze strukturą przyjmującą postać linked listy. Szukając nieużywanych komórek musieliśmy przeglądać kolejne węzły z listy i sprawdzać ich zajętość &ndash; przeskakiwanie po pamięci oraz znalezienie odpowiednio dużego ciągłego bloku może być czasochłonne, sama lista również ma swój rozmiar. Od wersji 2.0 zamieniono ją inną strukturą &ndash; bitmapą. Od teraz za każdym razem, kiedy tworzona jest zarządzana sterta, część pamięci na jej początku zostaje zarezerwowana na potrzeby bitmapy. Określa ona w prosty sposób (ustawiając lub zerując kolejne bity w pamięci) zajętość kolejnych komórek VALUE. Przeszukiwanie takiej struktury jest o wiele szybsze, zajmuje ona też mniej miejsca w pamięci &ndash; ponieważ bloki RValue mają po 40 bajtów i wymagają 1 bitu do sygnalizacji łatwo wyliczyć, że ostateczna bitmapa zajmuje około 1/(40*8) = 1/320 rozmiaru całej sterty.</p>
+
+<p>Do czego sprowadza się największy (moim zdaniem) problem Ruby&#8217;ego? Otóż GC w MRI nie dysponuje opcją przenoszenia obiektów. Porównując do Mono wszystkie obiekty w Rubym traktowane są jako pinned object. Niesie to szereg następstw m.in. w przypadku konieczności alokacji dużego obiektu na stercie o mocno sfragmentowanej strukturze, może istnieć potrzeba rozszerzenia rozmiaru sterty (a zatem zwiększenia zużycia RAMu w całym programie) pomimo, że istnieje dostateczna ilość miejsca, aby taki obiekt zaalokować.</p>
+
+<p>Czy można zmienić GC w Rubym na taki, który zdolny jest przesuwać obiekty? Nie. Na drodze stoją tu referencje na obiekty, które wewnątrz są w rzeczywistości zwykłymi wskaźnikami na bloki pamięci bezpośrednio na stercie. Przesunięcie obiektu na stercie wiąże się ze zmianą jego adresu, ponieważ jednak nie wiemy ile referencji (których w algorytmie <em>mark&amp;sweep</em> nie zliczamy) należy powiadomić o nowej lokacji obiektu, taka operacja nie jest możliwa. Naturalnie można to zmienić (np. wprowadzić wskaźniki pośrednie), jednakże spowoduje to dysonans między dotychczasowymi implementacjami wtyczek z języka C montowanych do Ruby&#8217;ego i zniszczy jego kompatybilność wstecz. Niestety sądzę, że prędzej czy później ta decyzja musi zostać podjęta.</p>
+
+<h2>Klątwa języków dynamicznych</span></h2>
+
+<p>Kolejnym krokiem w zrozumieniu problemu niskiej wydajności jest poznanie natury &ndash; i ceny &ndash; towarzyszącej językom dynamicznym. Weźmy pod uwagę następujący przykład: załóżmy, że stworzyliśmy klasę w dowolnym języku statycznie typowanym (np. Java lub C#). Jej postać jest następująca:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Point</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">y</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Nie zagłębiając się zanadto w szczegóły jesteśmy w stanie stwierdzić, że wywołanie konstruktora powinno zaowocować stworzeniem w pamięci obiektu zajmującego 8 bajtów (2*sizeof(int)). Jak to wygląda w językach dynamicznie typowanych? Otóż w Rubym MRI, Pythonie oraz JavaScriptcie (w niektórych przypadkach) tworzony obiekt jest de facto nie zwykłym blokiem pamięci lecz strukturą budową bardziej przypominającą hash mapę/słownik, w którym każde pola reprezentowane jest przez string (js), hash (py) lub symbol reprezentowany w globalnej tablicy symboli (rb). Dotyczy to każdego pojedynczego obiektu. Wynika to w naturalny sposób z faktu, że tworząc obiekt danego typu, możemy go w dowolnej chwili rozszerzyć o nowe pola bez zmiany struktury obiektów o tej samej klasie. Czas dostępu do pól w takich obiektach jest bardzo duży, zaś same struktury są o wiele większe niż ich odpowiedniki w językach statycznie typowanych.</p>
+
+<p>Czy da się to ominąć? Tak, rozwiązanie zostało już wynalezione i zaimplementowane w JavaScriptcie na silnikach V8 (Chrome) oraz najnowszym SquirrelFish (Safari). Oba te silniki definiują tzw. <em>hidden classes</em>. Idea która za nimi stoi wynika z prostej przesłanki. Otóż zauważono, że nawet w językach dynamicznych wewnętrzna struktura obiektów przez znaczną większość czasu pozostaje taka sama. Z tego powodu możemy reprezentować obiekty o tej samej budowie przez ukrytą klasę &ndash; jej struktura pamięci jest identyczna z tą w językach statycznie typowanych. W momencie kiedy rozszerzamy dany obiekt o kolejne pola, tworzymy dla niego kolejną ukrytą klasę, o nowej, rozrośniętej budowie, a następnie realokujemy do nowej postaci. Z punktu widzenia wykonywanego programu jest to dość rzadkie zjawisko, natomiast korzyści płynące z tego podejścia są ogromne.</p>
+
+<h2>JIT, Interpreter oraz Tracing</h2>
+
+<p>Ostatnia różnica, na której chcę się skupić dotyczy różnic wynikających z kompilatorów JIT (używanych obecnie niemal we wszystkich najpopularniejszych językach: Javie, C# czy Pythonie na silniku PyPy) w stosunku do tradycyjnych interpreterów (Ruby MRI) oraz możliwości jakich dostarczają.</p>
+
+<p>Podstawowa różnica między tymi dwoma typami polega na tym, że tradycyjny interpreter przetwarza i generuje kod maszynowy na bieżąco w czasie rzeczywistym, interpretując skrypt linijka po linijce. JIT w tym czasie wykonuje małe wyprzedzenie, przetwarzając cały dostępny kod jeszcze przed punktem jego wykonania.</p>
+
+<p>Dodatkową korzyścią płynącą z podejścia kompilacji JIT jest możliwość dynamicznej optymalizacji kodu w trakcie jego działania. Takie podejście stosowane jest przez wszystkie najnowsze maszyny wirtualne. Jedna z takich technik znana jest jako <strong>trace trees</strong> i została opisana <a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/ICS-TR-06-16.pdf">tutaj</a>. W dużym skrócie ideą tego podejścia jest wyłapanie w aplikacji powtarzających się fragmentów kodu oraz zoptymalizowanie ich w taki sposób, aby wykonywały one jak najmniej instrukcji procesora. W jaki sposób jest to osiągane?</p>
+
+<ul>
+<li><strong>Inlining </strong>&ndash; a więc ograniczenie liczby instrukcji call do zewnętrznych funkcji poprzez skopiowanie ich zawartości do wnętrza pętli.</li>
+<li><strong>Wnioskowanie typów</strong> &ndash; przykład: jeżeli w języku dynamicznym dodajemy do siebie w pętli dwie&nbsp;wartości typu int&nbsp;1000 razy, mamy przesłanki aby twierdzić, że operacje wykonane na tej zmiennej zawsze będą dotyczyć obiektu tego samego typu (gdyby nie to, musielibyśmy za każym razem sprawdzać czy operator dodawania nie został np. użyty raz dla <strong>int</strong>ów a inny raz dla <strong>string</strong>ów). Takie wnioski umożliwią nam wygenerowanie kodu maszynowego zoptymalizowanego do tego konkretnego typu &ndash; jest to bardzo przydatne z punktu widzenia Ruby&#8217;ego. Za przykład niech posłuży metoda dodawania 2 liczb całkowitych &ndash; teoretycznie możliwa do wykonania w 1 instrukcji maszynowej, w Rubym jest opakowana w metodę wirtualną, która dodatkowo definiuje sprawdzanie zakresu dla wynikowej liczby i w zależności od wyniku zwraca jedną z dwóch wewnętrznie różnych implementacji obiektu opakowującego dany wynik</li>
+<li><strong>Rekonstrukcja do postaci kodu maszynowego wykonywalnego na GPU</strong> &ndash; wykonywalne, o ile kompilator jest w stanie rozpoznać stosowny kod na podstawie określonych wzorców (z tego co wiem, maszyna wirtualna na FireFoxie potrafi coś takiego).</li>
+</ul>
+
+
+<p>Rozwiązania zostały już wykorzystane na najnowszych VMach JavaScriptu. Niestety Ruby i Python wciąż czekają na swoją kolej.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/2/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: asp | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/asp/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[O pomyłkach i wnioskach z pracy w ASP.NET MVC]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
+    <updated>2013-10-20T09:49:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
+    <content type="html"><![CDATA[<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
+
+<p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
+
+<h2>Twoja encja ≠ Twój model</h2>
+
+<p>Zasadniczym błędem (lub raczej skrótem myślowym) jest założenie, że każda klasa mapowana przez ORM na tabele może służyć jako model przekazywany bezpośrednio do widoku. Nie znaczy to, że jest to nie możliwe, jednak opcja ta jest z reguły nadużywana. Wynika to poniekąd ze stylu programowania wyuczonego z tutoriali z cyklu &ldquo;wyklep CRUDa w 5 min.&rdquo;. Piękne i proste, jednak nie mające wiele wspólnego z problemami dnia codziennego. Z drugiej strony jest to wina samego lenistwa programistów oraz przeświadczenia, że faza projektowania z rozpiską architektury chociażby na kartce papieru jest tylko dla kobiet i leszczy ;)</p>
+
+<p>Pytanie brzmi: kiedy należałoby porzucić modelowanie z encji na rzecz dedykowanych klas POCO? Prawda jest taka, że zależy to od przypadku i wymaga odrobiny doświadczenia.</p>
+
+<ul>
+<li>Jedną z podpowiedzi może być poziom zagłębienia zależności. Im jest on głębszy, tym bardziej wykorzystywana przez nas klasa odbiega strukturą od modelu wymaganego przez widok. Przykładowo już 2 poziom zagłębienia np. <code>Model.Products.SelectMany(p => p.Orders)</code> może świadczyć o tym, że dana encja nie jest właściwym kandydatem i powinna zostać zmapowana na dedykowaną do tego celu klasę.</li>
+<li>Innym przykładem może być sytuacja, w której nasz model wykazuje pewien związek z regułami biznesowymi. Przykładowo częstym sposobem reprezentacji okresu czasu powiązanego z danym obiektem jest dodanie do modelu dwóch pól określających granice czasowe. W tym momencie pojawia się jednak pewien dysonans między definicją biznesową (okres czasu jest pojedynczym obiektem) a rzeczywistą implementacją (okres czasu to dwa generyczne pola dat). Jeżeli logika biznesowa silnie bazuje na danej definicji np. przedział czasowy często pojawia się w kontekście wykonywanych operacji, wtedy możliwe, że lepiej byłoby wyodrębnić ją do osobnej klasy.</li>
+<li>Jak powszechnie wiadomo, we współczesnym świecie aplikacji WWW wymagania klientów są jednymi z najbardziej zmiennych elementów systemu. Możliwość oddzielenia modeli od encji wspiera ten trend, ponieważ o ile encje są powiązane ze schematem bazy danych (przez co są znacznie mniej podatne na zmiany ze względu na konieczność utrzymania spójności z istniejącymi danymi), o tyle modele wykorzystywane przez nas w aplikacji mogą być swobodnie modelowane do naszych potrzeb.</li>
+</ul>
+
+
+<h2>Twój ViewData = Twój Model</h2>
+
+<p>W przypadku niektórych frameworków model jest zdefiniowany w sposób jasny i jednoznaczny. W przypadku ASP.NET MVC nie jest jednak tak łatwo, ponieważ otrzymujemy tutaj więcej niż jeden sposób dostarczenia danych do widoku. Mowa tu oczywiście o ViewData. Wg. mnie obiekt ten, jakkolwiek przydatny, jest podstawowym złamaniem wzorca MVC w ASP.NET MVC. Dlaczego? Ponieważ &nbsp;prawda wygląda tak, że niezależnie od zdefiniowanych przez ciebie klas, prawdziwy model ma zawsze tylko jeden typ: <a href="http://msdn.microsoft.com/en-us/library/system.web.mvc.viewdatadictionary(v=vs.108">ViewDataDictionary</a>.aspx).</p>
+
+<p>Czy to źle? Niekoniecznie, zależy od przyjętego podejścia. Co z tego wynika? W przypadku modeli zwracanych przez formularze zazwyczaj przyjmuje się, że generyczny model powinien zawierać tylko te dane, które zostały wprowadzone przez użytkownika. Tzn. że informacje takie jak opcja wybrana przez użytkownika z listy powinna być częścią modelu podczas gdy sama lista dostępnych opcji powinna być przekazywana za pośrednictwem ViewBag/ViewData. Naturalnie w przypadku, gdy parsujemy model do postaci JSON przekazywanej do klienta, ta zasada nie dotyczy.</p>
+
+<h2>Nic nie znaczące Error Messages</h2>
+
+<p>Jednymi ze gorszych chwil w życiu programisty, są sytuacje, kiedy trzeba obsłużyć zgłoszenie o błędzie w aplikacji. Zdarza się, że zaglądamy wtedy do logów (o ile taką informację zalogowaliśmy ;) ), aby odnaleźć jakieś przydatne informacje, które pozwolą nam zidentyfikować naturę problemu. Jakże wielkie jest rozczarowanie, gdy jedynym hintem jaki wtedy otrzymujemy jest: <code>Object reference not set to an instance of an object.</code> Bardzo rzeczowa i jednoznaczna informacja wśród kilkuset linii kodu wymagających zbadania.</p>
+
+<p>Innym ciężkim przypadkiem jest logowanie niewystarczającej ilości informacji. Przykład (blok try-catch jest czysto poglądowy):
+``` c#
+try
+{</p>
+
+<pre><code>...
+var product = productRepository.GetById(id);
+if(product.Status != ProductStatus.Finished)
+    throw new InvalidStatusException("Provided product has invalid status");
+...
+</code></pre>
+
+<p>} catch(Exception e) {</p>
+
+<pre><code>    logger.Log(e.Message);
+</code></pre>
+
+<p>}
+```
+Co jest złego w tym przypadku? Wyobraźmy sobie, że dostajemy zgłoszenienie, o błędzie a w logach jedyną informacją jest: <code>Provided product has invalid status</code>. Czy wiemy o jakim statusie mowa? Czy wiemy o jaki produkt chodzi? Nie mamy żadnych informacji pozwalających zidentyfikować dany przypadek, mimo że wszystko co potrzebne mamy 2 linijki wyżej w kodzie źródłowym naszej aplikacji.</p>
+
+<p>Stąd mój apel: nie bądź leniwcem, minuta pracy teraz pozwoli ci zaoszczędzić godziny problemów później.</p>
+
+<h2>Too thin controllers, too fat services</h2>
+
+<p><em>Fat models, thin controllers</em> jest zwrotem często używanym w świecie MVC. Często jednak wynikiem utrzymania tej reguły jest zjawisko, które sam określam jako papierowe kontrolery. Weźmy na przykład następującą akcję MVC:
+``` c#
+[HttpPost]
+public void ToggleUserBan(bool activate)
+{</p>
+
+<pre><code>this.userService.ToggleUserBan(activate);
+</code></pre>
+
+<p>}
+<code>
+Na czym polega błąd? Prawdopodobnie metoda ToggleUserBan w serwisie jest przypadkiem zbyt szczegółowym. Daje to podstawy do przypuszczenia, że architektura aplikacji w którymś momencie się posypała. Zajrzyjmy więc do naszego hipotetycznego IUserService:
+</code> c#
+interface IUserService {</p>
+
+<pre><code>void ToggleUserBan(bool flag);
+IEnumerable&lt;User&gt; GetAllUsers();
+IEnumerable&lt;User&gt; GetActiveUsers();
+IEnumerable&lt;User&gt; GetBannedUsers();
+// ...kolejne 70 metod
+</code></pre>
+
+<p>}
+```
+Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do czynienia to nic innego, jak zwykłe zamiatanie brudu pod dywan. Pseudorozwiązanie polegające na przeniesieniu proceduralnego makaronu w miejsce, w które rzadziej się zagląda. Jest to częsty rezultat braku rewizji kodu i testów jednostkowych, oraz samowoli programistów.</p>
+
+<h2>Garść innych porad</h2>
+
+<ul>
+<li>unikaj static classes &ndash; utrudniają one modularyzację systemu i wprowadzają twarde powiązania, z których bardzo ciężko jest potem zrezygnować. Extension methods są w zasadzie jedynym zastosowaniem dla statycznych klas, dla jakich sam znajduję użytek.</li>
+<li>unikaj partial classes &ndash; dopuszczalne tylko w wypadku, gdy rozszerzasz klasę generowaną przez zewnętrzne narzędzia (co swoją drogą samo w sobie jest złym pomysłem ale o tym może kiedy indziej ;) )</li>
+<li>w przypadku zmiennych używaj nazw, które pozwalają określić ich typ i przeznaczenie &ndash; różnego rodzaju skróty oszczędzają dosłownie kilka sekund podczas pisania tylko po to, aby w przyszłości przedłużyć rozszyfrowywanie kodu przez kogoś innego o kilka minut. Pamiętaj, że w życiu programisty kod czyta się częściej niż pisze.</li>
+<li>podczas zwracania kolekcji zwracaj najmniejszy interface, który umożliwia wykonanie zadania &ndash; nie ma sensu wymagać aby argument był listą, jeżeli jedynym wykonywanym na nim działaniem jest foreach</li>
+<li>jeżeli zwracasz string lub kolekcje nigdy nie zwracaj nulli &ndash; zawsze używaj string.Empty lub Enumerable.Empty&lt;></li>
+<li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc/"/>
+    <updated>2013-01-12T22:32:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc</id>
+    <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
+
+<h2>1. Object-Relational Mapping</h2>
+
+<p>Na pierwszy ogień niech pójdą frameworki ORM. Jak nie ciężko się domyślić pod względem popularności triumfuje tutaj Entity Framework jako rozwiązanie promowane przez MS, zaś odrobinę z tyłu wydaje się być NHibernate. Jak to jednak wygląda, jeżeli wzięlibyśmy pod uwagę wydajność? Zaczynając od bardzo popularnego zestawienia <a href="http://ormeter.net/">ORM Battle</a>:</p>
+
+<ul>
+<li><a href="http://dataobjects.net/">DataObjects.NET</a> mogą poszczycić się najbardziej wydajną budową zapytań LINQ.</li>
+<li><a href="http://bltoolkit.net/">Business Logic Toolkit</a> jest stawiany jako zwycięzca w kwestii ogólnej wydajności (operacje CRUD itp.).
+-Pod względem zapytań LINQ wydajnosć <a href="http://nhforge.org/">NHibernate </a>jest skandaliczna &ndash; tutaj jednak należy się słowo wyjaśnienia, ponieważ framework ten posiada własny mechanizm generowania zapytań w locie (Criteria wraz z nakładką QueryOver), który oferuje znacznie lepszą wydajność oraz pozwala na więcej w stosunku do linq.</li>
+</ul>
+
+
+<p>Warto jednak zauważyć, że zestawienie to nie jest pełne, brakuje w nim powiem kilku ważnych bibliotek. Powołując się na kolejny benchmark wykonany przez <a href="http://servicestack.net/benchmarks/">ServiceStack</a> (ta nazwa powtórzy się tutaj jeszcze przy kilku okazjach), wysnuć można kilka innych wniosków:</p>
+
+<ul>
+<li>Narzut nakładany przez Entity Framework może wydłużyć czas wykonania zapytania nawet 13-krotnie! &ndash; (zakładam, że dla bardziej złożonych zapytań ta różnica zmniejsza się na korzyść EF) To ogromna przepaść nawet biorąc pod uwagę <a href="http://noamlewis.wordpress.com/2012/07/18/net-4-5-improves-orm-performance-across-the-chart/">usprawnienia</a> nałożone w .NET 4.5.</li>
+<li>Zwycięstwo wydajności należy do <a href="http://code.google.com/p/dapper-dot-net/">Dappera</a> &ndash; jest to microframework ORM stworzony przez Stackoverflow na potrzeby wysoko wydajnego dostępu do bazy danych, wykorzystywanego w tym serwisie. Tuż za nim znalazł się z kolei <a href="https://github.com/ServiceStack/ServiceStack.OrmLite">ServiceStack.OrmLite</a> (należy jednak pamiętać, że są oni autorami tego benchmarku).</li>
+</ul>
+
+
+<p>Na czym więc polega sukces i droga do szybkości? Myślę, że główną rolę odgrywa tutaj prostota &ndash; zarówno EF jak i NHibernate oferują rozbudowane interfejsy do budowy zapytań (LINQ i QueryOver), własne języki pośrednie (NHibernate &ndash; HQL, Entity Framework &ndash; ESQL), mechanizmy zarządzania obiektami itp. <strong>BLT</strong>, <strong>Dapper</strong> i <strong>OrmLite </strong>stosują tutaj proste operacje z wykorzystaniem standardowych zapytań SQL, odrzucając wyższe warstwy abstrakcji i trzymając się blisko podstawowych mechanizmów komunikacji z bazą danych. Dodatkowo microframeworki obarczają programistę koniecznością ręcznego zarządzania relacjami oraz synchronizacji stanu danych pomiędzy encjami i bazą. To z kolei przenosi dług wydajnościowy na kod napisany przez programistę.</p>
+
+<h2>2. Kontenery Inversion of Control</h2>
+
+<p><em>Dependency Injection</em> to już standard, mimo że wciąż nie jest to mechanizm domyślny w ASP.NET. Zapewnienie luźnych wiązań określane jest jako dobra praktyka zarówno w MVC jak i MVVM (stosowanym przez liczne frameworki stosowane również w aplikacjach desktopowych oraz na urządzenia mobline). Opierając się na kilku (<a href="http://www.palmmedia.de/blog/2011/8/30/ioc-container-benchmark-performance-comparison">1</a>, <a href="http://www.iocbattle.com/">2</a>, <a href="http://servicestack.net/benchmarks/#highcharts-8">3</a>, <a href="http://philipm.at/2011/0808/">4</a>) testach można podjąć się złożenia kilku wniosków:</p>
+
+<ol>
+<li><a href="http://www.ninject.org/">NInject</a> (który notabene jest całkiem popularnym rozwiązaniem) wydajnościowo jest jednym z najsłabszych i najwolniejszych kontenerów.</li>
+<li>Biblioteki promowane przez Microsoft &ndash; <a href="http://mef.codeplex.com/">MEF</a> oraz <a href="http://unity.codeplex.com/">Unity</a> &ndash; również nie prezentują porażającego poziomu. O ile Unity prezentuje się dość dobrze, to wciąż stanowi dość słabą konkurencję dla innych rozwiązań zawartych w zestawieniach.</li>
+<li>Mimo tego, że powyższe benchmarki nie zawsze się uzupełniają, po odrobinie przeszukiwania sieci można w zasadzie określić, że wśród zwycięzców wydajności znajdują się: <a href="http://docs.structuremap.net/">StructureMap</a> oraz <a href="http://funq.codeplex.com/">Funq</a> (który z tego co mi wiadomo nie jest obecnie wspierany, co idzie zdecydowanie na jego niekorzyść, jednak stanowi część frameworka <em>ServiceStack</em>, jest również dostępny w postaci open source).</li>
+</ol>
+
+
+<h2>3. Serializacja</h2>
+
+<p>Serializacja obiektów to dość szerokie zagadnienie, ponieważ możemy mieć na myśli różne formaty (xml, json czy dane binarne), zaś każdy z nich znajduje zastosowanie w innych sytuacjach i ma inną specyfikę. Opierając się na różnych źródłach (<a href="http://www.servicestack.net/benchmarks/NorthwindDatabaseRowsSerialization.100000-times.2010-08-17.html">1</a>, <a href="http://servicestack.net/benchmarks/#highcharts-6">2</a>), można pokusić się o kilka stwierdzeń:</p>
+
+<ul>
+<li>Jeżeli chodzi o rozmiar zajmowany przez serializowane obiekty, najwydajniejszym rozwiązaniem wydawać by się mogła serializacja binarna. Jest to prosty i dość logiczny wniosek, jednak okazuje się, że na tym polu również istnieje pewna konkurencja (m.in ze strony formatu json), zaś wbudowane w .NET formatery i serializatory wcale nie są najwydajniejszym, co platforma ta może zaoferować.</li>
+<li>Palma pierwszeństwa należy się <a href="https://developers.google.com/protocol-buffers/">Protocol Buffers</a> (protokół wymyślony przez Google oraz stosowany do komunikacji pomiędzy wewnętrznymi usługami giganta z Mountain View) oraz ich .NET-owym bindingom: totalne zwycięstwo zarówno pod względem rozmiaru serializowanego obiektu, jak i czasie serializacji/deserializacji. Biblioteka ta, ma jeszcze jedną przewagę &ndash; mimo, że wyjściowym formatem jest format binarny to w przeciwieństwie do domyślnych rozwiązań .NET protokół ten nie jest powiązany z jedną platformą i może służyć do komunikacji z usługami napisanymi w innych językach programowania.</li>
+<li>W kwestii serializacji JSON:
+
+<ul>
+<li>Serializery wbudowane we framework .NET należą do najwolniejszych rozwiązań dostępnych na rynku &ndash; jest to tym bardziej przykre, że stanowią one domyślną metodę serializacji zawartą w kontrolerach ASP MVC.</li>
+<li><a href="http://james.newtonking.com/projects/json-net.aspx">JSON.NET</a> (najpopularniejsza alternatywa dla wbudowanych serializatorów, używana m.in. w najnowszym WebAPI) mimo, że o jest wiele lepszy standardowych rozwiązań, również nie poraża swoimi osiągami</li>
+<li>Zwycięzcą pozostaje <a href="http://www.servicestack.net/docs/text-serializers/json-serializer">ServiceStack</a> (ponownie ;) ). 2-3x większa szybkość niż konkurencyjny Json.NET i jeszcze większa przewaga nad rozwiązaniami domyślnymi.</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>4. Client-side MVC/MVVM</h2>
+
+<p>W <a href="http://horusiath.blogspot.com/2012/06/krotki-przeglad-po-frameworkach-mvc-w.html">jednym z poprzednich wpisów</a> opisałem kilka popularnych frameworków javascriptowych stosowanych do prezentacji i zarządzania logiką po stronie przeglądarki. Ocena możliwości i szybkości tych platform należy do szczególnie trudnych. W internecie da się znaleźć kilka stron pozwalających na przyjżenie się bliżej i ocenieni wydajności na własne oczy (polecam <a href="http://stackoverflow.com/questions/12955337/angular-js-backbone-js-and-other-mv-patterned-js-libraries">ten wpis</a>).</p>
+
+<ul>
+<li><a href="http://backbonejs.org/">Backbone</a> jest wydajny, jednak należy tu wziąć pod uwagę fakt, że nie zapewnia żadnego typu bindingu między widokiem a modelem, w dodatku wymaga od użytkownika ręcznego manipulowania drzewem DOM &ndash; to z kolei stawia go w innej klasie problemów i w zasadzie ciężko go porównywać z frameworkami umożliwiającymi wiązania danych.</li>
+<li>Generalnie rzecz biorąc <a href="http://angularjs.org/">AngularJS</a> ma lepszą wydajność do <a href="http://knockoutjs.com/">Knockouta</a>. Jednak ta tendencja zmienia się wraz ze wzrostem liczy wiązań tzn. im większa tym bardziej Knockout wysuwa się na prowadzenie. W tym wypadku jednak duży wpływ na wynik końcowy ma sama budowa kontrolerów w AngularJS (dla lepszej wydajności powinny być one małe i nie zawierać zbyt dużej ilości powiązań ani skomplikowanej logiki obliczeniowej, która powinna być wykonywana osobno przez mechanizm serwisów dostępny we frameworku).</li>
+</ul>
+
+
+<h2>5. Templating Engines</h2>
+
+<p>Dużą różnicę robi również wykorzystanie silników do generowania szablonów stron WWW (od kiedy większość ze stron generowana jest w sposób dynamiczny). Tutaj jednak rozbijemy problem na 2 części:</p>
+
+<ol>
+<li>Silniki po stronie serwera &ndash; Na stackoverflow można znaleźć <a href="http://stackoverflow.com/questions/1451319/asp-net-mvc-view-engine-comparison">wątek</a>, który przedstawia krótką charakterystykę około 12 różnych silników wykorzystywanych do generowania stron po stronie serwera. Niestety, nie udało mi się znaleźć podobnego zestawienia jeżeli chodzi o kwestie wydajnościowe. Zamiast tego postaram się przedstawić kilka dobrych rad dotyczących kwestii wydajnościowych dotyczących dwóch domyślnych silników .NET, Aspx i Razor:
+
+<ul>
+<li>W większości przypadków Aspx działa lepiej niż porównywalny kod w Razorze (zwłaszcza w porównianiu z pierwszą wersją) &ndash; różnica ta wynosi przeważnie od 50% do 12% na korzyść aspx. Tutaj jednak wiele zależy od zmiany ustawień domyślnych, cacheowania elementów strony itp.</li>
+<li>W przypadku kiedy nie wykorzystujesz obu tych silników, usuń ten którego nie używasz. W wielu przypadkach przyspiesza to działanie aplikacji, m.in. przez to, że w prosty sposób skraca ilość przeszukiwanych szablonów w katalogu <em>Views</em> aplikacji MVC o połowę.</li>
+<li>Porada dotycząca ViewState (WebForms) &ndash; nie potrzebujesz mechanizmu ViewState na stronie? Wyłącz go. Potrzebujesz go? Zastanów się czy na pewno, zrób obejście, a potem go wyłącz. Serio. Mechanizm ten jest powszechnie uznawany za jedno z największych nieporozumień w świecie aplikacji webowych.</li>
+</ul>
+</li>
+<li>Silniki po stronie klienta &ndash; Budowa pełnego stosu MVC po stronie klienta nie jest jedynym sposobem na budowę dobrze zorganizowanego mechanizmu zarządzania widokami. W wielu przypadkach możliwe jest wykorzystanie prostego silnika wykorzystującego szablony do generowania widoków w bezpośrednio przez przeglądarkę. Mechanizm tak stosowany jest m.in. przez LinkedIn, jak również Twittera, który udostępnił swój silnik <a href="http://twitter.github.com/hogan.js/">Hogan.js</a> jako projekt open source. Dobry test wydajności rozmaitych silników zaprezentowano na <a href="http://jsperf.com/dom-vs-innerhtml-based-templating/112">tej stronie</a>.</li>
+</ol>
+
+
+<p>W większości takich porównań korona wydajności należy do <a href="http://olado.github.com/doT/index.html">doT.js</a>. Jedną z przyjemnych rzeczy w tej bibliotece, jest możliwość określania, które elementy szablonu będą generowane w czasie kompilacji (po wykonaniu kompilacji generowana jest funkcja kompilatora generująca wynikowy html na podstawie modelu przekazanego jako parametr &ndash; funkcja ta może być cache'owana), a które z nich będą wykonywane w runtime.</p>
+
+<h2>Podsumowanie</h2>
+
+<p>Po analizie dostępnych rozwiązań to co najbardziej mnie uderzyło, to fakt jak wiele z najpopularniejszych bibliotek prezentuje się zaskakująco żenująco w testach dotyczących wydajności. Za swoje małe odkrycie mogę uznać z kolei stos zaoferowany przez ServiceStack, dla których wydajność wydaje się priorytetem w każdej kategorii, w której podjęli się konkurować. Niestety nie miałem do tej pory dużo do czynienia z tym frameworkiem, co jednak bardzo przypadło mi do gustu, to fakt że jest to rozwiązanie kompletne, oferujące możliwość kompletnego zastąpienia każdego modułu w tradycyjnym stosie ASP.NET MVC/WCF/EntityFramework swoim własnym, spójnym zbiorem bibliotek. Do tego w całości działającym pod Mono na Linuxie.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[Ajax] Post tablicy do akcji]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/11/02/ajax-post-tablicy-do-akcji/"/>
+    <updated>2011-11-02T17:22:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/11/02/ajax-post-tablicy-do-akcji</id>
+    <content type="html"><![CDATA[<p>Podczas pracy nad łączeniem wywołań ajaxowych z frameworkiem ASP MVC 3 natknąłem się na dość interesujący problem &ndash; rozpatrzmy scenariusz, w którym mamy zamiar przekazać tablicę obiektów jakiegoś prostego typu (liczba, string) za pośrednictwem ajaxowego posta do jednej z akcji kontrolera. Taki przykład można zaprezentować w następujący sposób:</p>
+
+<p>Client side:
+``` js
+var array = [&lsquo;one&rsquo;, &lsquo;two&rsquo;, &lsquo;three&rsquo;];
+$.ajax(&lsquo;@Url.Action(&ldquo;AjaxPost&rdquo;)&rsquo;, {</p>
+
+<pre><code>type: 'post',
+data: array
+</code></pre>
+
+<p>});
+<code>
+Server side:
+</code> c#
+[HttpPost]
+public JsonResult AjaxPost(string[] array)
+{</p>
+
+<pre><code>if(array != null){
+    // to do
+}
+</code></pre>
+
+<p>}
+```
+W praktyce takie coś nie przejdzie, domyślny binder nie jest w stanie zrozumieć argumentów przekazanych w powyższym kodzie javascriptu. Powodem jest linijka zwierająca opis parametru &ndash; data : array. Wydawać by się mogło, że zapis ten można naprawić parsując naszą tablicę do notacji JSON, jednakże standardowe mechanizmy również nie sprawdzają się w tej roli. Z tego powodu następujące zapisy będą błędne:</p>
+
+<ul>
+<li>wykorzystanie <code>JSON.stringify(array)</code> lub <code> JSON.stringify({ &lsquo;array&rsquo; : array})</code></li>
+<li>wykorzystanie zewnętrznych bibliotek np. <code>$.parseJSON(array)</code>, <code>$.parseJSON({&lsquo;array&rsquo; : array})</code></li>
+</ul>
+
+
+<p>Rozwiązaniem tego problemu jest wykorzystanie funkcji z biblioteki jQuery o nazwie <a href="http://api.jquery.com/jQuery.param/">param</a>. Z jej wykorzystaniem nasza linijka powinna wyglądać następująco:
+<code>js
+data: $.param({'array' : array}, true)
+</code>
+Umieszczenie tablicy w obiekcie JSON jest wymagane, w dodatku nazwa pola musi odpowiadać nazwie parametru przekazywanego do naszej metody po stronie serwera (w przeciwnym razie binder nie rozpozna, którą zmienną zmapować na dany parametr).</p>
+
+<p>Można to oczywiście wykonać nie korzystając z gotowych bibliotek. W takim wypadku przekazywane przez nas parametry zapisane w postaci tekstu, w podanym przeze mnie przypadku, powinny mieć następującą postać: <code>array=one&amp;array=two&amp;array=three</code></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Wyświetlanie stron aspx przy pomocy iframe i jquery ui dialog]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy/"/>
+    <updated>2011-06-22T06:57:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy</id>
+    <content type="html"><![CDATA[<p>Witam, w dzisiejszym poście chciałbym podzielić się rozwiązaniem problemu, który pomimo, że przydarza się dość rzadko, to jednak zdążył napsuć mi trochę nerwów. Zacznijmy od opisania tematu:</p>
+
+<p>Dysponujemy standardową stroną aspx (zawierającą w sobie zarówno kontrolki aspx jak i skrypty jQuery), która docelowo ma zostać wyświetlona wewnątrz okna dialogowego dostępnego poprzez biblioteki jquery i jquery ui.</p>
+
+<p>Zadanie wydaje się banalne, przecież wystarczyłoby w stronie wyświetlającej okno wpisać kilka linijek:
+``` html</p>
+
+<div id="dialog">
+    <iframe src="ścieżka do wyświetlonej strony"></iframe>
+</div>
+
+
+<p>```
+Teraz już tylko wypisanie <code>$(&ldquo;#dialog&rdquo;).dialog()</code> i po sprawie. Ale czy na pewno? Otóż w moim przypadku takie podejście do sprawy skończyło się wyrzuceniem script errorów na stronie wyświetlanej w ramce (mowa tu o błędach typu <em>Object is undefined</em>). Co gorsza błąd ten był nagminny: występował niezależnie od tego, czy strona źródłowa posiadała dodaną informację o odnośnikach do plików jquery czy też nie.</p>
+
+<p>Ostatecznie rozwiązanie tego problemu okazało się stosunkowo proste. Chodzi w nim o to, aby nie dodawać atrybutu src do iframe bezpośrednio z poziomu html, a dopiero po wywołaniu metody dialog() na porządanym elemencie, który ma stać się oknem dialogowym. Przykładowy prawidłowo napisany kod:</p>
+
+<p>Html:
+``` html</p>
+
+<div id="dialog">
+    <iframe id="frame"></iframe>
+</div>
+
+
+<p><code>
+JavaScript:
+</code> js
+$(&ldquo;#dialog&rdquo;).dialog();
+$(&ldquo;#frame&rdquo;).attr(&lsquo;src&rsquo;, &lsquo;ścieżka do wyświetlanej strony&rsquo;);
+```</p>
+
+<p>Po takiej operacji nasze okno powinno być gotowe.</p>
+]]></content>
+  </entry>
+  
+</feed>

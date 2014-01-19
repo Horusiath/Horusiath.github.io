@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: wydajność | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/wydajnosc/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Niska wydajność Ruby'ego - studium porównawcze]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
+    <updated>2013-03-20T23:42:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
+    <content type="html"><![CDATA[<p>We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego dopasowania języka do zbioru metodyk i stosu technologicznego nastawionego na maksymalizację wydajności pracy programisty. Stanowią one &ldquo;wylęgarnię&rdquo; nowatorskich praktyk, które nieraz przenikają dalej i zostają zaadaptowane przez inne środowiska. Wystarczy podać kilka przykładów ze środowiska .NET: migracje w najnowszym EF4.3+, kierunek w jakim zmierza cały ASP.NET MVC czy dynamizacja języka C# &ndash; myśleliście, że idea stojąca za LINQ to nowatorski pomysł? ;) .</p>
+
+<p>Niestety za każym razem, kiedy mowa o Rubym, powracają kwestie jego wydajności. Jest to pięta achillesowa tego języka, powtarzana jak mantra w kolejnych dyskusjach programistów. Na czym jednak polegają te problemy? W tym postcie postaram się je opisać (w odniesieniu do najpopularniejszego kompilatora Ruby'ego &ndash; MRI) oraz opowiedzieć o rozwiązaniach, jakie zostały zaadaptowane w innych językach. Ponieważ moje obserwacje będę porównywał do innych implementacji, w tym Javy, C#, Pythona i różnych wirtualnych maszyn JavaScriptu, liczę że każdy będzie mógł wynieść z tego jakąś przydatną wiedzę.</p>
+
+<h2>Garbage Collector</h2>
+
+<p>Ten wątek musiał się tu pojawić, dlatego też postanowiłem zacząć właśnie od niego. Rozdział ten będzie dość trudny do przełknięcia dla osób, które z teorią stojącą za językami programowania nigdy nie miały do czynienia. Zanim przejdą one dalej, proponuję zaznajomić się z <a href="http://en.wikipedia.org/wiki/Garbage_collection_(computer_science">tym wpisem</a>) na Wikipedii.</p>
+
+<p>W dużym skrócie, Garbage collector w MRI wykorzystuje (podobnie jak wszystkie najpopularniejsze współcześnie maszyny wirtualne) algorytm <em>mark and sweep</em>. Jest to jednak pojęcie bardzo szerokie. Zagłębiając się w detale, dochodzimy do pewnych różnic.</p>
+
+<h3>Podział zarządzanego stosu</h3>
+
+<p>Większość programistów Javy i .NET zapewne kojarzy, że zarządzana sterta występująca w tych językach nie jest strukturą jednolitą, lecz jest podzielona na wiele przestrzeni (mowa tu o generacjach, ale nie tylko). I tak w przypadku .NET &ndash; na przykładzie SGena używanego w Mono, a świetnie opisanego <a href="http://www.mono-project.com/Generational_GC">tutaj</a> mamy do czynienia z podziałem sterty na kilka zbiorów:</p>
+
+<ul>
+<li><strong>Generacje</strong> &ndash; Zazwyczaj istnieją dwie lub więcej. Pierwszą jest <strong>żłobek</strong> (<em>nursery</em>). Ten zbiór jest relatywnie mały (domyślnie 4MB dla SGena, &frac12; pamięci cache L2 dla Pythona made by PyPy) i często czyszczony. Jest sprawny głównie ze względu na fakt, że większość obiektów przechowywanych na stercie ma stosunkowo krótki czas istnienia (np. zmienne lokalne funkcji/metod, które są niepotrzebne poza zakresem danej metody). Obiekty bardziej długowieczne przenoszone są na sterty kolejnych generacji. W rezultacie pamięć jest czyszczona częściej, jednak liczy się tutaj rozmiar przeszukiwanej pamięci (żłobek jest mały, przez co jego znakowanie i czyszczenie trwa bardzo krótko).</li>
+<li><strong>Przestrzeń dużych obiektów</strong> &ndash; ponieważ naprawdę duże obiekty są dość ciężkie do alokacji (znalezienie na stercie jednolitego bloku pamięci nie zajętego przez inne obiekty może być wyzwaniem), są one rozpatrywane osobno, zarówno na wirtualnych maszynach Javy jak i .NETu (tak w przypadku Mono jak i M$).</li>
+<li><strong>Łańcuchy znaków (string)</strong> &ndash; tekst jest również traktowany w specjalny sposób. Przykładowo wpisując w dwóch różnych miejscach w kodzie <em>&ldquo;ala ma kota&rdquo;</em> w praktyce definiujemy ten łańcuch znaków tylko raz, tworząc do niego dwie referencje. Ta zasada dotyczy zarówno Javy, .NETu, Pythona oraz najnowszych silników JavaScriptu. Ruby nie implementuje tej funkcjonalności &ndash; moim zdaniem na przeszkodzie stoi tutaj natura stringów w tym języku, które zgodnie ze specyfikacją mogą być mutowalne.</li>
+</ul>
+
+
+<p>Niestety w Rubym brakuje podziału sterty na generacje, przez co jest ona błyskawicznie zapychana obiektami o krótkim czasie życia, zaś &ldquo;sprzątnięcie&rdquo; całej sterty zajmuje sporo czasu. W chwili obecnej nie jest to możliwe, ponieważ GC w MRI nie implementuje przenoszenia obiektów wewnątrz sterty (dlaczego tak jest opowiem dalej).</p>
+
+<h3>Co znajduje się na stosie</h3>
+
+<p>W przypadku <strong>Javy</strong> sprawa podziału alokacji pomiędzy stos i stertę wygląda stosunkowo prosto: typy natywne i referencje na obiekty lądują na stosie, a reszta (obiekty klas) na stertę. W przypadku <strong>C#</strong> jest to trochę bardziej skomplikowane, ponieważ na stosie mogą wylądować również obiekty-struktury (<em>struct</em>) oraz obiekty utworzone za pomocą słowa kluczowego <strong>stackallock</strong>.</p>
+
+<p>Pomiędzy GC Javy (oraz javascriptowym V8) a Mono istnieje dodatkowa różnica: dwa pierwsze stosują tzw. precyzyjne wskaźniki, tzn. podczas przechodzenia po stosie przez marker (uruchamiany przez GC w pierwszej fazie pracy i służący oznaczeniu obiektów, które trzeba sprzątnąć) natrafiając na wartości od razu wie, czy są one wartościami czy referencjami na obiekty znajdujące się na stercie. Przykładowo maszyna wirtualna JavaScriptu z Chroma używa do tego specjalnego bitu określającego czy dana wartość jest referencją (stąd na V8 w wersji 32-bitowej liczby całkowite są wewnętrznie składowane jako wartości <em>31-bitowe</em>). Niestety SGen Mono musi za każdym razem sprawdzić (a w razie wątpliwości założyć z góry), czy taka wartość wskazuje adres na stercie.</p>
+
+<p>W przypadku Ruby'ego sprawa wygląda częściowo prościej: w tym języku nie istnieją typy wartościowe, zatem wszystkie wartości (w tym liczby oraz flagi logiczne) są reprezentowane przez obiekty składowane na zarządzanej stercie. To sprawia, że czas dostępu do nich jest dłuższy.</p>
+
+<p>Inna niespodzianka, jaką szykuje nam Ruby, sięga jeszcze dalej. Interpreter MRI (do nadejścia wersji 1.9) konstruował kod Ruby'ego przez pośrednią translację do <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">drzewa AST</a>. Jednakże chcąc zapewnić programistom &ldquo;pełnię władzy&rdquo; nad kodem, tak stworzone drzewo było składowane w postaci struktur Ruby'ego na jego zarządzanej stercie! Oznacza to, że cały aktualnie wykonywany kod jest reprezentowany przez faktycznie istniejące drzewo obiektów, zajmujące ogromną ilość pamięci.</p>
+
+<h3>Jak zarządzana jest sterta: .NET Mono</h3>
+
+<p>Kolejne zestawienie z Mono. Mówiąc dość ogólnie sterta jest podzielona na tak zwane bloki, one z kolei na sloty. Podczas oznaczania obiektów na stercie dzielimy je na 3 typy:</p>
+
+<ul>
+<li><strong>Root objects</strong> &ndash; są to obiekty, do których znaleziono referencje na stosie i które nie powinny zostać usunięte.</li>
+<li><strong>Garbage </strong>&ndash; a zatem obiekty-śmieci oraz puste przestrzenie, które mogą zostać realokowane pod nowe obiekty.</li>
+<li><strong>Pinned objects</strong> &ndash; specjalny rodzaj tzw. przypiętych obiektów. Są to obszary pamięci wyjęte spoza kontroli zarządzanej sterty, a więc np. struktury z języka C, na które mamy referencje z poziomu P/Invoke oraz obiekty przypięte ręcznie w zakresach <strong>unsafe</strong> (za pomocą słowa kluczowego <strong>fixed</strong>). W Mono do tej listy dochodzą również te adresy, które zostały znalezione na stosie, ale nie koniecznie wskazują na obiekty. Ze względów bezpieczeństwa takich obiektów nie można odśmiecać.</li>
+</ul>
+
+
+<p>Z punktu widzenia Garbage Collectora najbardziej upierdliwe są pinned objects. Dlaczego? Otóż w trakcie odśmiecania pamięci GC zostawia &ldquo;dziury&rdquo; pustych przestrzeni, które mogą posłużyć w przyszłości do zaalokowania nowych obiektów. Niestety te dziury powodują fragmentację pamięci. Co z tego, że mamy 10 luk po 100 bajtów, jeżeli potrzebujemy stworzyć obiekt rozmiaru 200B? Dlatego też GC w Mono został wyposażony w opcję realokacji obiektów &ndash; umożliwia to przesunięcie położenia obiektów w pamięci tak, aby złączyć luki powstałe po odśmiecaniu w 1 ciągły blok w pamięci.</p>
+
+<h3>Jak zarządzana jest sterta: Ruby</h3>
+
+<p>Z punktu widzenia MRI sterta również jest podzielona na komórki, które są reprezentowane w pamięci jako zwykłe struktury C (dokładna nazwa to <em>struct VALUE</em>).</p>
+
+<p>Ciekawostką jest sposób znajdowania pustych fragmentów na stercie służących pod przyszłe alokacje obiektów. Do wersji 2.0 (a więc we wszystkich obecnie używanych) mamy do czynienia ze strukturą przyjmującą postać linked listy. Szukając nieużywanych komórek musieliśmy przeglądać kolejne węzły z listy i sprawdzać ich zajętość &ndash; przeskakiwanie po pamięci oraz znalezienie odpowiednio dużego ciągłego bloku może być czasochłonne, sama lista również ma swój rozmiar. Od wersji 2.0 zamieniono ją inną strukturą &ndash; bitmapą. Od teraz za każdym razem, kiedy tworzona jest zarządzana sterta, część pamięci na jej początku zostaje zarezerwowana na potrzeby bitmapy. Określa ona w prosty sposób (ustawiając lub zerując kolejne bity w pamięci) zajętość kolejnych komórek VALUE. Przeszukiwanie takiej struktury jest o wiele szybsze, zajmuje ona też mniej miejsca w pamięci &ndash; ponieważ bloki RValue mają po 40 bajtów i wymagają 1 bitu do sygnalizacji łatwo wyliczyć, że ostateczna bitmapa zajmuje około 1/(40*8) = 1/320 rozmiaru całej sterty.</p>
+
+<p>Do czego sprowadza się największy (moim zdaniem) problem Ruby'ego? Otóż GC w MRI nie dysponuje opcją przenoszenia obiektów. Porównując do Mono wszystkie obiekty w Rubym traktowane są jako pinned object. Niesie to szereg następstw m.in. w przypadku konieczności alokacji dużego obiektu na stercie o mocno sfragmentowanej strukturze, może istnieć potrzeba rozszerzenia rozmiaru sterty (a zatem zwiększenia zużycia RAMu w całym programie) pomimo, że istnieje dostateczna ilość miejsca, aby taki obiekt zaalokować.</p>
+
+<p>Czy można zmienić GC w Rubym na taki, który zdolny jest przesuwać obiekty? Nie. Na drodze stoją tu referencje na obiekty, które wewnątrz są w rzeczywistości zwykłymi wskaźnikami na bloki pamięci bezpośrednio na stercie. Przesunięcie obiektu na stercie wiąże się ze zmianą jego adresu, ponieważ jednak nie wiemy ile referencji (których w algorytmie <em>mark&amp;sweep</em> nie zliczamy) należy powiadomić o nowej lokacji obiektu, taka operacja nie jest możliwa. Naturalnie można to zmienić (np. wprowadzić wskaźniki pośrednie), jednakże spowoduje to dysonans między dotychczasowymi implementacjami wtyczek z języka C montowanych do Ruby'ego i zniszczy jego kompatybilność wstecz. Niestety sądzę, że prędzej czy później ta decyzja musi zostać podjęta.</p>
+
+<h2>Klątwa języków dynamicznych</span></h2>
+
+<p>Kolejnym krokiem w zrozumieniu problemu niskiej wydajności jest poznanie natury &ndash; i ceny &ndash; towarzyszącej językom dynamicznym. Weźmy pod uwagę następujący przykład: załóżmy, że stworzyliśmy klasę w dowolnym języku statycznie typowanym (np. Java lub C#). Jej postać jest następująca:
+``` c#
+public class Point
+{</p>
+
+<pre><code>public int x;
+public int y;
+</code></pre>
+
+<p>}
+```
+Nie zagłębiając się zanadto w szczegóły jesteśmy w stanie stwierdzić, że wywołanie konstruktora powinno zaowocować stworzeniem w pamięci obiektu zajmującego 8 bajtów (2*sizeof(int)). Jak to wygląda w językach dynamicznie typowanych? Otóż w Rubym MRI, Pythonie oraz JavaScriptcie (w niektórych przypadkach) tworzony obiekt jest de facto nie zwykłym blokiem pamięci lecz strukturą budową bardziej przypominającą hash mapę/słownik, w którym każde pola reprezentowane jest przez string (js), hash (py) lub symbol reprezentowany w globalnej tablicy symboli (rb). Dotyczy to każdego pojedynczego obiektu. Wynika to w naturalny sposób z faktu, że tworząc obiekt danego typu, możemy go w dowolnej chwili rozszerzyć o nowe pola bez zmiany struktury obiektów o tej samej klasie. Czas dostępu do pól w takich obiektach jest bardzo duży, zaś same struktury są o wiele większe niż ich odpowiedniki w językach statycznie typowanych.</p>
+
+<p>Czy da się to ominąć? Tak, rozwiązanie zostało już wynalezione i zaimplementowane w JavaScriptcie na silnikach V8 (Chrome) oraz najnowszym SquirrelFish (Safari). Oba te silniki definiują tzw. <em>hidden classes</em>. Idea która za nimi stoi wynika z prostej przesłanki. Otóż zauważono, że nawet w językach dynamicznych wewnętrzna struktura obiektów przez znaczną większość czasu pozostaje taka sama. Z tego powodu możemy reprezentować obiekty o tej samej budowie przez ukrytą klasę &ndash; jej struktura pamięci jest identyczna z tą w językach statycznie typowanych. W momencie kiedy rozszerzamy dany obiekt o kolejne pola, tworzymy dla niego kolejną ukrytą klasę, o nowej, rozrośniętej budowie, a następnie realokujemy do nowej postaci. Z punktu widzenia wykonywanego programu jest to dość rzadkie zjawisko, natomiast korzyści płynące z tego podejścia są ogromne.</p>
+
+<h2>JIT, Interpreter oraz Tracing</h2>
+
+<p>Ostatnia różnica, na której chcę się skupić dotyczy różnic wynikających z kompilatorów JIT (używanych obecnie niemal we wszystkich najpopularniejszych językach: Javie, C# czy Pythonie na silniku PyPy) w stosunku do tradycyjnych interpreterów (Ruby MRI) oraz możliwości jakich dostarczają.</p>
+
+<p>Podstawowa różnica między tymi dwoma typami polega na tym, że tradycyjny interpreter przetwarza i generuje kod maszynowy na bieżąco w czasie rzeczywistym, interpretując skrypt linijka po linijce. JIT w tym czasie wykonuje małe wyprzedzenie, przetwarzając cały dostępny kod jeszcze przed punktem jego wykonania.</p>
+
+<p>Dodatkową korzyścią płynącą z podejścia kompilacji JIT jest możliwość dynamicznej optymalizacji kodu w trakcie jego działania. Takie podejście stosowane jest przez wszystkie najnowsze maszyny wirtualne. Jedna z takich technik znana jest jako <strong>trace trees</strong> i została opisana <a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/ICS-TR-06-16.pdf">tutaj</a>. W dużym skrócie ideą tego podejścia jest wyłapanie w aplikacji powtarzających się fragmentów kodu oraz zoptymalizowanie ich w taki sposób, aby wykonywały one jak najmniej instrukcji procesora. W jaki sposób jest to osiągane?</p>
+
+<ul>
+<li><strong>Inlining </strong>&ndash; a więc ograniczenie liczby instrukcji call do zewnętrznych funkcji poprzez skopiowanie ich zawartości do wnętrza pętli.</li>
+<li><strong>Wnioskowanie typów</strong> &ndash; przykład: jeżeli w języku dynamicznym dodajemy do siebie w pętli dwie&nbsp;wartości typu int&nbsp;1000 razy, mamy przesłanki aby twierdzić, że operacje wykonane na tej zmiennej zawsze będą dotyczyć obiektu tego samego typu (gdyby nie to, musielibyśmy za każym razem sprawdzać czy operator dodawania nie został np. użyty raz dla <strong>int</strong>ów a inny raz dla <strong>string</strong>ów). Takie wnioski umożliwią nam wygenerowanie kodu maszynowego zoptymalizowanego do tego konkretnego typu &ndash; jest to bardzo przydatne z punktu widzenia Ruby'ego. Za przykład niech posłuży metoda dodawania 2 liczb całkowitych &ndash; teoretycznie możliwa do wykonania w 1 instrukcji maszynowej, w Rubym jest opakowana w metodę wirtualną, która dodatkowo definiuje sprawdzanie zakresu dla wynikowej liczby i w zależności od wyniku zwraca jedną z dwóch wewnętrznie różnych implementacji obiektu opakowującego dany wynik</li>
+<li><strong>Rekonstrukcja do postaci kodu maszynowego wykonywalnego na GPU</strong> &ndash; wykonywalne, o ile kompilator jest w stanie rozpoznać stosowny kod na podstawie określonych wzorców (z tego co wiem, maszyna wirtualna na FireFoxie potrafi coś takiego).</li>
+</ul>
+
+
+<p>Rozwiązania zostały już wykorzystane na najnowszych VMach JavaScriptu. Niestety Ruby i Python wciąż czekają na swoją kolej.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
+    <link href="http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc/"/>
+    <updated>2013-01-12T22:32:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc</id>
+    <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
+
+<h2>1. Object-Relational Mapping</h2>
+
+<p>Na pierwszy ogień niech pójdą frameworki ORM. Jak nie ciężko się domyślić pod względem popularności triumfuje tutaj Entity Framework jako rozwiązanie promowane przez MS, zaś odrobinę z tyłu wydaje się być NHibernate. Jak to jednak wygląda, jeżeli wzięlibyśmy pod uwagę wydajność? Zaczynając od bardzo popularnego zestawienia <a href="http://ormeter.net/">ORM Battle</a>:</p>
+
+<ul>
+<li><a href="http://dataobjects.net/">DataObjects.NET</a> mogą poszczycić się najbardziej wydajną budową zapytań LINQ.</li>
+<li><a href="http://bltoolkit.net/">Business Logic Toolkit</a> jest stawiany jako zwycięzca w kwestii ogólnej wydajności (operacje CRUD itp.).
+-Pod względem zapytań LINQ wydajnosć <a href="http://nhforge.org/">NHibernate </a>jest skandaliczna &ndash; tutaj jednak należy się słowo wyjaśnienia, ponieważ framework ten posiada własny mechanizm generowania zapytań w locie (Criteria wraz z nakładką QueryOver), który oferuje znacznie lepszą wydajność oraz pozwala na więcej w stosunku do linq.</li>
+</ul>
+
+
+<p>Warto jednak zauważyć, że zestawienie to nie jest pełne, brakuje w nim powiem kilku ważnych bibliotek. Powołując się na kolejny benchmark wykonany przez <a href="http://servicestack.net/benchmarks/">ServiceStack</a> (ta nazwa powtórzy się tutaj jeszcze przy kilku okazjach), wysnuć można kilka innych wniosków:</p>
+
+<ul>
+<li>Narzut nakładany przez Entity Framework może wydłużyć czas wykonania zapytania nawet 13-krotnie! &ndash; (zakładam, że dla bardziej złożonych zapytań ta różnica zmniejsza się na korzyść EF) To ogromna przepaść nawet biorąc pod uwagę <a href="http://noamlewis.wordpress.com/2012/07/18/net-4-5-improves-orm-performance-across-the-chart/">usprawnienia</a> nałożone w .NET 4.5.</li>
+<li>Zwycięstwo wydajności należy do <a href="http://code.google.com/p/dapper-dot-net/">Dappera</a> &ndash; jest to microframework ORM stworzony przez Stackoverflow na potrzeby wysoko wydajnego dostępu do bazy danych, wykorzystywanego w tym serwisie. Tuż za nim znalazł się z kolei <a href="https://github.com/ServiceStack/ServiceStack.OrmLite">ServiceStack.OrmLite</a> (należy jednak pamiętać, że są oni autorami tego benchmarku).</li>
+</ul>
+
+
+<p>Na czym więc polega sukces i droga do szybkości? Myślę, że główną rolę odgrywa tutaj prostota &ndash; zarówno EF jak i NHibernate oferują rozbudowane interfejsy do budowy zapytań (LINQ i QueryOver), własne języki pośrednie (NHibernate &ndash; HQL, Entity Framework &ndash; ESQL), mechanizmy zarządzania obiektami itp. <strong>BLT</strong>, <strong>Dapper</strong> i <strong>OrmLite </strong>stosują tutaj proste operacje z wykorzystaniem standardowych zapytań SQL, odrzucając wyższe warstwy abstrakcji i trzymając się blisko podstawowych mechanizmów komunikacji z bazą danych. Dodatkowo microframeworki obarczają programistę koniecznością ręcznego zarządzania relacjami oraz synchronizacji stanu danych pomiędzy encjami i bazą. To z kolei przenosi dług wydajnościowy na kod napisany przez programistę.</p>
+
+<h2>2. Kontenery Inversion of Control</h2>
+
+<p><em>Dependency Injection</em> to już standard, mimo że wciąż nie jest to mechanizm domyślny w ASP.NET. Zapewnienie luźnych wiązań określane jest jako dobra praktyka zarówno w MVC jak i MVVM (stosowanym przez liczne frameworki stosowane również w aplikacjach desktopowych oraz na urządzenia mobline). Opierając się na kilku (<a href="http://www.palmmedia.de/blog/2011/8/30/ioc-container-benchmark-performance-comparison">1</a>, <a href="http://www.iocbattle.com/">2</a>, <a href="http://servicestack.net/benchmarks/#highcharts-8">3</a>, <a href="http://philipm.at/2011/0808/">4</a>) testach można podjąć się złożenia kilku wniosków:</p>
+
+<ol>
+<li><a href="http://www.ninject.org/">NInject</a> (który notabene jest całkiem popularnym rozwiązaniem) wydajnościowo jest jednym z najsłabszych i najwolniejszych kontenerów.</li>
+<li>Biblioteki promowane przez Microsoft &ndash; <a href="http://mef.codeplex.com/">MEF</a> oraz <a href="http://unity.codeplex.com/">Unity</a> &ndash; również nie prezentują porażającego poziomu. O ile Unity prezentuje się dość dobrze, to wciąż stanowi dość słabą konkurencję dla innych rozwiązań zawartych w zestawieniach.</li>
+<li>Mimo tego, że powyższe benchmarki nie zawsze się uzupełniają, po odrobinie przeszukiwania sieci można w zasadzie określić, że wśród zwycięzców wydajności znajdują się: <a href="http://docs.structuremap.net/">StructureMap</a> oraz <a href="http://funq.codeplex.com/">Funq</a> (który z tego co mi wiadomo nie jest obecnie wspierany, co idzie zdecydowanie na jego niekorzyść, jednak stanowi część frameworka <em>ServiceStack</em>, jest również dostępny w postaci open source).</li>
+</ol>
+
+
+<h2>3. Serializacja</h2>
+
+<p>Serializacja obiektów to dość szerokie zagadnienie, ponieważ możemy mieć na myśli różne formaty (xml, json czy dane binarne), zaś każdy z nich znajduje zastosowanie w innych sytuacjach i ma inną specyfikę. Opierając się na różnych źródłach (<a href="http://www.servicestack.net/benchmarks/NorthwindDatabaseRowsSerialization.100000-times.2010-08-17.html">1</a>, <a href="http://servicestack.net/benchmarks/#highcharts-6">2</a>), można pokusić się o kilka stwierdzeń:</p>
+
+<ul>
+<li>Jeżeli chodzi o rozmiar zajmowany przez serializowane obiekty, najwydajniejszym rozwiązaniem wydawać by się mogła serializacja binarna. Jest to prosty i dość logiczny wniosek, jednak okazuje się, że na tym polu również istnieje pewna konkurencja (m.in ze strony formatu json), zaś wbudowane w .NET formatery i serializatory wcale nie są najwydajniejszym, co platforma ta może zaoferować.</li>
+<li>Palma pierwszeństwa należy się <a href="https://developers.google.com/protocol-buffers/">Protocol Buffers</a> (protokół wymyślony przez Google oraz stosowany do komunikacji pomiędzy wewnętrznymi usługami giganta z Mountain View) oraz ich .NET-owym bindingom: totalne zwycięstwo zarówno pod względem rozmiaru serializowanego obiektu, jak i czasie serializacji/deserializacji. Biblioteka ta, ma jeszcze jedną przewagę &ndash; mimo, że wyjściowym formatem jest format binarny to w przeciwieństwie do domyślnych rozwiązań .NET protokół ten nie jest powiązany z jedną platformą i może służyć do komunikacji z usługami napisanymi w innych językach programowania.</li>
+<li>W kwestii serializacji JSON:
+
+<ul>
+<li>Serializery wbudowane we framework .NET należą do najwolniejszych rozwiązań dostępnych na rynku &ndash; jest to tym bardziej przykre, że stanowią one domyślną metodę serializacji zawartą w kontrolerach ASP MVC.</li>
+<li><a href="http://james.newtonking.com/projects/json-net.aspx">JSON.NET</a> (najpopularniejsza alternatywa dla wbudowanych serializatorów, używana m.in. w najnowszym WebAPI) mimo, że o jest wiele lepszy standardowych rozwiązań, również nie poraża swoimi osiągami</li>
+<li>Zwycięzcą pozostaje <a href="http://www.servicestack.net/docs/text-serializers/json-serializer">ServiceStack</a> (ponownie ;) ). 2-3x większa szybkość niż konkurencyjny Json.NET i jeszcze większa przewaga nad rozwiązaniami domyślnymi.</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>4. Client-side MVC/MVVM</h2>
+
+<p>W <a href="http://horusiath.blogspot.com/2012/06/krotki-przeglad-po-frameworkach-mvc-w.html">jednym z poprzednich wpisów</a> opisałem kilka popularnych frameworków javascriptowych stosowanych do prezentacji i zarządzania logiką po stronie przeglądarki. Ocena możliwości i szybkości tych platform należy do szczególnie trudnych. W internecie da się znaleźć kilka stron pozwalających na przyjżenie się bliżej i ocenieni wydajności na własne oczy (polecam <a href="http://stackoverflow.com/questions/12955337/angular-js-backbone-js-and-other-mv-patterned-js-libraries">ten wpis</a>).</p>
+
+<ul>
+<li><a href="http://backbonejs.org/">Backbone</a> jest wydajny, jednak należy tu wziąć pod uwagę fakt, że nie zapewnia żadnego typu bindingu między widokiem a modelem, w dodatku wymaga od użytkownika ręcznego manipulowania drzewem DOM &ndash; to z kolei stawia go w innej klasie problemów i w zasadzie ciężko go porównywać z frameworkami umożliwiającymi wiązania danych.</li>
+<li>Generalnie rzecz biorąc <a href="http://angularjs.org/">AngularJS</a> ma lepszą wydajność do <a href="http://knockoutjs.com/">Knockouta</a>. Jednak ta tendencja zmienia się wraz ze wzrostem liczy wiązań tzn. im większa tym bardziej Knockout wysuwa się na prowadzenie. W tym wypadku jednak duży wpływ na wynik końcowy ma sama budowa kontrolerów w AngularJS (dla lepszej wydajności powinny być one małe i nie zawierać zbyt dużej ilości powiązań ani skomplikowanej logiki obliczeniowej, która powinna być wykonywana osobno przez mechanizm serwisów dostępny we frameworku).</li>
+</ul>
+
+
+<h2>5. Templating Engines</h2>
+
+<p>Dużą różnicę robi również wykorzystanie silników do generowania szablonów stron WWW (od kiedy większość ze stron generowana jest w sposób dynamiczny). Tutaj jednak rozbijemy problem na 2 części:</p>
+
+<ol>
+<li>Silniki po stronie serwera &ndash; Na stackoverflow można znaleźć <a href="http://stackoverflow.com/questions/1451319/asp-net-mvc-view-engine-comparison">wątek</a>, który przedstawia krótką charakterystykę około 12 różnych silników wykorzystywanych do generowania stron po stronie serwera. Niestety, nie udało mi się znaleźć podobnego zestawienia jeżeli chodzi o kwestie wydajnościowe. Zamiast tego postaram się przedstawić kilka dobrych rad dotyczących kwestii wydajnościowych dotyczących dwóch domyślnych silników .NET, Aspx i Razor:
+
+<ul>
+<li>W większości przypadków Aspx działa lepiej niż porównywalny kod w Razorze (zwłaszcza w porównianiu z pierwszą wersją) &ndash; różnica ta wynosi przeważnie od 50% do 12% na korzyść aspx. Tutaj jednak wiele zależy od zmiany ustawień domyślnych, cacheowania elementów strony itp.</li>
+<li>W przypadku kiedy nie wykorzystujesz obu tych silników, usuń ten którego nie używasz. W wielu przypadkach przyspiesza to działanie aplikacji, m.in. przez to, że w prosty sposób skraca ilość przeszukiwanych szablonów w katalogu <em>Views</em> aplikacji MVC o połowę.</li>
+<li>Porada dotycząca ViewState (WebForms) &ndash; nie potrzebujesz mechanizmu ViewState na stronie? Wyłącz go. Potrzebujesz go? Zastanów się czy na pewno, zrób obejście, a potem go wyłącz. Serio. Mechanizm ten jest powszechnie uznawany za jedno z największych nieporozumień w świecie aplikacji webowych.</li>
+</ul>
+</li>
+<li>Silniki po stronie klienta &ndash; Budowa pełnego stosu MVC po stronie klienta nie jest jedynym sposobem na budowę dobrze zorganizowanego mechanizmu zarządzania widokami. W wielu przypadkach możliwe jest wykorzystanie prostego silnika wykorzystującego szablony do generowania widoków w bezpośrednio przez przeglądarkę. Mechanizm tak stosowany jest m.in. przez LinkedIn, jak również Twittera, który udostępnił swój silnik <a href="http://twitter.github.com/hogan.js/">Hogan.js</a> jako projekt open source. Dobry test wydajności rozmaitych silników zaprezentowano na <a href="http://jsperf.com/dom-vs-innerhtml-based-templating/112">tej stronie</a>.</li>
+</ol>
+
+
+<p>W większości takich porównań korona wydajności należy do <a href="http://olado.github.com/doT/index.html">doT.js</a>. Jedną z przyjemnych rzeczy w tej bibliotece, jest możliwość określania, które elementy szablonu będą generowane w czasie kompilacji (po wykonaniu kompilacji generowana jest funkcja kompilatora generująca wynikowy html na podstawie modelu przekazanego jako parametr &ndash; funkcja ta może być cache'owana), a które z nich będą wykonywane w runtime.</p>
+
+<h2>Podsumowanie</h2>
+
+<p>Po analizie dostępnych rozwiązań to co najbardziej mnie uderzyło, to fakt jak wiele z najpopularniejszych bibliotek prezentuje się zaskakująco żenująco w testach dotyczących wydajności. Za swoje małe odkrycie mogę uznać z kolei stos zaoferowany przez ServiceStack, dla których wydajność wydaje się priorytetem w każdej kategorii, w której podjęli się konkurować. Niestety nie miałem do tej pory dużo do czynienia z tym frameworkiem, co jednak bardzo przypadło mi do gustu, to fakt że jest to rozwiązanie kompletne, oferujące możliwość kompletnego zastąpienia każdego modułu w tradycyjnym stosie ASP.NET MVC/WCF/EntityFramework swoim własnym, spójnym zbiorem bibliotek. Do tego w całości działającym pod Mono na Linuxie.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Programowanie GPGPU - Microsoft.Accelerator v2]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/"/>
+    <updated>2011-09-19T18:09:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12</id>
+    <content type="html"><![CDATA[<p>Ostatnimi czasy postanowiłem zapoznać się z technikami programowania równoległego pod karty graficzne. Zacząłem poszukiwać rozwiązań, które bez konieczności poświęcania długich godzin na poznawanie nowych technologii pozwoliłyby mi wykorzystać potencjał drzemiący w GPU.</p>
+
+<p>Niestety problemy pojawiły się już na starcie, kiedy okazało się, że moja karta graficzna nosi na sobie ślady epoki poprzedzającej pojawienie się CUDA. Ograniczony do standardowych operacji oferowanych przez OpenGL i DirectX zacząłem szukać bibliotek-nakładek na te środowiska. Wśród opublikowanych rozwiązań natknąłem się na 2 interesujące biblioteki:
+&ndash; <a href="http://sourceforge.net/projects/cloo/">Cloo</a> &ndash; jest to.NET-owa nakładka na popularną w środowisku GPGPU bibliotekę OpenCL, umożliwiającą nam programowanie równoległe poprzez OpenGL.
+&ndash; <a href="http://research.microsoft.com/en-us/projects/accelerator/">Microsoft.Accelerator v. 2</a> &ndash; ta biblioteka z kolei jest odpowiedzią Microsoftu na napływające trendy. Nie jest to jeszcze gotowy produkt, lecz wciąż jest rozwijany i może rokować spore nadzieje.</p>
+
+<p>W tym poście postaram się opisać bibliotekę Microsoftu, pokrótce ją scharakteryzować (dla tych, których zanudzi czytanie dokumentacji na oficjalnej stronie) oraz jak przygotować projekt, aby móc wykorzystać jej potencjał.</p>
+
+<h2>Czym jest Accelerator?</h2>
+
+<p>Accelerator stanowi bibliotekę nałożoną na środowisko DirectX9, pozwalające nam za jego pomocą korzystać z karty graficznej do obliczeń nie związanych z grafiką (od wersji 2 biblioteki możliwe jest również przełączenie się na tradycyjny multiprocessing oferowany przez wielordzeniowe CPU).</p>
+
+<p>W jaki sposób jest to wykonywane? Otóż wyobraźmy sobie, że zasadniczo programując Pixel i Vertex Shadery tworzymy tak naprawdę kod programu, którego celem jest operowanie na przekazanym mu zbiorze zmiennych. Microsoft.Accelerator wykorzystuje ten sposób myślenia o Pixel Shaderach definiując specjalne klasy tablic, które w trakcie przetwarzania są zamieniane przez środowisko do postaci tekstury, która jest poddawana obróbce. Operacje które możemy wykonywać na tych tablicach, są również zdefiniowane (właściwe metody przechowywane są w klasie statycznej <strong>ParallelArrays</strong>), aby następnie składane do postaci <em>pojedynczego</em> pixel shadera (w tym celu Accelerator stosuje znany z języków funkcyjnych mechanizm leniwej ewaluacji wyrażeń, w którym rezultat działania metod jest produkowany dopiero kiedy należy go zwrócić do dalszego przetwarzania, nie zaś kiedy wywołujemy daną metodę).</p>
+
+<p>W odróżnieniu od Cloo udostępniony nam mechanizm gotowych operacji pozwala na skupienie się na osiągnięciu pożądanych wyników, bez ryzyka ugrzęźnięcia w źle napisanym kodzie.</p>
+
+<h2>Jak zainstalować Accelerator w naszym projekcie?</h2>
+
+<ol>
+<li>Ściągamy pakiet ze strony podanej pod <a href="http://research.microsoft.com/en-us/downloads/e45cf1d7-fd3d-4e03-a219-c0f3fca9881e/">tym linkiem</a>, a następnie instalujemy go. Ścieżka instalacji to <code>C:\Program Files (x86)\Microsoft\Accelerator v2 </code>dla systemów 64-bitowych zainstalowanych na partycji C. W stworzonym folderze otrzymamy dokumentację oraz kilka przykładowych programów.</li>
+<li>Jeżeli chcemy dołączyć bibliotekę do naszego projektu, to w otworzonym projekcie w Visual Studio dodajemy referencję do pliku <em>Microsoft.Accelerator.dll</em>, który możemy znaleźć w podfolderze <code>Accelerator v2/bin/Managed</code> .</li>
+<li>Dodatkowo w folderze <em>bin</em> mogliśmy się natknąć na 2 foldery: x64 i x86. Należy dodać plik <em>Accelerator.dll</em> z odpowiedniego folderu (zależnie od naszego sprzętu) do folderu, w którym znajduje się nasza aplikacja. <strong>Uwaga</strong>: jeżeli nie dodamy tego pliku lub dodamy nie właściwą wersję, będziemy w stanie skompilować program, ale podczas jego działania wyrzucony zostanie stosowny wyjątek (<strong>BadImageFormatException</strong> w przypadku skopiowania biblioteki z niewłaściwego folderu lub <strong>DllNotFoundException</strong> w przypadku nie wykrycia biblioteki, którą należało skopiować).</li>
+</ol>
+
+
+<p>Po tym wszystkim możemy już swobodnie pracować. Polecam zapoznać się z przykładami dostępnymi w folderze z zainstalowanym Acceleratorem ;) .</p>
+]]></content>
+  </entry>
+  
+</feed>

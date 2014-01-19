@@ -1,0 +1,459 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>[WCF] Wydobywanie wiadomości w postaci SOAP po stronie klienta - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Windows Communication Foundation jest obecnie jednym z bardziej powszechnych (i moim zdaniem także jednym z najlepiej zaprojektowanych) frameworków &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">[WCF] Wydobywanie Wiadomości W Postaci SOAP Po Stronie Klienta</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-24T23:07:00+01:00" pubdate data-updated="true">Nov 24<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Windows Communication Foundation jest obecnie jednym z bardziej powszechnych (i moim zdaniem także jednym z najlepiej zaprojektowanych) frameworków do obsługi usług sieciowych (<em>Web Services</em>). Nie wdając się zbytnio w szczegóły działania takiej usługi, wystarczy nam wiedzieć, że aby zostać przekazana, każda wiadomość (reprezentowana po stronie .NETu przez obiekt odpowiedniej klasy) musi być zserializowana do postaci tzw. dokumentu, który w większości przypadków występuje pod postacią XML lub jego podzbiorem, SOAP.</p>
+
+<p>Z reguły nie musimy dysponować wiedzą o tym, w jaki sposób nasza wiadomość zostaje reprezentowana za kulisami usługi. Niestety w życiu pojawiają się sytuacje, kiedy ta informacja może mieć dla nas istotne znaczenie. Przykładem takiej sytuacji mogą być narzędzia diagnostyczne, których zadaniem jest kontrola i monitorowanie działania usługi.</p>
+
+<p>Sposobów na wydobycie wiadomości w jej &ldquo;surowej&rdquo; postaci, tzn. reprezentacji XML (lub SOAP, ponieważ zależy nam na w miarę czytelnej formie) jest kilka. Jednym z nich może być np. podpięcie się do modułu zajmującego się deserializacją dokumentu. Innym jest wykorzystanie wbudowanych w WCF opcji tracingu. W poniższym przykładzie przedstawię drugą opcję.</p>
+
+<h2>Etap 1 &ndash; konfiguracja</h2>
+
+<p>Ponieważ WCF jest środowiskiem, które umożliwia zdefiniowanie niemal wszystkiego za pomocą konfiguracji, warto skorzystać z tego rozwiązania, kiedy tylko mamy taką możliwość. O pozostałych sytuacjach tzn. kiedy sama konfiguracja to za mało, a dostarczone przez twórców frameworka &ldquo;klocki&rdquo; nam nie wystarczą opowiem w dalszej części wpisu.</p>
+
+<p>Jak więc za pomocą konfiguracji ustawić naszego klienta, aby możliwy był nasłuch nadchodzących wiadomości? Po pierwsze należy zdefiniować taką opcję wewnątrz gałęzi system.service model. Ilustruje to następujący fragment:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;system.serviceModel&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;diagnostics&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;messageLogging</span>
+</span><span class='line'>        <span class="na">logMalformedMessages=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logMessagesAtServiceLevel=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logEntireMessage=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logMessagesAtTransportLevel=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">maxMessagesToLog=</span><span class="s">&quot;-1&quot;</span>
+</span><span class='line'>        <span class="na">maxSizeOfMessageToLog=</span><span class="s">&quot;10000&quot;</span>
+</span><span class='line'>        <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/diagnostics&gt;</span>
+</span><span class='line'>    ...pozostała część konfiguracji
+</span><span class='line'>  <span class="nt">&lt;/system.serviceModel&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>
+Co znaczą następujące atrybuty?:</p>
+
+<ul>
+<li><strong><em>logMalformedMessages</em></strong> &ndash; oznacza, że poza normalnymi wiadomościami, logowane zostaną również te, których deserializacja była niemożliwa (np. z powodu uszkodzenia zawartości dokumentu). W takim wypadku dokument zostaje logowany &ldquo;na surowo&rdquo; tzn. do momentu, kiedy był on jeszcze czytelny dla aplikacji. Jeżeli zawartość była zaszyfrowana w momencie wystąpienia błędu, log również będzie zaszyfrowany.</li>
+<li><strong><em>logMessagesAtServiceLevel</em></strong>, <strong><em>logMessagesAtTransportLevel</em></strong> &ndash; oznacza, czy wiadomości mają zostać logowane w momencie przejścia przez warstwę transportową, czy w chwili kiedy stają się dostępne dla usługi / konsumenta.</li>
+<li><strong><em>logEntireMessage</em></strong> &ndash; domyślnie ustawione na false. Określa czy logowana jest cała treść wiadomości czy tylko jej nagłówek SOAP.</li>
+<li><strong><em>maxMessagesToLog</em></strong> &ndash; określa limit wiadomości, które mogą być zalogowane. Pozwala nam uchronić się przed zasypaniem nadmierną ilością danych.</li>
+<li><strong><em>maxSizeOfMessageToLog</em></strong> &ndash; określa maksymalny rozmiar logowanej wiadomości. W momencie kiedy zapisywana wiadomość jest za długa, zapisana zostaje ta część która zmieściła się w limicie, a reszta zostaje ucięta i nie podlega logowaniu.</li>
+</ul>
+
+
+<p>Oczywiście nie musimy określać wszystkich tych atrybutów, ponieważ nie zawsze zależy nam na tak wysokim poziomie szczegółowości logowanych informacji.</p>
+
+<p>Kiedy określiliśmy zasady logowania wiadomości po stronie WCF, powiedzieliśmy naszej aplikacji jak ma wyglądać wiadomość, którą framework udostępnia do logowania. Teraz należy skonfigurować tracing, tzn. powiedzieć jakie typy wiadomości mają być logowane oraz jak ma przebiegać proces logowania (m.in. gdzie zapisujemy wiadomości). Oto wycinek przykładowej konfiguracji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;system.diagnostics&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;sources&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;source</span> <span class="na">name=</span><span class="s">&quot;System.ServiceModel.MessageLogging&quot;</span>
+</span><span class='line'>              <span class="na">switchValue=</span><span class="s">&quot;All&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;listeners&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;add</span> <span class="na">name=</span><span class="s">&quot;myListenerName&quot;</span>
+</span><span class='line'>               <span class="na">type=</span><span class="s">&quot;assembly qualified name&quot;</span>
+</span><span class='line'>               <span class="na">initializeData=</span><span class="s">&quot;my file path&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/listeners&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/source&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/sources&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/system.diagnostics&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Odrobina wyjaśnienia:</p>
+
+<ul>
+<li><strong>source</strong> &ndash; określa konfigurację obiektu, stanowiącego źródło nadchodzących logów. W przypadku, kiedy chcielibyśmy mieć możliwość późniejszego odwołania sie do tej instancji w kodzie aplikacji, należy zapamiętać nazwę stanowiącą identyfikator. Wartość switchValue określa jakiego typu wiadomości mają być logowane. Wyróżniamy:
+
+<ul>
+<li><strong><em>Off</em></strong> &ndash; wyłączona możliwość logowania.</li>
+<li><strong><em>Critical</em></strong> &ndash; logowane są błędy krytyczne, które mogą powodować wyłączenie się aplikacji (np. wyczerpanie pamięci, przepełnienie stosu, zawieszenie systemu).</li>
+<li><strong><em>Error</em></strong> &ndash; logowane są błędy, w tym te które mogą powodować nieprawidłowe działanie programu, które jednak nie spowodują zakończenia programu. Należą do nich chyba wszystkie niewyłapane wyjątki.&ndash; <strong><em>Warning</em></strong> &ndash; uprzedzenia programu o możliwości wystąpienia nieprawidłowości, które jednak nie będą miały większego wpływu na dalsze działanie aplikacji. Przykłady: nieprawidłowe logowanie, przekroczenie limitu czasu na wykonanie zadania.</li>
+<li><strong><em>Information</em></strong> &ndash; logowanie ważniejszych elementów działającej aplikacji np. poprawne odczytanie konfiguracji lub stworzenie kanału pomiędzy usługą a konsumentem &ndash; dla przypomnienia, WCF wymaga stworzenia kanału komunikacyjnego, jakiekolwiek protokoły wykorzystujące komunikację bezpołączeniową (w tym UDP) nie są obsługiwane.</li>
+<li><strong><em>Verbose</em></strong> &ndash; podobnie jak powyższe, jednak logowane są zdarzenia bardziej &ldquo;niskopoziomowe&rdquo; np. udane odczytanie nagłówka SOAP wiadomości.</li>
+<li><strong><em>ActivityTracing</em></strong> &ndash; logowane są wszystkie formy komunikacji między klientem a usługą, zarówno na poziomie usługi jak i w warstwie transportowej.</li>
+<li><strong><em>All</em></strong> &ndash; wszystkie powyższe.</li>
+</ul>
+</li>
+<li><strong>listeners</strong> &ndash; jest to kolekcja obiektów zajmujących się logowaniem wiadomości nadchodzących ze źródła. Dodając kolejny obiekt należy podać jego identyfikator (używany potem do rozpoznania go w kolekcji), typ czyli nazwę kwalifikowaną (pełna nazwa klasy, łącznie z podaniem przestrzeni nazw, nazwy zestawu / assembly, opcjonalnie również numer wersji i token). Do tego możemy również podać atrybut initializeData, który może posłużyć przekazaniu informacji inicjalizujących obiekt, bądź wykorzystywanych przez stosowny konstruktor listenera. Dostępnych mamy kilka typów wbudowanych listenerów oferowanych przez platformę .NET:
+
+<ul>
+<li><strong><em>TextWriterTraceListener</em></strong> &ndash; wykorzystuje standardowy strumień tekstowy do logowania wiadomości. W konfiguracji możemy podać plik, do którego logowne będą informacje. W aplikacji możemy podać strumień, dla którego listener stworzy obiekt TextWritera, który będzie później wykorzystywany do logowania zdarzeń.</li>
+<li><strong><em>XmlWriterTraceListener</em></strong> &ndash; tak jak powyższy, z tą różnicą że wykorzystywany wraper TextWritera jest zastąpiony XmlWriterem.</li>
+<li><strong><em>ConsoleTraceListener</em></strong> &ndash; automatycznie ustawia strumień wyjściowy konsoli (Console.Out) na odbiorcę logowanych wiadomości. Wszystkie zdarzenia zostaną wyświetlone na konsoli.</li>
+<li><strong><em>DefaultTraceListener</em></strong> &ndash; domyślnie używany tylko w trybie debug. Wysyła logowane wiadomości na okno Output środowiska Visual Studio.</li>
+<li><strong><em>EventLogTraceListener</em></strong> &ndash; wykorzystuje mechanizm logów udostępniony bezpośrednio przez nasz system operacyjny.</li>
+<li><strong><em>WebPageTraceListener</em></strong> &ndash; wykorzystywany do logowania informacji w kanałach udostępnianych przez ASP.NET framework.</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Powyższa konfiguracja jest w stanie samodzielnie &ndash; bez jakiejkolwiek ingerencji w kodzie &ndash; poradzić sobie z postawionym przez nas zadaniem zapisywania wiadomości w postaci SOAP. Niestety w sytuacji, kiedy podane nam możliwości listenerów nie wystarczą, np. kiedy chcielibyśmy logować wiadomości bezpośrednio w polu teksowym naszej aplikacji desktopowej, jesteśmy zmuszeni do wzięcia spraw we własne ręce i napisania własnego trace listenera.</p>
+
+<h2>Etap 2 &ndash; Logowanie wiadomości w polu tekstowym aplikacji</h2>
+
+<p>Kod który musimy napisać jest dość krótki i treściwy. Całość składa się z dwóch kroków:</p>
+
+<ol>
+<li>Stworzenie własnej klasy dziedziczącej po trace listenerze, umożliwiającej logowanie wiadomości w kontrolce aplikacji.</li>
+<li>Aktualizacja pliku konfiguracyjnego i podpięcie kontrolki do listenera.</li>
+</ol>
+
+
+<p>Implementacja klasy jest bardzo prosta, przykładowo może wyglądać tak:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">MyTraceListener</span> <span class="p">:</span> <span class="n">TraceListener</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">TextBoxBase</span> <span class="n">TextBox</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Write</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="n">TextBox</span><span class="p">==</span><span class="k">null</span><span class="p">)</span><span class="k">return</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">TextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">message</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">WriteLine</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">TextBox</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">TextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">message</span> <span class="p">+</span> <span class="n">Environment</span><span class="p">.</span><span class="n">NewLine</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W podstawowej wersji klasy wystarczy zdefiniować dwie metody abstrakcyjne. Dodatkowo stworzyliśmy właściwość typu TextBoxBase (ten przykład operuje na kontrolce z biblioteki Windows Forms), którą wykorzystamy za chwilę do podpięcia naszej kontrolki.</p>
+
+<p>Jak więc należałoby podpiąć wybraną przez nas kontrolkę do listenera takiego, jak podany powyżej? W pierwszej kolejności powinniśmy stworzyć obiekt TraceSource, który jest odpowiednikiem węzła source podanego przez nas wcześniej w konfiguracji. Może być podany w postaci pola dostępnego wewnątrz naszej aplikacji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="n">TraceSource</span> <span class="n">source</span> <span class="p">=</span>
+</span><span class='line'>    <span class="k">new</span> <span class="nf">TraceSource</span><span class="p">(</span><span class="s">&quot;System.ServiceModel.MessageLogging&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W konstruktorze podajemy taką samą nazwę, jak wartość atrybutu <strong>name</strong> w konfiguracji danego źródła. Następnie wyciągamy listenera i podpinamy do niego naszego textboxa.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">listener</span> <span class="p">=</span> <span class="n">source</span><span class="p">.</span><span class="n">Listeners</span><span class="p">[</span><span class="s">&quot;listener_config_name&quot;</span><span class="p">]</span> <span class="k">as</span> <span class="n">MyTraceListener</span><span class="p">;</span>
+</span><span class='line'><span class="n">listener</span><span class="p">.</span><span class="n">TextBox</span> <span class="p">=</span> <span class="n">myTextBox</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To wszystko. Kod inicjalizujący można umieścić np. w konstruktorze głównego okna naszej aplikacji. Od teraz wiadomości (filtrowaneg wg. tego co określiliśmy w konfiguracji) będą wypisywane w jej polu tekstowym.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-24T23:07:00+01:00" pubdate data-updated="true">Nov 24<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/wcf/'>WCF</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/11/17/javascript-jak-przetworzyc-query-string/" title="Previous Post: [Javascript] Jak przetworzyć query string?">&laquo; [Javascript] Jak przetworzyć query string?</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/01/07/javascript-konwersja-string-liczba/" title="Next Post: [Javascript] Konwersja string - liczba?">[Javascript] Konwersja string - liczba? &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

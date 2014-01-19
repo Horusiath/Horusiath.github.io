@@ -1,0 +1,468 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Ninject i pierwsze starcie z Dependency Injection - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Uwaga: poniższy wpis jest kierowany przede wszystkim do osób, które w tematyce TDD i DI są dość świeże lub &lsquo;nie czują&rsquo; jeszcze niektórych &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2011/07/31/ninject-i-pierwsze-starcie-z-dependency">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Ninject I Pierwsze Starcie Z Dependency Injection</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-07-31T23:52:00+02:00" pubdate data-updated="true">Jul 31<span>st</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Uwaga: poniższy wpis jest kierowany przede wszystkim do osób, które w tematyce TDD i DI są dość świeże lub &lsquo;nie czują&rsquo; jeszcze niektórych z przedstawianych poniżej pojęć.</p>
+
+<p>Nie dalej jak parę dni temu postanowiłem nieco rozwinąć swoją wiedzę z zakresu TDD (Test Driven Development). Jak pewnie osoby, które są zorientowane w podstawach tej metodyki wiedzą, niezbędnym elementem wymaganym podczas tworzenia takich rozwiązań jest konieczność przetestowania praktycznie każdej metody i klasy za pomocą <strong>wcześniej przygotowanych</strong> testów jednostkowych (tak jest, najpierw piszemy testy, a dopiero potem przygotowujemy implementację, która ma je poprawnie wykonać).</p>
+
+<p>Jak się jednak okazuje dość szybko natykamy się na pewien problem &ndash; w jaki sposób mamy przetestować klasy, które tworzą między sobą głębokie drzewa zależności lub sięgające do zewnętrznych zasobów. Przykładem może być chociażby klasa wykorzystująca zapytania do bazy danych czy operująca na danych przy użyciu obiektów z jakiegoś ORMa. Jak mamy przetestować wyniki zapytań w kosztownym w obsłudze i ciągle zmieniającym się środowisku bazy danych, która nie znajduje się bezpośrednio pod kontrolą klas odpowiedzialnych za testy?</p>
+
+<p>Rozwiązaniem tego problemu jest wzorzec <strong>Dependency Injection</strong>. Główną definicją z nim powiązaną jest pojęcie <em>loose coupling</em>. Zakłada ono, że należy unikać powiązania klas pomiędzy sobą na rzecz zależności klasa-interfejs, konstrukcji klas implementujących odpowiednie interfejsy oraz testowania metod prezentowanych za pośrednictwem interfejsów. Dokładniej przedstawię to na przykładzie poniżej.</p>
+
+<p>Inną ważną cechą związaną z wzorcem DI jest <strong>kontener DI</strong>. W skrócie chodzi o to, aby nie przekazywać ręcznie klas prezentujących dane interfejsy. Zamiast tego dysponujemy fabryką zwracającą na nasze zlecenie odpowiednie obiekty. W tym właśnie miejscu dochodzimy do tematu mojego posta. Mowa tutaj mianowicie o bibliotece Ninject. Jest to w pełni open source&#8217;owy projekt dostępny na githubie (strona główna projektu: <a href="http://ninject.org/">http://ninject.org/</a>). Wprowadza on w świat .Net zestaw klas umożliwiających nam szybkie i sprawne operowanie na kontenerach DI. Dla ciekawskich: innym projektem udostępniającym omawiane kontenery jest wspierany przez Microsoft <a href="http://unity.codeplex.com/">Unity 2.0</a>.</p>
+
+<h2>Projektowanie klas w myśl Dependency Injection</h2>
+
+<p>Ponieważ metodologia TDD znajduje powszechne uznanie w środowisku programistów ASP.Net MVC, za mój przykład posłuży właśnie ta platforma. Zakładam, że czytający mój wpis będzie miał pewne pojęcie odnośnie powodów stosowania wzorca repozytorium (<em>Repository pattern</em>), dlatego też od razu zabiorę się do opisania przypadku.</p>
+
+<p>Przyjmijmy, że dysponujemy klasą kontrolera (nazwijmy ją <strong>ItemsController</strong>), która zajmuje się nadzorowaniem wyświetlanych widoków w oparciu o obiekty klasy <strong>Item</strong>&ndash; w naszym przypadku będzie to docelowo obiekt mapowany na odpowiadający mu rekord w tabeli w bazie danych, jego implementacja jest obecnie nieistotna. W celu stworzenia jednolitego modelu nasz kontroler wykorzystywać będzie obiekt klasy <strong>ItemsRepository</strong>, przy pomocy którego będzie pobierał dane z bazy.</p>
+
+<p>Jest to dość standardowy scenariusz, wszystko powinno więc być dość jasne. Nasz wstępny wygląd klas może wyglądać w następujący sposób:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">ItemsController</span> <span class="p">:</span> <span class="n">Controller</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">ItemsRepository</span> <span class="n">repository</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="n">ViewResult</span> <span class="nf">Index</span><span class="p">()</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="cm">/* ... tutaj pobieramy rekordy</span>
+</span><span class='line'><span class="cm">     z bazy i przekazujemy je do widoku */</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">ItemsRepository</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="c1">// obiekt używany podczas mapowania obiektów z bazy</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">DataContext</span> <span class="n">context</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Item</span><span class="p">&gt;</span> <span class="n">Items</span><span class="p">{</span>
+</span><span class='line'>      <span class="k">get</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="cm">/* pobieramy rekordy z bazy i zwracamy</span>
+</span><span class='line'><span class="cm">         je jako obiekty klasy Item */</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wszystko wygląda na proste i przejrzyste do momentu, kiedy chcemy napisać testy jednostkowe mające na celu sprawdzenie, czy metoda Index kontrolera faktycznie zwraca porządany widok wypełniony właściwymi danymi.</p>
+
+<p>Tutaj dochodzimy do sedna Dependency Injection. Rozwiązaniem powyższego przypadku może być wydzielenie funkcjonalności repozytorium do postaci interfejsu ( a następnie przekazanie go do jako argumentu lub właściwości do kontrolera. Po takim zabiegu nasz kod wygląda następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IItemsRepository</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Item</span><span class="p">&gt;</span> <span class="n">Items</span><span class="p">{</span><span class="k">get</span><span class="p">;}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">ItemsRepository</span> <span class="p">:</span> <span class="n">IItemsRepository</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">DataContext</span> <span class="n">context</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Item</span><span class="p">&gt;</span> <span class="n">Items</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">get</span><span class="p">{...}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">ItemsController</span> <span class="p">:</span> <span class="n">Controller</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">IItemsRepository</span> <span class="n">repository</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="nf">ItemsController</span><span class="p">(</span><span class="n">IItemsRepository</span> <span class="n">repo</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">repository</span> <span class="p">=</span> <span class="n">repo</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="n">ViewResult</span> <span class="nf">Index</span><span class="p">()</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="p">...</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widzimy teraz nie jesteśmy związani na stałe wykorzystywaniem naszego repozytorium wewnątrz kontrolera. Jeżeli chcemy przetestować funkcjonalność kontrolera (bez angażowania w to naszej klasy <strong>ItemsRepository</strong>) wystarczy napisać testową implementację interfejsu <strong>IItemsRepository</strong>, która może zwracać dowolną wybraną przez nas kolekcję obiektów <strong>Item, </strong>nawet jeżeli nie są one w żaden sposób powiązane z bazą danych (a to z kolei zapewnia nam przezroczystość i kontrolę wystarczającą do przeprowadzenia testów oraz umożliwia wsparcie ze strony mocków).</p>
+
+<h2>Pora na Ninject</h2>
+
+<p>Kiedy nasze klasy są już gotowe powinniśmy się zastanowić w jaki sposób będziemy wywoływać konstruktor naszego kontrolera (podejście <em>Constructor Injection</em>). W tym celu wykorzystamy dostępną w ASP.Net MVC opcję umożliwiającą nam samodzielne określenie obiektu fabryki zajmującej się tworzeniem nowych kontrolerów. W tym celu musimy najpierw napisać własną klasę dziedziczącą po <code>System.Web.Mvc.DefaultControllerFactory</code> . Oto przykładowa implementacja fabryki:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">NinjectControllerFactory</span> <span class="p">:</span> <span class="n">DefaultControllerFactory</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="c1">// nasz DI container, który wykorzystamy do tworzenia powiązań</span>
+</span><span class='line'>  <span class="k">private</span> <span class="n">IKernel</span> <span class="n">kernel</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="nf">NinjectControllerFactory</span> <span class="p">()</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">kernel</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StandardKernel</span><span class="p">();</span>
+</span><span class='line'>      <span class="n">kernel</span><span class="p">.</span><span class="n">Bind</span><span class="p">&lt;</span><span class="n">IItemRepository</span><span class="p">&gt;().</span><span class="n">To</span><span class="p">&lt;</span><span class="n">ItemRepository</span><span class="p">&gt;();</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">protected</span> <span class="k">override</span> <span class="n">IController</span> <span class="nf">GetControllerInstance</span><span class="p">(</span><span class="n">RequestContext</span> <span class="n">reqCtx</span><span class="p">,</span> <span class="n">Type</span> <span class="n">controllerType</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">kernel</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="n">controllerType</span><span class="p">)</span> <span class="k">as</span> <span class="n">IController</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Na co warto zwrócić uwagę to fakt, że wewnątrz konstruktora możemy zauważyć tajemniczą linijkę:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">kernel</span><span class="p">.</span><span class="n">Bind</span><span class="p">&lt;</span><span class="n">IItemRepository</span><span class="p">&gt;().</span><span class="n">To</span><span class="p">&lt;</span><span class="n">ItemRepository</span><span class="p">&gt;();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jej znaczenie jest następujące &ndash; każemy kontenerowi naszej fabryki stworzyć powiązanie polegające na tym, że za każdym razem kiedy wyślemy do kontenera żądanie utworzenia obiektu wymagającego <strong>IItemRepository</strong>, wtedy automatycznie wykonane zostanie mapowanie wiązania i przekazanie obiektu <strong>ItemRepository</strong>. Sytuacja taka zachodzi wewnątrz metody <em>GetControllerInstance</em>, gdzie wywołujemy polecenie <code>kernel.Get()</code>. Jeżeli typ przekazanego kontrolera będzie wymagał przekazania obiektu do konstruktora (jak w przypadku klasy <strong>ItemsController</strong>), zostanie on automatycznie wypełniony. Pozwala to na sprawne i płynne operowanie kodem.</p>
+
+<p><strong>Uwaga</strong>: jeżeli chcemy, aby powyższa fabryka była faktycznie wykorzystywana w naszym projekcie, musimy ją podpiąć. Robimy to w następujący sposób &ndash; wewnątrz pliku <strong>Global.asax.cs</strong> znajdujemy metodę <code>Application_Start</code>i na jej końcu dodajemy następującą linijkę:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">ControllerBuilder</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">SetControllerFactory</span><span class="p">(</span><span class="k">new</span> <span class="n">NinjectControllerFactory</span><span class="p">());</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-07-31T23:52:00+02:00" pubdate data-updated="true">Jul 31<span>st</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2011/07/31/ninject-i-pierwsze-starcie-z-dependency/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2011/07/31/ninject-i-pierwsze-starcie-z-dependency/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/07/13/mssql-date-range-na-tablicach/" title="Previous Post: [MSSQL] Date Range na tablicach rekurencyjnych">&laquo; [MSSQL] Date Range na tablicach rekurencyjnych</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/08/16/prosta-scena-do-gry-przy-uzyciu-html5/" title="Next Post: Prosta scena do gry przy użyciu Html5 i CoffeeScriptu">Prosta scena do gry przy użyciu Html5 i CoffeeScriptu &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

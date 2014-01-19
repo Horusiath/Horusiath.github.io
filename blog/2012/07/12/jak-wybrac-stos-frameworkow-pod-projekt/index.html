@@ -1,0 +1,347 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Jak wybrać stos frameworków pod projekt webowy (.NET) - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="W życiu każdego web developera nadchodzi moment, kiedy należy się zdecydować na wybór platform i bibliotek wykorzystywanych w nowym projekcie. Nie ma &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Jak Wybrać Stos Frameworków Pod Projekt Webowy (.NET)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-07-12T18:14:00+02:00" pubdate data-updated="true">Jul 12<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>W życiu każdego web developera nadchodzi moment, kiedy należy się zdecydować na wybór platform i bibliotek wykorzystywanych w nowym projekcie. Nie ma w tym absolutnie nic złego, co więcej powinniśmy być zadowoleni, mając taką opcję. W aplikacjach biznesowych często jest on podejmowany &ndash; nie zawsze słusznie ani rozsądnie (przynajmniej z naszego punktu widzenia) &ndash; za nas, przez osoby trzecie. Tym bardziej warto doceniać sytuacje, w których mamy możliwość wygłoszenia swojej opinii.</p>
+
+<p>W takim razie rodzi się kolejne pytanie: co wybrać? W tym wątku postaram się rozwinąć swoje obserwacje na temat niektórych rozwiązań i stworzyć drobny przekrój technologii wykorzystywanych przez programistów .NET do budowy aplikacji sieciowych.</p>
+
+<h2>Hosting</h2>
+
+<p>Pierwsza sprawa to miejsce, w którym stać będzie nasza aplikacja. Czy będzie to standardowy wykupiony hosting, własny serwer czy może zechcemy udać się w podróż <em>into the cloud?</em> Nie rozwodzę się tutaj nad wykorzystywanym typem serwera, ponieważ praktycznie każdy rozsądny hosting oferuje IIS co najmniej od wersji 7. Hosting aplikacji na innych serwerach jest bardzo ograniczony. Osobiście nie udało mi się znaleźć strony oferującej serwery typu Mono Apache. Nadzieją na przyszłość dla alternatyw IIS może być framework <a href="http://nancyfx.org/">Nancy</a> &ndash; jeżeli się upowszechni, być może pojawią się oferty hostingowe na innych obsługiwanych przez niego serwerach.</p>
+
+<p>Kwestia hostingu aplikacji w chmurze to inna zabawa. Tutaj aplikacje .NETowe mają spore ograniczenie. W praktyce spotkałem tylko dwie chmury typu PaaS oferujące taki hosting: promowany przez Microsoft <a href="http://www.windowsazure.com/pl-pl/">Windows Azure</a> oraz oparty o chmurę Amazonu <a href="https://appharbor.com/">AppHarbor</a>.</p>
+
+<p>Cechą AppHarbor jest prostota &ndash; chmura ta bierze na siebie wiele z rozwiązań sprawdzonych już w Heroku i moim zdaniem jest to absolutny strzał w dziesiątkę. AppHarbor oferuje bardzo tanie jak na chmurę rozwiązania (najmniejsza, pojedyncza, współdzielona instancja jest zawsze za darmo), do tego oferuje szereg znanych technologii, o które można rozszerzyć naszą aplikację &ndash; są to głównie istniejące już na Amazonie usługi, oferty baz danych, systemów kolejkowych i innych (co ważne dla osób chcących je wykorzystać do celów prywatnych, niemal wszystkie w dysponują wersją darmową). Do tego wszystkiego wystarczy zamontować zwykłą aplikację ASP.NET (nie potrzebne są żadne specyficzne projekty). Skalowanie wykonywane jest przez proste zwiększenie liczby instancji oraz wykupienie droższych ofert u zewnętrznych usługodawców.</p>
+
+<p>W przypadku Windows Azure mamy do czynienia z kompletnie innym podejściem. Aplikacja umieszczona na Azure jest pisana z dedykacją dla tej chmury. Potrzebny jest do tego osobny projekt, konieczne jest również generowanie specjalnych paczek umieszczanych docelowo w chmurze. Do tego cała oferta jest znacznie droższa niż opisywany poprzednik, nie mamy również dostępu do tak szerokiego menu dodatkowych usług i są one z reguły kierowane specjalnie pod Azure (technologii tych nie zobaczymy nigdzie indziej). Jakie są więc zalety? Prawdopodobnie lepsze przystosowanie do aplikacji wymagających dużego skalowania i lepsze osiągi istniejących usług. Ostatecznie może to mieć znaczenie, zwłaszcza dla dużych aplikacji.</p>
+
+<h2>Framework</h2>
+
+<p>W tej sytuacji również wybór jest dość prosty. O Mono Rails nikt już nie pamięta (zresztą nie ma takiej potrzeby). W praktyce mamy parę rozwiązań:</p>
+
+<ul>
+<li><strong>ASP.NET Web Forms</strong> &ndash; stara technologia, która wywołuje dreszcze chyba u wszystkich, którzy mieli już okazję posmakować MVC. Istnieje garść bibliotek dla tej technologii, jednak osobiście nikomu bym jej nie polecił. Brak modularyzacji komponentów, praktyczny brak możliwości prowadzenia testów jednostkowych czy cała masa chybionych pomysłów (ViewState WTF?) powodują, że aplikacje pisane w Web Forms często są drogą przez mękę.</li>
+<li><strong>ASP.NET MVC</strong> &ndash; nowsze spojrzenie, wyraźnie inspirowane Ruby on Rails (co widać coraz wyraźniej w każdej następnej wersji). W dodatku często wykorzystywane, sprawdzone i wspierane zarówno przez sam Microsoft, jak i wiele firm zewnętrznych. Rozwiązanie w sam raz dla tych, którzy chcą rozwiązań pewnych i szybkich w pisaniu, jednocześnie nie tracąc poczucia elastyczności.</li>
+</ul>
+
+
+<p>Ponieważ programowanie do dynamiczna dyscyplina, warto również zwrócić uwagę na dwa stosunkowo nowe, wybijające się rozwiązania:</p>
+
+<ul>
+<li><strong>ASP.NET MVC Web API</strong> &ndash; dostępne od nadchodzącej wersji ASP MVC 4. Jedną z jego zalet jest znaczne uproszczenie w tworzeniu serwerów API (o których wspominałem w jednym z wcześniejszych wpisów), przez co stanowi pewien kontrast wobec tradycyjnego ASP MVC, jest jednak w chwili obecnej rozwiązaniem bardziej na czasie.</li>
+<li><strong>Nancy </strong>&ndash; framework inspirowany Sinatrą (kolejna platforma webowa na Ruby&#8217;ego). Cechy charakterystyczne to duża modularność (przydatna sprawa kiedy potrzebujemy przystosować środowisko specjalnie pod nasze potrzeby) oraz niewielki rozmiar. Rozwiązanie to jest jednak nowe (mniej sprawdzone do ASP). Stąd polecałbym go do mniejszych aplikacji oraz tam, gdzie rola serwera opiera się głównie na pośredniczeniu między klientem a bazą danych (patrz Server API).</li>
+</ul>
+
+
+<h2>Baza danych i ORM</h2>
+
+<p>Temat jest dość szeroki, dlatego nie będę się skupiał na niuansach dotyczących wyboru między bazami relacyjnymi i nierelacyjnymi &ndash; po pierwsze jest to temat na osobny artykuł, po za tym uważam, że z tymi drugimi wciąż miałem za mało do czynienia.</p>
+
+<p>W przypadku relacyjnych baz danych, przeważnie zostanie nam narzucone jakieś konkretne rozwiązanie. W momencie, gdy mamy dostęp do SqlServer, dalszy wybór nasuwa się praktycznie sam &ndash; <strong>Entity Framework</strong>. Polecam szczególnie przyjżeć się wersjom powyżej 4.0+. Widać (kolejną zresztą) inspirację Rubym (mam mianowicie na myśli świetny mechanizm migracji/kontroli wesji bazy danych ala Rake &ndash; szczególnie przydatny w sytuacji, kiedy członkowie zespołu mają mieć dostęp do własnych, niezależnych developerskich instancji bazy danych), jak również przejście na model POCO, co zwiększa elastyczność oraz daje mniejsze uzależnienie naszych modeli od konkretnej technologii.</p>
+
+<p>W przypadku innych typów baz, EF nie zawsze musi się to okazać najlepszym rozwiązaniem. Wynika to z faktu, że ten ORM tworzony były z myślą o bazie Microsoftu i często po macoszemu traktuje (ignoruje) technologie nie wykorzystywane przez SqlServer, ale wciąż dostępne w jego alternatywach. W tej dziedzinie można zauważyć sporą konkurencję ze strony<strong> (Fluent) NHibernate</strong>. Do ciekawostek należy mechanizm <a href="http://nhforge.org/blogs/nhibernate/archive/2009/12/17/queryover-in-nh-3-0.aspx">QueryOver</a>, mniej uniwersalny i bardziej niskopoziomowy od LINQ, jednakże lepiej przystosowany do generowania zapytań SQL pod konkretną bazę.</p>
+
+<p>Ostatecznie kiedy mowa o takich kobyłach jak EF czy NH, warto się zastanowić, czy naprawdę potrzebujemy czegoś tak wielkiego, czy może wystarczy nam mniejsze, prostsze rozwiązanie. W końcu nie każda aplikacja musi obsługiwać zaawansowane zapytania i dawać nam możliwość ingerencji w najdrobniejszy aspekt pracy z bazą danych. W takim wypadku powstało kilka MicroORMów, wśród których najpopularniejszym rozwiązaniem jest <a href="https://github.com/markrendle/Simple.Data/">Simple.Data</a>. Dynamicznie tworzone POCOsy, zapytania sterowane konwencją nazewniczą metod oraz wsparcie naprawdę dużej ilości baz danych &ndash; najpopularniejszych baz relacyjnych, dokumentowej bazy MongoDB i planowane wsparcie usług bazodanowych dostępnych na Azure &ndash; to mocne strony tego projektu. Coś w sam raz dla osób chcących skupić się na szybkim wykonaniu gotowego kodu do komunikacji z bazą z pominięciem wszystkich upierdliwych konfiguracji.</p>
+
+<h2>Prezentacja danych</div></h2>
+
+<p>Gdzie ma się znajdować logika odpowiedzialna za prezentację danych? W przypadku logiki umieszczonej po stronie serwera mamy do czynienia z dynamicznym generowaniem stron, a co za tym idzie, większym kosztem obliczeniowym po stronie serwera oraz z reguły większym rozmiarem przesyłanych odpowiedzi do klienta. Zaletą jest lepsza kontrola oraz dość rozbudowane możliwości większości komercyjnych kontrolek &ndash; przydatne zwłaszcza w rozwiązaniach typowo biznesowych. W tej dziedzinie znane są dwie marki:</p>
+
+<ul>
+<li><a href="http://www.telerik.com/products/aspnet-mvc.aspx">Telerik</a> MVC &ndash; całkiem dobra biblioteka dysponująca szerokimi możliwościami (bindowanie bezpośrednio do akcji po stronie serwera, usług WCF lub wywołań ajax), o całkiem sporych możliwościach własnego rozszerzania. Wadą mogą być pewne nieprzemyślane (z mojego punktu widzenia) decyzje np. duża różnica w obsłudze kolumn z danymi i komend oraz spore rozbieżności w kodzie generowanym przez wiązania ajaxowe i serwerowe.</li>
+<li><a href="http://www.devexpress.com/Subscriptions/DXperience/WhatsNew2012v1/asp.xml">DevExpress</a>. Nie spotkałem jeszcze nikogo, kto po kontakcie z Telerikiem, wybrałby DevExpress. Naprawdę ciężko usłyszeć o tej bibliotece cokolwiek dobrego. Generowany HTML nie ma wiele wspólnego z logiką, w razie potrzeb ciężko jest rozszerzyć istniejące opcje, zaś samo wsparcie techniczne jest dalekie od ideału.</li>
+</ul>
+
+
+<p>W przypadku kontrolek renderowanych po stronie klienta mamy prawdziwe zatrzęsienie dostępnych rozwiązań. Od jQuery UI, przez rozmaite formy wykresów, gridów czy grafów. Ciężko objąć je wszystkie dlatego postanowiłem znów wybrać dwa ciekawe rozwiązania przyjazne zwłaszcza z punktu widzenia biznesu:</p>
+
+<ul>
+<li><a href="http://www.kendoui.com/web.aspx">KendoUI</a> &ndash; kolejna biblioteka od twórców Telerika, tym razem skupiona jednak w całości po stronie klienta. Dostarcza dużych możliwości, w tym integrację z urządzeniami mobilnymi, frameworkiem MVVM Knockout.js (promowanym przez Microsoft wraz z nadchodzącym wypuszeniem ASP MVC 4) oraz obsługą HTML5.</li>
+<li><a href="http://www.sencha.com/products/extjs/">ExtJS</a> &ndash; duży framework oferujący bardzo rozbudowane możliwości kontroli logiki i prezentacji danych. Jego budowa jest bardziej &ldquo;obiektowa&rdquo; (w ujęciu tworzenia instancji klas/prototypów) niż KendoUI, jednak wydaje się również, że jest trudniejszy do opanowania od swojego konkurenta &ndash; poniekąd przez fakt, że wydaje się stanowić bardziej rozległe rozwiązanie.</li>
+</ul>
+
+
+<h2>Uzupełnienie</h2>
+
+<p>Pisząc uzupełnienie mam na myśli szereg bibliotek, które nieraz ułatwiają pracę, ale ciężko je podpisać pod którąkolwiek z poprzednich kategorii. W praktyce chciałem utworzyć jeszcze jedną dziedzinę, stworzoną specjalnie z myślą o rozbudowanych aplikacjach klienckich (Single Page Applications i stos MVC po stronie przeglądarki), ale ich opis zaprezentowałem we wcześniejszych postach.</p>
+
+<p>Jednym z najciekawszych spotkanych do tej pory projektów wydaje się być <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>.To prawdziwe wybawienie dla osób, które nie chcą za każdym razem walczyć ze stylami i kompozycjami, a w pełni wystarczy im zbiór najbardziej popularnych rozwiązań podanych <em>out of the box</em>.</p>
+
+<p>Osoby wykorzystujące API zewnętrznych portali (np. Facebook, Twitter) mogą być zaciekawione możliwościami oferowanymi przez <a href="http://andrewplummer.github.com/APIConnect/">Connect API</a>. Ta biblioteka javascriptowa pomaga zautomatyzować odwołania do zewnętrznych API, tworząc jednocześnie spójny interfejs dla tych usług.</p>
+
+<p>Na zakończenie, mówiąc o automatyzacji, ciekawym rozwiązaniem jest C#-owa biblioteka <a href="https://github.com/AutoMapper/AutoMapper">AutoMapper</a>. Świetnie nadaje się w sytuacjach kiedy musimy dokonywać częstych mapowań pomiędzy obiektami (jak również dokonywać kompozycji obiektów czy spłaszczeń &ndash; <em>flattening</em>) i świetnie pozwala zautomatyzować cały ten proces.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-07-12T18:14:00+02:00" pubdate data-updated="true">Jul 12<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/" title="Previous Post: Forwardowanie i streaming dużych plików przez WCF">&laquo; Forwardowanie i streaming dużych plików przez WCF</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/08/24/nlp-stemming-i-lematyzacja/" title="Next Post: [NLP] Stemming i lematyzacja">[NLP] Stemming i lematyzacja &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

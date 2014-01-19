@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: bazy danych | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/bazy-danych/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[FluentMigrator - wersjonowanie bazy danych]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/"/>
+    <updated>2011-10-19T21:25:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy</id>
+    <content type="html"><![CDATA[<p>W dzisiejszym poście pokrótce postaram się opisać narzędzie, jakim jest FluentMigrator oraz dlaczego warto korzystać z niego podczas pisania projektów (zwłaszcza kiedy mowa o projektach zespołowych).</p>
+
+<p>W sytuacjach kiedy zespół programistów tworzy aplikację wykorzystującą dostęp do wspólnej bazy danych, wszelkie zmiany wykonywane przez każdego z nich (np. dodawanie nowych tabel, kolumn czy zmiana nazw już istniejących) mogą powodować problemy w kompatybilności &ndash; zwłaszcza w przypadku wykorzysytwania modeli ORM. W tym celu warto się zabezpieczyć (a w dłuższej mierze czasu również znacząco przyspieszyć szybkość wprowadzanych zmian i aktualizacji systemu), korzystając z narzędzi umożliwiających wersjonowanie bazy danych w sposób &ndash; przynajmniej ideologicznie &ndash; podobny do tradycyjnych systemów kontroli wersji.</p>
+
+<p>FluentMigrator (<a href="https://github.com/schambers/fluentmigrator/wiki">link</a>) jest właśnie takim narzędziem. Jednakże w przeciwieństwie do standardowych systemów kontroli wersji, gdzie zmiany są utrzymywane i aktualizowane za pomocą kilku prostych komend, tutaj czeka nas nieco więcej pracy.</p>
+
+<h2>Migracje i Profile</h2>
+
+<p>Podstawowym terminem występującym we fluent migratorze jest tzw. migracja. Reprezentuje ona pojedyńczy zestaw zmian (coś na kształt jednego <em>commitu</em> w systemach kontroli wersji). W rzeczywistości jest to klasa dziedzicząca po abstrakcyjnej klasie <strong>Migrator</strong> (lub którejś z jego pochodnych), w której wprowadzamy kod wykonujący interesujące nas zmiany. Aby wiązanie to było możliwe zobowiązani jesteśmy zaimplementować 2 metody:</p>
+
+<ul>
+<li><strong>Up</strong> &ndash; jest to metoda odpowiedzialna wprowadzenie zmian (<em>upgrade</em>) przed podniesieniem aktualnej wersji bazy danych.</li>
+<li><strong>Down</strong> &ndash; metoda opozycyjna do Up, odpowiada za <em>downgrade</em> wersji naszej bazy. Jej zadaniem jest cofnięcie wszystkich zmian, które wykonaliśmy w Up'ie.</li>
+</ul>
+
+
+<p>W niektórych sytuacjach możliwe jest zautomatyzowanie tego procesu i automatyczne generowanie methody down na podstawie zmian wykonanych podczas Up. Drugą ważną sprawą związaną z migracjami jest atrybut <strong>MigrationAttribute</strong>. Pobiera on jeden parametr &ndash; liczbę typu long, która określa aktualny numer migracji. Umożliwia nam to wykonywanie up/down w sposób uporządkowany z zachowaniem odpowiednich współzależności między kolejnymi wersjami.</p>
+
+<p>Innym ciekawym uzupełnieniem powyższych funkcjonalności jest atrybut <strong>Profile</strong>, który w pewien sposób kojarzy mi się z branchami znanymi z systemów kontroli wersji. Dodając profil do konkretnych migracji jesteśmy w stanie tworzyć alternatywne przebiegi migracji tzn. wykonywać tylko te upgrade'y, które znajdują się w ramach danego profilu.</p>
+
+<h2>Fluent Interface</h2>
+
+<p>Dalszym rozszerzeniem istniejących plusów jest zestaw interfejsów umożliwiających budowę tabel, ich uzupełnianie oraz wykonywanie stworzonych przez nas skryptów. Zaletą tego rozwiązania jest to, że nie wymaga ono od nas pisania skryptów Sql pod konkretną bazę danych, ponieważ jesteśmy w stanie wygenerować je za pośrednictwem fluent interface. Co do wad, jest ich kilka, dlatego też wszelkie wykonywane przez nas zmiany muszą być wykonywane z rozwagą i przy dobrym zrozumieniu możliwości posiadanego przez nas narzędzia:</p>
+
+<ul>
+<li>Fluent interface nie jest w stanie samodzielnie wygenerować elementów bazy specyficznych dla danego dialektu sql np. możemy wygenerować tabele dla baz MSSql oraz Oracle, jednak takie rzeczy jak sekwencje i triggery Oracle'a muszą być wykonane za pośrednictwem skryptów.</li>
+<li>Fluent interface nie gwarantuje zgodności z EntityFramework ani innymi frameworkami ORM. Przykładem może być metoda <code>.AsInt32()</code>dostępna poprzez interface. Mimo nazwy, kolumna wygenerowana przez tą metodę może być typu <code>Number(10,0)</code>, co z kolei EF4 przekształci jako Int64, mimo że nie było to naszym celem.</li>
+<li>Wykonywanie skryptów z użyciem właściwości <em>Execute</em> nie gwarantuje pomyślności, nawet w sytuacjach kiedy te skrypty wprowadzane ręcznie do bazy wykonywane są prawidłowo. Wynika to z faktu, że w komunikacji z bazą FluentInterface korzysta z istniejących bibliotek .dll, które pełnią w naszym projekcie rolę adaptera dla klienta bazy danych.</li>
+</ul>
+
+
+<p>Dobrym pomysłem może być podpięcie narzędzia migrate.exe (jego projekt jest dostępny na stronie projektu na githubie) do post-buildu naszego projektu. Robimy to wchodząc we właściwości (<em>Project&rArr;nazwa_projektu&rArr;Properties</em>), następnie klikamy zakładkę <em>Build Events</em> i w oknie <em>Post-build event command line</em> wywołujemy migrate.exe w właściwymi parametrami np.:<code>ścieżka_do_migrate/migrate.exe -a ścieżka_do_naszej_biblioteki/nazwa_biblioteki.dll -db typ_bazy_danych -c connection_string -profile Profil -version nr_versji</code>, gdzie:</p>
+
+<ul>
+<li><strong>a</strong> &ndash; określa fizyczną scieżkę pod którą możemy znaleźć skompilowaną bibliotekę zawierającą zdefiniowane przez nas migracje</li>
+<li><strong>db</strong> &ndash; określa rodzaj bazy danych, jest wykorzystywana potem przez fabrykę FluentMigratora, która na podstawie przekazanego parametru próbuje stworzyć obiekt adaptera dla naszej bazy danych</li>
+<li><strong>c</strong> &ndash; connectionString umożliwiający dostęp do naszej bazy danych.</li>
+<li><strong>profile</strong> &ndash; (parametr opcjonalny) określa profil migracji, które mają zostać wykonane</li>
+<li><strong>version</strong> &ndash; (parametr opcjonalny) określa wersję, do której ma zostać wykonany upgrade. Jeżeli przyjmuje wartość 0, oznacza to, że wykonane zostaną wszystkie migracje znalezione w danej bibliotece .dll.</li>
+</ul>
+
+
+<p>Rozwiązanie takie oferuje tą zaletę, że wymusza, aby w trakcie wykoniania buildu biblioteki, zostały wprowadzone zmiany do bazy. Jeżeli napisane przez nas migracje są nieprawidłowe lub nie zostały wprowadzone, projekt nie zostanie zbudowany.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[MSSQL] Date Range na tablicach rekurencyjnych]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/07/13/mssql-date-range-na-tablicach/"/>
+    <updated>2011-07-13T15:47:00+02:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/07/13/mssql-date-range-na-tablicach</id>
+    <content type="html"><![CDATA[<p>Ostatnimi czasy dostałem do napisania zadanie związane z koniecznością stworzenia zapytania SQL (na potrzeby projektu budowanego w MSSQL Server 2008), którego jedną z charakterystycznych cech była konieczność sprawdzenia warunku dla wszystkich dat z podanego zakresu. Z początku proste, zadanie to miało jednak kilka dodatkowych warunków:</p>
+
+<ol>
+<li>Nie wolno mi było tworzyć w systemie tablic pomocniczych (żadnych poleceń CREATE TABLE ani ALTER TABLE) &ndash; zapytanie miało być w domyśle wykorzystywane w wielu miejscach jednocześnie, a wcześniejsze stworzenie tablicy z danymi uznane było za nadmiarowość danych.</li>
+<li>Zapytanie miało zachowywać się właściwie, gdy jeden z parametrów (data końcowa) był NULLem &ndash; w takim przypadku pobieramy datę bieżącą.</li>
+<li>Zapytanie miało mieć parametr decydujący o tym, czy sprawdzane daty znajdują się w odstępach dziennych, tygodniowych czy miesięcznych.</li>
+<li>Całość miała być skonstruowana tak, aby zapytania można było użyć podczas generowania raportów RDL.</li>
+</ol>
+
+
+<p>Mając do tej pory małe doświadczenia z samym SQL-em zacząłem szybko zgłębiać temat. Ostatecznie powziąłem decyzję o wykorzystaniu ciekawego wynalazku &ndash; tablic rekurencyjnych. Ponieważ było to rozwiązanie dopuszczalne z punktu widzenia wymagań, postanowiłem stworzyć pomocniczą funkcję.</p>
+
+<p>Oto przykładowa implementacja rozwiązania:
+``` sql
+CREATE FUNCTION dbo.DateRange
+(@start_date datetime,
+ @end_date datetime,
+ @unit nvarchar(5))
+RETURNS
+ @Dates TABLE(data datetime)
+AS
+BEGIN</p>
+
+<pre><code>WITH cte AS
+(
+    SELECT 1 i, @start_date AS data
+    UNION ALL
+    SELECT i + 1, CASE @unit
+    WHEN 'day' THEN DATEADD( day, i, @start_date )
+    WHEN 'week' THEN DATEADD( week, i, @start_date )
+    WHEN 'month' THEN DATEADD( month, i, @start_date )
+    END
+    FROM cte
+    WHERE 
+    (@unit = 'day' AND ((@end_date IS NULL AND
+    DATEADD(day, i, @start_date) &lt;= GETDATE()) OR
+        (DATEADD( day, i, @start_date ) &lt;= @end_date))) OR
+    (@unit = 'week' AND ((@end_date IS NULL AND
+    DATEADD(week, i, @start_date) &lt;= GETDATE()) OR
+        (DATEADD( week, i, @start_date ) &lt;= @end_date))) OR
+    (@unit = 'month' AND ((@end_date IS NULL AND
+    DATEADD(month, i, @start_date) &lt;= GETDATE()) OR 
+        (DATEADD( month, i, @start_date ) &lt;= @end_date)))
+</code></pre>
+
+<p>  )</p>
+
+<pre><code>INSERT INTO @Dates (data)
+SELECT data FROM cte
+OPTION (MAXRECURSION 32000)
+RETURN;
+</code></pre>
+
+<p>END
+```
+Jak widać, funkcja przyjmuje 3 parametry:</p>
+
+<ul>
+<li>datę początkową &ndash; w przypadku funkcji jest wymagana, lecz w samym zapytaniu można ją dostosować do swoich potrzeb.</li>
+<li>datę końcową &ndash; możliwe jest tu podanie wartości NULL, dla takiego przypadku pobieramy bieżącą datę.</li>
+<li>jednostkę &ndash; mowa tutaj o typie jednostek w jakich mierzymy przedziały (codziennie, w tygodniach, w miesiącach)</li>
+</ul>
+
+
+<p>Przykładowe wywołanie funkcji:
+<code>sql
+SELECT data
+FROM dbo.DateRange('2011-01-01', NULL, 'month')
+</code>
+Dodatkowo warto zwrócić uwagę na opcję określającą maksymalny poziom rekurencji w generowanej tabeli. Nie jest do element obowiązkowy, niemniej warto się w ten sposób zabezpieczyć.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Pobieranie dużych zbiorów w Entity Framework]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity/"/>
+    <updated>2011-03-24T19:48:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity</id>
+    <content type="html"><![CDATA[<p>Siedząc dzisiaj w pracy natknąłem się na pewien problem. Otóż spotkałem się z koniecznością pobrania wierszy z bazy i zapisania jej w pliku. Problem w zasadzie trywialny, lecz kiedy mówimy o konieczności zapisania kilkuset tysięcy wierszy, nie jest już tak łatwo. Żadne standardowe odwołanie nie zda tutaj egzaminu, ponieważ wcześniej czy później nasz program zapełni całą dostępną pamięć.</p>
+
+<p>Znajomy polecił mi wykorzystać funkcjonalność, jaką dostarczają metody Skip i Take, dostępne w LINQ. Dzięki nim możemy w prosty sposób podzielić przetwarzaną przez nas bazę na mniejsze fragmenty, które następnie przetwarzamy.</p>
+
+<p>Poniżej przedstawiam przykładowy kod rozwiązania:
+``` c#
+using(Entities context = new Entities())
+{</p>
+
+<pre><code> var package = new int[1];
+ int count = 0;          // licznik
+ int resolution = 1000;  // "rozmiar" paczki
+ do
+ {
+      package = (from d in context.Data
+                     select d).OrderBy(x =&gt; x)
+            .Skip(count).Take(resolution).ToArray();
+
+      count += resolution;
+ } while (package.Lenght == resolution);
+</code></pre>
+
+<p>}
+```
+Jak widać rozwiązanie jest proste. Sądze, że jedyne co wymaga wyjaśnienia, to wykorzystanie OrderBy. Jest to potrzebne, ponieważ ponieważ stałe pomijanie (metoda Skip) pewnych elementów kolekcji wymaga jej poprzedniego posortowania.</p>
+]]></content>
+  </entry>
+  
+</feed>

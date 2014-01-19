@@ -1,0 +1,389 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Javascript - porady i uwagi - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z kodem JavaScriptu, z jakim przyszło mi się spotykać w pracy i na uczelni. Zauważyłem &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Javascript - Porady I Uwagi</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-09T15:16:00+02:00" pubdate data-updated="true">Sep 9<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z kodem JavaScriptu, z jakim przyszło mi się spotykać w pracy i na uczelni. Zauważyłem, że wiele osób skupia się na logice serwerowej, trzymając się wielu kanonów określających jak powinno się pisać czysty i rozwijalny kod. Z drugiej strony jednocześnie traktują one skrypty JS po macoszemu, jako coś przez co trzeba jakoś przebrnąć.</p>
+
+<p>Nie ma co ukrywać, że utrzymanie przejrzystości i rozszerzalności modułów w JavaScriptcie jest o wiele trudniejsze niż w standardowych językach wykonywanych po stronie serwera. Dlatego właśnie uważam, że tym bardziej wymagają one uwagi i wkładu w zachowanie jakości. Poniżej przedstawię kilka uwag/wskazówek dla programistów, którzy chcieliby poprawić jakość pisanego kodu.</p>
+
+<h2>1. Zapoznaj się z <a href="http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml">Google Style Guide</a></h2>
+
+<p>Myślę, że to powinien być pierwszy krok dla każdego programisty frontendowego (i nie tylko). W każdym języku istnieją pewne konwencje i złote rady i JS nie jest tu żadnym wyjątkiem. Poradnik Google&#8217;a to nic innego jak zbiór powszechnie wypracowanych, przemyślanych zasad, którymi warto kierować się w trakcie pisania aplikacji WWW. Część z moich dalszych uwag będzie też rozwinięciem punktów z tego podręcznika.</p>
+
+<h2>2. Zamykaj skrypty we własnych zakresach (scopes)</h2>
+
+<p>Ten punkt dotyczy częstej sytuacji w której tworząc skrypty do aplikacji często definiujemy wiele zmiennych i funkcji globalnych o tymczasowym zastosowaniu. Tworzy to całą masę śmieciowego kodu, który jest dostępny w innych częściach aplikacji i w przyszłości może poskutkować zmniejszeniem czytelności, kłopotami z dalszą rozwijalnością kodu i zwiększeniem ryzyka powstawania błędów.</p>
+
+<p>Rozwiązaniem tego problemu jest posłużenie się wzorcem funkcji natychmiastowych (wykonywanych natychmiast po ich zdefiniowaniu). Poniżej zaprezentowałem przykład obrazujący to rozwiązanie:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span><span class="o">&gt;</span>
+</span><span class='line'><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nb">window</span><span class="p">,</span> <span class="nx">$</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="s1">&#39;use strict&#39;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">someVariable</span><span class="p">;</span>
+</span><span class='line'>    <span class="c1">// reszta kodu</span>
+</span><span class='line'><span class="p">})(</span><span class="nb">window</span><span class="p">,</span> <span class="nx">$</span><span class="p">);</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Utworzyliśmy w ten sposób odrębny zakres (<em>scope</em>), w którym wykonywane są funkcje skryptu. Oznacza to m.in., że zadeklarowana w przykładzie zmienna <em>someVariable</em> nie będzie widoczna przez inne skrypty spoza tego zakresu. Wpis <em>&lsquo;use strict&rsquo;</em> jest pomijany przez starsze przeglądarki, zaś w nowszych sprawia, że pisany kod będzie znacznie bardziej restrykcyjnie traktowany przez kompilator, przez co łatwiej można w nim wyłapać błędy i niejasności. Więcej na ten temat można przeczytać <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Functions_and_function_scope/Strict_mode?redirectlocale=en-US&amp;amp;redirectslug=JavaScript%2FStrict_mode">tutaj</a>.</p>
+
+<p>Można się zatem zapytać, po co w argumentach funkcji umieszczone są redefinicje zmiennych <em>window </em>i<em> jQuery</em>? Odpowiedź jest prosta: przejrzystość. Podając jawnie globalne typy z innych bibliotek i zmiennych środowiskowych możemy w mgnieniu oka określić powiązania pomiędzy naszym skryptem, a zewnętrznymi modułami.</p>
+
+<h2>3. Organizuj zmienne globalne w modułach/przestrzeniach nazw</h2>
+
+<p>Kolejnym krokiem w stronę dobrej organizacji kodu jest wykorzystanie powszechnie stosowanej w językach <em>server-side</em> opcji cięcia kodu w moduły i przestrzenie nazw. Może się to wydawać mało zrozumiałe, ponieważ JavaScript nie definiuje jawnie takich konstrukcji językowych. Jednakże możliwości tego języka są praktycznie nieograniczone, co daje nam możliwość rozwiązania tego problemu w inny sposób.</p>
+
+<p>Pierwsza propozycja przedstawiona jest poniżej. Osobiście nie polecam jej, jednakże w przypadku, gdy mamy niewiele modułów w naszej aplikacji, może się okazać wystarczająca.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">MyModule</span> <span class="o">=</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">MyModule</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">MyModule</span> <span class="o">||</span> <span class="p">{});</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">MySubModule</span> <span class="o">=</span> <span class="p">(</span><span class="nx">MyModule</span><span class="p">.</span><span class="nx">MySubModule</span> <span class="o">=</span> <span class="nx">MyModule</span><span class="p">.</span><span class="nx">MySubModule</span> <span class="o">||</span> <span class="p">{});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jest to prosta konstrukcja językowa wydobywająca moduł (reprezentowany w praktyce przez obiekt) z tzw. korzenia (<em>root</em> &ndash; w tym wypadku zmienna <em>window</em>) lub tworząca go w przypadku, gdy dany moduł nie został jeszcze utworzony. Zwrócony obiekt służy następnie jako uchwyt dla pozostałych definiowanych przez nas funkcji i zmiennych.</p>
+
+<p>Innym rozwiązaniem jest stworzenie predefiniowanej metody pozwalającej wydobywać/tworzyć moduły na zawołanie, wraz z zachowaniem ich hierarchii. Ten prosty wzorzec, nazywany jak nie ciężko się domyślić przestrzenią nazw (<em>namespace</em>), może być sprowadzony do postaci pojedyńczej funkcji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nb">window</span><span class="p">.</span><span class="nx">namespace</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">root</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">parent</span> <span class="o">=</span> <span class="nx">root</span> <span class="o">||</span> <span class="nb">window</span><span class="p">;</span>    <span class="c1">// jeżeli nie podaliśmy korzenia, korzystamy z obiektu okna</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">modules</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">modules</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">module</span> <span class="o">=</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+</span><span class='line'>        <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">||</span> <span class="p">{});</span>
+</span><span class='line'>        <span class="nx">parent</span> <span class="o">=</span> <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">];</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">parent</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Tak zdefiniowana funkcja pozwala nam pobierać lub tworzyć hierarchie modułów na żądanie. Przykładowe użycie może wyglądać następująco: <code>var regexes = namespace(&lsquo;System.Text.RegularExpressions&rsquo;);</code></p>
+
+<h2>4. Komunikuj się poprzez obiekty</h2>
+
+<p>Jest to dość wieloznaczne stwierdzenie, w praktyce jednak chodzi o prostą ideę: wykorzystanie proxy w komunikacji z zewnętrznymi serwisami, a nawet między różnymi modułami. Jest to wygodny sposób zachowanie luźnych powiązań.</p>
+
+<p>W ramach przykładu załóżmy, że wykorzystujemy obiekt pośredniczący w obsłudze żądań ajaxowych z różnych modułów naszej aplikacji. Niestety z jakiegoś powodu biblioteka jQuery, z której korzystaliśmy do obsługi tych wywołań, generuje błędy lub posiada zbyt ubogie funkcje. Dzięki wykorzystaniu proxy możemy ją zamienić na inną (lub napisać własną) bez potrzeby przepisywania kodu we wszystkich miejscach, które do tej pory wykorzystywały ją do komunikacji.</p>
+
+<p>Kolejną wynikającą z tego zaletą jest możliwość przeprowadzania testów jednostkowych dla skryptów klienckich. Nie ma przecież żadnych przeciwwskazań, aby stworzyć mocki, które będziemy mogli podstawiać w miejsce obiektu komunikatora.</p>
+
+<p>Innym zastosowaniem takiego rozwiązania jest możliwość reagowania na nadchodzące wiadomości w bardziej wyrafinowany sposób. Zastanówcie się, jak do tej pory reagowaliście, jeżeli w odpowiedzi na wasze żądanie na serwer zamiast upragnionego JSONa dostawaliście stringa zawierającego stronę z błędem? Oczywiście należałoby jakoś powiadomić użytkownika o wystąpieniu błędu lub wywołać odpowiednią reakcję systemu. To z kolei wiąże się z koniecznością każdorazowego sprawdzenia, czy zwrócona wiadomość jest prawidłowa. Wykorzystując interfejs pośredniczący moglibyśmy odpowiednio reagować na takie sytuacje <strong>zanim </strong>wiadomość zostanie przekazana dalej do oczekujących na nią elementów, a nawet za pomocą wzorca Publish/Subscribe tworzyć listy obiektów oczekujących i reagujących na konkretne rodzaje komunikatów.</p>
+
+<h2>5. Dokumentuj skrypty</h2>
+
+<p>Może to zabrzmi dziwnie, ale taka jest prawda. Kiedy rozwijasz duże aplikacje, bardzo możliwe że na przestrzeni miesięcy będziesz musiał wrócić do dawno nie oglądanego kodu lub twoja praca zostanie odziedziczona przez innego programistę, który nie ma zielonego pojęcia o tym co i jak działa. Z tego powodu w momencie, gdy skrypty nie są okraszone stosownymi komentarzami, ilość WTFów/min. znacznie wzrasta. Nie powinniśmy się przejmować wzrostem rozmiaru plików JS, ponieważ niemal każdy minifier załatwi ten problem za nas. Warto przyjąć sobie jakiś konkretny format pisania komentarzy, a w tej dziedzinie standardem wydaje się <a href="http://en.wikipedia.org/wiki/JSDoc">JSDoc</a>.</p>
+
+<h2>6. Minimalizuj skrypty</h2>
+
+<p>Kolejna sprawa, która powinna być dość oczywista w praktyce, często jest jednak pomijana. Minimalizowanie skryptów oraz styli pozwala nawet kilkukrotnie zmniejszyć rozmiar wymaganych do pobrania plików. Jak wiadomo im mniejszy rozmiar, tym mniej danych trzeba przesłać przez sieć i tym szybciej dana strona zostanie załadowana. Ma to znaczenie zwłaszcza dla użytkowników korzystających z urządzeń mobilnych, które często są wykorzystywane w otwartych obszarach np. miejskich hot-spotach, gdzie udźwig łącza stanowi pewien problem.</p>
+
+<p>Innym dobrym pomysłem jest łączenie wielu plików ze skryptami do jednego pliku. Znowu wynika to z faktu, że większa ilość plików wymaga wygenerowanie przez przeglądarkę większej ilości zapytań. W przypadku gdy przeglądarka klienta lub serwer hostujący nie obsługują protokołu <a href="https://sites.google.com/a/chromium.org/dev/spdy/spdy-whitepaper">SPDY</a>, oznacza to, że każdy żądany zasób będzie wymagał ustanowienia nowego połączenia TCP, co jest dość kosztowne i negatywnie przekłada się na czas transmisji, zwłaszcza na dużych dystansach między klientem a serwerem. Z tego powodu wskazane jest zarówno łączenie jak i minimalizacja skryptów i stylów w środowisku produkcyjnym.</p>
+
+<h2>7. Testuj skrypty</h2>
+
+<p>Nie jest chyba dla nikogo niespodzianką, że w życiu programisty dużą część czasu poświęca się nie tylko na pisaniu kodu, ale również na sprawdzeniu jego poprawności. Aby zautomatyzować ten proces, powstało wiele frameworków umożliwiających przeprowadzanie szybkich testów. Ponieważ w dzisiejszych aplikacjach webowych coraz większa część logiki zaczyna być wykonywana po stronie klienta, dobrą praktyką jest przygotowywanie testów również dla skryptów JS. Zalet tego podejścia jest sporo, warto wymienić chociaż kilka z nich:</p>
+
+<ul>
+<li>Przeprowadzanie testów jednostkowych wymusza budowanie modularnych aplikacji opartych o luźne powiązania między obiektami. Jest to bardzo dobra metodyka programowania i pomaga poprawić czytelność oraz jakość pisanego kodu.</li>
+<li>Od kiedy JavaScript umożliwia nam zdalne wywoływanie zdarzeń związanych z akcjami użytkownika, możliwe jest również przynajmniej częściowe zautomatyzowanie testów wymagających podejmowania działań po stronie klienta.</li>
+<li>W przypadku scalania i minimalizacji skryptów (zwłaszcza tych wykorzystujących niezminimalizowane biblioteki zewnętrzne do developingu i zminimalizowane w środowisku produkcyjnym) nigdy nie możemy mieć 100% pewności, że nasz scalony/zminimalizowany skrypt będzie dalej działał dokładnie tak jak sprawdzaliśmy.</li>
+</ul>
+
+
+<p>Środowisk do testów javascriptowych jest dość sporo. Osobiście mogę polecić <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, framework bazujący na rozwiązaniach znanych dla programistów Ruby z RSpeca. Jest łatwy do nauki i wprowadzenia w naszej aplikacji, a jednocześnie daje nam dużą swobodę w tworzeniu własnych rozwiązań.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-09T15:16:00+02:00" pubdate data-updated="true">Sep 9<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/08/24/nlp-stemming-i-lematyzacja/" title="Previous Post: [NLP] Stemming i lematyzacja">&laquo; [NLP] Stemming i lematyzacja</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/12/30/nodejs-renderowanie-layoutow-z/" title="Next Post: node.js - renderowanie layoutów z wykorzystaniem doT.js">node.js - renderowanie layoutów z wykorzystaniem doT.js &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

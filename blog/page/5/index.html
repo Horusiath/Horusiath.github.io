@@ -1,0 +1,1036 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="Witam, w dzisiejszym poście postaram się streścić ideę pomysłu, który jakiś czas temu przyszedł mi do głowy. Rozpatrzmy następujący przypadek: &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/page/5">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/02/09/typy-anonimowe-metody/">Typy Anonimowe a Metody</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-09T20:17:00+01:00" pubdate data-updated="true">Feb 9<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Witam, w dzisiejszym poście postaram się streścić ideę pomysłu, który jakiś czas temu przyszedł mi do głowy. Rozpatrzmy następujący przypadek:</p>
+
+<p>Załóżmy, że mamy zaimplementowaną relacyjną bazę danych i odwołujemy się do niej wykorzystując mapowania O\R oraz Linq do wydobywania rezultatów zapytań. W środowisku .Net jest to sytuacja dość częsta, okazuje się jednak, że nieraz nie chcemy pobierać wszystkich informacji zawartych w tabelach. W tym celu w zapytaniach Linq często stosuje się tzw. typy anonimowe. Umożliwiają one stworzenie listy obiektów, nie definiując uprzednio typu klasy, jakiego mają być dane obiekty. Jest to bardzo wygodne rozwiązanie, zawiera jednak 2 zasadnicze wady:</p>
+
+<ol>
+<li>pola\właściwości zainicjalizowane w ten sposób zawsze są typu readonly</li>
+<li>wewnątrz typów anonimowych nie można definiować metod</li>
+</ol>
+
+
+<p>Jak widać jest to spory ubytek w stosunku do np. popularnych klas anonimowych, jakie można spotkać w Javie. W dzisiejszym poście opiszę sposób na okrężne rozwiązanie 2 punktu.</p>
+
+<p>Niech za przykład posłuży nam tabela <strong>users</strong> wypełniona obiektami klasy <strong>Osoba</strong> zawierająca różne pola np.: identyfikator, imie, nazwisko, adres itp. W naszym problemie chcemy jednak ograniczyć się do wyboru 2 pól &ndash; imienia i nazwiska. W tym celu stosujemy typ anonimowy. Cała sytuacja jest opisana poniżej:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">items</span> <span class="p">=</span> <span class="p">(</span><span class="k">from</span> <span class="n">x</span> <span class="k">in</span> <span class="n">users</span>
+</span><span class='line'>      <span class="k">select</span> <span class="k">new</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">Name</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span>
+</span><span class='line'>          <span class="n">Surname</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span>
+</span><span class='line'>      <span class="p">}).</span><span class="n">ToList</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Rozwińmy jednak problem. Załóżmy, że chcemy mieć dostęp do metody, która w typ przypadku będzie zwracała stringa wypisującego imię i nazwisko danego użytkownika. Tutaj właśnie dochodzimy do sedna rozwiązania. Ponieważ w typach anonimowych można definiować wyłącznie obiekty. Obejściem jest&hellip; delegat! Wpierw zadeklarujemy delegata (możemy też wykorzystać któregoś z wbudowanych o ile będzie odpowiedni do potrzeb naszej funkcji):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="kt">string</span> <span class="nf">StringDelegate</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Teraz wystarczy już tylko dodać całość do wywołania obiektu typu anonimowego i przekazać np. za pomocą wyrażenia lambda ciało metody do wykonania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">new</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Name</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span>
+</span><span class='line'>  <span class="n">Surname</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span><span class="p">,</span>
+</span><span class='line'>  <span class="n">FullName</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StringDelegate</span><span class="p">(()=&gt;{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Format</span><span class="p">(</span><span class="s">&quot;{0} {1}&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Całość okazała się prosta do zaimplementowania. Teraz aby wywołać naszą metodę, wystarczy napisać (posługując się kodem napisanym poprzednio) <code>items[0].FullName()</code> :) .</p>
+
+<p>Na koniec rozpatrzmy kilka uwag:</p>
+
+<ul>
+<li><p>Należy pamiętać, że mimo wszystko wciąż mamy do czynienia z delegatem, zatem wywołując <i><b>FullName()</b></i> w rzeczywistości dochodzi do wywołania metody <i><b>FullName.Invoke()</b></i>. Nie myślcie więc, że w ten sposób można np. przeciążyć w typie anonimowym metodę ToString(). To rozwiązanie ma na celu przede wszystkim wygodę programisty.</p></li>
+<li><p>Jak widzimy na przykładzie, pobranie parametrów w metodzie jest wykonywane z obiektu x. Jest tak ponieważ definiując ciało wyrażenia lambda kompilator nie jest jeszcze w stanie rozpoznać składowych typu anonimowego. Wyrażenie jawne za pomocą this również nie jest możliwe. Możnaby się spytać, co się zatem stanie, gdybyśmy próbowali zmienic zawartość którejś ze składowych typu anonimowego. Odpowiedź jest prosta: nie skompilujemy takiego projektu, ponieważ składowe typów anonimowych są zawsze typu readonly i po zainicjowaniu nie można ich zmieniać :) .</p></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/02/05/syntaxhighlighter/">Immutable String - Czy Na Pewno?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-05T10:43:00+01:00" pubdate data-updated="true">Feb 5<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Na wstępie zacznę od przedstawienia łańcuchów znakowych w językach takich jak C# i Java. Jak zapewno większości z czytelników wiadomo, łańcuch znaków jest w tych językach niezmienny tzn. przypisanie lub dodanie nowej wartości do zmiennej typu string (lub String) spowoduje tak naprawdę zaalokowanie nowego fragmentu pamięci i przypisanie jego adresu do zmiennej. Może to być dość uciążliwe w sytuacji, kiedy często chcemy modyfikować dany łańcuch (ciągłe przepisywanie zmiennych jest dość pamięciożerne). Oczywiście są na to sposoby (jak choćby znana klasa StringBuilder).</p>
+
+<p>Co jednak zrobić w sytuacji, kiedy mamy już zainicjowany string, a potrzebujemy często zmieniać jego zawartość. Oczywiście najbardziej oczywistym rozwiązaniem wydaje się konwersja na tablicę znaków (metoda ToCharArray()), ale miło byłoby dokonywać takich zmian bez tworzenia nowych struktur.</p>
+
+<p>Tutaj własnie dochodzimy do alternatywnych możliwości oferowanych przez język C#, a mianowicie możliwości operowania na wskaźnikach. Takie rozwiązanie pozwoli nam dokonywać zmiany w łańcuchu znaków, bez potrzeby kopiowania i alokowania nowych fragmentów pamięci.
+Ideę takiego rozwiązania prezentuje poniższy kod:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">String</span> <span class="n">mystring</span> <span class="p">=</span> <span class="err">“</span><span class="n">ala</span> <span class="n">ma</span> <span class="n">kota</span><span class="err">”</span><span class="p">;</span>
+</span><span class='line'><span class="k">unsafe</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">fixed</span> <span class="p">(</span><span class="kt">char</span><span class="p">*</span> <span class="n">mystrptr</span> <span class="p">=</span> <span class="n">mystring</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">mystrptr</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">=</span> <span class="p">(</span><span class="kt">char</span><span class="p">)(*</span><span class="n">mystrptr</span> <span class="p">-</span> <span class="m">32</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">mystring</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Odwołanie za pomocą indexu wykonałem, aby pokazać, że można swobodnie zmieniać pojedyńcze znaki, wypisując po prostu ich pozycję w stringu.
+Trudnością takiego rozwiązania jest fakt, że należy w projekcie zezwolić na wykorzystywanie kodu unsafe. Poniżej zamieszczam minitutorial dla osób, które nie wiedzą jak to zrobić:</p>
+
+<ul>
+<li>W menu wybieramy zakładkę <strong>Project</strong>&rArr;<strong>Nazwa_projetku</strong>&rArr;<strong>Properties&hellip;</strong></li>
+<li>Wyświetla się nam okno z właściwościami projektu, przechodzimy do zakładki <strong>Build</strong> i zaznaczamy pole <strong>Allow unsafe code</strong>.</li>
+</ul>
+
+
+<p>Niestety niektórych rzeczy nie da się przeskoczyć, przykładowo nie możemy wydłużyć istniejącego stringa (jeżeli spróbujemy zmienić znak o indeksie będącym poza zakresem stringa, nie dostaniemy żadnej błędnej wiadomości, ale ostatecznie nadpisany znak i tak nie zostanie wyświetlony). Niemniej sposób który opisałem, jest przyjemną ciekawostką i pozwala nieco nagiąć prawa rządzące łańcuchami znaków w C#.</p>
+
+<h2>Comments</h2>
+
+
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Rafał Garbowski</div>
+<div class='content'>
+Interesujący artykuł, oby było takich więcej ;-)</div>
+</div>
+</div>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/12/11/podstawy-programowania-w-cil-cz-1/">Podstawy Programowania W CIL Cz. 1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-12-11T10:27:00+01:00" pubdate data-updated="true">Dec 11<span>th</span>, 2010</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Witam, w dzisiejszym poście postaram się pokrótce przedstawić najważniejsze Common Intermediate Language, czyli języka pośredniego platformy .Net. Jak pewnie wszystkim zainteresowanym wiadomo, wszystkie programy napisane w językach platformy .Net są kompilowane wpierw do kodu pośredniego czyli CIL. Jednakże my sami również możemy pisać programy bezpośrednio w nim, a nawet wykorzystywać potem biblioteki z tak napisanym kodem w naszych aplikacjach.</p>
+
+<p>Dlaczego warto poznać CIL? Chociażby dlatego, żeby wiedzieć jak wygląda wewnętrzna realizacja języków wysokiego poziomu. Ale to nie wszystko. Możemy również definiować konstrukcje które nie istnieją lub nie są dostępne w naszych językach wysokiego poziomu (jak np. zmienne globalne, których nie ma w C#).</p>
+
+<p>Zacznijmy od budowy języka. Rolę słów kluczowych w Common Intermediate Language pełnią tzw. tokeny. Możemy je podzielić na 3 grupy:</p>
+
+<ol>
+<li><strong>Dyrektywy</strong> &ndash; służą opisowi struktury pakietu. Można je rozpoznać po prefixie &ldquo;.&rdquo; (np. .namespace, .assembly itp.).</li>
+<li><strong>Atrybuty</strong> &ndash; służą określaniu, w jaki sposób dana dyrektywa ma zostać przetworzona. Przykładowe atrybuty to: extends, implements, private.</li>
+<li><strong>Kody operacyjne</strong> &ndash; odpowiadają za podawanie logiki (można o nich myśleć trochę jak o instrukcjach assemblera). Przykłady: box, unbox, throw. W praktyce nazwy te służą czytelniejszemu rozpoznawaniu binarnych kodów operacyjnych (np. 0X58 (kod add) to kod operacyjny dodawania 2 liczb, zaś 0X73 (kod newobj) służy alokacji obiektu na zarządzanej stercie).</li>
+<li><strong>Etykiety</strong> &ndash; służą rozpoznawaniu danej linii kodu. Mogą przyjmować dodowlne nazwy (pod warunkiem, że nie powtarzają się w zasięgu tej samej składowej) i nie są wymagane do prawidłowego działania kodu. Jedyne sytuacje, kiedy są obowiązkowe, to określenie przepływu logiki w konstrukcjach rozgałęzienia lub w pętlach.</li>
+</ol>
+
+
+<p>W CIL zmienne są przechowywane na tzw. wirtualnym stosie wykonywania (virtual execution stack). Aby mieć dostęp do danego elementu, musimy go wpierw jawnie załadować na stos, a potem zrzucić go, kiedy będziemy chccieli go użyć.</p>
+
+<p>Stwórzmy teraz przykładowy projekt &ldquo;Hello World&rdquo; i przeanalizujmy jego kod w języku CIL. W tym celu posłużę się możliwością utworzenia gotowego projektu z rozszerzeniem .il w programie MonoDevelop (niestety VS nie umożliwia jeszcze dodawania projektów pisanych w kodzie pośrednim). Jednakże aby móc podlągać i pisać w VS polecam zapoznać się z programami <strong>ilasm</strong> (kompilator), <strong>ildasm</strong> (dezassembler) oraz <strong>peverify</strong> (program sprawdzający poprawność zbudowanego kodu). Kod wynikowy może się nieco różnić, ale główna idea zostanie bez zmian.</p>
+
+<p>Tak więc po stworzeniu nowego projektu naszym oczom ukazał się następujący kod:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>.assembly HelloWorld
+</span><span class='line'>{
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>.assembly extern mscorlib { }
+</span><span class='line'>
+</span><span class='line'>.namespace DefaultNamespace
+</span><span class='line'>{
+</span><span class='line'>    .class private auto ansi beforefieldinit MainClass extends [mscorlib]System.Object
+</span><span class='line'>    {
+</span><span class='line'>        .method public hidebysig static void Main(string[] args) cil managed
+</span><span class='line'>        {
+</span><span class='line'>            .entrypoint
+</span><span class='line'>            .maxstack  1
+</span><span class='line'>            ldstr "Hello World!"
+</span><span class='line'>            call void [mscorlib]System.Console::WriteLine(string)
+</span><span class='line'>            ret
+</span><span class='line'>        }
+</span><span class='line'>    }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Przejdźmy więc do jego interpretacji</p>
+
+<ul>
+<li><code>.assembly HelloWorld</code> &ndash; oznacza to nasz pakiet. Wewnątrz można zaszyć informacje istotne dla pakietu (np. .ver, .module).</li>
+<li><code>.assembly extern mscorlib</code> &ndash; deklarujemy pakiety zewnętrzne, z których korzysta nasz pakiet.</li>
+<li><code>.class private auto ansi beforefieldinit MainClass </code> &ndash; definicja głównej klasy programu. Atrybut extends oznacza, że nasza klasa dziedziczy po System.Object.</li>
+<li><code>.entrypoint </code>&ndash; oznakowuje daną metodę jako punkt wejścia dla pliku wykonywalnego.</li>
+<li><code>.maxstack</code> &ndash; określa maksymalną głębokość wirtualnego stosu wykonywania.</li>
+<li><code>ldstr</code> &ndash; operacja ładowania stringa na stos.</li>
+<li><code>call void [mscorlib]System.Console::WriteLine(string)</code> &ndash; wywołanie metody WriteLine z klasy System.Console. CIL wymaga, aby podawać pełną nazwę kwalifikowaną typu za każdym razem, kiedy chcemy się do niego odwołać. Poza tym musimy podać dokładną definicję metody.</li>
+</ul>
+
+
+<p>Ten przykładowy kod pozwala nam zrozumieć podstawy języka. Ponieważ obiektami, interfejsami i strukturami chcę zająć się w następnym artykule tutaj podam tylko krótką tabelę opisującą bazowe typy danych i odpowiadające im słowa kluczowe CIL. Będą nam potrzebne później.</p>
+
+<table class="table"><tbody><tr><th>Typ klasy bazowej .NET</th><th>Reprezentacja w języku CIL</th><th>Notacja stałych CIL</th>  </tr><tr> <td>System.SByte</td><td>int8</td><td>I1</td> </tr><tr> <td>System.Byte</td><td>unsigned int8</td><td>U1</td> </tr><tr> <td>System.Int16</td><td>int16</td><td>I2</td> </tr><tr> <td>System.Int32</td><td>int32</td><td>I4</td> </tr><tr> <td>System.Int64</td><td>int64</td><td>I8</td> </tr><tr> <td>System.Char</td><td>char</td><td>CHAR</td> </tr><tr> <td>System.Single</td><td>float32</td><td>R4</td> </tr><tr> <td>System.Double</td><td>float64</td><td>R8</td> </tr><tr> <td>System.Boolean</td><td>bool</td><td>BOOLEAN</td> </tr><tr> <td>System.String</td><td>string</td><td>brak</td> </tr><tr> <td>System.Object</td><td>object</td><td>brak</td> </tr><tr> <td>System.Void</td><td>void</td><td>VOID</td> </tr></tbody></table>
+
+
+<p>To wszystko. W następnym artykule nauczymy się, jak tworzyć własne klasy oraz jak je wykorzystywać w naszym programie.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/11/16/csharp-skompresowane-drzewo-trie/">[CSharp] Skompresowane Drzewo TRIE</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-11-16T13:32:00+01:00" pubdate data-updated="true">Nov 16<span>th</span>, 2010</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Ostatnimi czasy powróciłem do programów wykonywanych na potrzeby przedmiotów na Informatyce. Wśród nich udało mi się odnaleźć projekt skompresowanego drzewa TRIE. Po drobnym odświeżeniu pomyślałem, że mogę się nim podzielić tutaj.</p>
+
+<p>Czym w zasadzie jest skompresowane drzewo TRIE? Czym różni się tak bardzo od swojej normalnej wersji? Głębiej zainteresowanych tematem odsyłam do wyszukiwania. Najprostszym źródłem jest wikipedia [<a href="http://pl.wikipedia.org/wiki/Skompresowane_drzewo_trie">Link</a>]. Tutaj postaram się skupić na opisaniu podstawowych operacji: dodaniu elementu, usunięciu go, wyszukaniu i odczytaniu klucza.</p>
+
+<p><strong>Odczytanie słowa-klucza dla wybranego węzła</strong> &ndash; tutaj widać pierwszą różnicę w stosunku do standardowego TRIE. Węzeł nie przechowuje całego klucza, a jedynie tę jego część, która jest unikalna dla samego węzła i nie powtarza się w pokrewnych gałęziach. W związku z tym samo odczytanie polega na poruszaniu się w górę drzewa (aż do korzenia) i wrzucaniu na stos kolejnych fragmentów klucza, przechowywanych przez przodków węzła, w którym zaczęliśmy. Następnie wystarczy złączyć ściągane ze stosu elementy &ndash; w ten sposób otrzymujemy gotowy klucz.</p>
+
+<p><strong>Wyszukiwanie węzła wg. podanego wzorca</strong> &ndash; zaczynając od korzenia, musimy sprawdzić wzorzec dla każdego z jego dzieci. W pierwszej kolejności eliminujemy te węzły, których składowa klucza jest dłuższa od wzorca (takie węzły są automatycznie niezgodne). Dla pozostałych wykonujemy porównanie wzorca ze składową szukając momentu, w którym oba ciągi się różnią. Dalej wycinamy z wzorca zgodną część (w tym celu należało zapamiętać numer pozycji, w której wystąpiła różnica) i powtarzamy operację wyszukiwania dla kolejnych dzieci węzła, przekazując im skrócony wzorzec.</p>
+
+<p><strong>Dodawanie węzła</strong> &ndash; tutaj sprawa może być dość skomplikowana. Pierwszy przypadek: Zaczynając od korzenia, dla każdego z jego dzieci należy porównać podany klucz z ich składową klucza. Dla tych, które są częściowo zgodne, skracamy klucz o wspólną część i sprawdzamy dalej. Jeżeli w ten sposób doszliśmy do końca i wszystkie składowe we wszystkich węzłach zostały sprawdzone w całości, po prostu dodajemy kolejny węzeł do dzieci najbardziej podobnego rodzica. W innym wypadku, jeżeli ostatnia składowa klucza jest tylko częściowo podobna, należy wyciąć część wspólną i stworzyć z niej węzeł, do którego dodajemy 2 węzły mające za składowe różniące się między sobą części klucza. Ostatnia sytuacja zachodzi wtedy, gdy klucz okazuje się w pełni zgodny ze składową, ale jest od niej krótszy. Wtedy ponownie wydzielamy część wspólną, ale tym razem węzeł, który był rodzicem, zostaje ustawiony jako dziecko względem nowo stworzonego węzła, który zajmuje jego dotychczasowe miejsce w drzewie.</p>
+
+<p><strong>Usuwanie węzła</strong> &ndash; zaczynając od korzenia, wyszukujemy wzorca wśród jego dzieci. Zakładając, że usuwany węzeł istnieje, wyrzucamy go z drzewa i wracamy do jego rodzica. Jeżeli rodzicowi zostało tylko jedno dziecko, ale sam zawiera pewną wartość, nie robimy nic. Jeżeli jest inaczej usówamy rodzica, zaś na początku składowej klucza jedynaka dodajemy składową rodzica i ustawiamy więzy pokrewienstwa.</p>
+
+<p>Całość opisuje poniższy kod &ndash; klasa PatriciaTreeNode opisuje jedynie operacje na węzłach:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+<span class='line-number'>153</span>
+<span class='line-number'>154</span>
+<span class='line-number'>155</span>
+<span class='line-number'>156</span>
+<span class='line-number'>157</span>
+<span class='line-number'>158</span>
+<span class='line-number'>159</span>
+<span class='line-number'>160</span>
+<span class='line-number'>161</span>
+<span class='line-number'>162</span>
+<span class='line-number'>163</span>
+<span class='line-number'>164</span>
+<span class='line-number'>165</span>
+<span class='line-number'>166</span>
+<span class='line-number'>167</span>
+<span class='line-number'>168</span>
+<span class='line-number'>169</span>
+<span class='line-number'>170</span>
+<span class='line-number'>171</span>
+<span class='line-number'>172</span>
+<span class='line-number'>173</span>
+<span class='line-number'>174</span>
+<span class='line-number'>175</span>
+<span class='line-number'>176</span>
+<span class='line-number'>177</span>
+<span class='line-number'>178</span>
+<span class='line-number'>179</span>
+<span class='line-number'>180</span>
+<span class='line-number'>181</span>
+<span class='line-number'>182</span>
+<span class='line-number'>183</span>
+<span class='line-number'>184</span>
+<span class='line-number'>185</span>
+<span class='line-number'>186</span>
+<span class='line-number'>187</span>
+<span class='line-number'>188</span>
+<span class='line-number'>189</span>
+<span class='line-number'>190</span>
+<span class='line-number'>191</span>
+<span class='line-number'>192</span>
+<span class='line-number'>193</span>
+<span class='line-number'>194</span>
+<span class='line-number'>195</span>
+<span class='line-number'>196</span>
+<span class='line-number'>197</span>
+<span class='line-number'>198</span>
+<span class='line-number'>199</span>
+<span class='line-number'>200</span>
+<span class='line-number'>201</span>
+<span class='line-number'>202</span>
+<span class='line-number'>203</span>
+<span class='line-number'>204</span>
+<span class='line-number'>205</span>
+<span class='line-number'>206</span>
+<span class='line-number'>207</span>
+<span class='line-number'>208</span>
+<span class='line-number'>209</span>
+<span class='line-number'>210</span>
+<span class='line-number'>211</span>
+<span class='line-number'>212</span>
+<span class='line-number'>213</span>
+<span class='line-number'>214</span>
+<span class='line-number'>215</span>
+<span class='line-number'>216</span>
+<span class='line-number'>217</span>
+<span class='line-number'>218</span>
+<span class='line-number'>219</span>
+<span class='line-number'>220</span>
+<span class='line-number'>221</span>
+<span class='line-number'>222</span>
+<span class='line-number'>223</span>
+<span class='line-number'>224</span>
+<span class='line-number'>225</span>
+<span class='line-number'>226</span>
+<span class='line-number'>227</span>
+<span class='line-number'>228</span>
+<span class='line-number'>229</span>
+<span class='line-number'>230</span>
+<span class='line-number'>231</span>
+<span class='line-number'>232</span>
+<span class='line-number'>233</span>
+<span class='line-number'>234</span>
+<span class='line-number'>235</span>
+<span class='line-number'>236</span>
+<span class='line-number'>237</span>
+<span class='line-number'>238</span>
+<span class='line-number'>239</span>
+<span class='line-number'>240</span>
+<span class='line-number'>241</span>
+<span class='line-number'>242</span>
+<span class='line-number'>243</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="k">class</span>
+</span><span class='line'><span class="err">{</span>
+</span><span class='line'>   <span class="k">public</span> <span class="kt">string</span> <span class="n">Key</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="n">T</span> <span class="n">Value</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="n">IList</span><span class="p">&lt;</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">Nodes</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Parent</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="k">override</span> <span class="kt">string</span> <span class="nf">ToString</span><span class="p">()</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nf">getWord</span><span class="p">();</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">private</span> <span class="kt">string</span> <span class="nf">getWord</span><span class="p">()</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="c1">//ponieważ na każdym węźle trzymamy jedynie część całego słowa, aby odczytać cały klucz należy</span>
+</span><span class='line'>        <span class="c1">//złączyć wszystkie częściowe klucze na węzłach zaczynając od korzenia</span>
+</span><span class='line'>        <span class="n">Stack</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">stack</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Stack</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
+</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">t</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span> <span class="n">t</span> <span class="p">!=</span> <span class="k">null</span><span class="p">;</span> <span class="n">t</span> <span class="p">=</span> <span class="n">t</span><span class="p">.</span><span class="n">Parent</span><span class="p">)</span>
+</span><span class='line'>              <span class="n">stack</span><span class="p">.</span><span class="n">Push</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">Key</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">StringBuilder</span> <span class="n">sb</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StringBuilder</span><span class="p">();</span>
+</span><span class='line'>        <span class="k">while</span> <span class="p">(</span><span class="n">stack</span><span class="p">.</span><span class="n">Count</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
+</span><span class='line'>              <span class="n">sb</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">stack</span><span class="p">.</span><span class="n">Pop</span><span class="p">());</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">sb</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="nf">PatriciaTreeNode</span><span class="p">()</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="n">Value</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">Key</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">Nodes</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">Parent</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="nf">PatriciaTreeNode</span><span class="p">(</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">parent</span><span class="p">,</span> <span class="kt">string</span> <span class="n">key</span><span class="p">,</span> <span class="n">T</span> <span class="k">value</span> <span class="p">=</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="n">Nodes</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">Parent</span> <span class="p">=</span> <span class="n">parent</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">Key</span> <span class="p">=</span> <span class="n">key</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">Value</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">parent</span><span class="p">.</span><span class="n">Nodes</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>              <span class="n">parent</span><span class="p">.</span><span class="n">Nodes</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;();</span>
+</span><span class='line'>        <span class="n">parent</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">private</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Replace2</span><span class="p">(</span><span class="kt">string</span> <span class="n">st</span><span class="p">,</span> <span class="kt">int</span> <span class="n">i</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="c1">//stwórz nowy węzeł ze wspólnej części kluczy dwóch węzłów wywoływanych z poprzedniej funkcji</span>
+</span><span class='line'>        <span class="c1">//i oznacza index ostatniego znaku w częsci słowa wspólnej dla obu węzłów</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">node</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">.</span><span class="n">Parent</span><span class="p">,</span> <span class="n">Key</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">i</span><span class="p">));</span>
+</span><span class='line'>        <span class="k">this</span><span class="p">.</span><span class="n">Key</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">Key</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="n">i</span><span class="p">);</span> <span class="c1">//z niewspólnej dla węzłów części klucza stwórz nowy klucz</span>
+</span><span class='line'>        <span class="k">this</span><span class="p">.</span><span class="n">Parent</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>           <span class="c1">//usuń zależność dziecko-rodzic</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;.</span><span class="n">SetRelationship</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>   <span class="c1">//ustawiamy relacje ojciec-dziecko</span>
+</span><span class='line'>        <span class="c1">//musimy stworzyć nowe dziecko z drugiej niewspólnej części klucza</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">newChild</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">node</span><span class="p">,</span> <span class="n">st</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">newChild</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">private</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Replace</span><span class="p">(</span><span class="kt">string</span> <span class="n">st</span><span class="p">,</span> <span class="kt">int</span> <span class="n">i</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="c1">//ta podmiana służy sytuacji, gdy trzeba rozbić jeden węzeł na dwa nowe w relacji rodzic-dziecko,</span>
+</span><span class='line'>        <span class="c1">//ponieważ klucz nowego węzła zawiera się w starym</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">node</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">.</span><span class="n">Parent</span><span class="p">,</span> <span class="n">st</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">this</span><span class="p">.</span><span class="n">Key</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">Key</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">this</span><span class="p">.</span><span class="n">Parent</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">this</span><span class="p">.</span><span class="n">Parent</span> <span class="p">=</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;.</span><span class="n">SetRelationship</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetRelationship</span><span class="p">(</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">parent</span><span class="p">,</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">child</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">parent</span><span class="p">.</span><span class="n">Nodes</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>              <span class="n">parent</span><span class="p">.</span><span class="n">Nodes</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;();</span>
+</span><span class='line'>        <span class="n">parent</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">child</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">child</span><span class="p">.</span><span class="n">Parent</span> <span class="p">=</span> <span class="n">parent</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Add</span><span class="p">(</span><span class="kt">string</span> <span class="n">st</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">node</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">st</span> <span class="p">==</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="k">return</span> <span class="k">null</span><span class="p">;</span>            <span class="c1">//jeżeli przekazano pusty łańcuch zwracamy null</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">Parent</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span> <span class="n">Key</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">!=</span> <span class="n">st</span><span class="p">[</span><span class="m">0</span><span class="p">])</span> <span class="k">return</span> <span class="k">null</span><span class="p">;</span>   <span class="c1">//jeżeli klucz nie ma części wspólnej z st, nie rób nic</span>
+</span><span class='line'>        <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="kt">bool</span> <span class="n">b</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">Nodes</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">Parent</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="n">node</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">,</span> <span class="n">st</span><span class="p">);</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;</span> <span class="n">Key</span><span class="p">.</span><span class="n">Length</span><span class="p">)</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="nf">AddChecker</span><span class="p">(</span><span class="n">st</span><span class="p">);</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="k">else</span>  <span class="c1">//jeżeli to wzorzec jest dłuższy</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">Key</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">!=</span> <span class="n">Key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="p">{</span> <span class="n">b</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>                   <span class="k">if</span> <span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="c1">//jeżeli wzorzec jest zgodny z kluczem, ale nie jest cały sprawdzony</span>
+</span><span class='line'>                   <span class="p">{</span>
+</span><span class='line'>                        <span class="n">node</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">,</span> <span class="n">st</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+</span><span class='line'>                        <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>                   <span class="p">}</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="nf">Replace2</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">else</span>    <span class="c1">//jeżeli mają dzieci</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">Parent</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="c1">//sprawdzamy czy wzorca nie można dołączyć do któregoś z dzieci</span>
+</span><span class='line'>                   <span class="k">foreach</span> <span class="p">(</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">n</span> <span class="k">in</span> <span class="n">Nodes</span><span class="p">)</span>
+</span><span class='line'>                        <span class="k">if</span> <span class="p">((</span><span class="n">node</span> <span class="p">=</span> <span class="n">n</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">st</span><span class="p">))</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>                              <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>                   <span class="n">node</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">,</span> <span class="n">st</span><span class="p">);</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;</span> <span class="n">Key</span><span class="p">.</span><span class="n">Length</span><span class="p">)</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="nf">AddChecker</span><span class="p">(</span><span class="n">st</span><span class="p">);</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="k">else</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">Key</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">!=</span> <span class="n">Key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="p">{</span> <span class="n">b</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>                   <span class="k">if</span> <span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="c1">//jeżeli wzorzec jest zgodny z kluczem, ale nie jest cały sprawdzony</span>
+</span><span class='line'>                   <span class="p">{</span>
+</span><span class='line'>                        <span class="c1">//próbujemy dodać pozostałą część wzorca do któregoś z dzieci</span>
+</span><span class='line'>                        <span class="k">foreach</span> <span class="p">(</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">n</span> <span class="k">in</span> <span class="n">Nodes</span><span class="p">)</span>
+</span><span class='line'>                              <span class="k">if</span> <span class="p">((</span><span class="n">node</span> <span class="p">=</span> <span class="n">n</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">st</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>                                   <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>                        <span class="c1">//jeżeli żadne dziecko nie przyjęło wzorca, tworzymy nowe dziecko</span>
+</span><span class='line'>                        <span class="n">node</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">,</span> <span class="n">st</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+</span><span class='line'>                        <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>                   <span class="p">}</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="nf">Replace2</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="k">static</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Remove</span><span class="p">(</span><span class="kt">string</span> <span class="n">st</span><span class="p">,</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">root</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">node</span> <span class="p">=</span> <span class="n">Search</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">root</span><span class="p">);</span>     <span class="c1">//wyszukujemy poszukiwanego słowa</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">node</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Nodes</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Parent</span><span class="p">.</span><span class="n">Parent</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="c1">//jeżeli ojciec jest korzeniem</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="n">node</span><span class="p">.</span><span class="n">Parent</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+</span><span class='line'>                   <span class="n">node</span><span class="p">.</span><span class="n">Parent</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="k">else</span>                                  <span class="c1">//ojciec nie jest korzeniem</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">n</span> <span class="p">=</span> <span class="n">node</span><span class="p">.</span><span class="n">Parent</span><span class="p">;</span>
+</span><span class='line'>                   <span class="c1">//usuwamy więzy zależności między odnalezionym węzłem i jego ojcem</span>
+</span><span class='line'>                   <span class="n">node</span><span class="p">.</span><span class="n">Parent</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>                   <span class="n">n</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+</span><span class='line'>                   <span class="k">if</span> <span class="p">(</span><span class="n">n</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Count</span> <span class="p">==</span> <span class="m">1</span> <span class="p">&amp;&amp;</span> <span class="n">n</span><span class="p">.</span><span class="n">Value</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>     <span class="c1">//jeżeli ojcowi zostało tylko 1 dziecko i sam nie ma żadnej wartości</span>
+</span><span class='line'>                   <span class="p">{</span>
+</span><span class='line'>                        <span class="c1">//dążymy do sytuacji w której dziecko przejmuje rolę ojca</span>
+</span><span class='line'>                        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">o</span> <span class="p">=</span> <span class="n">n</span><span class="p">.</span><span class="n">Nodes</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>         <span class="c1">//wybieramy dziecko</span>
+</span><span class='line'>                        <span class="n">o</span><span class="p">.</span><span class="n">Key</span> <span class="p">=</span> <span class="n">n</span><span class="p">.</span><span class="n">Key</span> <span class="p">+</span> <span class="n">o</span><span class="p">.</span><span class="n">Key</span><span class="p">;</span>                             <span class="c1">//łączymy klucze rodzica i dziecka</span>
+</span><span class='line'>                        <span class="n">n</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Clear</span><span class="p">();</span>
+</span><span class='line'>                        <span class="n">o</span><span class="p">.</span><span class="n">Parent</span> <span class="p">=</span> <span class="n">n</span><span class="p">.</span><span class="n">Parent</span><span class="p">;</span>
+</span><span class='line'>                        <span class="n">n</span><span class="p">.</span><span class="n">Parent</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">o</span><span class="p">);</span>
+</span><span class='line'>                        <span class="n">n</span><span class="p">.</span><span class="n">Parent</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+</span><span class='line'>                        <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+</span><span class='line'>                   <span class="p">}</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Count</span> <span class="p">==</span> <span class="m">1</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>              <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">o</span> <span class="p">=</span> <span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+</span><span class='line'>              <span class="n">o</span><span class="p">.</span><span class="n">Key</span> <span class="p">=</span> <span class="n">node</span><span class="p">.</span><span class="n">Key</span> <span class="p">+</span> <span class="n">o</span><span class="p">.</span><span class="n">Key</span><span class="p">;</span>
+</span><span class='line'>              <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;.</span><span class="n">SetRelationship</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Parent</span><span class="p">,</span> <span class="n">o</span><span class="p">);</span>
+</span><span class='line'>              <span class="n">node</span><span class="p">.</span><span class="n">Parent</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+</span><span class='line'>              <span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="n">Clear</span><span class="p">();</span>
+</span><span class='line'>              <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">private</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">AddChecker</span><span class="p">(</span><span class="kt">string</span> <span class="n">st</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="kt">bool</span> <span class="n">b</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>        <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="c1">//sprawdzamy do którego znaku oba słowa są do siebie podobne</span>
+</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">st</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">!=</span> <span class="n">Key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="p">{</span> <span class="n">b</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">b</span><span class="p">)</span>    <span class="c1">//jeżeli wzorzec jest zgodny z kluczem, ale nie cały klucz został sprawdzony</span>
+</span><span class='line'>              <span class="k">return</span> <span class="nf">Replace</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nf">Replace2</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>   <span class="c1">//jeżeli w jakimś miejscu są niezgodne</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="k">static</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Search</span><span class="p">(</span><span class="kt">string</span> <span class="n">st</span><span class="p">,</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">main</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>        <span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+</span><span class='line'>        <span class="kt">string</span> <span class="n">word</span><span class="p">;</span>                     <span class="c1">//słowo przekazywane do kolejnych funkcji</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">main</span><span class="p">.</span><span class="n">Parent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>    <span class="c1">//podany węzeł nie jest korzeniem</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">((</span><span class="n">st</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">.</span><span class="n">Length</span><span class="p">)</span> <span class="p">&lt;</span> <span class="m">0</span><span class="p">)</span> <span class="k">return</span> <span class="k">null</span><span class="p">;</span>      <span class="c1">//jeżeli  wzorzec jest krótszy od klucza, zakończ</span>
+</span><span class='line'>              <span class="k">for</span> <span class="p">(;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+</span><span class='line'>                   <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">!=</span> <span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">return</span> <span class="k">null</span><span class="p">;</span>               <span class="c1">//jeżeli klucz węzła różni się od wzorca, zakończ</span>
+</span><span class='line'>              <span class="c1">//jeżeli wszystko się zgadza, a słowa są tej samej długości, zwróć węzeł</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">.</span><span class="n">Length</span> <span class="p">==</span> <span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">.</span><span class="n">Length</span><span class="p">)</span> <span class="k">return</span> <span class="n">main</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">main</span><span class="p">.</span><span class="n">Nodes</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>     <span class="c1">//jeżeli węzeł ma dzieci</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>              <span class="n">word</span> <span class="p">=</span> <span class="n">st</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>   <span class="c1">//przepisz niesprawdzony fragment wzorca</span>
+</span><span class='line'>              <span class="c1">//szukamy reszty wzorca wśród dzieci</span>
+</span><span class='line'>              <span class="k">foreach</span><span class="p">(</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">n</span> <span class="k">in</span> <span class="n">main</span><span class="p">.</span><span class="n">Nodes</span><span class="p">)</span>
+</span><span class='line'>                   <span class="k">if</span><span class="p">((</span><span class="n">node</span> <span class="p">=</span> <span class="n">Search</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">public</span> <span class="k">static</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">SearchTemplate</span><span class="p">(</span><span class="kt">string</span> <span class="n">st</span><span class="p">,</span> <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">main</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">{</span>
+</span><span class='line'>        <span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">node</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">main</span><span class="p">.</span><span class="n">Parent</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>    <span class="c1">//ojciec nie jest korzeniem</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">!=</span> <span class="n">st</span><span class="p">[</span><span class="m">0</span><span class="p">])</span> <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>              <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span><span class='line'>              <span class="kt">bool</span> <span class="n">b</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">.</span><span class="n">Length</span> <span class="p">&gt;</span> <span class="n">st</span><span class="p">.</span><span class="n">Length</span><span class="p">)</span>       <span class="c1">//jeżeli klucz jest dłuższy od słowa</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">st</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">!=</span> <span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="p">{</span> <span class="n">b</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span> <span class="p">}</span>      <span class="c1">//sprawdzanie zgodności</span>
+</span><span class='line'>                   <span class="k">if</span> <span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">return</span> <span class="n">main</span><span class="p">;</span>                     <span class="c1">//jeżeli wzorzec był w pełni zgodny z kluczem, zwróć ten węzeł</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="k">else</span>  <span class="c1">//jeżeli klucz jest krótszy od wzorca</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                   <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="k">if</span> <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">!=</span> <span class="n">main</span><span class="p">.</span><span class="n">Key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="p">{</span> <span class="n">b</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span> <span class="p">}</span>    <span class="c1">//sprawdzanie zgodności</span>
+</span><span class='line'>                   <span class="c1">//jeżeli jest zgodny, sprawdź pozostałą część wzorca wśród dzieci</span>
+</span><span class='line'>                   <span class="k">if</span> <span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</span><span class='line'>                   <span class="p">{</span>
+</span><span class='line'>                        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">==</span> <span class="n">st</span><span class="p">.</span><span class="n">Length</span><span class="p">)</span> <span class="k">return</span> <span class="n">main</span><span class="p">;</span>  <span class="c1">//jeżeli nie ma czego dalej sprawdzać zwracamy węzeł</span>
+</span><span class='line'>                        <span class="k">if</span> <span class="p">(</span><span class="n">main</span><span class="p">.</span><span class="n">Nodes</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>                              <span class="k">foreach</span> <span class="p">(</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">n</span> <span class="k">in</span> <span class="n">main</span><span class="p">.</span><span class="n">Nodes</span><span class="p">)</span>
+</span><span class='line'>                                   <span class="k">if</span> <span class="p">((</span><span class="n">node</span> <span class="p">=</span> <span class="n">SearchTemplate</span><span class="p">(</span><span class="n">st</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">n</span><span class="p">))</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>                   <span class="p">}</span>
+</span><span class='line'>                   <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">else</span>    <span class="c1">//jeżeli węzeł to korzeń</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">main</span><span class="p">.</span><span class="n">Nodes</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>                   <span class="k">foreach</span> <span class="p">(</span><span class="n">PatriciaTreeNode</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">n</span> <span class="k">in</span> <span class="n">main</span><span class="p">.</span><span class="n">Nodes</span><span class="p">)</span>
+</span><span class='line'>                        <span class="k">if</span> <span class="p">((</span><span class="n">node</span> <span class="p">=</span> <span class="n">SearchTemplate</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Teraz wystarczy tylko dorzucić do tego &ldquo;nakładkę&rdquo; i gotowe.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/4/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

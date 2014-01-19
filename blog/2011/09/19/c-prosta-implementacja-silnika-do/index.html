@@ -1,0 +1,570 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>[C#] Prosta implementacja silnika do wyszukiwania pełnotekstowego - Simple Solutions</title>
+  <meta name="author" content="Bartosz Sypytkowski">
+
+  
+  <meta name="description" content="W dzisiejszym poście postaram się przedstawić jedno z możliwych rozwiązań problemu, jakim jest konieczność odnajdywania plików zawierających w sobie &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Horusiath.github.io/blog/2011/09/19/c-prosta-implementacja-silnika-do">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Simple Solutions</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Horusiath.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">[C#] Prosta Implementacja Silnika Do Wyszukiwania Pełnotekstowego</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-19T18:21:00+02:00" pubdate data-updated="true">Sep 19<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>W dzisiejszym poście postaram się przedstawić jedno z możliwych rozwiązań problemu, jakim jest konieczność odnajdywania plików zawierających w sobie pewne poszukiwane przez nas frazy. Mowa tu oczywiście o problemach związanych z implementacją wyszukiwarki pełnotekstowej. Poniżej przedstawię sposób na jedną z prostszych jej implementacji.</p>
+
+<h2>Wstęp</h2>
+
+<p>Na wstępie warto zwrócić uwagę na podstawowy ciąg czynności, które powinny wystąpić, aby dany plik został zaindeksowany oraz aby późniejsze wyszukiwanie przebiegało szybciej i bardziej dokładnie. Na główne kroki składają się:</p>
+
+<ul>
+<li>Przetworzenie zawartości pliku &ndash; pierwszym krokiem jest zamiana tekstu na postać bardziej sformalizowaną (tzw. termy). W tym momencie następują czynności takie jak:
+
+<ul>
+<li>usunięcie znaków interpunkcyjnych i znaczników</li>
+<li>usunięcie zbędnych słów (np. przyimków)</li>
+<li>zamiana wielkich liter na małe</li>
+<li>usunięcie niepotrzebnych końcówek w odmianach słów</li>
+</ul>
+</li>
+<li>Zamiana sformatowanego tekstu na wektor &ndash; wektory są dobrą metodą reprezentacji słów w danym tekście. Kilka z najpopularniejszych sposobów zapisywania danych w wektorach:
+
+<ul>
+<li><strong>Binarny </strong>&ndash; w tym wypadku wektor zapisuje wartość binarną (prawda/fałsz) dla każdego opisywanego słowa. Słowa występujące w tekście są oznaczane jako prawda. Pozostałe nie występujące w pliku (lecz wciąż mające swoje miejsce w wektorze) oznaczone są jako fałsz. Wady:
+
+<ul>
+<li>mała dokładność informacji (wiemy wyłącznie o tym, czy dane słowo występuje w tekście)
+Zalety:</li>
+<li>szybka możliwość weryfikacji występowania danego słowa w tekście</li>
+<li>taki sposób zapisu zajmuje najmniej miejsca w pamięci</li>
+</ul>
+</li>
+<li><strong>&ldquo;Bag-of-words&rdquo;</strong> &ndash; taki sposób reprezentacji dokumentu (w swojej podstawowej wersji) zlicza ilość (częstotliwość) wystąpień danego słowa w tekście. Zamiast oznaczania słowa w postaci bitu określamy go przez liczbę wyrażającą jego liczność.Wady:
+
+<ul>
+<li>Wymaga zdecydowanie większej ilości pamięci niż zapis binarny przy takiej samej ilości zaindeksowanych dokumentów.
+Zalety:</li>
+<li>Pozwala wydobyć więcej informacji o dokumencie.</li>
+<li>Umożliwia tworzenie podstawowego rankingu najlepiej pasujących dokumentów.</li>
+</ul>
+</li>
+<li><strong>Pozycyjny </strong>&ndash; w takiej postaci zapisujemy nie tylko ilość wystąpień danego termu w dokumencie, ale również zapisujemy pozycje, w których dane termy zostały znalezione.Wady:
+
+<ul>
+<li>Wymaga największej ilości pamięci dla pojedynczego wektora.</li>
+<li>Generowanie odpowiedzi na zapytanie dotyczące wyszukiwania może być czasochłonne.
+Zalety:</li>
+<li>Jest to najbardziej kompletny zapis, zwrócone wyniki mają największą dokładność.</li>
+<li>Na podstawie danych zawartych w wektorze możliwe jest częściowe lub kompletne odtworzenie dokumentu.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Zapisanie wektora &ndash; wymagana tutaj jest struktura danych umożliwiająca szybki dostęp oraz będąca w stanie przechowywać duże ilości informacji (np. rozproszone struktury danych oparte o tablice haszujące lub skompresowane drzewa TRIE).</li>
+</ul>
+
+
+<p>Na potrzeby naszej implementacji postanowiłem przyjąć następujące założenia:</p>
+
+<ol>
+<li>Nie przywiązujemy większej uwagi do aspektów optymalizacji &ndash; chodzi tutaj o możliwie maksymalną prostotę wykonanego rozwiązania.</li>
+<li>Skupiamy się na strukturach danych istniejących w bibliotece postawowej.</li>
+<li>Reprezentacja binarna &ndash; powody: możliwość prostej i szybkiej implementacji.</li>
+<li>Operujemy na z góry ustalonej (maksymalnej) liczbie słów.</li>
+</ol>
+
+
+<h2>Implementacja</h2>
+
+<p>Do pierwszej części zadania stworzymy prostą listę przechowującą implementacje interfejsu <em>IFilter</em> (będzie on reprezentować pojedyńczą operację służącą przekształceniu tekstu-termu w kolejny tekst-term). Przetwarzanie tekstu będzie polegało na przekazaniu wyniku działania jednego filtru do następnego. Na nasze potrzeby interfejs będzie implementował tylko 1 metodę: <code>string Apply(string text);</code>. Kilka najprostszych filtrów to:</p>
+
+<ol>
+<li>Filtr redukujący wszystkie wielkie litery w tekście &ndash; tutaj wystarczy na parametrze wywołać metodę <em>ToLower()</em>.</li>
+<li>Filtr usuwający znaki interpunkcyjne z tekstu</li>
+<li>Znaki przeznaczone do usunięcia zostaną zapisane wewnątrz właściwości StopChars (może to być dowolny typ wyliczeniowy <em>char </em>&ndash; taki wymóg spełniają również zwykłe stringi).</li>
+<li>Przykładowa implementacja metody Apply:</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="kt">string</span> <span class="nf">Apply</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">text</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">c</span> <span class="k">in</span> <span class="n">StopChars</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">result</span> <span class="p">=</span> <span class="n">result</span><span class="p">.</span><span class="n">Replace</span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="n">ToString</span><span class="p">(),</span>
+</span><span class='line'>                           <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>Filtr usuwający zbędne wyrazy:
+
+<ul>
+<li>Wyrazy przeznaczone do usunięcia będą znajdowały się wewnątrz właściwości StopWords (tutaj dowolny typ implementujący <code>IEnumerable<string></code>).</li>
+<li>Przykładowa implementacja metody Apply:</li>
+</ul>
+</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="kt">string</span> <span class="nf">Apply</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">text</span>
+</span><span class='line'>        <span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
+</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">.</span><span class="n">ToList</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">word</span> <span class="k">in</span> <span class="n">StopWords</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">result</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+</span><span class='line'>            <span class="k">if</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">==</span> <span class="n">word</span><span class="p">)</span>
+</span><span class='line'>                <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Dla ułatwienia operację filtrowania wydzielimy do osobnej metody. Będzie ona używana zarówno podczas indeksowania plików, jak i ich wyszukiwania. Przykładowa implementacja:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IList</span><span class="p">&lt;</span><span class="n">IFilter</span><span class="p">&gt;</span> <span class="n">Filters</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span> <span class="kt">string</span> <span class="nf">Filter</span><span class="p">(</span><span class="kt">string</span> <span class="n">txt</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">txt</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">filter</span> <span class="k">in</span> <span class="n">Filters</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">result</span> <span class="p">=</span> <span class="n">filter</span><span class="p">.</span><span class="n">Apply</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W dalszej kolejności będziemy potrzebowali metody, która pozwoli nam zamienić tak przetworzony tekst na wektor bitowy. W tym celu utworzymy dwie pomocnicze właściwości:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IDictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;</span> <span class="n">Indexer</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'><span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">Words</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Zadaniem Indexera będzie gromadzenie par nazwa_pliku &ndash; wektor_pliku. Z kolei właściwość <em>Words</em> pozwoli nam przechować numery indeksów, pod którymi znalezione mogą być konkretne słowa. Sama metoda służąca zamianie tekstu na odpowiadający mu wektor może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="n">BitArray</span> <span class="nf">CreateVector</span><span class="p">(</span><span class="kt">string</span> <span class="n">filtered</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">vector</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BitArray</span><span class="p">(</span><span class="n">MAX_SIZE</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">splits</span> <span class="p">=</span> <span class="n">filtered</span><span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
+</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">s</span> <span class="k">in</span> <span class="n">splits</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(!</span><span class="n">Words</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+</span><span class='line'>            <span class="n">Words</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">vector</span><span class="p">[</span><span class="n">Words</span><span class="p">.</span><span class="n">IndexOf</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">vector</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W tym przypadku MAX_SIZE jest zwyczajną stałą typu<em> int</em> określającą maksymalną liczbę obsługiwanych przez nas słów. Całość wygląda następująco:</p>
+
+<ol>
+<li>Dzielimy przekazany tekst na słowa.</li>
+<li>Dla każdego słowa sprawdzamy, czy został mu nadany odpowiedni indeks w liście <em>Words</em>. Jeżeli nie, dodajemy go do listy. Ponieważ nowe elementy dodawane są na koniec listy, nie musimy się obawiać zmiany pozycji dotychczas zaindeksowanych słów.&lt;</li>
+<li>Na koniec ustawiamy bit wystąpienia słowa na pozycji wskazanej przez słowa zaindeskowane w kroku 2.</li>
+</ol>
+
+
+<p>Cały cykl dodawania pliku do indeksu jest bardzo krótki i wygląda następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">AddToIndexer</span><span class="p">(</span><span class="kt">string</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">string</span> <span class="n">content</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">filtered</span> <span class="p">=</span> <span class="n">Filter</span><span class="p">(</span><span class="n">content</span><span class="p">);</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">vector</span> <span class="p">=</span> <span class="n">CreateVector</span><span class="p">(</span><span class="n">filtered</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">Indexer</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">vector</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ostatnią rzeczą, bez której nasza praca nie miałaby sensu, jest implementacja metody odpowiedzialnej za wyszukiwanie zaindeksowanych plików wg. występujących w nich słów-termów. Poniższy kod odpowiada za znalezienie plików, w których występują wszystkie słowa kluczowe przekazane jako parametr (a więc będący odpowiednikiem logicznego AND):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">FindAnd</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">splits</span> <span class="p">=</span> <span class="n">Filter</span><span class="p">(</span><span class="n">text</span><span class="p">).</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
+</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;&gt;</span> <span class="n">result</span> <span class="p">=</span>
+</span><span class='line'>        <span class="k">new</span> <span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;[</span><span class="m">0</span><span class="p">];</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">flag</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">split</span> <span class="k">in</span> <span class="n">splits</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="n">Words</span><span class="p">.</span><span class="n">IndexOf</span><span class="p">(</span><span class="n">split</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">==</span> <span class="p">-</span><span class="m">1</span> <span class="p">||</span> <span class="n">i</span> <span class="p">&gt;=</span> <span class="n">MAX_SIZE</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(!</span><span class="n">flag</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">flag</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>            <span class="n">result</span> <span class="p">=</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">Indexer</span>
+</span><span class='line'>                     <span class="k">where</span> <span class="n">pair</span><span class="p">.</span><span class="n">Value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span class='line'>                     <span class="k">select</span> <span class="n">pair</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">else</span>
+</span><span class='line'>            <span class="n">result</span> <span class="p">=</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">result</span>
+</span><span class='line'>                     <span class="k">where</span> <span class="n">pair</span><span class="p">.</span><span class="n">Value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span class='line'>                     <span class="k">select</span> <span class="n">pair</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">result</span> <span class="k">select</span> <span class="n">pair</span><span class="p">.</span><span class="n">Key</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Słowem wyjaśnienia:</p>
+
+<ol>
+<li>Na starcie przepuszczamy poszukiwany ciąg znaków przez nasze filtry, aby zamienić je na ich odpowiedniki w termach. Kolejnym krokiem jest ich podział na pojedyńcze słowa.</li>
+<li>Dla każdego z poszukiwanych słów przechodzimy przez następujące kroki:
+
+<ul>
+<li>Sprawdzamy czy dane słowo zostało zaindeksowane (a więc czy możliwe jest jego znalezienie) &ndash; jeżeli nie przechodzimy do następnego cyklu pętli.</li>
+<li>W przypadku, gdy dane słowo jest pierwszym, wg. którego przeszukujemy nasz indeks, celem przeszukiwań jest zmienna Indexer zawierająca pełną pulę dostępnych wyników. W innym przypadku (pętla wykonuje się dla kolejnych słów), dziedzina poszukiwań obejmuje tylko wyniki zdobyte w poprzedzającym cyklu.</li>
+<li>Na koniec pozbywamy się niepotrzebnych już informacji o wektorach zwracając same nazwy plików.</li>
+</ul>
+</li>
+</ol>
+
+
+<p>Nie będę się zajmował tutaj wprowadzaniem odpowiednika logicznego OR (a więc metody wyszukującej pliki, w których pojawiło się co najmniej jedno z poszukiwanych słów), ponieważ jest to operacja prostsza &ndash; dzięki użyciu linku wystarczy złączyć wyniki dla każdego z pojedyńczych słów, a następnie usunąć powtarzające się wyniki (np. za pomocą metody <em>Distinct()</em>).</div></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Bartosz Sypytkowski</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-19T18:21:00+02:00" pubdate data-updated="true">Sep 19<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/eksploracja-danych/'>eksploracja danych</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Horusiath.github.io/blog/2011/09/19/c-prosta-implementacja-silnika-do/" data-via="horusiath" data-counturl="http://Horusiath.github.io/blog/2011/09/19/c-prosta-implementacja-silnika-do/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/" title="Previous Post: Programowanie GPGPU - Microsoft.Accelerator v2">&laquo; Programowanie GPGPU - Microsoft.Accelerator v2</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/" title="Next Post: FluentMigrator - wersjonowanie bazy danych">FluentMigrator - wersjonowanie bazy danych &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'horusiath',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Bartosz Sypytkowski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

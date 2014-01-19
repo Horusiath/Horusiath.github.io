@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: xml | Simple Solutions]]></title>
+  <link href="http://Horusiath.github.io/blog/categories/xml/atom.xml" rel="self"/>
+  <link href="http://Horusiath.github.io/"/>
+  <updated>2014-01-19T21:14:50+01:00</updated>
+  <id>http://Horusiath.github.io/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Transformata XSL]]></title>
+    <link href="http://Horusiath.github.io/blog/2011/03/01/transformata-xsl/"/>
+    <updated>2011-03-01T19:58:00+01:00</updated>
+    <id>http://Horusiath.github.io/blog/2011/03/01/transformata-xsl</id>
+    <content type="html"><![CDATA[<p>W dzisiejszym poście przedstawię problem, z którym przyszło mi się ostatnio zmierzyć. Miałem do wykonania proste zadanie &ndash; Musiałem dokonać transformacji danych z jednego pliku XML na inny plik XML za pomocą stworzonego przez siebie pliku <strong>transformaty XSL</strong>.</p>
+
+<p>Nie ma w tym większej filozofii, gdyby nie kilka ciekawostek:</p>
+
+<ul>
+<li>W sieci jest stosunkowo dużo materiałów i przykładów odnośnie konwersji <strong>XML to HTML</strong>, ale o wiele rzadziej można się natknąć na przydatne informacje odnośnie transformacji <strong>XML to XML</strong>.</li>
+<li>W pliku podczas transformacji natrafiłem na potrzebę stworzenia węzła wynikowego, którego nazwa była w postaci wartości w jednym z węzłów źródłowych, zatem nie była znana w momencie pisania pliku XSLT</li>
+<li>Podczas iterowania po dzieciach danego węzła musiałem mieć możliwość odczytania ich aktualnego indeksu na liście węzłów-dzieci należących do danego rodzica.</li>
+</ul>
+
+
+<p>Zacznijmy jednak od krótkiej definicji <strong>XSLT</strong>. Jest to prosty język znacznikowy oparty na <strong>XML</strong>. Służy on formowaniu przekształceń (transformat) plików <strong>XML</strong> na inne typy plików (m.in. html, czysty tekst, czy inne pliki xml). Jest to wygodne rozwiązanie, zwłaszcza gdy przychodzi nam do stworzenia strony w htmlu zawierającej dane w postaci xml. <strong>XSLT</strong> służy wtedy wygodnemu tworzeniu wzorca takiej strony.</p>
+
+<p>Poniżej przedstawię parę prostych porad odnośnie tworzenia transformaty dla plików <strong>XML</strong>. Są to w zasadzie podstawy, ale mam nadzieję, że pozwolą zaoszczędzić nieco czasu osobom, które stawiają pierwsze kroki w tej dziedzinie.</p>
+
+<h2>XML to XML</h2>
+
+<p>Pierwszym krokiem powinno być zdefiniowanie w naszej transformacie formatu wyjściowego transformowanych plików. Służy do tego następująca konstrukcja:
+``` xml
+&lt;?xml version=&lsquo;1.0&rsquo;?>
+&lt;xsl:stylesheet version=&ldquo;1.0&rdquo; xmlns:xsl=&ldquo;<a href="http://www.w3.org/1999/XSL/Transform">http://www.w3.org/1999/XSL/Transform</a>&rdquo;></p>
+
+<pre><code>&lt;xsl:output method="xml"/&gt;
+</code></pre>
+
+<p>&lt;/xsl:stylesheet>
+```
+Atrybut method znacznika <code>xsl:output</code> pozwala nam zdefiniować format pliku wyjściowego.</p>
+
+<p>Drugim podstawowym krokiem jest konstrukcja węzła xml. W tym celu posłużymy się znacznikiem <code>xsl:element</code> z atrybutem name. Przykład:
+``` xml
+&lt;xsl:element name=&ldquo;pozycja&rdquo;></p>
+
+<pre><code>&lt;xsl:value-of select="root/position"/&gt;
+</code></pre>
+
+<p>&lt;/xsl:element>
+```
+Powyższy fragment spowoduje stworzenie węzła o nazwie pozycja, mającego za swoją wartość wartość odpowiadającego węzła position, będącego dzieckiem węzła root. Tyle odnośnie podstaw.</p>
+
+<h2>Dynamiczne nazywanie węzłów</h2>
+
+<p>Następną ciekawostką jest wspomniana przeze mnie wcześniej możliwość dynamicznego nazywania węzłów za pomocą wyrażeń <strong><strong>XSLT</strong></strong>. Aby przykład był jaśniejszy, zobrazuję go tak:</p>
+
+<p>Załóżmy, że mamy węzeł <code>pos</code> zawierający wartośc <code>geo1</code>. Chcielibyśmy, aby w wynikowym pliku xml pojawił się węzeł o nazwie <code>pos_geo1</code>, dodatkowo, żeby jego nazwa mogła ulegać zmianie w zależności od wartości przechowywanej w <code>pos</code>. Niestety, wyrażenie <code>value-of</code> tutaj nie zadziała. Na szczęście w xslt istnieje jednak jego odpowiednik, który można stosować do atrybutów węzłów &ndash; chodzi o parę nawiasów <strong>{}</strong>. Są one atrybutowym odpowiednikiem <code>value-of</code>, tzn. doklejają wartość przechowywaną pod wyrażeniem, które znajduje się wewnątrz tych nawiasów jako element stringa w atrybucie. Przykład:
+<code>xml
+&lt;xsl:element name="pos_{pos}"&gt;
+&lt;/xsl:element&gt;
+</code>
+ W przypadku, kiedy wewnątrz węzła źródłowego znajduje się wartość <code>geo1</code>, powyższy kod spowoduje stworzenie węzła o nazwie <code>pos_geo1</code>.</p>
+
+<h2>Index iterowanego elementu</h2>
+
+<p>Ostatnim przykładem będzie wydobycie numeru indeksu aktualnie iterowanego elementu. Jak wiemy, do iterowania po elementach-dzieciach danego węzła służy konstrukcja <code>xsl:for-each</code>. Jednakże, tak jak pętle foreach znane z normalnych języków programowania, nie posiada ona żadnej (jawnej) wartości inkrementowanej. Skąd więc ją wydobyć? Służy do tego metoda <code>position()</code> , którą zawieramy wewnątrz poznanych wcześniej sześciennych nawiasów <strong>{}</strong>. Należy pamiętać, że w przeciwieństwie do większości języków programowania pierwszy indeks będzie miał numer 1 a nie zero. Przykład:
+``` xml
+&lt;xsl:for-each select=&ldquo;kryteria&rdquo;></p>
+
+<pre><code>&lt;xsl:element name="kryt_{position()-1}"&gt;
+    &lt;xsl:value-of select="kryterium"/&gt;
+&lt;/xsl:element&gt;
+</code></pre>
+
+<p>&lt;/xsl:for-each>
+```
+Powyższy przykład spowoduje zamianę seri znacznika <strong>kryteria</strong> z dziećmi <strong>kryterium</strong> na serię znaczników o nazwie <strong>kryt</strong>_nr gdzie nr będzie aktualnym indeksem danego <strong>kryterium</strong> na liście dzieci węzła <strong>kryteria</strong>. Dodatkowo odejmując 1 spowodujemy, że odliczanie numeru nr zacznie się od 0.</p>
+
+<p>To wszystko na dzisiaj. Mam nadzieję, że te informacje trochę pomogą i skrócą wasz czas nauki narzędzia, jakim jest <strong><strong>XSLT</strong></strong>.</p>
+]]></content>
+  </entry>
+  
+</feed>
