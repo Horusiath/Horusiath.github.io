@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: shell | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/shell/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/shell/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[PowerShell okiem programisty .NET]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/05/17/powershell-okiem-programisty-net/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/05/17/powershell-okiem-programisty-net/"/>
     <updated>2013-05-17T21:20:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/05/17/powershell-okiem-programisty-net</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/05/17/powershell-okiem-programisty-net</id>
     <content type="html"><![CDATA[<p>Artykuł ten tworzę z dość prostego powodu. Wraz z mijającym czasem w każdym programiście rośnie opór oraz lenistwo wobec powtarzalnych czynności wykonywanych codziennie w pracy. Stąd też szukamy sposobów na zautomatyzowanie choć części z tych zadań. PowerShell może być jednym ze sposobów na osiągnięcie tego celu. Z tego powodu warto lepiej się z nim zapoznać.</p>
 
 <p>Zanim zacznę, chcę zaznaczyć, że nie jestem mistrzem PS. Postanowiłem jednak podzielić się swoimi doświadczeniami z punktu widzenia typowego programisty .NET i w miarę zwięźle pokazać, w jaki sposób przenieść niektóre z najpopularniejszych operacji występujących w tym świecie na ich odpowiedniki w PowerShellu. Zaczynajmy.</p>

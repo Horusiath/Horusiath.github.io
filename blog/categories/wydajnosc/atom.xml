@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: wydajność | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/wydajnosc/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/wydajnosc/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Niska wydajność Ruby'ego - studium porównawcze]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
     <updated>2013-03-20T23:42:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
     <content type="html"><![CDATA[<p>We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego dopasowania języka do zbioru metodyk i stosu technologicznego nastawionego na maksymalizację wydajności pracy programisty. Stanowią one &ldquo;wylęgarnię&rdquo; nowatorskich praktyk, które nieraz przenikają dalej i zostają zaadaptowane przez inne środowiska. Wystarczy podać kilka przykładów ze środowiska .NET: migracje w najnowszym EF4.3+, kierunek w jakim zmierza cały ASP.NET MVC czy dynamizacja języka C# &ndash; myśleliście, że idea stojąca za LINQ to nowatorski pomysł? ;) .</p>
 
 <p>Niestety za każym razem, kiedy mowa o Rubym, powracają kwestie jego wydajności. Jest to pięta achillesowa tego języka, powtarzana jak mantra w kolejnych dyskusjach programistów. Na czym jednak polegają te problemy? W tym postcie postaram się je opisać (w odniesieniu do najpopularniejszego kompilatora Ruby'ego &ndash; MRI) oraz opowiedzieć o rozwiązaniach, jakie zostały zaadaptowane w innych językach. Ponieważ moje obserwacje będę porównywał do innych implementacji, w tym Javy, C#, Pythona i różnych wirtualnych maszyn JavaScriptu, liczę że każdy będzie mógł wynieść z tego jakąś przydatną wiedzę.</p>
@@ -112,9 +112,9 @@ Nie zagłębiając się zanadto w szczegóły jesteśmy w stanie stwierdzić, ż
   
   <entry>
     <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc/"/>
     <updated>2013-01-12T22:32:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc</id>
     <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
 
 <h2>1. Object-Relational Mapping</h2>
@@ -204,9 +204,9 @@ Nie zagłębiając się zanadto w szczegóły jesteśmy w stanie stwierdzić, ż
   
   <entry>
     <title type="html"><![CDATA[Programowanie GPGPU - Microsoft.Accelerator v2]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/"/>
     <updated>2011-09-19T18:09:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12</id>
     <content type="html"><![CDATA[<p>Ostatnimi czasy postanowiłem zapoznać się z technikami programowania równoległego pod karty graficzne. Zacząłem poszukiwać rozwiązań, które bez konieczności poświęcania długich godzin na poznawanie nowych technologii pozwoliłyby mi wykorzystać potencjał drzemiący w GPU.</p>
 
 <p>Niestety problemy pojawiły się już na starcie, kiedy okazało się, że moja karta graficzna nosi na sobie ślady epoki poprzedzającej pojawienie się CUDA. Ograniczony do standardowych operacji oferowanych przez OpenGL i DirectX zacząłem szukać bibliotek-nakładek na te środowiska. Wśród opublikowanych rozwiązań natknąłem się na 2 interesujące biblioteki:

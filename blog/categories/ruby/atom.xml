@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: ruby | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/ruby/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Czego programiści .NET mogliby nauczyć się od Rubystów?]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/"/>
     <updated>2013-06-16T12:28:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc</id>
     <content type="html"><![CDATA[<p>.NET był wybraną przeze mnie technologią niemal od początku mojej przygody z programowaniem. Uważam jednak, że programista nie powinien się zamykać w jednej szyfladce i poznawać szerokie spectrum technologii. Porównywać je i znać wady oraz zalety każdej z nich. Ostatecznie zaś umieć dobrać właściwą technologię do rozwiązania napotykanych problemów &ndash; nie odwrotnie ;)</p>
 
 <p>Stąd też pytanie w temacie. Czy faktycznie programiści .NET mogą nauczyć się czegoś ze środowiska Ruby, języka, który ostatnimi czasy zbiera niemało batów (głównie związanych z wydajnością oraz bezpieczeństwem jego najpopularniejszej platformy, RoRa)? Otóż jak się okazuje całkiem sporo, nawet pomimo już istniejącego trendu absorbowania do platformy .NET sporej ilości rozwiązań napotykanych w konkurencyjnych gałęziach. Poniżej postaram się wymienić te, które moim zdaniem są warte odnotowania.</p>
@@ -42,9 +42,9 @@
   
   <entry>
     <title type="html"><![CDATA[Zapowiedź Ruby 2.1 - generational heap]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/"/>
     <updated>2013-05-14T20:02:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/05/14/zapowiedz-ruby-21-generational-heap</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/05/14/zapowiedz-ruby-21-generational-heap</id>
     <content type="html"><![CDATA[<p>Nie minęło wiele czasu od wydania Ruby'ego w wersji 2.0, a już pojawiła się ciekawa nowinka &ndash; od wersji 2.1 MRI ma wspierać generacje na zarządzanej stercie. Była to dla mnie wiadomość o tyle ciekawsza, że do tej pory sądziłem, że nie jest to możliwe bez zerwania kompatybilności z niskopoziomowymi rozszerzeniami języka C, które znajdują się w niektórych bibliotekach &ndash; tymczasem zapewniono, że żadna tego typu sytuacja nie będzie mieć miejsca.</p>
 
 <h2>Generacje w Rubym (MRI)</h2>
@@ -67,9 +67,9 @@
   
   <entry>
     <title type="html"><![CDATA[Niska wydajność Ruby'ego - studium porównawcze]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
     <updated>2013-03-20T23:42:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
     <content type="html"><![CDATA[<p>We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego dopasowania języka do zbioru metodyk i stosu technologicznego nastawionego na maksymalizację wydajności pracy programisty. Stanowią one &ldquo;wylęgarnię&rdquo; nowatorskich praktyk, które nieraz przenikają dalej i zostają zaadaptowane przez inne środowiska. Wystarczy podać kilka przykładów ze środowiska .NET: migracje w najnowszym EF4.3+, kierunek w jakim zmierza cały ASP.NET MVC czy dynamizacja języka C# &ndash; myśleliście, że idea stojąca za LINQ to nowatorski pomysł? ;) .</p>
 
 <p>Niestety za każym razem, kiedy mowa o Rubym, powracają kwestie jego wydajności. Jest to pięta achillesowa tego języka, powtarzana jak mantra w kolejnych dyskusjach programistów. Na czym jednak polegają te problemy? W tym postcie postaram się je opisać (w odniesieniu do najpopularniejszego kompilatora Ruby'ego &ndash; MRI) oraz opowiedzieć o rozwiązaniach, jakie zostały zaadaptowane w innych językach. Ponieważ moje obserwacje będę porównywał do innych implementacji, w tym Javy, C#, Pythona i różnych wirtualnych maszyn JavaScriptu, liczę że każdy będzie mógł wynieść z tego jakąś przydatną wiedzę.</p>

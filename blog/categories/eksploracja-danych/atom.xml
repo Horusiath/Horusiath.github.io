@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: eksploracja danych | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/eksploracja-danych/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/eksploracja-danych/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[[NLP] Stemming i lematyzacja]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/08/24/nlp-stemming-i-lematyzacja/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/08/24/nlp-stemming-i-lematyzacja/"/>
     <updated>2012-08-24T08:17:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/08/24/nlp-stemming-i-lematyzacja</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/08/24/nlp-stemming-i-lematyzacja</id>
     <content type="html"><![CDATA[<p>Zagłębiając się coraz dalej w NLP (<em>ang. Natural Language Processing</em>) &ndash; dziedzinę znaną również jako przetwarzanie języka naturalnego &ndash; natrafiłem na dość powszechny problem, którego rozwiązaniem pragnę się podzielić w tym artykule. Zacznijmy jednak od ogólnego przedstawienia problemu: załóżmy, że w życiu każdego programisty zdarzają się chwilę, w których musi on stworzyć aplikację zdolną poradzić sobie z analizą standardowego tekstu tzn. takiego, który domyślnie nie był sformatowany w sposób umożliwiający zastosowanie prostych wzorców w celu wyciągnięcia rzeczowych informacji. O ile dla większości ludzi zadanie to powinno być banalne, gdyż wystarczy nam zwykłe czytanie tekstu ze zrozumieniem, o tyle istniejące programy komputerowe mają niezwykłe problemy z jego rozwiązaniem. To właśnie tutaj z pomocą przychodzą pojęcia takie jak lematyzacja i stemming.</p>
 
 <p><strong>Stemming </strong>&ndash; bazując na definicji z angielskiej wikipedii jest to proces polegający na wydobyciu z wybranego wyrazu tzw. rdzenia, a więc tej jego części, która jest odporna na odmiany przez przyimki, rodzaje itp.</p>
@@ -322,9 +322,9 @@ private static string ApplyRule(string word, StemRule rule)
   
   <entry>
     <title type="html"><![CDATA[[C#] Prosta implementacja silnika do wyszukiwania pełnotekstowego]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/09/19/c-prosta-implementacja-silnika-do/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/09/19/c-prosta-implementacja-silnika-do/"/>
     <updated>2011-09-19T18:21:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/09/19/c-prosta-implementacja-silnika-do</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/09/19/c-prosta-implementacja-silnika-do</id>
     <content type="html"><![CDATA[<p>W dzisiejszym poście postaram się przedstawić jedno z możliwych rozwiązań problemu, jakim jest konieczność odnajdywania plików zawierających w sobie pewne poszukiwane przez nas frazy. Mowa tu oczywiście o problemach związanych z implementacją wyszukiwarki pełnotekstowej. Poniżej przedstawię sposób na jedną z prostszych jej implementacji.</p>
 
 <h2>Wstęp</h2>
@@ -542,9 +542,9 @@ Słowem wyjaśnienia:</p>
   
   <entry>
     <title type="html"><![CDATA[Przeszukiwanie sieci i indeksowanie stron internetowych]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie/"/>
     <updated>2011-04-29T19:32:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie</id>
     <content type="html"><![CDATA[<p>Ostatnimi czasy postanowiłem stworzyć prostą aplikację, której zadaniem byłoby przeszukiwanie wszerz stron internetowych. Temat zacznę od omówienia mojego spojżenia na problem:</p>
 
 <ol>

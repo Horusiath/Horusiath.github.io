@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: free talk | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/free-talk/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/free-talk/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Garść pro tipów przydatnych podczas tworzenia aplikacji]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
     <updated>2013-06-26T22:49:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
     <content type="html"><![CDATA[<p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
 
 <p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
@@ -74,9 +74,9 @@
   
   <entry>
     <title type="html"><![CDATA[Parę słów o HTMLu i CSSie]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/"/>
     <updated>2013-04-21T08:45:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/04/21/pare-sow-o-htmlu-i-cssie</id>
     <content type="html"><![CDATA[<p>W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie codziennej pracy. Część z nich cieszy się już sporą popularnością w świecie web developerów innych środowisk, zaś w świecie .NET stawiają swoje pierwsze kroki.</p>
 
 <p>Zanim zacznę właściwą część postu, chcę wszystkim przypomnieć o <a href="http://visualstudiogallery.msdn.microsoft.com/6ed4c78f-a23e-49ad-b5fd-369af0c2107f">Web Essentials</a>. Jest to absolutny <em>must have</em> jeżeli chodzi o web development w VS2012. Wiele z feature'ów opisywanych przeze mnie dalej jest już wbudowanych w to rozszerzenie.</p>
@@ -140,9 +140,9 @@ W przypadku Web Essentials dla VS2012 jedyne co musimy zrobić, to umieścić ta
   
   <entry>
     <title type="html"><![CDATA[Nowe technologie - tak czy nie?]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/02/19/nowe-technologie-tak-czy-nie/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/02/19/nowe-technologie-tak-czy-nie/"/>
     <updated>2013-02-19T18:54:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/02/19/nowe-technologie-tak-czy-nie</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/02/19/nowe-technologie-tak-czy-nie</id>
     <content type="html"><![CDATA[<p>Jedną z ciekawszych cech web developerki jest mnogość dostępnych na tym polu rozwiązań i technologii. Dlaczego uważam, że to dobrze? Poniekąd dlatego, że w ten sposób programista może przezwyciężyć spadek motywacji i nudę związaną z wykonywaniem kolejnego <em>wielkiego projektu w młodym, dynamicznym zespole</em>. Stwarza również pole do popisu i ciągłego rozwoju, pokazuje różne sposoby na zrobienie tego samego lepiej i szybciej.</p>
 
 <p>Niestety z punktu widzenia osób odpowiedzialnych za dostarczenie projektu klientowi nowa technologia w projekcie to nieprzewidywalna zmienna. Kierownik projektu otrzymując propozycję wykorzystania czegoś nowego musi wziąć pod uwagę wiele niewiadomych. Kilka z tych które wpadły mi do głowy to:</div><div><ul><li>Czy w ogóle tego potrzebujemy?</li><li>Czy jest to dobrze udokumentowane? O jak dojrzałym projekcie mówimy? Jak wygląda sprawa ze wsparciem ze strony społeczności, producenta etc.?</li><li>Czy twórca nie porzuci wsparcia dla bieżącej wersji zostawiając nas na lodzie?</li><li>Ile czasu zajmie teamowi przyswojenie tej technologii? A skoro już ją ma poznać, to czy będziemy mogli wykorzystać tą wiedzę w innych projektach?</li><li>Jak wykorzystanie tej technologii wpłynie na opóźnienie/przyspieszenie wykonania projektu na etapie startowym, głównym, czy końcowym?</li><li>Jak wpłynie to na wzrost/spadek końcowego kosztu projektu, koszt jego utrzymania i modernizacji?</li></ul><div>&nbsp; &nbsp; Każdy z tych czynników może pomóc w osiągnięciu końcowego efektu, stworzyć aplikację szybciej, poprawić jej wydajność, zwiększyć stopień modularności kodu, a przez to pomóc w jego późniejszym rozwoju. Z drugiej strony zastosowanie (lub nieumiejętne zastosowanie) danego frameworka może odbić się echem w każdej fazie życia projektu, tym głośniejszym im dłużej on będzie budowany, rozwijany i eksploatowany przez klienta.</p>
@@ -187,9 +187,9 @@ W przypadku Web Essentials dla VS2012 jedyne co musimy zrobić, to umieścić ta
   
   <entry>
     <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc/"/>
     <updated>2013-01-12T22:32:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc</id>
     <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
 
 <h2>1. Object-Relational Mapping</h2>

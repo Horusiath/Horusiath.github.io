@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: WCF | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/wcf/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/wcf/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Forwardowanie i streaming dużych plików przez WCF]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/"/>
     <updated>2012-07-04T19:08:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow</id>
     <content type="html"><![CDATA[<p>W trakcie tworzenia serwisów bazujących na ASP.NET niejednokrotnie zdarza się potrzeba przesyłania dużych plików przez sieć. W przypadku, gdy kontroler, aby przetransportować plik do przeglądarki, musi odwołać się do usługi sieciowej (w opisywanym przez mnie wypadku WCF) sprawy mogą się trochę skomplikować. Ponieważ nie chcielibyśmy, aby nasz serwer regularnie zapychał się buforując dużą ilość danych, dobrym rozwiązaniem byłoby utworzenie strumienia wzdłuż całego stosu komunikacyjnego. Przedstawia to rysunek poglądowy poniżej.</p>
 
 <p><img border="0" src="http://3.bp.blogspot.com/-YNoTKRkDFdY/T_Rk7WLTmYI/AAAAAAAAAEo/x8aFQOc0siQ/s1600/flow.png" /></p>
@@ -210,9 +210,9 @@ Ostatnia rzecz warta odnotowania, to w zasadzie rada dla developerów. Niestety,
   
   <entry>
     <title type="html"><![CDATA[[WCF] Wydobywanie wiadomości w postaci SOAP po stronie klienta]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/"/>
     <updated>2011-11-24T23:07:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci</id>
     <content type="html"><![CDATA[<p>Windows Communication Foundation jest obecnie jednym z bardziej powszechnych (i moim zdaniem także jednym z najlepiej zaprojektowanych) frameworków do obsługi usług sieciowych (<em>Web Services</em>). Nie wdając się zbytnio w szczegóły działania takiej usługi, wystarczy nam wiedzieć, że aby zostać przekazana, każda wiadomość (reprezentowana po stronie .NETu przez obiekt odpowiedniej klasy) musi być zserializowana do postaci tzw. dokumentu, który w większości przypadków występuje pod postacią XML lub jego podzbiorem, SOAP.</p>
 
 <p>Z reguły nie musimy dysponować wiedzą o tym, w jaki sposób nasza wiadomość zostaje reprezentowana za kulisami usługi. Niestety w życiu pojawiają się sytuacje, kiedy ta informacja może mieć dla nas istotne znaczenie. Przykładem takiej sytuacji mogą być narzędzia diagnostyczne, których zadaniem jest kontrola i monitorowanie działania usługi.</p>

@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: javascript | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/javascript/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/javascript/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Knockout.js - spostrzeżenia]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
     <updated>2013-03-09T12:25:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia</id>
     <content type="html"><![CDATA[<p>Ponieważ z <a href="http://knockoutjs.com/">knockout.js</a> mam do czynienia od dłuższego czasu (dokładnie od wersji 1.0 ;) ), postanowiłem podzielić się moimi spostrzeżeniami ze tymi, którzy chcą wykorzystać ten framework w swojej pracy, jak również osobami które już go stosują oraz generalnie wszystkim zainteresowanym w pisaniu ustrukturyzowanych skryptów JS. Ale zacznijmy od początku.</p>
 
 <h2>Czym jest Knockout.js?</h2>
@@ -114,9 +114,9 @@ Wraz ze wzrostem wymagań dobrą opcją jest dodanie do takiej komunikacji bardz
   
   <entry>
     <title type="html"><![CDATA[Javascript a wzorce projektowe]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/02/23/javascript-wzorce-projektowe/"/>
     <updated>2013-02-23T19:01:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/02/23/javascript-wzorce-projektowe</id>
     <content type="html"><![CDATA[<p>Założę się, że wiele osób czytając ten tytuł puknie się w głowę. I owszem w wielu sytuacjach wzorce nie są niezbędne do tworzenia przejrzystych i dobrze rozwijalnych skryptów. Do czasu. Dokładnie do momentu gdy nasz skrypt zaczyna mieć więcej niż kilkadziesiąt linijek.</p>
 
 <p>W zależności od języka programowania, pisany przez nas kod może mieć mniejszą lub większą przejrzystość. Niektóre języki takie jak Haskel, są z natury bardzo klarowne i skupiają się na istocie rzeczy. Inne, jak właśnie Javascript, dają programiście olbrzymie możliwość zrobienia czegoś na pierdyliard sposobów, co nie oznacza, że każdy sposób jest poprawny. Jakby tego było mało, javascriptowe JITy są wstanie przełknąć nawet bardzo niezdarny kod. Dlatego właśnie dyscyplina samego programisty oraz stosowanie wzorców jest tym bardziej istotne.</p>
@@ -406,9 +406,9 @@ Jak widać, nie jest to technika przejrzysta, głównie ze względu na obejścia
   
   <entry>
     <title type="html"><![CDATA[node.js - renderowanie layoutów z wykorzystaniem doT.js]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/12/30/nodejs-renderowanie-layoutow-z/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/12/30/nodejs-renderowanie-layoutow-z/"/>
     <updated>2012-12-30T10:09:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/12/30/nodejs-renderowanie-layoutow-z</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/12/30/nodejs-renderowanie-layoutow-z</id>
     <content type="html"><![CDATA[<p>Stało się. Po wielu podejściach skłoniłem się do <a href="http://nodejs.org/">node.js</a> i postanowiłem napisać w nim swoją pierwszą aplikację z prawdziwego zdarzenia. O moich motywach i wątpliwościach, jakie towarzyszyły wykorzystaniu javascriptu do tworzenia logiki po stronie serwera opowiem innym razem. W tym poście postaram się skupić na innym zagadnieniu.</p>
 
 <p>Po dość długim rekonesansie związanym z technologiami używanymi w node.js zdecydowałem się, że moja aplikacja zostanie oparta o bibliotekę <a href="http://expressjs.com/">express.js</a>. Jest to chyba najpopularniejszy framework w tym środowisku (ideowo czerpiący z Sinatry znanej wśród programistów Ruby'ego), którego głównymi zaletami są niewielki narzut obliczeniowy, łatwość konfiguracji, duża ilość zewnętrznych rozszerzeń oraz spora społeczność. W tym momencie należało również dokonać kilku dość istotnych wyborów. Ten, którego dotyczy mój wpis, dotyczył wyboru silnika renderującego. Z początku myślałem o najprostszym rozwiązaniu tzn. serwowaniu statycznych stron html. Jednakże takie rozwiązanie sprawia pewne problemy, z czego najbardziej upierdliwym jest chyba brak layoutów (ponieważ duża część widoków jest współdzielona, zmiana jednego z takich fragmentów wymagała by synchronizacji we wszystkich pozostałych stronach). Stąd postawiłem kilka warunków, jakie powinien spełniać silnik dla mojej aplikacji:</p>
@@ -577,9 +577,9 @@ res.show('home', model);    // nasza customowa metoda
   
   <entry>
     <title type="html"><![CDATA[Javascript - porady i uwagi]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/09/09/javascript-porady-i-uwagi/"/>
     <updated>2012-09-09T15:16:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/09/09/javascript-porady-i-uwagi</id>
     <content type="html"><![CDATA[<p>Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z kodem JavaScriptu, z jakim przyszło mi się spotykać w pracy i na uczelni. Zauważyłem, że wiele osób skupia się na logice serwerowej, trzymając się wielu kanonów określających jak powinno się pisać czysty i rozwijalny kod. Z drugiej strony jednocześnie traktują one skrypty JS po macoszemu, jako coś przez co trzeba jakoś przebrnąć.</p>
 
 <p>Nie ma co ukrywać, że utrzymanie przejrzystości i rozszerzalności modułów w JavaScriptcie jest o wiele trudniejsze niż w standardowych językach wykonywanych po stronie serwera. Dlatego właśnie uważam, że tym bardziej wymagają one uwagi i wkładu w zachowanie jakości. Poniżej przedstawię kilka uwag/wskazówek dla programistów, którzy chcieliby poprawić jakość pisanego kodu.</p>
@@ -676,9 +676,9 @@ Tak zdefiniowana funkcja pozwala nam pobierać lub tworzyć hierarchie modułów
   
   <entry>
     <title type="html"><![CDATA[API Servery i MVC po stronie klienta]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/"/>
     <updated>2012-06-30T22:32:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta</id>
     <content type="html"><![CDATA[<p>Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w stronę klienta. Sprawę potęguje fakt, że coraz więcej powstaje narzędzi ułatwiających te czynności, zaś duże firmy, takie jak Google, Twitter czy Facebook, promują przenoszenie kolejnych funkcjonalności do przeglądarki.</p>
 
 <p>Zacznijmy od tego, jak wygląda &ldquo;tradycyjny&rdquo; model działania aplikacji WWW.</p>

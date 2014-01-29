@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: kontrola wersji | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/kontrola-wersji/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/kontrola-wersji/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Ustrukturyzowane repozytorium - Git Flow]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow/"/>
     <updated>2013-03-16T08:29:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow</id>
     <content type="html"><![CDATA[<p>O tym czym jest Git, wie chyba każdy programista. O konwencjach i wzorcach stosowanych podczas produkcji do rozwoju repozytorium słyszało jednak zdecydowanie mniej osób, zaś jeszcze mniej stosowało je w praktyce. W tym poście postaram się poruszyć ten temat w kontekście <strong>git flow</strong> &ndash; narzędzia do integracji systemu kontroli wersji ze strategią procesu tworzenia oprogramowania.</p>
 
 <p>Jakiś czas temu Maciej Aniserowicz <a href="http://www.maciejaniserowicz.com/2012/12/10/sztuka-commitowania-pracy/">opisał na swoim blogu</a> kilka własnych przemyśleń na temat konwencji stosowanych w celu poprawy pracy z systemem kontroli wersji. Mniej więcej wtedy zaczął mi świtać pomysł podzielenia się swoimi spostrzeżeniami na temat git flow &ndash; narzędzia, które miałem okazję poznać wcześniej podczas moich przygód jako programisty RoR. Teraz po długich miesiącach nareszcie zebrałem się w sobie aby podzielić się swoimi doświadczeniami.</p>
@@ -62,9 +62,9 @@
   
   <entry>
     <title type="html"><![CDATA[FluentMigrator - wersjonowanie bazy danych]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/"/>
     <updated>2011-10-19T21:25:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy</id>
     <content type="html"><![CDATA[<p>W dzisiejszym poście pokrótce postaram się opisać narzędzie, jakim jest FluentMigrator oraz dlaczego warto korzystać z niego podczas pisania projektów (zwłaszcza kiedy mowa o projektach zespołowych).</p>
 
 <p>W sytuacjach kiedy zespół programistów tworzy aplikację wykorzystującą dostęp do wspólnej bazy danych, wszelkie zmiany wykonywane przez każdego z nich (np. dodawanie nowych tabel, kolumn czy zmiana nazw już istniejących) mogą powodować problemy w kompatybilności &ndash; zwłaszcza w przypadku wykorzysytwania modeli ORM. W tym celu warto się zabezpieczyć (a w dłuższej mierze czasu również znacząco przyspieszyć szybkość wprowadzanych zmian i aktualizacji systemu), korzystając z narzędzi umożliwiających wersjonowanie bazy danych w sposób &ndash; przynajmniej ideologicznie &ndash; podobny do tradycyjnych systemów kontroli wersji.</p>

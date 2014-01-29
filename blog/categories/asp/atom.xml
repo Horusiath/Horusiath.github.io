@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: asp | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/asp/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/asp/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[O pomyłkach i wnioskach z pracy w ASP.NET MVC]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
     <updated>2013-10-20T09:49:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
     <content type="html"><![CDATA[<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
 
 <p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
@@ -112,9 +112,9 @@ Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do cz
   
   <entry>
     <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc/"/>
     <updated>2013-01-12T22:32:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc</id>
     <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
 
 <h2>1. Object-Relational Mapping</h2>
@@ -204,9 +204,9 @@ Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do cz
   
   <entry>
     <title type="html"><![CDATA[[Ajax] Post tablicy do akcji]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/11/02/ajax-post-tablicy-do-akcji/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/11/02/ajax-post-tablicy-do-akcji/"/>
     <updated>2011-11-02T17:22:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/11/02/ajax-post-tablicy-do-akcji</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/11/02/ajax-post-tablicy-do-akcji</id>
     <content type="html"><![CDATA[<p>Podczas pracy nad łączeniem wywołań ajaxowych z frameworkiem ASP MVC 3 natknąłem się na dość interesujący problem &ndash; rozpatrzmy scenariusz, w którym mamy zamiar przekazać tablicę obiektów jakiegoś prostego typu (liczba, string) za pośrednictwem ajaxowego posta do jednej z akcji kontrolera. Taki przykład można zaprezentować w następujący sposób:</p>
 
 <p>Client side:
@@ -253,9 +253,9 @@ Umieszczenie tablicy w obiekcie JSON jest wymagane, w dodatku nazwa pola musi od
   
   <entry>
     <title type="html"><![CDATA[Wyświetlanie stron aspx przy pomocy iframe i jquery ui dialog]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy/"/>
     <updated>2011-06-22T06:57:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy</id>
     <content type="html"><![CDATA[<p>Witam, w dzisiejszym poście chciałbym podzielić się rozwiązaniem problemu, który pomimo, że przydarza się dość rzadko, to jednak zdążył napsuć mi trochę nerwów. Zacznijmy od opisania tematu:</p>
 
 <p>Dysponujemy standardową stroną aspx (zawierającą w sobie zarówno kontrolki aspx jak i skrypty jQuery), która docelowo ma zostać wyświetlona wewnątrz okna dialogowego dostępnego poprzez biblioteki jquery i jquery ui.</p>

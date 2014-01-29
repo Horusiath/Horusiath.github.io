@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: ServiceStack | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/servicestack/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/servicestack/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[ServiceStack - alternatywa dla ASP.NET]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/"/>
     <updated>2013-08-10T20:14:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/08/10/servicestack-alternatywa-dla-aspnet</id>
     <content type="html"><![CDATA[<p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
 
 <ul>

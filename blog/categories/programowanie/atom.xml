@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: programowanie | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/programowanie/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/programowanie/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[O pomyłkach i wnioskach z pracy w ASP.NET MVC]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
     <updated>2013-10-20T09:49:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
     <content type="html"><![CDATA[<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
 
 <p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
@@ -112,9 +112,9 @@ Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do cz
   
   <entry>
     <title type="html"><![CDATA[ServiceStack - alternatywa dla ASP.NET]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/"/>
     <updated>2013-08-10T20:14:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/08/10/servicestack-alternatywa-dla-aspnet</id>
     <content type="html"><![CDATA[<p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
 
 <ul>
@@ -181,9 +181,9 @@ Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do cz
   
   <entry>
     <title type="html"><![CDATA[Garść pro tipów przydatnych podczas tworzenia aplikacji]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
     <updated>2013-06-26T22:49:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
     <content type="html"><![CDATA[<p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
 
 <p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
@@ -240,9 +240,9 @@ Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do cz
   
   <entry>
     <title type="html"><![CDATA[Knockout.js - spostrzeżenia]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
     <updated>2013-03-09T12:25:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia</id>
     <content type="html"><![CDATA[<p>Ponieważ z <a href="http://knockoutjs.com/">knockout.js</a> mam do czynienia od dłuższego czasu (dokładnie od wersji 1.0 ;) ), postanowiłem podzielić się moimi spostrzeżeniami ze tymi, którzy chcą wykorzystać ten framework w swojej pracy, jak również osobami które już go stosują oraz generalnie wszystkim zainteresowanym w pisaniu ustrukturyzowanych skryptów JS. Ale zacznijmy od początku.</p>
 
 <h2>Czym jest Knockout.js?</h2>
@@ -339,9 +339,9 @@ Wraz ze wzrostem wymagań dobrą opcją jest dodanie do takiej komunikacji bardz
   
   <entry>
     <title type="html"><![CDATA[Javascript a wzorce projektowe]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/02/23/javascript-wzorce-projektowe/"/>
     <updated>2013-02-23T19:01:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/02/23/javascript-wzorce-projektowe</id>
     <content type="html"><![CDATA[<p>Założę się, że wiele osób czytając ten tytuł puknie się w głowę. I owszem w wielu sytuacjach wzorce nie są niezbędne do tworzenia przejrzystych i dobrze rozwijalnych skryptów. Do czasu. Dokładnie do momentu gdy nasz skrypt zaczyna mieć więcej niż kilkadziesiąt linijek.</p>
 
 <p>W zależności od języka programowania, pisany przez nas kod może mieć mniejszą lub większą przejrzystość. Niektóre języki takie jak Haskel, są z natury bardzo klarowne i skupiają się na istocie rzeczy. Inne, jak właśnie Javascript, dają programiście olbrzymie możliwość zrobienia czegoś na pierdyliard sposobów, co nie oznacza, że każdy sposób jest poprawny. Jakby tego było mało, javascriptowe JITy są wstanie przełknąć nawet bardzo niezdarny kod. Dlatego właśnie dyscyplina samego programisty oraz stosowanie wzorców jest tym bardziej istotne.</p>

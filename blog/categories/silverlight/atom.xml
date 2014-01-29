@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: silverlight | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/silverlight/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/silverlight/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Silverlight - parametry inicjalizacyjne w HTML]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w/"/>
     <updated>2011-03-10T23:45:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w</id>
     <content type="html"><![CDATA[<p>W dzisiejszym poście opiszę krótko obsługę parametrów inicjalizacyjnych w aplikacjach silverlight znajdujących się na naszych stronach. Stanowią one wygodny sposób przekazywania pewnych wartości do aplikacji, gdyż jesteśmy w stanie zapisać je już na poziomie kodu html. Ale do rzeczy.</p>
 
 <p>Jeżeli przeglądaliście kiedyś stronę html z osadzoną na niej kontrolką silverlight, na pewno zauważyliście, że wewnątrz znaczników object zdefiniowane mamy różne parametry aplikacji. Wśród tych wygenerowanych domyślnie mamy m.in:</p>
@@ -70,9 +70,9 @@ var value = App.Current.Resources[key];
   
   <entry>
     <title type="html"><![CDATA[Silverlight - detekcja krawędzi]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/02/25/silverlight-detekcja-krawedzi/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/02/25/silverlight-detekcja-krawedzi/"/>
     <updated>2011-02-25T11:35:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/02/25/silverlight-detekcja-krawedzi</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/02/25/silverlight-detekcja-krawedzi</id>
     <content type="html"><![CDATA[<p>W dzisiejszym poście postaram się opisać, w jaki sposób zaimplementować filtr obrazu służący do wykrywania krawędzi. W tym celu posłużymy się implementacją filtru Sobela (jest to jeden z najpopularniejszych filtrów służących temu celowi). Ale po kolei. Najpierw ustalmy plan, według którego będziemy przygotowywać obraz do obróbki:</p>
 
 <ul>

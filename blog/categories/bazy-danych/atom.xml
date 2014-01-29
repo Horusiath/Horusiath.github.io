@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: bazy danych | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/bazy-danych/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/bazy-danych/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[FluentMigrator - wersjonowanie bazy danych]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/"/>
     <updated>2011-10-19T21:25:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy</id>
     <content type="html"><![CDATA[<p>W dzisiejszym poście pokrótce postaram się opisać narzędzie, jakim jest FluentMigrator oraz dlaczego warto korzystać z niego podczas pisania projektów (zwłaszcza kiedy mowa o projektach zespołowych).</p>
 
 <p>W sytuacjach kiedy zespół programistów tworzy aplikację wykorzystującą dostęp do wspólnej bazy danych, wszelkie zmiany wykonywane przez każdego z nich (np. dodawanie nowych tabel, kolumn czy zmiana nazw już istniejących) mogą powodować problemy w kompatybilności &ndash; zwłaszcza w przypadku wykorzysytwania modeli ORM. W tym celu warto się zabezpieczyć (a w dłuższej mierze czasu również znacząco przyspieszyć szybkość wprowadzanych zmian i aktualizacji systemu), korzystając z narzędzi umożliwiających wersjonowanie bazy danych w sposób &ndash; przynajmniej ideologicznie &ndash; podobny do tradycyjnych systemów kontroli wersji.</p>
@@ -66,9 +66,9 @@
   
   <entry>
     <title type="html"><![CDATA[[MSSQL] Date Range na tablicach rekurencyjnych]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/07/13/mssql-date-range-na-tablicach/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/07/13/mssql-date-range-na-tablicach/"/>
     <updated>2011-07-13T15:47:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/07/13/mssql-date-range-na-tablicach</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/07/13/mssql-date-range-na-tablicach</id>
     <content type="html"><![CDATA[<p>Ostatnimi czasy dostałem do napisania zadanie związane z koniecznością stworzenia zapytania SQL (na potrzeby projektu budowanego w MSSQL Server 2008), którego jedną z charakterystycznych cech była konieczność sprawdzenia warunku dla wszystkich dat z podanego zakresu. Z początku proste, zadanie to miało jednak kilka dodatkowych warunków:</p>
 
 <ol>
@@ -144,9 +144,9 @@ Dodatkowo warto zwrócić uwagę na opcję określającą maksymalny poziom reku
   
   <entry>
     <title type="html"><![CDATA[Pobieranie dużych zbiorów w Entity Framework]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity/"/>
     <updated>2011-03-24T19:48:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity</id>
     <content type="html"><![CDATA[<p>Siedząc dzisiaj w pracy natknąłem się na pewien problem. Otóż spotkałem się z koniecznością pobrania wierszy z bazy i zapisania jej w pliku. Problem w zasadzie trywialny, lecz kiedy mówimy o konieczności zapisania kilkuset tysięcy wierszy, nie jest już tak łatwo. Żadne standardowe odwołanie nie zda tutaj egzaminu, ponieważ wcześniej czy później nasz program zapełni całą dostępną pamięć.</p>
 
 <p>Znajomy polecił mi wykorzystać funkcjonalność, jaką dostarczają metody Skip i Take, dostępne w LINQ. Dzięki nim możemy w prosty sposób podzielić przetwarzaną przez nas bazę na mniejsze fragmenty, które następnie przetwarzamy.</p>

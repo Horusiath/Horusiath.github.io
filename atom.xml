@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Przenosiny]]></title>
-    <link href="http://Horusiath.github.io/blog/2014/01/12/przenosiny/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2014/01/12/przenosiny/"/>
     <updated>2014-01-12T23:03:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2014/01/12/przenosiny</id>
+    <id>http://bartoszsypytkowski.com/blog/2014/01/12/przenosiny</id>
     <content type="html"><![CDATA[<p>Od ostatniego posta minęło trochę czasu, było to jednak związane z ambitnymi zmianami jakie od dawna planowałem wobec bloga. <a href="http://horusiath.blogspot.com">Mój poprzedni blog</a> naprawdę dawał się już we znaki, głównie przez rozrośnięty i archaiczny silnik, który sprawiał naprawdę sporo kłopotów kiedy przychodziło do odrobiny bardziej zaawansowanej konfiguracji.</p>
 
 <p>Chciałem zamienić swojego bloga w coś prostego w obsłudze, a jednocześnie dającego możliwości sporej personalizacji. Po drodze szukałem różnych rozwiązań. W praktyce wziąłem pod uwagę 3 z nich:</p>
@@ -39,9 +39,9 @@
   
   <entry>
     <title type="html"><![CDATA[O pomyłkach i wnioskach z pracy w ASP.NET MVC]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/"/>
     <updated>2013-10-20T09:49:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet</id>
     <content type="html"><![CDATA[<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
 
 <p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
@@ -152,9 +152,9 @@
   
   <entry>
     <title type="html"><![CDATA[ServiceStack - alternatywa dla ASP.NET]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/"/>
     <updated>2013-08-10T20:14:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/08/10/servicestack-alternatywa-dla-aspnet</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/08/10/servicestack-alternatywa-dla-aspnet</id>
     <content type="html"><![CDATA[<p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
 
 <ul>
@@ -221,9 +221,9 @@
   
   <entry>
     <title type="html"><![CDATA[Garść pro tipów przydatnych podczas tworzenia aplikacji]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/"/>
     <updated>2013-06-26T22:49:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas</id>
     <content type="html"><![CDATA[<p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
 
 <p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
@@ -280,9 +280,9 @@
   
   <entry>
     <title type="html"><![CDATA[Czego programiści .NET mogliby nauczyć się od Rubystów?]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/"/>
     <updated>2013-06-16T12:28:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc</id>
     <content type="html"><![CDATA[<p>.NET był wybraną przeze mnie technologią niemal od początku mojej przygody z programowaniem. Uważam jednak, że programista nie powinien się zamykać w jednej szyfladce i poznawać szerokie spectrum technologii. Porównywać je i znać wady oraz zalety każdej z nich. Ostatecznie zaś umieć dobrać właściwą technologię do rozwiązania napotykanych problemów &ndash; nie odwrotnie ;)</p>
 
 <p>Stąd też pytanie w temacie. Czy faktycznie programiści .NET mogą nauczyć się czegoś ze środowiska Ruby, języka, który ostatnimi czasy zbiera niemało batów (głównie związanych z wydajnością oraz bezpieczeństwem jego najpopularniejszej platformy, RoRa)? Otóż jak się okazuje całkiem sporo, nawet pomimo już istniejącego trendu absorbowania do platformy .NET sporej ilości rozwiązań napotykanych w konkurencyjnych gałęziach. Poniżej postaram się wymienić te, które moim zdaniem są warte odnotowania.</p>
@@ -307,9 +307,9 @@
   
   <entry>
     <title type="html"><![CDATA[PowerShell okiem programisty .NET]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/05/17/powershell-okiem-programisty-net/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/05/17/powershell-okiem-programisty-net/"/>
     <updated>2013-05-17T21:20:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/05/17/powershell-okiem-programisty-net</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/05/17/powershell-okiem-programisty-net</id>
     <content type="html"><![CDATA[<p>Artykuł ten tworzę z dość prostego powodu. Wraz z mijającym czasem w każdym programiście rośnie opór oraz lenistwo wobec powtarzalnych czynności wykonywanych codziennie w pracy. Stąd też szukamy sposobów na zautomatyzowanie choć części z tych zadań. PowerShell może być jednym ze sposobów na osiągnięcie tego celu. Z tego powodu warto lepiej się z nim zapoznać.</p>
 
 <p>Zanim zacznę, chcę zaznaczyć, że nie jestem mistrzem PS. Postanowiłem jednak podzielić się swoimi doświadczeniami z punktu widzenia typowego programisty .NET i w miarę zwięźle pokazać, w jaki sposób przenieść niektóre z najpopularniejszych operacji występujących w tym świecie na ich odpowiedniki w PowerShellu. Zaczynajmy.</p>
@@ -803,9 +803,9 @@
   
   <entry>
     <title type="html"><![CDATA[Zapowiedź Ruby 2.1 - generational heap]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/"/>
     <updated>2013-05-14T20:02:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/05/14/zapowiedz-ruby-21-generational-heap</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/05/14/zapowiedz-ruby-21-generational-heap</id>
     <content type="html"><![CDATA[<p>Nie minęło wiele czasu od wydania Ruby&#8217;ego w wersji 2.0, a już pojawiła się ciekawa nowinka &ndash; od wersji 2.1 MRI ma wspierać generacje na zarządzanej stercie. Była to dla mnie wiadomość o tyle ciekawsza, że do tej pory sądziłem, że nie jest to możliwe bez zerwania kompatybilności z niskopoziomowymi rozszerzeniami języka C, które znajdują się w niektórych bibliotekach &ndash; tymczasem zapewniono, że żadna tego typu sytuacja nie będzie mieć miejsca.</p>
 
 <h2>Generacje w Rubym (MRI)</h2>
@@ -828,9 +828,9 @@
   
   <entry>
     <title type="html"><![CDATA[O redundancji w wyrażeniach LINQ]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/"/>
     <updated>2013-04-23T21:35:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq</id>
     <content type="html"><![CDATA[<p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
 
 <h2>Przykład</h2>
@@ -909,9 +909,9 @@
   
   <entry>
     <title type="html"><![CDATA[Parę słów o HTMLu i CSSie]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/"/>
     <updated>2013-04-21T08:45:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/04/21/pare-sow-o-htmlu-i-cssie</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/04/21/pare-sow-o-htmlu-i-cssie</id>
     <content type="html"><![CDATA[<p>W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie codziennej pracy. Część z nich cieszy się już sporą popularnością w świecie web developerów innych środowisk, zaś w świecie .NET stawiają swoje pierwsze kroki.</p>
 
 <p>Zanim zacznę właściwą część postu, chcę wszystkim przypomnieć o <a href="http://visualstudiogallery.msdn.microsoft.com/6ed4c78f-a23e-49ad-b5fd-369af0c2107f">Web Essentials</a>. Jest to absolutny <em>must have</em> jeżeli chodzi o web development w VS2012. Wiele z feature&#8217;ów opisywanych przeze mnie dalej jest już wbudowanych w to rozszerzenie.</p>
@@ -985,9 +985,9 @@
   
   <entry>
     <title type="html"><![CDATA[Niska wydajność Ruby'ego - studium porównawcze]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
     <updated>2013-03-20T23:42:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
     <content type="html"><![CDATA[<p>We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego dopasowania języka do zbioru metodyk i stosu technologicznego nastawionego na maksymalizację wydajności pracy programisty. Stanowią one &ldquo;wylęgarnię&rdquo; nowatorskich praktyk, które nieraz przenikają dalej i zostają zaadaptowane przez inne środowiska. Wystarczy podać kilka przykładów ze środowiska .NET: migracje w najnowszym EF4.3+, kierunek w jakim zmierza cały ASP.NET MVC czy dynamizacja języka C# &ndash; myśleliście, że idea stojąca za LINQ to nowatorski pomysł? ;) .</p>
 
 <p>Niestety za każym razem, kiedy mowa o Rubym, powracają kwestie jego wydajności. Jest to pięta achillesowa tego języka, powtarzana jak mantra w kolejnych dyskusjach programistów. Na czym jednak polegają te problemy? W tym postcie postaram się je opisać (w odniesieniu do najpopularniejszego kompilatora Ruby&#8217;ego &ndash; MRI) oraz opowiedzieć o rozwiązaniach, jakie zostały zaadaptowane w innych językach. Ponieważ moje obserwacje będę porównywał do innych implementacji, w tym Javy, C#, Pythona i różnych wirtualnych maszyn JavaScriptu, liczę że każdy będzie mógł wynieść z tego jakąś przydatną wiedzę.</p>
@@ -1086,9 +1086,9 @@
   
   <entry>
     <title type="html"><![CDATA[Ustrukturyzowane repozytorium - Git Flow]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow/"/>
     <updated>2013-03-16T08:29:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow</id>
     <content type="html"><![CDATA[<p>O tym czym jest Git, wie chyba każdy programista. O konwencjach i wzorcach stosowanych podczas produkcji do rozwoju repozytorium słyszało jednak zdecydowanie mniej osób, zaś jeszcze mniej stosowało je w praktyce. W tym poście postaram się poruszyć ten temat w kontekście <strong>git flow</strong> &ndash; narzędzia do integracji systemu kontroli wersji ze strategią procesu tworzenia oprogramowania.</p>
 
 <p>Jakiś czas temu Maciej Aniserowicz <a href="http://www.maciejaniserowicz.com/2012/12/10/sztuka-commitowania-pracy/">opisał na swoim blogu</a> kilka własnych przemyśleń na temat konwencji stosowanych w celu poprawy pracy z systemem kontroli wersji. Mniej więcej wtedy zaczął mi świtać pomysł podzielenia się swoimi spostrzeżeniami na temat git flow &ndash; narzędzia, które miałem okazję poznać wcześniej podczas moich przygód jako programisty RoR. Teraz po długich miesiącach nareszcie zebrałem się w sobie aby podzielić się swoimi doświadczeniami.</p>
@@ -1133,9 +1133,9 @@
   
   <entry>
     <title type="html"><![CDATA[Knockout.js - spostrzeżenia]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
     <updated>2013-03-09T12:25:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/03/09/knockoutjs-spostrzezenia</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia</id>
     <content type="html"><![CDATA[<p>Ponieważ z <a href="http://knockoutjs.com/">knockout.js</a> mam do czynienia od dłuższego czasu (dokładnie od wersji 1.0 ;) ), postanowiłem podzielić się moimi spostrzeżeniami ze tymi, którzy chcą wykorzystać ten framework w swojej pracy, jak również osobami które już go stosują oraz generalnie wszystkim zainteresowanym w pisaniu ustrukturyzowanych skryptów JS. Ale zacznijmy od początku.</p>
 
 <h2>Czym jest Knockout.js?</h2>
@@ -1242,9 +1242,9 @@
   
   <entry>
     <title type="html"><![CDATA[Javascript a wzorce projektowe]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/02/23/javascript-wzorce-projektowe/"/>
     <updated>2013-02-23T19:01:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/02/23/javascript-wzorce-projektowe</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/02/23/javascript-wzorce-projektowe</id>
     <content type="html"><![CDATA[<p>Założę się, że wiele osób czytając ten tytuł puknie się w głowę. I owszem w wielu sytuacjach wzorce nie są niezbędne do tworzenia przejrzystych i dobrze rozwijalnych skryptów. Do czasu. Dokładnie do momentu gdy nasz skrypt zaczyna mieć więcej niż kilkadziesiąt linijek.</p>
 
 <p>W zależności od języka programowania, pisany przez nas kod może mieć mniejszą lub większą przejrzystość. Niektóre języki takie jak Haskel, są z natury bardzo klarowne i skupiają się na istocie rzeczy. Inne, jak właśnie Javascript, dają programiście olbrzymie możliwość zrobienia czegoś na pierdyliard sposobów, co nie oznacza, że każdy sposób jest poprawny. Jakby tego było mało, javascriptowe JITy są wstanie przełknąć nawet bardzo niezdarny kod. Dlatego właśnie dyscyplina samego programisty oraz stosowanie wzorców jest tym bardziej istotne.</p>
@@ -1678,9 +1678,9 @@
   
   <entry>
     <title type="html"><![CDATA[Nowe technologie - tak czy nie?]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/02/19/nowe-technologie-tak-czy-nie/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/02/19/nowe-technologie-tak-czy-nie/"/>
     <updated>2013-02-19T18:54:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/02/19/nowe-technologie-tak-czy-nie</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/02/19/nowe-technologie-tak-czy-nie</id>
     <content type="html"><![CDATA[<p>Jedną z ciekawszych cech web developerki jest mnogość dostępnych na tym polu rozwiązań i technologii. Dlaczego uważam, że to dobrze? Poniekąd dlatego, że w ten sposób programista może przezwyciężyć spadek motywacji i nudę związaną z wykonywaniem kolejnego <em>wielkiego projektu w młodym, dynamicznym zespole</em>. Stwarza również pole do popisu i ciągłego rozwoju, pokazuje różne sposoby na zrobienie tego samego lepiej i szybciej.</p>
 
 <p>Niestety z punktu widzenia osób odpowiedzialnych za dostarczenie projektu klientowi nowa technologia w projekcie to nieprzewidywalna zmienna. Kierownik projektu otrzymując propozycję wykorzystania czegoś nowego musi wziąć pod uwagę wiele niewiadomych. Kilka z tych które wpadły mi do głowy to:</div><div><ul><li>Czy w ogóle tego potrzebujemy?</li><li>Czy jest to dobrze udokumentowane? O jak dojrzałym projekcie mówimy? Jak wygląda sprawa ze wsparciem ze strony społeczności, producenta etc.?</li><li>Czy twórca nie porzuci wsparcia dla bieżącej wersji zostawiając nas na lodzie?</li><li>Ile czasu zajmie teamowi przyswojenie tej technologii? A skoro już ją ma poznać, to czy będziemy mogli wykorzystać tą wiedzę w innych projektach?</li><li>Jak wykorzystanie tej technologii wpłynie na opóźnienie/przyspieszenie wykonania projektu na etapie startowym, głównym, czy końcowym?</li><li>Jak wpłynie to na wzrost/spadek końcowego kosztu projektu, koszt jego utrzymania i modernizacji?</li></ul><div>&nbsp; &nbsp; Każdy z tych czynników może pomóc w osiągnięciu końcowego efektu, stworzyć aplikację szybciej, poprawić jej wydajność, zwiększyć stopień modularności kodu, a przez to pomóc w jego późniejszym rozwoju. Z drugiej strony zastosowanie (lub nieumiejętne zastosowanie) danego frameworka może odbić się echem w każdej fazie życia projektu, tym głośniejszym im dłużej on będzie budowany, rozwijany i eksploatowany przez klienta.</p>
@@ -1725,9 +1725,9 @@
   
   <entry>
     <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
-    <link href="http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc/"/>
     <updated>2013-01-12T22:32:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2013/01/12/aspnet-wydajnosc</id>
+    <id>http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc</id>
     <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
 
 <h2>1. Object-Relational Mapping</h2>
@@ -1817,9 +1817,9 @@
   
   <entry>
     <title type="html"><![CDATA[node.js - renderowanie layoutów z wykorzystaniem doT.js]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/12/30/nodejs-renderowanie-layoutow-z/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/12/30/nodejs-renderowanie-layoutow-z/"/>
     <updated>2012-12-30T10:09:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/12/30/nodejs-renderowanie-layoutow-z</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/12/30/nodejs-renderowanie-layoutow-z</id>
     <content type="html"><![CDATA[<p>Stało się. Po wielu podejściach skłoniłem się do <a href="http://nodejs.org/">node.js</a> i postanowiłem napisać w nim swoją pierwszą aplikację z prawdziwego zdarzenia. O moich motywach i wątpliwościach, jakie towarzyszyły wykorzystaniu javascriptu do tworzenia logiki po stronie serwera opowiem innym razem. W tym poście postaram się skupić na innym zagadnieniu.</p>
 
 <p>Po dość długim rekonesansie związanym z technologiami używanymi w node.js zdecydowałem się, że moja aplikacja zostanie oparta o bibliotekę <a href="http://expressjs.com/">express.js</a>. Jest to chyba najpopularniejszy framework w tym środowisku (ideowo czerpiący z Sinatry znanej wśród programistów Ruby&#8217;ego), którego głównymi zaletami są niewielki narzut obliczeniowy, łatwość konfiguracji, duża ilość zewnętrznych rozszerzeń oraz spora społeczność. W tym momencie należało również dokonać kilku dość istotnych wyborów. Ten, którego dotyczy mój wpis, dotyczył wyboru silnika renderującego. Z początku myślałem o najprostszym rozwiązaniu tzn. serwowaniu statycznych stron html. Jednakże takie rozwiązanie sprawia pewne problemy, z czego najbardziej upierdliwym jest chyba brak layoutów (ponieważ duża część widoków jest współdzielona, zmiana jednego z takich fragmentów wymagała by synchronizacji we wszystkich pozostałych stronach). Stąd postawiłem kilka warunków, jakie powinien spełniać silnik dla mojej aplikacji:</p>
@@ -2063,9 +2063,9 @@
   
   <entry>
     <title type="html"><![CDATA[Javascript - porady i uwagi]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/09/09/javascript-porady-i-uwagi/"/>
     <updated>2012-09-09T15:16:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/09/09/javascript-porady-i-uwagi</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/09/09/javascript-porady-i-uwagi</id>
     <content type="html"><![CDATA[<p>Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z kodem JavaScriptu, z jakim przyszło mi się spotykać w pracy i na uczelni. Zauważyłem, że wiele osób skupia się na logice serwerowej, trzymając się wielu kanonów określających jak powinno się pisać czysty i rozwijalny kod. Z drugiej strony jednocześnie traktują one skrypty JS po macoszemu, jako coś przez co trzeba jakoś przebrnąć.</p>
 
 <p>Nie ma co ukrywać, że utrzymanie przejrzystości i rozszerzalności modułów w JavaScriptcie jest o wiele trudniejsze niż w standardowych językach wykonywanych po stronie serwera. Dlatego właśnie uważam, że tym bardziej wymagają one uwagi i wkładu w zachowanie jakości. Poniżej przedstawię kilka uwag/wskazówek dla programistów, którzy chcieliby poprawić jakość pisanego kodu.</p>
@@ -2182,9 +2182,9 @@
   
   <entry>
     <title type="html"><![CDATA[[NLP] Stemming i lematyzacja]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/08/24/nlp-stemming-i-lematyzacja/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/08/24/nlp-stemming-i-lematyzacja/"/>
     <updated>2012-08-24T08:17:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/08/24/nlp-stemming-i-lematyzacja</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/08/24/nlp-stemming-i-lematyzacja</id>
     <content type="html"><![CDATA[<p>Zagłębiając się coraz dalej w NLP (<em>ang. Natural Language Processing</em>) &ndash; dziedzinę znaną również jako przetwarzanie języka naturalnego &ndash; natrafiłem na dość powszechny problem, którego rozwiązaniem pragnę się podzielić w tym artykule. Zacznijmy jednak od ogólnego przedstawienia problemu: załóżmy, że w życiu każdego programisty zdarzają się chwilę, w których musi on stworzyć aplikację zdolną poradzić sobie z analizą standardowego tekstu tzn. takiego, który domyślnie nie był sformatowany w sposób umożliwiający zastosowanie prostych wzorców w celu wyciągnięcia rzeczowych informacji. O ile dla większości ludzi zadanie to powinno być banalne, gdyż wystarczy nam zwykłe czytanie tekstu ze zrozumieniem, o tyle istniejące programy komputerowe mają niezwykłe problemy z jego rozwiązaniem. To właśnie tutaj z pomocą przychodzą pojęcia takie jak lematyzacja i stemming.</p>
 
 <p><strong>Stemming </strong>&ndash; bazując na definicji z angielskiej wikipedii jest to proces polegający na wydobyciu z wybranego wyrazu tzw. rdzenia, a więc tej jego części, która jest odporna na odmiany przez przyimki, rodzaje itp.</p>
@@ -2693,9 +2693,9 @@
   
   <entry>
     <title type="html"><![CDATA[Jak wybrać stos frameworków pod projekt webowy (.NET)]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/"/>
     <updated>2012-07-12T18:14:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt</id>
     <content type="html"><![CDATA[<p>W życiu każdego web developera nadchodzi moment, kiedy należy się zdecydować na wybór platform i bibliotek wykorzystywanych w nowym projekcie. Nie ma w tym absolutnie nic złego, co więcej powinniśmy być zadowoleni, mając taką opcję. W aplikacjach biznesowych często jest on podejmowany &ndash; nie zawsze słusznie ani rozsądnie (przynajmniej z naszego punktu widzenia) &ndash; za nas, przez osoby trzecie. Tym bardziej warto doceniać sytuacje, w których mamy możliwość wygłoszenia swojej opinii.</p>
 
 <p>W takim razie rodzi się kolejne pytanie: co wybrać? W tym wątku postaram się rozwinąć swoje obserwacje na temat niektórych rozwiązań i stworzyć drobny przekrój technologii wykorzystywanych przez programistów .NET do budowy aplikacji sieciowych.</p>
@@ -2770,9 +2770,9 @@
   
   <entry>
     <title type="html"><![CDATA[Forwardowanie i streaming dużych plików przez WCF]]></title>
-    <link href="http://Horusiath.github.io/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/"/>
     <updated>2012-07-04T19:08:00+02:00</updated>
-    <id>http://Horusiath.github.io/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow</id>
+    <id>http://bartoszsypytkowski.com/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow</id>
     <content type="html"><![CDATA[<p>W trakcie tworzenia serwisów bazujących na ASP.NET niejednokrotnie zdarza się potrzeba przesyłania dużych plików przez sieć. W przypadku, gdy kontroler, aby przetransportować plik do przeglądarki, musi odwołać się do usługi sieciowej (w opisywanym przez mnie wypadku WCF) sprawy mogą się trochę skomplikować. Ponieważ nie chcielibyśmy, aby nasz serwer regularnie zapychał się buforując dużą ilość danych, dobrym rozwiązaniem byłoby utworzenie strumienia wzdłuż całego stosu komunikacyjnego. Przedstawia to rysunek poglądowy poniżej.</p>
 
 <p><img border="0" src="http://3.bp.blogspot.com/-YNoTKRkDFdY/T_Rk7WLTmYI/AAAAAAAAAEo/x8aFQOc0siQ/s1600/flow.png" /></p>

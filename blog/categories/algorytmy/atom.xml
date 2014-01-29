@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: algorytmy | Simple Solutions]]></title>
-  <link href="http://Horusiath.github.io/blog/categories/algorytmy/atom.xml" rel="self"/>
-  <link href="http://Horusiath.github.io/"/>
-  <updated>2014-01-19T21:40:00+01:00</updated>
-  <id>http://Horusiath.github.io/</id>
+  <link href="http://bartoszsypytkowski.com/blog/categories/algorytmy/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-01-29T21:50:25+01:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
     <email><![CDATA[b.sypytkowski@gmail.com]]></email>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Silverlight - detekcja krawędzi]]></title>
-    <link href="http://Horusiath.github.io/blog/2011/02/25/silverlight-detekcja-krawedzi/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2011/02/25/silverlight-detekcja-krawedzi/"/>
     <updated>2011-02-25T11:35:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2011/02/25/silverlight-detekcja-krawedzi</id>
+    <id>http://bartoszsypytkowski.com/blog/2011/02/25/silverlight-detekcja-krawedzi</id>
     <content type="html"><![CDATA[<p>W dzisiejszym poście postaram się opisać, w jaki sposób zaimplementować filtr obrazu służący do wykrywania krawędzi. W tym celu posłużymy się implementacją filtru Sobela (jest to jeden z najpopularniejszych filtrów służących temu celowi). Ale po kolei. Najpierw ustalmy plan, według którego będziemy przygotowywać obraz do obróbki:</p>
 
 <ul>
@@ -106,9 +106,9 @@ Jak widać nie iterujemy po wszystkich pixelach, lecz pozostawiamy &ldquo;obramo
   
   <entry>
     <title type="html"><![CDATA[[CSharp] Skompresowane drzewo TRIE]]></title>
-    <link href="http://Horusiath.github.io/blog/2010/11/16/csharp-skompresowane-drzewo-trie/"/>
+    <link href="http://bartoszsypytkowski.com/blog/2010/11/16/csharp-skompresowane-drzewo-trie/"/>
     <updated>2010-11-16T13:32:00+01:00</updated>
-    <id>http://Horusiath.github.io/blog/2010/11/16/csharp-skompresowane-drzewo-trie</id>
+    <id>http://bartoszsypytkowski.com/blog/2010/11/16/csharp-skompresowane-drzewo-trie</id>
     <content type="html"><![CDATA[<p>Ostatnimi czasy powróciłem do programów wykonywanych na potrzeby przedmiotów na Informatyce. Wśród nich udało mi się odnaleźć projekt skompresowanego drzewa TRIE. Po drobnym odświeżeniu pomyślałem, że mogę się nim podzielić tutaj.</p>
 
 <p>Czym w zasadzie jest skompresowane drzewo TRIE? Czym różni się tak bardzo od swojej normalnej wersji? Głębiej zainteresowanych tematem odsyłam do wyszukiwania. Najprostszym źródłem jest wikipedia [<a href="http://pl.wikipedia.org/wiki/Skompresowane_drzewo_trie">Link</a>]. Tutaj postaram się skupić na opisaniu podstawowych operacji: dodaniu elementu, usunięciu go, wyszukaniu i odczytaniu klucza.</p>
