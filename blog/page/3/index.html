@@ -9,7 +9,7 @@
   <meta name="author" content="Bartosz Sypytkowski">
 
   
-  <meta name="description" content="Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w &hellip;">
+  <meta name="description" content="W trakcie tworzenia serwisów bazujących na ASP.NET niejednokrotnie zdarza się potrzeba przesyłania dużych plików przez sieć. W przypadku, gdy &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -75,6 +75,321 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/">Forwardowanie I Streaming Dużych Plików Przez WCF</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-07-04T19:08:00+02:00" pubdate data-updated="true">Jul 4<span>th</span>, 2012</time>
+        
+         | <a href="/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W trakcie tworzenia serwisów bazujących na ASP.NET niejednokrotnie zdarza się potrzeba przesyłania dużych plików przez sieć. W przypadku, gdy kontroler, aby przetransportować plik do przeglądarki, musi odwołać się do usługi sieciowej (w opisywanym przez mnie wypadku WCF) sprawy mogą się trochę skomplikować. Ponieważ nie chcielibyśmy, aby nasz serwer regularnie zapychał się buforując dużą ilość danych, dobrym rozwiązaniem byłoby utworzenie strumienia wzdłuż całego stosu komunikacyjnego. Przedstawia to rysunek poglądowy poniżej.</p>
+
+<p><img border="0" src="http://3.bp.blogspot.com/-YNoTKRkDFdY/T_Rk7WLTmYI/AAAAAAAAAEo/x8aFQOc0siQ/s1600/flow.png" /></p>
+
+<p>Stwórzmy zatem przykładowe rozwiązanie takiego problemu. W tym celu podzielimy go na dwa mniejsze podproblemy: strumieniowanie pliku przy pomocy Windows Communication Foundation oraz forwardowanie otrzymanego strumienia bezpośrednio do przeglądarki. Co istotne, w rozwiązaniu tym nie możemy pozwolić sobie na zbuforowanie pliku w którymkolwiek momencie strumieniowania.</p>
+
+<h2>Streaming WCF</h2>
+
+<p>Zacznijmy od zdefiniowania przykładowego interfejsu naszej usługi. Może on wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[ServiceContract]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IFileStreamer</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'><span class="na">    [OperationContract]</span>
+</span><span class='line'>    <span class="n">FileStreamResponse</span> <span class="nf">GetFile</span><span class="p">(</span><span class="n">FileStreamRequest</span> <span class="n">request</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widzimy jedyną operacja wykonywaną przez naszą usługę jest pobranie obiektu klasy <em>FileStreamResponse</em>. Klasę taką możemy zdefiniować następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[MessageContract]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">FileStreamResponse</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'><span class="na">    [MessageHeader]</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">string</span> <span class="n">FileName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="na">    [MessageHeader]</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">string</span> <span class="n">ContentType</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="na">    [MessageHeader]</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">long</span> <span class="n">FileLength</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="na">    [MessageBodyMember]</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">Stream</span> <span class="n">Stream</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Warto zatrzymać się na chwilę w tym miejscu. Jak widzimy obiekt tej klasy nie jest zdefiniowany za pomocą standardowego atrybutu <em>[DataContract]</em>, lecz nieco rzadziej spotykanego <em>[MessageContract]. </em>Powodem takiego zachowania jest właściwość oznaczona parametrem <em>[MessageBodyMember]</em>. Jest to główna treść naszego obiektu, strumień. Reszta danych zdefiniowana zostanie w nagłówku wiadomości SOAP, w którą opakowane są wszystkie serializowane obiekty transportowane przez naszą usługę. Jest tak, ponieważ zgodnie z regułami narzucanymi przez WCF, jeżeli zwracany jest strumień, powinien on być jedynym elementem zawartym w ciele wiadomości. Więcej o message contractach można dowiedzieć się <a href="http://msdn.microsoft.com/en-us/library/ms730255.aspx">tutaj</a> oraz <a href="http://msdn.microsoft.com/en-us/library/ms733742.aspx">tutaj</a>.</p>
+
+<p>Mimo że nasza usługa ma za zadanie strumieniować pliki, to w praktyce zwracany strumień jest klasy <em>Stream</em>. Dzieje się tak z dwóch powodów:</p>
+
+<ol>
+<li>Ponieważ klasa <em>FileStream</em> nie jest oznaczona atrybutem <em>Serializable</em>, nie może ona być zserializowana i przesłana przez sieć.</li>
+<li>W praktyce serializer WCF zawsze będzie konwertował wszystkie wyjściowe strumienie do klasy <em>MessageBodyStream</em>. Jest to ważne, ze względu na fakt że klasa ta nie dysponuje takimi możliwościami jak większość innych strumieni &ndash; opiszę je w drugiej części artykułu &ndash; i będziemy musieli ominąć jej braki.</li>
+</ol>
+
+
+<p>W dalszej kolejności powinniśmy się przyjrzeć budowie obiektu przekazywanego jako parametr. W naszym przykładzie wygląda on następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[MessageContract]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">FileStreamRequest</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'><span class="na">    [MessageBodyMember]</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widać jedyną zmienną przechowywaną przez nasz obiekt żądania jest pojedyncza liczba. Pytanie zatem brzmi: czy musimy budować osobny obiekt żądania na potrzeby tylko jednego prostego parametru? Odpowiedź brzmi: Tak. Dzieje się tak dlatego, że WCF wymaga od nas, aby w przypadku, gdy w operacji zwracane są obiekty oznaczone jako <em>[MessageContract]</em>, operacja ta może przyjmować za parametry jedynie inne obiekty oznaczone tym atrybutem i może w ten sposób przyjmować tylko jeden obiekt.</p>
+
+<p>Przejdźmy teraz do zdefiniowania klasy służącej za implementację naszej usługi.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[ServiceBehavior(AddressFilterMode = AddressFilterMode.Any)]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">FileStreamer</span> <span class="p">:</span> <span class="n">IFileStreamer</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">FileStreamResponse</span> <span class="nf">GetFile</span><span class="p">(</span><span class="n">FileStreamRequest</span> <span class="n">request</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// pobieramy ścieżkę do pliku</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">path</span> <span class="p">=</span> <span class="n">GetPathFor</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">filename</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="n">GetFileName</span><span class="p">(</span><span class="n">path</span><span class="p">);</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FileStream</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Open</span><span class="p">,</span> <span class="n">FileAccess</span><span class="p">.</span><span class="n">Read</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="k">new</span> <span class="n">FileStreamResponse</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">Stream</span> <span class="p">=</span> <span class="n">stream</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">FileLength</span> <span class="p">=</span> <span class="n">stream</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">FileName</span> <span class="p">=</span> <span class="n">filename</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">ContentType</span> <span class="p">=</span> <span class="s">&quot;application/zip&quot;</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// ... dalsza implementacja </span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Na koniec musimy zdefiniować konfigurację usługi tak, aby mogła ona wykorzystywać strumieniowanie. W tym wypadku jesteśmy ograniczeni do wyboru jednego z czterech bindingów, które to umożliwiają:</p>
+
+<ul>
+<li>BasicHttpBinding</li>
+<li>WebHttpBinding</li>
+<li>NetTcpBinding</li>
+<li>NetNamedPipeBinding</li>
+</ul>
+
+
+<p>Niezbędne jest również określenie maksymalnego rozmiaru danych przesyłanych w strumieniu oraz określenie kierunku strumienia &ndash; dla danych pobieranych z usługi jest to <em>StreamedResponse</em>. Dodatkowo warto określić kodowanie wiadomości (co pozwoli zmniejszyć jej rozmiar) oraz rozmiar bufora ramki (im większy jego rozmiar tym mniej &ldquo;rozdrobniona&rdquo; będzie nasza wiadomość, lecz jednocześnie więcej pamięci potrzebnej jest na obsługę bufora przez serwer). Domyślny rozmiar bufora w WCF wynosi 64KB.</p>
+
+<p>W rezultacie przykładowa konfiguracja może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;services&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;service</span> <span class="na">name=</span><span class="s">&quot;&lt;namespace&gt;.FileStreamer&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;endpoint</span>
+</span><span class='line'>      <span class="na">binding=</span><span class="s">&quot;basicHttpBinding&quot;</span>
+</span><span class='line'>      <span class="na">address=</span><span class="s">&quot;http://localhost/&lt;webservice_address&gt;&quot;</span>
+</span><span class='line'>      <span class="na">contract=</span><span class="s">&quot;&lt;namespace&gt;.IFileStreamer&quot;</span>
+</span><span class='line'>      <span class="na">bindingConfiguration=</span><span class="s">&quot;streamedBasicHttpBinding&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/service&gt;</span>
+</span><span class='line'><span class="nt">&lt;/services&gt;</span>
+</span><span class='line'><span class="nt">&lt;bindings&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;basicHttpBinding&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;binding</span> <span class="na">name=</span><span class="s">&quot;streamedBasicHttpBinding&quot;</span>
+</span><span class='line'>             <span class="na">transferMode=</span><span class="s">&quot;StreamedResponse&quot;</span>
+</span><span class='line'>             <span class="na">messageEncoding=</span><span class="s">&quot;Mtom&quot;</span>
+</span><span class='line'>             <span class="na">maxReceivedMessageSize=</span><span class="s">&quot;629145600&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- maksymalny rozmiar pliku: 600MB --&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/basicHttpBinding&gt;</span>
+</span><span class='line'><span class="nt">&lt;/bindings&gt;&lt;/services&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Analogicznie do tego można utworzyć konfigurację kliencką. Można ją zdefiniować ręcznie albo posłużyć się opcją <em>Add Service Reference</em> z menu kontekstowego referencji w projekcie docelowym otwartym w Visual Studio lub używając narzędzia <em>svcutil </em>i wygenerować w ten sposób potrzebny plik proxy klienta i konfigurację.</p>
+
+<h2>Forwardowanie po stronie ASP</h2>
+
+<p>Zanim przejdziemy do pisania przykładowego kodu, należy zwrócić uwagę na kilka kwestii.</p>
+
+<p>Tak jak opisałem wcześniej mimo, że transport pliku z operacji WCF odbywa się za pomocą strumienia, nie jest to jednak obiekt klasy <em>FileStream</em>, lecz <em>MessageBodyStream</em>. Nanosi to na nasze zadanie pewne trudności:</p>
+
+<ul>
+<li>Metoda <em>Read </em>strumienia tej klasy nie musi zwracać w wyniku ilości faktycznie odczytanych wierszy. Ponieważ strumień nie definiuje również żadnego odpowiednika flagi <em>EndOfStream</em>, musimy z góry znać długość strumienia, aby w odpowiednim momencie zakończyć odczytywanie danych.</li>
+<li>Strumień ten nie implementuje właściwości <em>Length</em> (sic!), stąd też musieliśmy wcześniej zdefiniować message contract, w którym ustawiamy ręcznie tą długość jako jeden z parametrów przekazywanych w nagłówku wiadomości.</li>
+<li>Przy próbie bezpośredniego zwrócenia tego strumienia przy przekazaniu go do metody <em>File </em>kontrolera, nastąpi próba zbuforowania całego pliku przez kontroler. Zgodnie z początkowym założeniem nie możemy do tego dopuścić. Z tego powodu powinniśmy własnoręcznie skonstruować odpowiedź dla przeglądarki.</li>
+</ul>
+
+
+<p>W rezultacie przykładowy kod akcji kontrolera może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="n">ActionResult</span> <span class="nf">GetFileStream</span><span class="p">(</span><span class="kt">long</span> <span class="n">id</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="c1">// fileStreamer - klient proxy do usługi WCF</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">message</span> <span class="p">=</span> <span class="n">fileStreamer</span><span class="p">.</span><span class="n">GetFile</span><span class="p">(</span><span class="k">new</span> <span class="n">FileStreamRequest</span> <span class="p">{</span> <span class="n">Id</span> <span class="p">=</span> <span class="n">versionId</span> <span class="p">});</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="n">Stream</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span> <span class="n">message</span><span class="p">.</span><span class="n">FileLength</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BinaryReader</span><span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="n">Stream</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">Clear</span><span class="p">();</span>
+</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="n">message</span><span class="p">.</span><span class="n">ContentType</span><span class="p">;</span>
+</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">AddHeader</span><span class="p">(</span><span class="s">&quot;Content-Length&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">.</span><span class="n">FileLength</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
+</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">AddHeader</span><span class="p">(</span><span class="s">&quot;Content-Disposition&quot;</span><span class="p">,</span> <span class="s">&quot;attachment; filename=&quot;</span> <span class="p">+</span> <span class="n">message</span><span class="p">.</span><span class="n">FileName</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="kt">var</span> <span class="n">defaultBufferSize</span> <span class="p">=</span> <span class="m">1024</span><span class="p">*</span><span class="m">1024</span><span class="p">*</span><span class="m">64</span><span class="p">;</span>   <span class="c1">// 65KB</span>
+</span><span class='line'>            <span class="kt">var</span> <span class="n">bytesRead</span> <span class="p">=</span> <span class="m">0L</span><span class="p">;</span>
+</span><span class='line'>            <span class="k">do</span>
+</span><span class='line'>            <span class="p">{</span>
+</span><span class='line'>                <span class="kt">var</span> <span class="n">frame</span> <span class="p">=</span> <span class="p">(</span><span class="n">bytesRead</span> <span class="p">+</span> <span class="n">defaultBufferSize</span><span class="p">)</span> <span class="p">&lt;=</span> <span class="n">message</span><span class="p">.</span><span class="n">FileLength</span>
+</span><span class='line'>                    <span class="p">?</span> <span class="n">defaultBufferSize</span>
+</span><span class='line'>                    <span class="p">:</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">message</span><span class="p">.</span><span class="n">FileLength</span> <span class="p">-</span> <span class="n">bytesRead</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>                <span class="kt">var</span> <span class="n">buffer</span> <span class="p">=</span> <span class="n">stream</span><span class="p">.</span><span class="n">ReadBytes</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+</span><span class='line'>                <span class="n">Response</span><span class="p">.</span><span class="n">BinaryWrite</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+</span><span class='line'>                <span class="n">Response</span><span class="p">.</span><span class="n">Flush</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>                <span class="n">bytesRead</span> <span class="p">+=</span> <span class="n">frame</span><span class="p">;</span>
+</span><span class='line'>            <span class="p">}</span> <span class="k">while</span> <span class="p">(</span> <span class="n">bytesRead</span> <span class="p">&lt;</span> <span class="n">message</span><span class="p">.</span><span class="n">FileLength</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">End</span><span class="p">();</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ostatnia rzecz warta odnotowania, to w zasadzie rada dla developerów. Niestety, aby sprawdzić działanie strumienia w praktyce, musimy uruchomić naszą aplikację na rzeczywistym serwerze IIS (można to ustawić we właściwościach projektu), ponieważ standardowy serwer developerski ASP nie udostępnia tej opcji.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1270,194 +1585,6 @@ Zalety:</li>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2011/08/16/prosta-scena-do-gry-przy-uzyciu-html5/">Prosta Scena Do Gry Przy Użyciu Html5 I CoffeeScriptu</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-08-16T23:18:00+02:00" pubdate data-updated="true">Aug 16<span>th</span>, 2011</time>
-        
-         | <a href="/blog/2011/08/16/prosta-scena-do-gry-przy-uzyciu-html5/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>W dzisiejszym poście postaram się streścić (w postaci przykładu oczywiście ;) ) moje krótkie doznania związane z nauką Coffee Scriptu i jego zastosowaniu w aplikacjach tworzonych przy pomocy Visual Studio.</p>
-
-<p>Zacznijmy od tego, czym jest CoffeeScript? Otóż jest to język skryptowy wysokiego poziomu (składnią przypominający Ruby&#8217;ego i po części Pythona), kompilowany bezpośrednio do JavaScriptu. Na jego plus dochodzi fakt, że nie odbiega on za daleko od samego .js, a przez to jest on wygodny do operowania zarówno na elementach strony jak i we współpracy z już istniejącymi bibliotekami .js (nie są przy tym wymagane żadne dodatkowe zabiegi). Dla osób, które o tym nie słyszały i nie miały wcześniej do czynienia polecam oficjalną stronę (link <a href="http://jashkenas.github.com/coffee-script/">tutaj</a>). Jest tam dokładny opis języka wraz z przykładami użycia i interaktywną konsolą, pokazującą na żywo jak wygląda napisany przez nas kod zaraz po skompilowaniu.</p>
-
-<p>Jak zamontować Coffee Script w aplikacji pisanej w Visual Studio? Jest wiele rozwiązań, ja przedstawię dwa, które uznałem za najprostsze do zrozumienia i najbardziej sensowne:
-&ndash; Używanie kompilatorów w czasie wykonania &ndash; jest to rozwiązanie dające sporą kontrolę i pewne pole do popisu, ale też bardziej obciążające maszynę. Istnieje wiele kompilatorów przygotowanych pod platformę .NET, osobiście mogę polecić <a href="https://github.com/abolibibelot/coffeescript-dotnet#readme">CoffeeScript.Net</a> (głównie ze względu na to, że z innymi kompilatorami nie miałem wiele do czynienia).
-&ndash; Można też ściągnąć stosowny template do Visual Studio (ja korzystam z tych zawartych w <a href="http://www.mindscapehq.com/products/web-workbench">Mindscape Web Workbench</a>). Generują one kod na bierząco w trakcie jego pisania &ndash; jest do preferowana przeze mnie opcja, ponieważ na bierząco możemy sprawdzać, czy nie popełniamy błędów a nasz kod się kompiluje. W takim wypadku wystarczy dodać do strony standardowy skrypt js, a jako źródło podać ścieżkę do pliku .coffee i zmienić jej rozszerzenie na .js.</p>
-
-<h2>Tworzymy obsługę sceny</h2>
-
-<p>W tym punkcie zacznijmy od stworzenia klasy, której zadaniem będzie rysowanie obiektów na scenie (w tym celu należy uprzednio stworzyć odpowiedni canvas) i wypełnianiu jej tła.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Graphics</span>
-</span><span class='line'>  <span class="nv">constructor: </span><span class="nf">(canvas) -&gt;</span>
-</span><span class='line'>      <span class="nv">can = </span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">canvas</span><span class="p">)</span>
-</span><span class='line'>      <span class="vi">@ctx = </span><span class="nx">can</span><span class="p">.</span><span class="nx">getContext</span><span class="p">(</span><span class="s">&quot;2d&quot;</span><span class="p">)</span>
-</span><span class='line'>      <span class="vi">@w = </span><span class="nx">can</span><span class="p">.</span><span class="nx">width</span>
-</span><span class='line'>      <span class="vi">@h = </span><span class="nx">can</span><span class="p">.</span><span class="nx">height</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nv">drawBack: </span><span class="nf">(r, g, b) -&gt;</span>
-</span><span class='line'>       <span class="vi">@ctx.fillStyle = </span><span class="s">&quot;rgb(</span><span class="si">#{</span><span class="nx">r</span><span class="si">}</span><span class="s">,</span><span class="si">#{</span><span class="nx">g</span><span class="si">}</span><span class="s">,</span><span class="si">#{</span><span class="nx">b</span><span class="si">}</span><span class="s">)&quot;</span>
-</span><span class='line'>       <span class="nx">@ctx</span><span class="p">.</span><span class="nx">fillRect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">@w</span><span class="p">,</span> <span class="nx">@h</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nv">drawRect: </span><span class="nf">(p) -&gt;</span>
-</span><span class='line'>      <span class="vi">@ctx.fillStyle = </span><span class="s">&quot;rgb(200, 200, 200)&quot;</span>
-</span><span class='line'>      <span class="nx">@ctx</span><span class="p">.</span><span class="nx">fillRect</span><span class="p">(</span><span class="nx">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nx">p</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Słowo wyjasnienia:</p>
-
-<ul>
-<li><code>constructor</code> &ndash; jak łatwo się domyślić reprezentuje on konstruktor naszej klasy. Przekazujemy do niego nazwę identyfikatora elementu <strong>Canvas</strong>, który wykorzystamy do renderowania. Symbol <code>@ </code>jest w JavaScript&#8217;cie zamieniany bezpośrednio na <strong>this</strong>. (należy z tym uważać, zwłaszcza podczas zagłębiania @ w funkcjach przekazywanych jako parametry).</li>
-<li><code>drawBack</code> &ndash; zamalowuje powierzchnię w tle kolorem o podanych w parametrach wartościach r, g, b. Wyrażenie <code>#{r}</code> (i podobne) są zamieniane na konkatencje (złączenie) całości wyrażenia do jednego stringa wraz z wypełnionymi wartościami zawartymi w zmiennej r.</li>
-<li><code>drawRect</code> &ndash; odpowiada za narysowanie prostokąta o parametrach przekazanych przez tablicę (wybrałem tablicę ze względu na prostotę, można ją zastąpić na wiele sposobów). Jak można się domyślić indeksy 0, 1, 2, 3 tablicy odpowiadają kolejno 0 &ndash; odległość lewego górnego rogu od lewej krawędzi canvy, 1 &ndash; odległości lewego górnego rogu od górnej krawędzi canvy, 2 &ndash; szerokości prostokątu, 3 &ndash; wysokości prostokątu.</li>
-</ul>
-
-
-<p>Kiedy już rozumiemy jak będzie wykonywane renderowanie elementów na scenie, przejdźmy do dalszych operacji.</p>
-
-<h2>Budowa animowanej sceny</h2>
-
-<p>Kolejnym krokiem będzie stworzenie klasy odpowiedzialnej za obsługę zdarzeń oraz pętli gry. Sposoby konstrukcji samej pętli są różne, polecam zapoznać się z <a href="http://nokarma.org/2011/02/02/javascript-game-development-the-game-loop/index.html">tym wpisem</a>. Autor dobrze i wyczerpująco tłumaczy zasady konstrukcji pętli gry w JavaScript&#8217;cie.</p>
-
-<p>Moje podejście postaram się wyjaśnić na poniższym kodzie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Game</span>
-</span><span class='line'>  <span class="nv">constructor: </span><span class="nf">(canvas) -&gt;</span>
-</span><span class='line'>      <span class="vi">@w = </span><span class="nx">canvas</span><span class="p">.</span><span class="nx">width</span>
-</span><span class='line'>      <span class="vi">@h = </span><span class="nx">canvas</span><span class="p">.</span><span class="nx">height</span>
-</span><span class='line'>      <span class="vi">@g = </span><span class="k">new</span> <span class="nx">Graphics</span><span class="p">(</span><span class="nx">canvas</span><span class="p">)</span>
-</span><span class='line'>      <span class="vi">@fps = </span><span class="mi">50</span>
-</span><span class='line'>      <span class="vi">@loop_id = </span><span class="kc">undefined</span>
-</span><span class='line'>      <span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s">&quot;keydown&quot;</span><span class="p">,</span> <span class="nx">@update</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nv">update: </span><span class="nf">(evt) -&gt;</span>
-</span><span class='line'>      <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">38</span>        <span class="c1">#arrow down</span>
-</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">5</span>
-</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">40</span>   <span class="c1">#arrow up</span>
-</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">5</span>
-</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">37</span>   <span class="c1">#arrow left</span>
-</span><span class='line'>       <span class="nx">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">5</span>
-</span><span class='line'>      <span class="k">else</span> <span class="k">if</span> <span class="nx">evt</span><span class="o">?</span><span class="p">.</span><span class="nx">which</span> <span class="o">is</span> <span class="mi">39</span>   <span class="c1">#arrow right</span>
-</span><span class='line'>          <span class="nx">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">5</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nv">draw: </span><span class="nf">-&gt;</span>
-</span><span class='line'>      <span class="nx">@g</span><span class="p">.</span><span class="nx">drawBack</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-</span><span class='line'>      <span class="nx">@g</span><span class="p">.</span><span class="nx">drawRect</span><span class="p">(</span><span class="nx">p1</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nv">startGame: </span><span class="nf">-&gt;</span>
-</span><span class='line'>      <span class="nv">self = </span><span class="nx">@</span>
-</span><span class='line'>      <span class="vi">@loop_id = </span><span class="nx">setInterval</span><span class="p">((()</span> <span class="nf">-&gt;</span>
-</span><span class='line'>       <span class="nx">self</span><span class="p">.</span><span class="nx">draw</span><span class="p">()</span>
-</span><span class='line'>       <span class="p">),</span> <span class="mi">1000</span> <span class="o">/</span> <span class="nx">self</span><span class="p">.</span><span class="nx">fps</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nv">endGame: </span><span class="nf">-&gt;</span>
-</span><span class='line'>      <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">@loop_id</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Nieco wyjaśnień:
-&ndash; <code>constructor</code> &ndash; tutaj jak widzimy jednocześnie definiujemy stworzony przez nas uprzednio obiekt klasy Graphics, ale też dodatkowo dodajemy definiujemy listener (methoda <strong>update</strong>), który będzie zajmował się obsługą klawiatury na potrzeby okna przeglądarki. Pola naszej klasy:
-&ndash; <code>fps</code> &ndash; liczba cykli pętli / klatek na sekundę &ndash; jest to wartość orientacyjna, nasza przeglądarka wcale nie musi, a prawdopodobnie nawet nie będzie dotrzymywać zamierzonej przez nas wartości.
-&ndash; <code>loop_id</code> &ndash; uchwyt do metody wykonującej pętlę, niezbędny jeżeli będziemy chcieli ją zatrzymać.
-&ndash; <code>update</code> &ndash; prosta metoda obsługująca poruszanie naszego obiektu po planszy. Wartość p1[0] odpowiada ruchowi w poziomie, analogicznie p1[1] to ruch w pionie. wyrażenie <code>evt?.which</code> odpowiada zapisowi słownemu &ndash; sprawdź, czy obiekt <strong>evt</strong> istnieje, a jeżeli tak podaj wartość jego pola <strong>which</strong> (określa ono kod naciśniętego przycisku &ndash; znacznie więcej na ten temat można przeczytać <a href="http://unixpapa.com/js/key.html">tutaj</a>).
-&ndash; <code>draw</code> &ndash; wywołujemy tutaj kolejno metody do wypełniania tła kolorem czarnym, a następnie odrysowujemy nasz kształt (prostokąt) w pozycjach podanych przez tablicę.
-&ndash; <code>startGame</code> &ndash; ustawiamy cykliczne wykonywanie metody <code>draw </code>(w założeniu 50 klatek/sek. w praktyce będzie to inna wartość). Warto zauważyć, że aby wywołać metodę <strong>draw</strong> z bieżącego obiektu Game, zapisaliśmy uprzednio wartość this (w CoffeScript jej odpowiednikiem jest znak <code>@</code>) do osobnej zmiennej. Dzieje się tak dlatego, ponieważ po wejściu do funkcji obsługiwanej przez <code>setInterval</code>zmienia się kontekst wykonywanego bloku kodu, a co za tym idzie zmienna <code>this</code>/<code>@</code>wskazuje już na inny obiekt (w tym wypadku będzie to bodajże okno przeglądarki). Na koniec zapisujemy uchwyt do wykonywanej metody w zmiennej @loop_id.</p>
-
-<p>W praktyce to wszystko wystarczy, aby uruchomić podstawową scenę uwzględniającą animacje i reagującą na akcje wykonywane przez użytkownika na klawiaturze :) . Przykładowe uruchomienie sceny:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">p1 = </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">50</span><span class="p">]</span>    <span class="c1"># x, y, width, height</span>
-</span><span class='line'><span class="nx">$</span> <span class="nf">-&gt;</span>
-</span><span class='line'>  <span class="c1"># odpowiednik document.ready, wymaga dołączenia jquery</span>
-</span><span class='line'>  <span class="nv">game = </span><span class="k">new</span> <span class="nx">Game</span><span class="p">(</span><span class="s">&quot;arena&quot;</span><span class="p">)</span>   <span class="c1"># arena - canvas id</span>
-</span><span class='line'>  <span class="nx">game</span><span class="p">.</span><span class="nx">startGame</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Uwagi:
-&ndash; Z nieznanych mi przyczyn (nie ustaliłem jeszcze dokładnego powodu) javascript skompilowany z powyższego kodu może mieć problemy z uruchomieniem na przeglądarce Chrome. Firefox i Opera nie sprawiają tutaj większych problemów.
-&ndash; Istnieje sporo gotowych frameworków, które odciążają nas z konieczności konstruowania inteligentnych pętli gry. Jest to temat wart zbadania.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -1475,6 +1602,10 @@ Zalety:</li>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/02/02/uncommon-static-type-feats/">Top features every statically typed language should have</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
       </li>
     
@@ -1488,10 +1619,6 @@ Zalety:</li>
     
       <li class="post">
         <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
       </li>
     
   </ul>

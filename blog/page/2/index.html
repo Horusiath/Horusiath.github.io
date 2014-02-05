@@ -9,7 +9,7 @@
   <meta name="author" content="Bartosz Sypytkowski">
 
   
-  <meta name="description" content="O tym czym jest Git, wie chyba każdy programista. O konwencjach i wzorcach stosowanych podczas produkcji do rozwoju repozytorium słyszało jednak &hellip;">
+  <meta name="description" content="We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -75,6 +75,136 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/20/niska-wydajnosc-rubyego-studium/">Niska Wydajność Ruby&#8217;ego - Studium Porównawcze</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-20T23:42:00+01:00" pubdate data-updated="true">Mar 20<span>th</span>, 2013</time>
+        
+         | <a href="/blog/2013/03/20/niska-wydajnosc-rubyego-studium/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego dopasowania języka do zbioru metodyk i stosu technologicznego nastawionego na maksymalizację wydajności pracy programisty. Stanowią one &ldquo;wylęgarnię&rdquo; nowatorskich praktyk, które nieraz przenikają dalej i zostają zaadaptowane przez inne środowiska. Wystarczy podać kilka przykładów ze środowiska .NET: migracje w najnowszym EF4.3+, kierunek w jakim zmierza cały ASP.NET MVC czy dynamizacja języka C# &ndash; myśleliście, że idea stojąca za LINQ to nowatorski pomysł? ;) .</p>
+
+<p>Niestety za każym razem, kiedy mowa o Rubym, powracają kwestie jego wydajności. Jest to pięta achillesowa tego języka, powtarzana jak mantra w kolejnych dyskusjach programistów. Na czym jednak polegają te problemy? W tym postcie postaram się je opisać (w odniesieniu do najpopularniejszego kompilatora Ruby&#8217;ego &ndash; MRI) oraz opowiedzieć o rozwiązaniach, jakie zostały zaadaptowane w innych językach. Ponieważ moje obserwacje będę porównywał do innych implementacji, w tym Javy, C#, Pythona i różnych wirtualnych maszyn JavaScriptu, liczę że każdy będzie mógł wynieść z tego jakąś przydatną wiedzę.</p>
+
+<h2>Garbage Collector</h2>
+
+<p>Ten wątek musiał się tu pojawić, dlatego też postanowiłem zacząć właśnie od niego. Rozdział ten będzie dość trudny do przełknięcia dla osób, które z teorią stojącą za językami programowania nigdy nie miały do czynienia. Zanim przejdą one dalej, proponuję zaznajomić się z <a href="http://en.wikipedia.org/wiki/Garbage_collection_(computer_science">tym wpisem</a>) na Wikipedii.</p>
+
+<p>W dużym skrócie, Garbage collector w MRI wykorzystuje (podobnie jak wszystkie najpopularniejsze współcześnie maszyny wirtualne) algorytm <em>mark and sweep</em>. Jest to jednak pojęcie bardzo szerokie. Zagłębiając się w detale, dochodzimy do pewnych różnic.</p>
+
+<h3>Podział zarządzanego stosu</h3>
+
+<p>Większość programistów Javy i .NET zapewne kojarzy, że zarządzana sterta występująca w tych językach nie jest strukturą jednolitą, lecz jest podzielona na wiele przestrzeni (mowa tu o generacjach, ale nie tylko). I tak w przypadku .NET &ndash; na przykładzie SGena używanego w Mono, a świetnie opisanego <a href="http://www.mono-project.com/Generational_GC">tutaj</a> mamy do czynienia z podziałem sterty na kilka zbiorów:</p>
+
+<ul>
+<li><strong>Generacje</strong> &ndash; Zazwyczaj istnieją dwie lub więcej. Pierwszą jest <strong>żłobek</strong> (<em>nursery</em>). Ten zbiór jest relatywnie mały (domyślnie 4MB dla SGena, &frac12; pamięci cache L2 dla Pythona made by PyPy) i często czyszczony. Jest sprawny głównie ze względu na fakt, że większość obiektów przechowywanych na stercie ma stosunkowo krótki czas istnienia (np. zmienne lokalne funkcji/metod, które są niepotrzebne poza zakresem danej metody). Obiekty bardziej długowieczne przenoszone są na sterty kolejnych generacji. W rezultacie pamięć jest czyszczona częściej, jednak liczy się tutaj rozmiar przeszukiwanej pamięci (żłobek jest mały, przez co jego znakowanie i czyszczenie trwa bardzo krótko).</li>
+<li><strong>Przestrzeń dużych obiektów</strong> &ndash; ponieważ naprawdę duże obiekty są dość ciężkie do alokacji (znalezienie na stercie jednolitego bloku pamięci nie zajętego przez inne obiekty może być wyzwaniem), są one rozpatrywane osobno, zarówno na wirtualnych maszynach Javy jak i .NETu (tak w przypadku Mono jak i M$).</li>
+<li><strong>Łańcuchy znaków (string)</strong> &ndash; tekst jest również traktowany w specjalny sposób. Przykładowo wpisując w dwóch różnych miejscach w kodzie <em>&ldquo;ala ma kota&rdquo;</em> w praktyce definiujemy ten łańcuch znaków tylko raz, tworząc do niego dwie referencje. Ta zasada dotyczy zarówno Javy, .NETu, Pythona oraz najnowszych silników JavaScriptu. Ruby nie implementuje tej funkcjonalności &ndash; moim zdaniem na przeszkodzie stoi tutaj natura stringów w tym języku, które zgodnie ze specyfikacją mogą być mutowalne.</li>
+</ul>
+
+
+<p>Niestety w Rubym brakuje podziału sterty na generacje, przez co jest ona błyskawicznie zapychana obiektami o krótkim czasie życia, zaś &ldquo;sprzątnięcie&rdquo; całej sterty zajmuje sporo czasu. W chwili obecnej nie jest to możliwe, ponieważ GC w MRI nie implementuje przenoszenia obiektów wewnątrz sterty (dlaczego tak jest opowiem dalej).</p>
+
+<h3>Co znajduje się na stosie</h3>
+
+<p>W przypadku <strong>Javy</strong> sprawa podziału alokacji pomiędzy stos i stertę wygląda stosunkowo prosto: typy natywne i referencje na obiekty lądują na stosie, a reszta (obiekty klas) na stertę. W przypadku <strong>C#</strong> jest to trochę bardziej skomplikowane, ponieważ na stosie mogą wylądować również obiekty-struktury (<em>struct</em>) oraz obiekty utworzone za pomocą słowa kluczowego <strong>stackallock</strong>.</p>
+
+<p>Pomiędzy GC Javy (oraz javascriptowym V8) a Mono istnieje dodatkowa różnica: dwa pierwsze stosują tzw. precyzyjne wskaźniki, tzn. podczas przechodzenia po stosie przez marker (uruchamiany przez GC w pierwszej fazie pracy i służący oznaczeniu obiektów, które trzeba sprzątnąć) natrafiając na wartości od razu wie, czy są one wartościami czy referencjami na obiekty znajdujące się na stercie. Przykładowo maszyna wirtualna JavaScriptu z Chroma używa do tego specjalnego bitu określającego czy dana wartość jest referencją (stąd na V8 w wersji 32-bitowej liczby całkowite są wewnętrznie składowane jako wartości <em>31-bitowe</em>). Niestety SGen Mono musi za każdym razem sprawdzić (a w razie wątpliwości założyć z góry), czy taka wartość wskazuje adres na stercie.</p>
+
+<p>W przypadku Ruby&#8217;ego sprawa wygląda częściowo prościej: w tym języku nie istnieją typy wartościowe, zatem wszystkie wartości (w tym liczby oraz flagi logiczne) są reprezentowane przez obiekty składowane na zarządzanej stercie. To sprawia, że czas dostępu do nich jest dłuższy.</p>
+
+<p>Inna niespodzianka, jaką szykuje nam Ruby, sięga jeszcze dalej. Interpreter MRI (do nadejścia wersji 1.9) konstruował kod Ruby&#8217;ego przez pośrednią translację do <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">drzewa AST</a>. Jednakże chcąc zapewnić programistom &ldquo;pełnię władzy&rdquo; nad kodem, tak stworzone drzewo było składowane w postaci struktur Ruby&#8217;ego na jego zarządzanej stercie! Oznacza to, że cały aktualnie wykonywany kod jest reprezentowany przez faktycznie istniejące drzewo obiektów, zajmujące ogromną ilość pamięci.</p>
+
+<h3>Jak zarządzana jest sterta: .NET Mono</h3>
+
+<p>Kolejne zestawienie z Mono. Mówiąc dość ogólnie sterta jest podzielona na tak zwane bloki, one z kolei na sloty. Podczas oznaczania obiektów na stercie dzielimy je na 3 typy:</p>
+
+<ul>
+<li><strong>Root objects</strong> &ndash; są to obiekty, do których znaleziono referencje na stosie i które nie powinny zostać usunięte.</li>
+<li><strong>Garbage </strong>&ndash; a zatem obiekty-śmieci oraz puste przestrzenie, które mogą zostać realokowane pod nowe obiekty.</li>
+<li><strong>Pinned objects</strong> &ndash; specjalny rodzaj tzw. przypiętych obiektów. Są to obszary pamięci wyjęte spoza kontroli zarządzanej sterty, a więc np. struktury z języka C, na które mamy referencje z poziomu P/Invoke oraz obiekty przypięte ręcznie w zakresach <strong>unsafe</strong> (za pomocą słowa kluczowego <strong>fixed</strong>). W Mono do tej listy dochodzą również te adresy, które zostały znalezione na stosie, ale nie koniecznie wskazują na obiekty. Ze względów bezpieczeństwa takich obiektów nie można odśmiecać.</li>
+</ul>
+
+
+<p>Z punktu widzenia Garbage Collectora najbardziej upierdliwe są pinned objects. Dlaczego? Otóż w trakcie odśmiecania pamięci GC zostawia &ldquo;dziury&rdquo; pustych przestrzeni, które mogą posłużyć w przyszłości do zaalokowania nowych obiektów. Niestety te dziury powodują fragmentację pamięci. Co z tego, że mamy 10 luk po 100 bajtów, jeżeli potrzebujemy stworzyć obiekt rozmiaru 200B? Dlatego też GC w Mono został wyposażony w opcję realokacji obiektów &ndash; umożliwia to przesunięcie położenia obiektów w pamięci tak, aby złączyć luki powstałe po odśmiecaniu w 1 ciągły blok w pamięci.</p>
+
+<h3>Jak zarządzana jest sterta: Ruby</h3>
+
+<p>Z punktu widzenia MRI sterta również jest podzielona na komórki, które są reprezentowane w pamięci jako zwykłe struktury C (dokładna nazwa to <em>struct VALUE</em>).</p>
+
+<p>Ciekawostką jest sposób znajdowania pustych fragmentów na stercie służących pod przyszłe alokacje obiektów. Do wersji 2.0 (a więc we wszystkich obecnie używanych) mamy do czynienia ze strukturą przyjmującą postać linked listy. Szukając nieużywanych komórek musieliśmy przeglądać kolejne węzły z listy i sprawdzać ich zajętość &ndash; przeskakiwanie po pamięci oraz znalezienie odpowiednio dużego ciągłego bloku może być czasochłonne, sama lista również ma swój rozmiar. Od wersji 2.0 zamieniono ją inną strukturą &ndash; bitmapą. Od teraz za każdym razem, kiedy tworzona jest zarządzana sterta, część pamięci na jej początku zostaje zarezerwowana na potrzeby bitmapy. Określa ona w prosty sposób (ustawiając lub zerując kolejne bity w pamięci) zajętość kolejnych komórek VALUE. Przeszukiwanie takiej struktury jest o wiele szybsze, zajmuje ona też mniej miejsca w pamięci &ndash; ponieważ bloki RValue mają po 40 bajtów i wymagają 1 bitu do sygnalizacji łatwo wyliczyć, że ostateczna bitmapa zajmuje około 1/(40*8) = 1/320 rozmiaru całej sterty.</p>
+
+<p>Do czego sprowadza się największy (moim zdaniem) problem Ruby&#8217;ego? Otóż GC w MRI nie dysponuje opcją przenoszenia obiektów. Porównując do Mono wszystkie obiekty w Rubym traktowane są jako pinned object. Niesie to szereg następstw m.in. w przypadku konieczności alokacji dużego obiektu na stercie o mocno sfragmentowanej strukturze, może istnieć potrzeba rozszerzenia rozmiaru sterty (a zatem zwiększenia zużycia RAMu w całym programie) pomimo, że istnieje dostateczna ilość miejsca, aby taki obiekt zaalokować.</p>
+
+<p>Czy można zmienić GC w Rubym na taki, który zdolny jest przesuwać obiekty? Nie. Na drodze stoją tu referencje na obiekty, które wewnątrz są w rzeczywistości zwykłymi wskaźnikami na bloki pamięci bezpośrednio na stercie. Przesunięcie obiektu na stercie wiąże się ze zmianą jego adresu, ponieważ jednak nie wiemy ile referencji (których w algorytmie <em>mark&amp;sweep</em> nie zliczamy) należy powiadomić o nowej lokacji obiektu, taka operacja nie jest możliwa. Naturalnie można to zmienić (np. wprowadzić wskaźniki pośrednie), jednakże spowoduje to dysonans między dotychczasowymi implementacjami wtyczek z języka C montowanych do Ruby&#8217;ego i zniszczy jego kompatybilność wstecz. Niestety sądzę, że prędzej czy później ta decyzja musi zostać podjęta.</p>
+
+<h2>Klątwa języków dynamicznych</span></h2>
+
+<p>Kolejnym krokiem w zrozumieniu problemu niskiej wydajności jest poznanie natury &ndash; i ceny &ndash; towarzyszącej językom dynamicznym. Weźmy pod uwagę następujący przykład: załóżmy, że stworzyliśmy klasę w dowolnym języku statycznie typowanym (np. Java lub C#). Jej postać jest następująca:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Point</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">y</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Nie zagłębiając się zanadto w szczegóły jesteśmy w stanie stwierdzić, że wywołanie konstruktora powinno zaowocować stworzeniem w pamięci obiektu zajmującego 8 bajtów (2*sizeof(int)). Jak to wygląda w językach dynamicznie typowanych? Otóż w Rubym MRI, Pythonie oraz JavaScriptcie (w niektórych przypadkach) tworzony obiekt jest de facto nie zwykłym blokiem pamięci lecz strukturą budową bardziej przypominającą hash mapę/słownik, w którym każde pola reprezentowane jest przez string (js), hash (py) lub symbol reprezentowany w globalnej tablicy symboli (rb). Dotyczy to każdego pojedynczego obiektu. Wynika to w naturalny sposób z faktu, że tworząc obiekt danego typu, możemy go w dowolnej chwili rozszerzyć o nowe pola bez zmiany struktury obiektów o tej samej klasie. Czas dostępu do pól w takich obiektach jest bardzo duży, zaś same struktury są o wiele większe niż ich odpowiedniki w językach statycznie typowanych.</p>
+
+<p>Czy da się to ominąć? Tak, rozwiązanie zostało już wynalezione i zaimplementowane w JavaScriptcie na silnikach V8 (Chrome) oraz najnowszym SquirrelFish (Safari). Oba te silniki definiują tzw. <em>hidden classes</em>. Idea która za nimi stoi wynika z prostej przesłanki. Otóż zauważono, że nawet w językach dynamicznych wewnętrzna struktura obiektów przez znaczną większość czasu pozostaje taka sama. Z tego powodu możemy reprezentować obiekty o tej samej budowie przez ukrytą klasę &ndash; jej struktura pamięci jest identyczna z tą w językach statycznie typowanych. W momencie kiedy rozszerzamy dany obiekt o kolejne pola, tworzymy dla niego kolejną ukrytą klasę, o nowej, rozrośniętej budowie, a następnie realokujemy do nowej postaci. Z punktu widzenia wykonywanego programu jest to dość rzadkie zjawisko, natomiast korzyści płynące z tego podejścia są ogromne.</p>
+
+<h2>JIT, Interpreter oraz Tracing</h2>
+
+<p>Ostatnia różnica, na której chcę się skupić dotyczy różnic wynikających z kompilatorów JIT (używanych obecnie niemal we wszystkich najpopularniejszych językach: Javie, C# czy Pythonie na silniku PyPy) w stosunku do tradycyjnych interpreterów (Ruby MRI) oraz możliwości jakich dostarczają.</p>
+
+<p>Podstawowa różnica między tymi dwoma typami polega na tym, że tradycyjny interpreter przetwarza i generuje kod maszynowy na bieżąco w czasie rzeczywistym, interpretując skrypt linijka po linijce. JIT w tym czasie wykonuje małe wyprzedzenie, przetwarzając cały dostępny kod jeszcze przed punktem jego wykonania.</p>
+
+<p>Dodatkową korzyścią płynącą z podejścia kompilacji JIT jest możliwość dynamicznej optymalizacji kodu w trakcie jego działania. Takie podejście stosowane jest przez wszystkie najnowsze maszyny wirtualne. Jedna z takich technik znana jest jako <strong>trace trees</strong> i została opisana <a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/ICS-TR-06-16.pdf">tutaj</a>. W dużym skrócie ideą tego podejścia jest wyłapanie w aplikacji powtarzających się fragmentów kodu oraz zoptymalizowanie ich w taki sposób, aby wykonywały one jak najmniej instrukcji procesora. W jaki sposób jest to osiągane?</p>
+
+<ul>
+<li><strong>Inlining </strong>&ndash; a więc ograniczenie liczby instrukcji call do zewnętrznych funkcji poprzez skopiowanie ich zawartości do wnętrza pętli.</li>
+<li><strong>Wnioskowanie typów</strong> &ndash; przykład: jeżeli w języku dynamicznym dodajemy do siebie w pętli dwie&nbsp;wartości typu int&nbsp;1000 razy, mamy przesłanki aby twierdzić, że operacje wykonane na tej zmiennej zawsze będą dotyczyć obiektu tego samego typu (gdyby nie to, musielibyśmy za każym razem sprawdzać czy operator dodawania nie został np. użyty raz dla <strong>int</strong>ów a inny raz dla <strong>string</strong>ów). Takie wnioski umożliwią nam wygenerowanie kodu maszynowego zoptymalizowanego do tego konkretnego typu &ndash; jest to bardzo przydatne z punktu widzenia Ruby&#8217;ego. Za przykład niech posłuży metoda dodawania 2 liczb całkowitych &ndash; teoretycznie możliwa do wykonania w 1 instrukcji maszynowej, w Rubym jest opakowana w metodę wirtualną, która dodatkowo definiuje sprawdzanie zakresu dla wynikowej liczby i w zależności od wyniku zwraca jedną z dwóch wewnętrznie różnych implementacji obiektu opakowującego dany wynik</li>
+<li><strong>Rekonstrukcja do postaci kodu maszynowego wykonywalnego na GPU</strong> &ndash; wykonywalne, o ile kompilator jest w stanie rozpoznać stosowny kod na podstawie określonych wzorców (z tego co wiem, maszyna wirtualna na FireFoxie potrafi coś takiego).</li>
+</ul>
+
+
+<p>Rozwiązania zostały już wykorzystane na najnowszych VMach JavaScriptu. Niestety Ruby i Python wciąż czekają na swoją kolej.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -2021,321 +2151,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/">Forwardowanie I Streaming Dużych Plików Przez WCF</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-07-04T19:08:00+02:00" pubdate data-updated="true">Jul 4<span>th</span>, 2012</time>
-        
-         | <a href="/blog/2012/07/04/forwardowanie-i-streaming-duzych-plikow/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>W trakcie tworzenia serwisów bazujących na ASP.NET niejednokrotnie zdarza się potrzeba przesyłania dużych plików przez sieć. W przypadku, gdy kontroler, aby przetransportować plik do przeglądarki, musi odwołać się do usługi sieciowej (w opisywanym przez mnie wypadku WCF) sprawy mogą się trochę skomplikować. Ponieważ nie chcielibyśmy, aby nasz serwer regularnie zapychał się buforując dużą ilość danych, dobrym rozwiązaniem byłoby utworzenie strumienia wzdłuż całego stosu komunikacyjnego. Przedstawia to rysunek poglądowy poniżej.</p>
-
-<p><img border="0" src="http://3.bp.blogspot.com/-YNoTKRkDFdY/T_Rk7WLTmYI/AAAAAAAAAEo/x8aFQOc0siQ/s1600/flow.png" /></p>
-
-<p>Stwórzmy zatem przykładowe rozwiązanie takiego problemu. W tym celu podzielimy go na dwa mniejsze podproblemy: strumieniowanie pliku przy pomocy Windows Communication Foundation oraz forwardowanie otrzymanego strumienia bezpośrednio do przeglądarki. Co istotne, w rozwiązaniu tym nie możemy pozwolić sobie na zbuforowanie pliku w którymkolwiek momencie strumieniowania.</p>
-
-<h2>Streaming WCF</h2>
-
-<p>Zacznijmy od zdefiniowania przykładowego interfejsu naszej usługi. Może on wyglądać następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[ServiceContract]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IFileStreamer</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'><span class="na">    [OperationContract]</span>
-</span><span class='line'>    <span class="n">FileStreamResponse</span> <span class="nf">GetFile</span><span class="p">(</span><span class="n">FileStreamRequest</span> <span class="n">request</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widzimy jedyną operacja wykonywaną przez naszą usługę jest pobranie obiektu klasy <em>FileStreamResponse</em>. Klasę taką możemy zdefiniować następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[MessageContract]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">FileStreamResponse</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'><span class="na">    [MessageHeader]</span>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">string</span> <span class="n">FileName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="na">    [MessageHeader]</span>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">string</span> <span class="n">ContentType</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="na">    [MessageHeader]</span>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">long</span> <span class="n">FileLength</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="na">    [MessageBodyMember]</span>
-</span><span class='line'>    <span class="k">public</span> <span class="n">Stream</span> <span class="n">Stream</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Warto zatrzymać się na chwilę w tym miejscu. Jak widzimy obiekt tej klasy nie jest zdefiniowany za pomocą standardowego atrybutu <em>[DataContract]</em>, lecz nieco rzadziej spotykanego <em>[MessageContract]. </em>Powodem takiego zachowania jest właściwość oznaczona parametrem <em>[MessageBodyMember]</em>. Jest to główna treść naszego obiektu, strumień. Reszta danych zdefiniowana zostanie w nagłówku wiadomości SOAP, w którą opakowane są wszystkie serializowane obiekty transportowane przez naszą usługę. Jest tak, ponieważ zgodnie z regułami narzucanymi przez WCF, jeżeli zwracany jest strumień, powinien on być jedynym elementem zawartym w ciele wiadomości. Więcej o message contractach można dowiedzieć się <a href="http://msdn.microsoft.com/en-us/library/ms730255.aspx">tutaj</a> oraz <a href="http://msdn.microsoft.com/en-us/library/ms733742.aspx">tutaj</a>.</p>
-
-<p>Mimo że nasza usługa ma za zadanie strumieniować pliki, to w praktyce zwracany strumień jest klasy <em>Stream</em>. Dzieje się tak z dwóch powodów:</p>
-
-<ol>
-<li>Ponieważ klasa <em>FileStream</em> nie jest oznaczona atrybutem <em>Serializable</em>, nie może ona być zserializowana i przesłana przez sieć.</li>
-<li>W praktyce serializer WCF zawsze będzie konwertował wszystkie wyjściowe strumienie do klasy <em>MessageBodyStream</em>. Jest to ważne, ze względu na fakt że klasa ta nie dysponuje takimi możliwościami jak większość innych strumieni &ndash; opiszę je w drugiej części artykułu &ndash; i będziemy musieli ominąć jej braki.</li>
-</ol>
-
-
-<p>W dalszej kolejności powinniśmy się przyjrzeć budowie obiektu przekazywanego jako parametr. W naszym przykładzie wygląda on następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[MessageContract]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">FileStreamRequest</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'><span class="na">    [MessageBodyMember]</span>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widać jedyną zmienną przechowywaną przez nasz obiekt żądania jest pojedyncza liczba. Pytanie zatem brzmi: czy musimy budować osobny obiekt żądania na potrzeby tylko jednego prostego parametru? Odpowiedź brzmi: Tak. Dzieje się tak dlatego, że WCF wymaga od nas, aby w przypadku, gdy w operacji zwracane są obiekty oznaczone jako <em>[MessageContract]</em>, operacja ta może przyjmować za parametry jedynie inne obiekty oznaczone tym atrybutem i może w ten sposób przyjmować tylko jeden obiekt.</p>
-
-<p>Przejdźmy teraz do zdefiniowania klasy służącej za implementację naszej usługi.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[ServiceBehavior(AddressFilterMode = AddressFilterMode.Any)]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">FileStreamer</span> <span class="p">:</span> <span class="n">IFileStreamer</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">public</span> <span class="n">FileStreamResponse</span> <span class="nf">GetFile</span><span class="p">(</span><span class="n">FileStreamRequest</span> <span class="n">request</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="c1">// pobieramy ścieżkę do pliku</span>
-</span><span class='line'>        <span class="kt">var</span> <span class="n">path</span> <span class="p">=</span> <span class="n">GetPathFor</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="kt">var</span> <span class="n">filename</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="n">GetFileName</span><span class="p">(</span><span class="n">path</span><span class="p">);</span>
-</span><span class='line'>        <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FileStream</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Open</span><span class="p">,</span> <span class="n">FileAccess</span><span class="p">.</span><span class="n">Read</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="k">return</span> <span class="k">new</span> <span class="n">FileStreamResponse</span>
-</span><span class='line'>        <span class="p">{</span>
-</span><span class='line'>            <span class="n">Stream</span> <span class="p">=</span> <span class="n">stream</span><span class="p">,</span>
-</span><span class='line'>            <span class="n">FileLength</span> <span class="p">=</span> <span class="n">stream</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span>
-</span><span class='line'>            <span class="n">FileName</span> <span class="p">=</span> <span class="n">filename</span><span class="p">,</span>
-</span><span class='line'>            <span class="n">ContentType</span> <span class="p">=</span> <span class="s">&quot;application/zip&quot;</span>
-</span><span class='line'>        <span class="p">};</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// ... dalsza implementacja </span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Na koniec musimy zdefiniować konfigurację usługi tak, aby mogła ona wykorzystywać strumieniowanie. W tym wypadku jesteśmy ograniczeni do wyboru jednego z czterech bindingów, które to umożliwiają:</p>
-
-<ul>
-<li>BasicHttpBinding</li>
-<li>WebHttpBinding</li>
-<li>NetTcpBinding</li>
-<li>NetNamedPipeBinding</li>
-</ul>
-
-
-<p>Niezbędne jest również określenie maksymalnego rozmiaru danych przesyłanych w strumieniu oraz określenie kierunku strumienia &ndash; dla danych pobieranych z usługi jest to <em>StreamedResponse</em>. Dodatkowo warto określić kodowanie wiadomości (co pozwoli zmniejszyć jej rozmiar) oraz rozmiar bufora ramki (im większy jego rozmiar tym mniej &ldquo;rozdrobniona&rdquo; będzie nasza wiadomość, lecz jednocześnie więcej pamięci potrzebnej jest na obsługę bufora przez serwer). Domyślny rozmiar bufora w WCF wynosi 64KB.</p>
-
-<p>W rezultacie przykładowa konfiguracja może wyglądać następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;services&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;service</span> <span class="na">name=</span><span class="s">&quot;&lt;namespace&gt;.FileStreamer&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;endpoint</span>
-</span><span class='line'>      <span class="na">binding=</span><span class="s">&quot;basicHttpBinding&quot;</span>
-</span><span class='line'>      <span class="na">address=</span><span class="s">&quot;http://localhost/&lt;webservice_address&gt;&quot;</span>
-</span><span class='line'>      <span class="na">contract=</span><span class="s">&quot;&lt;namespace&gt;.IFileStreamer&quot;</span>
-</span><span class='line'>      <span class="na">bindingConfiguration=</span><span class="s">&quot;streamedBasicHttpBinding&quot;</span><span class="nt">/&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;/service&gt;</span>
-</span><span class='line'><span class="nt">&lt;/services&gt;</span>
-</span><span class='line'><span class="nt">&lt;bindings&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;basicHttpBinding&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;binding</span> <span class="na">name=</span><span class="s">&quot;streamedBasicHttpBinding&quot;</span>
-</span><span class='line'>             <span class="na">transferMode=</span><span class="s">&quot;StreamedResponse&quot;</span>
-</span><span class='line'>             <span class="na">messageEncoding=</span><span class="s">&quot;Mtom&quot;</span>
-</span><span class='line'>             <span class="na">maxReceivedMessageSize=</span><span class="s">&quot;629145600&quot;</span><span class="nt">/&gt;</span>
-</span><span class='line'>    <span class="c">&lt;!-- maksymalny rozmiar pliku: 600MB --&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;/basicHttpBinding&gt;</span>
-</span><span class='line'><span class="nt">&lt;/bindings&gt;&lt;/services&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Analogicznie do tego można utworzyć konfigurację kliencką. Można ją zdefiniować ręcznie albo posłużyć się opcją <em>Add Service Reference</em> z menu kontekstowego referencji w projekcie docelowym otwartym w Visual Studio lub używając narzędzia <em>svcutil </em>i wygenerować w ten sposób potrzebny plik proxy klienta i konfigurację.</p>
-
-<h2>Forwardowanie po stronie ASP</h2>
-
-<p>Zanim przejdziemy do pisania przykładowego kodu, należy zwrócić uwagę na kilka kwestii.</p>
-
-<p>Tak jak opisałem wcześniej mimo, że transport pliku z operacji WCF odbywa się za pomocą strumienia, nie jest to jednak obiekt klasy <em>FileStream</em>, lecz <em>MessageBodyStream</em>. Nanosi to na nasze zadanie pewne trudności:</p>
-
-<ul>
-<li>Metoda <em>Read </em>strumienia tej klasy nie musi zwracać w wyniku ilości faktycznie odczytanych wierszy. Ponieważ strumień nie definiuje również żadnego odpowiednika flagi <em>EndOfStream</em>, musimy z góry znać długość strumienia, aby w odpowiednim momencie zakończyć odczytywanie danych.</li>
-<li>Strumień ten nie implementuje właściwości <em>Length</em> (sic!), stąd też musieliśmy wcześniej zdefiniować message contract, w którym ustawiamy ręcznie tą długość jako jeden z parametrów przekazywanych w nagłówku wiadomości.</li>
-<li>Przy próbie bezpośredniego zwrócenia tego strumienia przy przekazaniu go do metody <em>File </em>kontrolera, nastąpi próba zbuforowania całego pliku przez kontroler. Zgodnie z początkowym założeniem nie możemy do tego dopuścić. Z tego powodu powinniśmy własnoręcznie skonstruować odpowiedź dla przeglądarki.</li>
-</ul>
-
-
-<p>W rezultacie przykładowy kod akcji kontrolera może wyglądać następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="n">ActionResult</span> <span class="nf">GetFileStream</span><span class="p">(</span><span class="kt">long</span> <span class="n">id</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="c1">// fileStreamer - klient proxy do usługi WCF</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">message</span> <span class="p">=</span> <span class="n">fileStreamer</span><span class="p">.</span><span class="n">GetFile</span><span class="p">(</span><span class="k">new</span> <span class="n">FileStreamRequest</span> <span class="p">{</span> <span class="n">Id</span> <span class="p">=</span> <span class="n">versionId</span> <span class="p">});</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="n">Stream</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span> <span class="n">message</span><span class="p">.</span><span class="n">FileLength</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BinaryReader</span><span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="n">Stream</span><span class="p">))</span>
-</span><span class='line'>        <span class="p">{</span>
-</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">Clear</span><span class="p">();</span>
-</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">ContentType</span> <span class="p">=</span> <span class="n">message</span><span class="p">.</span><span class="n">ContentType</span><span class="p">;</span>
-</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">AddHeader</span><span class="p">(</span><span class="s">&quot;Content-Length&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">.</span><span class="n">FileLength</span><span class="p">.</span><span class="n">ToString</span><span class="p">());</span>
-</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">AddHeader</span><span class="p">(</span><span class="s">&quot;Content-Disposition&quot;</span><span class="p">,</span> <span class="s">&quot;attachment; filename=&quot;</span> <span class="p">+</span> <span class="n">message</span><span class="p">.</span><span class="n">FileName</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="kt">var</span> <span class="n">defaultBufferSize</span> <span class="p">=</span> <span class="m">1024</span><span class="p">*</span><span class="m">1024</span><span class="p">*</span><span class="m">64</span><span class="p">;</span>   <span class="c1">// 65KB</span>
-</span><span class='line'>            <span class="kt">var</span> <span class="n">bytesRead</span> <span class="p">=</span> <span class="m">0L</span><span class="p">;</span>
-</span><span class='line'>            <span class="k">do</span>
-</span><span class='line'>            <span class="p">{</span>
-</span><span class='line'>                <span class="kt">var</span> <span class="n">frame</span> <span class="p">=</span> <span class="p">(</span><span class="n">bytesRead</span> <span class="p">+</span> <span class="n">defaultBufferSize</span><span class="p">)</span> <span class="p">&lt;=</span> <span class="n">message</span><span class="p">.</span><span class="n">FileLength</span>
-</span><span class='line'>                    <span class="p">?</span> <span class="n">defaultBufferSize</span>
-</span><span class='line'>                    <span class="p">:</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">message</span><span class="p">.</span><span class="n">FileLength</span> <span class="p">-</span> <span class="n">bytesRead</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>                <span class="kt">var</span> <span class="n">buffer</span> <span class="p">=</span> <span class="n">stream</span><span class="p">.</span><span class="n">ReadBytes</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
-</span><span class='line'>                <span class="n">Response</span><span class="p">.</span><span class="n">BinaryWrite</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
-</span><span class='line'>                <span class="n">Response</span><span class="p">.</span><span class="n">Flush</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>                <span class="n">bytesRead</span> <span class="p">+=</span> <span class="n">frame</span><span class="p">;</span>
-</span><span class='line'>            <span class="p">}</span> <span class="k">while</span> <span class="p">(</span> <span class="n">bytesRead</span> <span class="p">&lt;</span> <span class="n">message</span><span class="p">.</span><span class="n">FileLength</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>            <span class="n">Response</span><span class="p">.</span><span class="n">End</span><span class="p">();</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Ostatnia rzecz warta odnotowania, to w zasadzie rada dla developerów. Niestety, aby sprawdzić działanie strumienia w praktyce, musimy uruchomić naszą aplikację na rzeczywistym serwerze IIS (można to ustawić we właściwościach projektu), ponieważ standardowy serwer developerski ASP nie udostępnia tej opcji.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -2353,6 +2168,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/02/02/uncommon-static-type-feats/">Top features every statically typed language should have</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
       </li>
     
@@ -2366,10 +2185,6 @@
     
       <li class="post">
         <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego programiści .NET mogliby nauczyć się od Rubystów?</a>
       </li>
     
   </ul>
