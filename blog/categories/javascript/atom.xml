@@ -4,7 +4,7 @@
   <title><![CDATA[Category: javascript | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-02-23T20:02:33+01:00</updated>
+  <updated>2014-02-23T20:04:58+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[More thoughts on Knockout.js and JavaScript MVC]]></title>
+    <title type="html"><![CDATA[More thoughts on Knockout.js and JavaScript MVVM]]></title>
     <link href="http://bartoszsypytkowski.com/blog/2014/02/20/more-thoughts-on-knockout/"/>
     <updated>2014-02-20T22:47:00+01:00</updated>
     <id>http://bartoszsypytkowski.com/blog/2014/02/20/more-thoughts-on-knockout</id>
