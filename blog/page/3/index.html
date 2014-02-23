@@ -9,7 +9,7 @@
   <meta name="author" content="Bartosz Sypytkowski">
 
   
-  <meta name="description" content="W trakcie tworzenia serwisów bazujących na ASP.NET niejednokrotnie zdarza się potrzeba przesyłania dużych plików przez sieć. W przypadku, gdy &hellip;">
+  <meta name="description" content="W życiu każdego web developera nadchodzi moment, kiedy należy się zdecydować na wybór platform i bibliotek wykorzystywanych w nowym projekcie. Nie ma &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -75,6 +75,112 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/">Jak Wybrać Stos Frameworków Pod Projekt Webowy (.NET)</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-07-12T18:14:00+02:00" pubdate data-updated="true">Jul 12<span>th</span>, 2012</time>
+        
+         | <a href="/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W życiu każdego web developera nadchodzi moment, kiedy należy się zdecydować na wybór platform i bibliotek wykorzystywanych w nowym projekcie. Nie ma w tym absolutnie nic złego, co więcej powinniśmy być zadowoleni, mając taką opcję. W aplikacjach biznesowych często jest on podejmowany &ndash; nie zawsze słusznie ani rozsądnie (przynajmniej z naszego punktu widzenia) &ndash; za nas, przez osoby trzecie. Tym bardziej warto doceniać sytuacje, w których mamy możliwość wygłoszenia swojej opinii.</p>
+
+<p>W takim razie rodzi się kolejne pytanie: co wybrać? W tym wątku postaram się rozwinąć swoje obserwacje na temat niektórych rozwiązań i stworzyć drobny przekrój technologii wykorzystywanych przez programistów .NET do budowy aplikacji sieciowych.</p>
+
+<h2>Hosting</h2>
+
+<p>Pierwsza sprawa to miejsce, w którym stać będzie nasza aplikacja. Czy będzie to standardowy wykupiony hosting, własny serwer czy może zechcemy udać się w podróż <em>into the cloud?</em> Nie rozwodzę się tutaj nad wykorzystywanym typem serwera, ponieważ praktycznie każdy rozsądny hosting oferuje IIS co najmniej od wersji 7. Hosting aplikacji na innych serwerach jest bardzo ograniczony. Osobiście nie udało mi się znaleźć strony oferującej serwery typu Mono Apache. Nadzieją na przyszłość dla alternatyw IIS może być framework <a href="http://nancyfx.org/">Nancy</a> &ndash; jeżeli się upowszechni, być może pojawią się oferty hostingowe na innych obsługiwanych przez niego serwerach.</p>
+
+<p>Kwestia hostingu aplikacji w chmurze to inna zabawa. Tutaj aplikacje .NETowe mają spore ograniczenie. W praktyce spotkałem tylko dwie chmury typu PaaS oferujące taki hosting: promowany przez Microsoft <a href="http://www.windowsazure.com/pl-pl/">Windows Azure</a> oraz oparty o chmurę Amazonu <a href="https://appharbor.com/">AppHarbor</a>.</p>
+
+<p>Cechą AppHarbor jest prostota &ndash; chmura ta bierze na siebie wiele z rozwiązań sprawdzonych już w Heroku i moim zdaniem jest to absolutny strzał w dziesiątkę. AppHarbor oferuje bardzo tanie jak na chmurę rozwiązania (najmniejsza, pojedyncza, współdzielona instancja jest zawsze za darmo), do tego oferuje szereg znanych technologii, o które można rozszerzyć naszą aplikację &ndash; są to głównie istniejące już na Amazonie usługi, oferty baz danych, systemów kolejkowych i innych (co ważne dla osób chcących je wykorzystać do celów prywatnych, niemal wszystkie w dysponują wersją darmową). Do tego wszystkiego wystarczy zamontować zwykłą aplikację ASP.NET (nie potrzebne są żadne specyficzne projekty). Skalowanie wykonywane jest przez proste zwiększenie liczby instancji oraz wykupienie droższych ofert u zewnętrznych usługodawców.</p>
+
+<p>W przypadku Windows Azure mamy do czynienia z kompletnie innym podejściem. Aplikacja umieszczona na Azure jest pisana z dedykacją dla tej chmury. Potrzebny jest do tego osobny projekt, konieczne jest również generowanie specjalnych paczek umieszczanych docelowo w chmurze. Do tego cała oferta jest znacznie droższa niż opisywany poprzednik, nie mamy również dostępu do tak szerokiego menu dodatkowych usług i są one z reguły kierowane specjalnie pod Azure (technologii tych nie zobaczymy nigdzie indziej). Jakie są więc zalety? Prawdopodobnie lepsze przystosowanie do aplikacji wymagających dużego skalowania i lepsze osiągi istniejących usług. Ostatecznie może to mieć znaczenie, zwłaszcza dla dużych aplikacji.</p>
+
+<h2>Framework</h2>
+
+<p>W tej sytuacji również wybór jest dość prosty. O Mono Rails nikt już nie pamięta (zresztą nie ma takiej potrzeby). W praktyce mamy parę rozwiązań:</p>
+
+<ul>
+<li><strong>ASP.NET Web Forms</strong> &ndash; stara technologia, która wywołuje dreszcze chyba u wszystkich, którzy mieli już okazję posmakować MVC. Istnieje garść bibliotek dla tej technologii, jednak osobiście nikomu bym jej nie polecił. Brak modularyzacji komponentów, praktyczny brak możliwości prowadzenia testów jednostkowych czy cała masa chybionych pomysłów (ViewState WTF?) powodują, że aplikacje pisane w Web Forms często są drogą przez mękę.</li>
+<li><strong>ASP.NET MVC</strong> &ndash; nowsze spojrzenie, wyraźnie inspirowane Ruby on Rails (co widać coraz wyraźniej w każdej następnej wersji). W dodatku często wykorzystywane, sprawdzone i wspierane zarówno przez sam Microsoft, jak i wiele firm zewnętrznych. Rozwiązanie w sam raz dla tych, którzy chcą rozwiązań pewnych i szybkich w pisaniu, jednocześnie nie tracąc poczucia elastyczności.</li>
+</ul>
+
+
+<p>Ponieważ programowanie do dynamiczna dyscyplina, warto również zwrócić uwagę na dwa stosunkowo nowe, wybijające się rozwiązania:</p>
+
+<ul>
+<li><strong>ASP.NET MVC Web API</strong> &ndash; dostępne od nadchodzącej wersji ASP MVC 4. Jedną z jego zalet jest znaczne uproszczenie w tworzeniu serwerów API (o których wspominałem w jednym z wcześniejszych wpisów), przez co stanowi pewien kontrast wobec tradycyjnego ASP MVC, jest jednak w chwili obecnej rozwiązaniem bardziej na czasie.</li>
+<li><strong>Nancy </strong>&ndash; framework inspirowany Sinatrą (kolejna platforma webowa na Ruby&#8217;ego). Cechy charakterystyczne to duża modularność (przydatna sprawa kiedy potrzebujemy przystosować środowisko specjalnie pod nasze potrzeby) oraz niewielki rozmiar. Rozwiązanie to jest jednak nowe (mniej sprawdzone do ASP). Stąd polecałbym go do mniejszych aplikacji oraz tam, gdzie rola serwera opiera się głównie na pośredniczeniu między klientem a bazą danych (patrz Server API).</li>
+</ul>
+
+
+<h2>Baza danych i ORM</h2>
+
+<p>Temat jest dość szeroki, dlatego nie będę się skupiał na niuansach dotyczących wyboru między bazami relacyjnymi i nierelacyjnymi &ndash; po pierwsze jest to temat na osobny artykuł, po za tym uważam, że z tymi drugimi wciąż miałem za mało do czynienia.</p>
+
+<p>W przypadku relacyjnych baz danych, przeważnie zostanie nam narzucone jakieś konkretne rozwiązanie. W momencie, gdy mamy dostęp do SqlServer, dalszy wybór nasuwa się praktycznie sam &ndash; <strong>Entity Framework</strong>. Polecam szczególnie przyjżeć się wersjom powyżej 4.0+. Widać (kolejną zresztą) inspirację Rubym (mam mianowicie na myśli świetny mechanizm migracji/kontroli wesji bazy danych ala Rake &ndash; szczególnie przydatny w sytuacji, kiedy członkowie zespołu mają mieć dostęp do własnych, niezależnych developerskich instancji bazy danych), jak również przejście na model POCO, co zwiększa elastyczność oraz daje mniejsze uzależnienie naszych modeli od konkretnej technologii.</p>
+
+<p>W przypadku innych typów baz, EF nie zawsze musi się to okazać najlepszym rozwiązaniem. Wynika to z faktu, że ten ORM tworzony były z myślą o bazie Microsoftu i często po macoszemu traktuje (ignoruje) technologie nie wykorzystywane przez SqlServer, ale wciąż dostępne w jego alternatywach. W tej dziedzinie można zauważyć sporą konkurencję ze strony<strong> (Fluent) NHibernate</strong>. Do ciekawostek należy mechanizm <a href="http://nhforge.org/blogs/nhibernate/archive/2009/12/17/queryover-in-nh-3-0.aspx">QueryOver</a>, mniej uniwersalny i bardziej niskopoziomowy od LINQ, jednakże lepiej przystosowany do generowania zapytań SQL pod konkretną bazę.</p>
+
+<p>Ostatecznie kiedy mowa o takich kobyłach jak EF czy NH, warto się zastanowić, czy naprawdę potrzebujemy czegoś tak wielkiego, czy może wystarczy nam mniejsze, prostsze rozwiązanie. W końcu nie każda aplikacja musi obsługiwać zaawansowane zapytania i dawać nam możliwość ingerencji w najdrobniejszy aspekt pracy z bazą danych. W takim wypadku powstało kilka MicroORMów, wśród których najpopularniejszym rozwiązaniem jest <a href="https://github.com/markrendle/Simple.Data/">Simple.Data</a>. Dynamicznie tworzone POCOsy, zapytania sterowane konwencją nazewniczą metod oraz wsparcie naprawdę dużej ilości baz danych &ndash; najpopularniejszych baz relacyjnych, dokumentowej bazy MongoDB i planowane wsparcie usług bazodanowych dostępnych na Azure &ndash; to mocne strony tego projektu. Coś w sam raz dla osób chcących skupić się na szybkim wykonaniu gotowego kodu do komunikacji z bazą z pominięciem wszystkich upierdliwych konfiguracji.</p>
+
+<h2>Prezentacja danych</div></h2>
+
+<p>Gdzie ma się znajdować logika odpowiedzialna za prezentację danych? W przypadku logiki umieszczonej po stronie serwera mamy do czynienia z dynamicznym generowaniem stron, a co za tym idzie, większym kosztem obliczeniowym po stronie serwera oraz z reguły większym rozmiarem przesyłanych odpowiedzi do klienta. Zaletą jest lepsza kontrola oraz dość rozbudowane możliwości większości komercyjnych kontrolek &ndash; przydatne zwłaszcza w rozwiązaniach typowo biznesowych. W tej dziedzinie znane są dwie marki:</p>
+
+<ul>
+<li><a href="http://www.telerik.com/products/aspnet-mvc.aspx">Telerik</a> MVC &ndash; całkiem dobra biblioteka dysponująca szerokimi możliwościami (bindowanie bezpośrednio do akcji po stronie serwera, usług WCF lub wywołań ajax), o całkiem sporych możliwościach własnego rozszerzania. Wadą mogą być pewne nieprzemyślane (z mojego punktu widzenia) decyzje np. duża różnica w obsłudze kolumn z danymi i komend oraz spore rozbieżności w kodzie generowanym przez wiązania ajaxowe i serwerowe.</li>
+<li><a href="http://www.devexpress.com/Subscriptions/DXperience/WhatsNew2012v1/asp.xml">DevExpress</a>. Nie spotkałem jeszcze nikogo, kto po kontakcie z Telerikiem, wybrałby DevExpress. Naprawdę ciężko usłyszeć o tej bibliotece cokolwiek dobrego. Generowany HTML nie ma wiele wspólnego z logiką, w razie potrzeb ciężko jest rozszerzyć istniejące opcje, zaś samo wsparcie techniczne jest dalekie od ideału.</li>
+</ul>
+
+
+<p>W przypadku kontrolek renderowanych po stronie klienta mamy prawdziwe zatrzęsienie dostępnych rozwiązań. Od jQuery UI, przez rozmaite formy wykresów, gridów czy grafów. Ciężko objąć je wszystkie dlatego postanowiłem znów wybrać dwa ciekawe rozwiązania przyjazne zwłaszcza z punktu widzenia biznesu:</p>
+
+<ul>
+<li><a href="http://www.kendoui.com/web.aspx">KendoUI</a> &ndash; kolejna biblioteka od twórców Telerika, tym razem skupiona jednak w całości po stronie klienta. Dostarcza dużych możliwości, w tym integrację z urządzeniami mobilnymi, frameworkiem MVVM Knockout.js (promowanym przez Microsoft wraz z nadchodzącym wypuszeniem ASP MVC 4) oraz obsługą HTML5.</li>
+<li><a href="http://www.sencha.com/products/extjs/">ExtJS</a> &ndash; duży framework oferujący bardzo rozbudowane możliwości kontroli logiki i prezentacji danych. Jego budowa jest bardziej &ldquo;obiektowa&rdquo; (w ujęciu tworzenia instancji klas/prototypów) niż KendoUI, jednak wydaje się również, że jest trudniejszy do opanowania od swojego konkurenta &ndash; poniekąd przez fakt, że wydaje się stanowić bardziej rozległe rozwiązanie.</li>
+</ul>
+
+
+<h2>Uzupełnienie</h2>
+
+<p>Pisząc uzupełnienie mam na myśli szereg bibliotek, które nieraz ułatwiają pracę, ale ciężko je podpisać pod którąkolwiek z poprzednich kategorii. W praktyce chciałem utworzyć jeszcze jedną dziedzinę, stworzoną specjalnie z myślą o rozbudowanych aplikacjach klienckich (Single Page Applications i stos MVC po stronie przeglądarki), ale ich opis zaprezentowałem we wcześniejszych postach.</p>
+
+<p>Jednym z najciekawszych spotkanych do tej pory projektów wydaje się być <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>.To prawdziwe wybawienie dla osób, które nie chcą za każdym razem walczyć ze stylami i kompozycjami, a w pełni wystarczy im zbiór najbardziej popularnych rozwiązań podanych <em>out of the box</em>.</p>
+
+<p>Osoby wykorzystujące API zewnętrznych portali (np. Facebook, Twitter) mogą być zaciekawione możliwościami oferowanymi przez <a href="http://andrewplummer.github.com/APIConnect/">Connect API</a>. Ta biblioteka javascriptowa pomaga zautomatyzować odwołania do zewnętrznych API, tworząc jednocześnie spójny interfejs dla tych usług.</p>
+
+<p>Na zakończenie, mówiąc o automatyzacji, ciekawym rozwiązaniem jest C#-owa biblioteka <a href="https://github.com/AutoMapper/AutoMapper">AutoMapper</a>. Świetnie nadaje się w sytuacjach kiedy musimy dokonywać częstych mapowań pomiędzy obiektami (jak również dokonywać kompozycji obiektów czy spłaszczeń &ndash; <em>flattening</em>) i świetnie pozwala zautomatyzować cały ten proces.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1522,69 +1628,6 @@ Zalety:</li>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/">Programowanie GPGPU - Microsoft.Accelerator V2</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-09-19T18:09:00+02:00" pubdate data-updated="true">Sep 19<span>th</span>, 2011</time>
-        
-         | <a href="/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Ostatnimi czasy postanowiłem zapoznać się z technikami programowania równoległego pod karty graficzne. Zacząłem poszukiwać rozwiązań, które bez konieczności poświęcania długich godzin na poznawanie nowych technologii pozwoliłyby mi wykorzystać potencjał drzemiący w GPU.</p>
-
-<p>Niestety problemy pojawiły się już na starcie, kiedy okazało się, że moja karta graficzna nosi na sobie ślady epoki poprzedzającej pojawienie się CUDA. Ograniczony do standardowych operacji oferowanych przez OpenGL i DirectX zacząłem szukać bibliotek-nakładek na te środowiska. Wśród opublikowanych rozwiązań natknąłem się na 2 interesujące biblioteki:
-&ndash; <a href="http://sourceforge.net/projects/cloo/">Cloo</a> &ndash; jest to.NET-owa nakładka na popularną w środowisku GPGPU bibliotekę OpenCL, umożliwiającą nam programowanie równoległe poprzez OpenGL.
-&ndash; <a href="http://research.microsoft.com/en-us/projects/accelerator/">Microsoft.Accelerator v. 2</a> &ndash; ta biblioteka z kolei jest odpowiedzią Microsoftu na napływające trendy. Nie jest to jeszcze gotowy produkt, lecz wciąż jest rozwijany i może rokować spore nadzieje.</p>
-
-<p>W tym poście postaram się opisać bibliotekę Microsoftu, pokrótce ją scharakteryzować (dla tych, których zanudzi czytanie dokumentacji na oficjalnej stronie) oraz jak przygotować projekt, aby móc wykorzystać jej potencjał.</p>
-
-<h2>Czym jest Accelerator?</h2>
-
-<p>Accelerator stanowi bibliotekę nałożoną na środowisko DirectX9, pozwalające nam za jego pomocą korzystać z karty graficznej do obliczeń nie związanych z grafiką (od wersji 2 biblioteki możliwe jest również przełączenie się na tradycyjny multiprocessing oferowany przez wielordzeniowe CPU).</p>
-
-<p>W jaki sposób jest to wykonywane? Otóż wyobraźmy sobie, że zasadniczo programując Pixel i Vertex Shadery tworzymy tak naprawdę kod programu, którego celem jest operowanie na przekazanym mu zbiorze zmiennych. Microsoft.Accelerator wykorzystuje ten sposób myślenia o Pixel Shaderach definiując specjalne klasy tablic, które w trakcie przetwarzania są zamieniane przez środowisko do postaci tekstury, która jest poddawana obróbce. Operacje które możemy wykonywać na tych tablicach, są również zdefiniowane (właściwe metody przechowywane są w klasie statycznej <strong>ParallelArrays</strong>), aby następnie składane do postaci <em>pojedynczego</em> pixel shadera (w tym celu Accelerator stosuje znany z języków funkcyjnych mechanizm leniwej ewaluacji wyrażeń, w którym rezultat działania metod jest produkowany dopiero kiedy należy go zwrócić do dalszego przetwarzania, nie zaś kiedy wywołujemy daną metodę).</p>
-
-<p>W odróżnieniu od Cloo udostępniony nam mechanizm gotowych operacji pozwala na skupienie się na osiągnięciu pożądanych wyników, bez ryzyka ugrzęźnięcia w źle napisanym kodzie.</p>
-
-<h2>Jak zainstalować Accelerator w naszym projekcie?</h2>
-
-<ol>
-<li>Ściągamy pakiet ze strony podanej pod <a href="http://research.microsoft.com/en-us/downloads/e45cf1d7-fd3d-4e03-a219-c0f3fca9881e/">tym linkiem</a>, a następnie instalujemy go. Ścieżka instalacji to <code>C:\Program Files (x86)\Microsoft\Accelerator v2 </code>dla systemów 64-bitowych zainstalowanych na partycji C. W stworzonym folderze otrzymamy dokumentację oraz kilka przykładowych programów.</li>
-<li>Jeżeli chcemy dołączyć bibliotekę do naszego projektu, to w otworzonym projekcie w Visual Studio dodajemy referencję do pliku <em>Microsoft.Accelerator.dll</em>, który możemy znaleźć w podfolderze <code>Accelerator v2/bin/Managed</code> .</li>
-<li>Dodatkowo w folderze <em>bin</em> mogliśmy się natknąć na 2 foldery: x64 i x86. Należy dodać plik <em>Accelerator.dll</em> z odpowiedniego folderu (zależnie od naszego sprzętu) do folderu, w którym znajduje się nasza aplikacja. <strong>Uwaga</strong>: jeżeli nie dodamy tego pliku lub dodamy nie właściwą wersję, będziemy w stanie skompilować program, ale podczas jego działania wyrzucony zostanie stosowny wyjątek (<strong>BadImageFormatException</strong> w przypadku skopiowania biblioteki z niewłaściwego folderu lub <strong>DllNotFoundException</strong> w przypadku nie wykrycia biblioteki, którą należało skopiować).</li>
-</ol>
-
-
-<p>Po tym wszystkim możemy już swobodnie pracować. Polecam zapoznać się z przykładami dostępnymi w folderze z zainstalowanym Acceleratorem ;) .</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -1602,6 +1645,10 @@ Zalety:</li>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/02/20/more-thoughts-on-knockout/">More thoughts on Knockout.js and JavaScript MVC</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/02/02/uncommon-static-type-feats/">Top features every statically typed language should have</a>
       </li>
     
@@ -1615,10 +1662,6 @@ Zalety:</li>
     
       <li class="post">
         <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
       </li>
     
   </ul>

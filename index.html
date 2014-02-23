@@ -9,7 +9,7 @@
   <meta name="author" content="Bartosz Sypytkowski">
 
   
-  <meta name="description" content="In this post I want to focus on features of statically typed languages which I consider interesting and usefull, but still uncommon and rare among &hellip;">
+  <meta name="description" content="Today I want to share with my reflections on using Knockout.js and client side MVVM pattern. Some of them refer to my previous post on the same topic &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -75,6 +75,202 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/02/20/more-thoughts-on-knockout/">More Thoughts on Knockout.js and JavaScript MVC</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-20T22:47:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2014</time>
+        
+         | <a href="/blog/2014/02/20/more-thoughts-on-knockout/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Today I want to share with my reflections on using <a href="http://knockoutjs.com/">Knockout.js</a> and client side MVVM pattern. Some of them refer to my previous post on the same <a href="/blog/2013/03/09/knockoutjs-spostrzezenia/">topic</a> (in Polish language). These are my advices to all entusiasts of JavaScipt rich applications, especially to those, who want to try Knockout in production environment.</p>
+
+<h1>Layered structure</h1>
+
+<p>Most of the frontent application logic, I&rsquo;ve got an occasion to look into, was pretty messy. Simple web pages usually are build of chunks of JavaScript code used to bound existing libraries and perform simple logic tasks. Everything is coupled, any kind of logic and DOM manipulations are mixed together. This is the place, where unicorns live and magic happens. But if you&rsquo;re into rich client side applications and frameworks such as Knockout.js, this is not an option. Why?</p>
+
+<p>Knockout.js, AngularJS, Backbone and other MV* frameworks are dedicated to create a web applications. This literaly means, that your client page is an application rather than an ordinary page, rendered only to display the data. There will be probably a <strong>lot</strong> of code and logic bound to HTML on the page. If you will manage your code in unstructurized manner, you&rsquo;ll soon find yourself in spot, where any further changes will the a depressing, time-consuming nightmare.</p>
+
+<p>To be able to manage a large chunks of code, you will need to decouple your JavaScript logic into layers. Beacuse Knockout doesn&rsquo;t provide any application layers off hand, responsibility of creating them lies on you. In rest of the post bellow I want to share my personal experiences developed during many months spent of using Knockout in production environment. Layers described by me can be exactly mapped onto specific patterns/groups of patterns and are described from top to bottom, beginning from layer used for server communication, through data management, HTML page partitioning to core used to bound everything together.</p>
+
+<h2>Gateway</h2>
+
+<p>The main goal of the Gateway object is to abstract server API to look like an ordinary JavaScript function. We would like to call the service in form of <code>usersApi.getUserById(1)</code> rather than cryptic <code>$.post(''api/users', { id: 1 })</code>. In my opinion this is more natural and gives us an easier way for further refactoring. What else can gateways do?</p>
+
+<p>First of all, they should be able to hide necessity of resolution parametrized URLs from view models. They should be able to resolve them or have some helpers attached (think about eqivalent of UrlHelpers, path methods etc.).</p>
+
+<p>In most of the cases I&rsquo;ve met, server communication is done by traditional ajax requests through jQuery ajax or similar calls. Since those functions always returns jQuery promises as a result, you may find that this is not what you want. Maybe you need a more detailed informations or a custom wrapper around promises. Or if you use <a href="https://github.com/Reactive-Extensions/RxJS">RxJS</a>, you probably may want <code>Rx.Observable</code> objects. For all of these cases Gateway is good place to implement.</p>
+
+<p>Gateways could be also used to perform mapping of JSON into fully qualified JavaScript objects you may want to use. This includes things like serializing/deserializing dates, adding additional computed properties, adding/removing recursive dependencies or even changing entire structure of object to beter fit our needs. From Knockout point of view, we can wrap/unwrap objects into ko.observables directly at this layer.</p>
+
+<p>When your data manipulation and mapping logic become more and more complex, consider using a dedicated Factory/Mapper objects to maintain code decoupling.</p>
+
+<h2>Data source</h2>
+
+<p>Data sources (or Data Access Objects) are alternatives to gateways, since they serve similar purpose, but provide much more complex mechanisms. When we speak about data represented on the page, we&rsquo;ll probably see problems associated with incomplete data representation on client side. Paginated tables, autocomplete suggestions, calendar pages, infinite scrolls etc. When used with remote source, all of these use server side requests to get data to be shown to end users. But on large data volumes we never retrieve all of the informations, instead using only those records, which need te be displayed. One of the roles of data sources is to store and manage data received this way, so the next time user goes back to previously displayed page or gets subset of records already provided, we may restore it from the local cache rather than repeating request to the server.</p>
+
+<p>If you want to see a possible ways to implement this pattern, I would recommend you to look at some of the existing implementations, like:</p>
+
+<ul>
+<li><a href="https://github.com/twitter/typeahead.js/blob/master/doc/bloodhound.md">Bloodhound</a> suggestion engine for Twitter&rsquo;s <a href="http://twitter.github.io/typeahead.js/">typeahead.js</a> library</li>
+<li>Kendo UI <a href="http://docs.telerik.com/kendo-ui/api/framework/datasource">DataSource</a> prototype</li>
+<li><a href="http://www.breezejs.com/">Breeze.js</a> framework</li>
+<li><a href="http://pouchdb.com/">PouchDB</a>, which is actually full in-browser database with remote sync option</li>
+</ul>
+
+
+<p>All of them provide interesting point of view of what separated data source managers are capable to.</p>
+
+<p>Among other advantages of data source separation we could mention sharing of common data between view models, which should not reference too each other directly, but also managing data objects lifecycle. Fetching data from the server, and synchronizing changes made localy by the client could be done easily this way.</p>
+
+<p>When it comes to data objects, I&rsquo;ve noticed that for purposes of data manipulation on the client side it&rsquo;s nice to have some kind of universal identifiers to manipulate enities. Those identifiers should uniquely identify single entity among all others on the page &ndash; this means, that database identifiers from the JSON object representing server side entities may not be sufficient, since in many cases the records id&rsquo;s (at least when we speak about relational databases with non-UUID primary keys) are guaranted to be unique only in single table/collection scope.</p>
+
+<p>In my case good solution of this problem seems to be an additional object property &ndash; lets call it <code>$id</code> &ndash; which serves only client side logic (server may ignore that value) and it&rsquo;s combination of unique identifier of the entity type and single entity identifier. Since it&rsquo;s called the same among all data objects in client side application, no matter of their type, we may also definie universal comparison operators and function for fetching and data integration. To do so it&rsquo;s also necessary that <code>$id</code> has to be generated in deterministic way &ndash; no matter how many times we create a JavaScript representation of the same database record, it should allways have the same <code>$id</code> value.</p>
+
+<h2>Partial View Models</h2>
+
+<p>Partial view models are used to separate model-view binding in domains of interests. Instead of unorganized bindings of all observed properties to single God Object, remember to use smaller pieces which actually fits a concrete parts of your page &ndash; menus, navbars, forms, modal windows etc.</p>
+
+<p>Don&rsquo;t ever mix a multiple view models in scope of single view component. The only exception from that rule is when you need to manipulate current view model in it&rsquo;s parent context, but even in that case you shouldn&rsquo;t access higher than direct parrent of current VM. If you do, that usually means, something is wrong.</p>
+
+<p>Avoid referencing between view models, especially when they share the same hierarchy level. View models should be an independent units of work. They don&rsquo;t need to know details of other view models to perform requested operations. Use Knockout contexts or dedicated objects as an inter-communication layer and share them between view models, when some message passing is needed.</p>
+
+<p>Don&rsquo;t create large nested objects inside view models. Inject them through constructors instead. Knockout view models lifetime is much longer than AngularJS controllers, but it&rsquo;s still a better solution to share large objects and &ndash; if they come with a lot of logic &ndash; to decouple them from view model. This also includes objects used to communicate with external world.</p>
+
+<h2>Application root</h2>
+
+<p>Since Knockout allows you to use only one View Model as root for whole page, my advice is to create dedicated view model, which won&rsquo;t be used with any visible parts of the page itself. It&rsquo;s role is to serve as a container for actual view models used to display data on the page and to provide universal features to be used by everyone. For me this option remains true even for small ingerention of Knockout logic into the page, because in the world of changing requirements formally small pages may grow rapidly in very short amount of time.</p>
+
+<p>When comes to integration of partial view models and application root, usually it&rsquo;s sufficient to create <strong>all</strong> partial VMs on root level. View models can be nested in large tree structures, but don&rsquo;t overuse this feature. Try to keep your view models dependency scopes as flat as you can. Application root is a good point to handle inner components creation and lifecycle. That also means, it should be able to access and provide all objects &ndash; gateways, data sources, factories, event buses, AJAX handlers etc. &ndash; directly to view models.</p>
+
+<h2>Appendix: Events and Pub/Sub pattern</h2>
+
+<p>There are few more things I wish to present in this post. One of them is a Publish/Subscribe pattern and event processing. It isn&rsquo;t bound to any specific layer since all of them can get advantage of using it. I also found it the best way of dealing with communication between various Knockout view models.</p>
+
+<p>Below I will show one of the simplest implementation used to handling custom events. If you want to be able to use more advanced techniques, you probably want to look for some dedicated libraries such as <a href="https://github.com/Reactive-Extensions/RxJS">RxJS</a>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">EventStream</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span> <span class="o">=</span> <span class="p">{};</span>    <span class="c1">// this could be made private</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// subscribe to channel</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$on</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">callback</span><span class="p">){</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="k">typeof</span> <span class="nx">callback</span> <span class="o">===</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
+</span><span class='line'>          <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
+</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">channel</span><span class="p">)</span>
+</span><span class='line'>              <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">]</span> <span class="o">=</span> <span class="p">[];</span>
+</span><span class='line'>          <span class="nx">channel</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">callback</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// unsubscribe from channel</span>
+</span><span class='line'>  <span class="c1">// this is tricky since anonymous functions, once subscribed cannot be removed</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$off</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">callback</span><span class="p">){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">],</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">channel</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">){</span>
+</span><span class='line'>          <span class="nx">channel</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">channel</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
+</span><span class='line'>              <span class="k">delete</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// publish an event</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$trigger</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">event</span><span class="p">){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">channel</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">){</span>
+</span><span class='line'>              <span class="k">try</span> <span class="p">{</span>
+</span><span class='line'>                  <span class="nx">channel</span><span class="p">[</span><span class="nx">i</span><span class="p">](</span><span class="nx">event</span><span class="p">);</span>
+</span><span class='line'>              <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">){</span>
+</span><span class='line'>                  <span class="c1">// an error occurred in subscriber function</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since we have whole event pub/sub feature in one separate prototype, we can now implement it in any object we wish, either through composition or as a mixin. Additionaly we can use globaly shared instances of <code>EventStream</code> in similar fashion we use an event buses.</p>
+
+<h1>Final thoughs</h1>
+
+<p>I want to end with a few short advices:</p>
+
+<ul>
+<li>All of my observations are based on observations of using Knockout and MVVM in non-SPA paradigm. As I&rsquo;ve said in previous posts, I wouldn&rsquo;t recommend Knockout for creating single page applications, because there are a lot of alternative frameworks, which suits better for this purpose.</li>
+<li><a href="https://github.com/Knockout-Contrib/Knockout-Validation">Knockout-validation</a> library &ndash; I&rsquo;ve found it pain in the ass almost everytime, I&rsquo;ve needed to create anything more complex than basic, flat structure validation. There are a lots of problems when it comes to nested objects validation, nullable objects and dealing with validation results caches &ndash; which btw. cannot be accessed via library API. So if you are determined to use it, consider yourself warned.</li>
+<li>Use unit tests any time you can. This not only will allow you to catch more potential errors (which are more likely to exist in language such as JavaScript) but are also a nice way to check if your code blocks are properly separated. And better prepare yourself, because client side logic tests are much more difficult to write than their backend cousins.</li>
+<li>Create a common prefix for properties used as helper fields and methods, but not directly responsible for view model page manipulations. I&rsquo;ve already shown examples such as <code>$id</code> field and event stream methods with <code>$</code> prefix. I&rsquo;ve found them quite usefull, but I don&rsquo;t want refer to them from view <code>data-bind</code> attributes or server side. They should remain transparent for both of these.</li>
+<li>I didn&rsquo;t mention about any kind of Service layer, used for performin business logic. The reason is simple &ndash; unless you&rsquo;re creating SPA with offline editing capabilities, due to reliability and security reasons you probably never wan&rsquo;t to inject a business logic into frontend.</li>
+</ul>
+
+
+<p>And last but not least. There are no universal rules. Form your own point of view, appropriate to your problems.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1300,111 +1496,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/">Parę Słów O HTMLu I CSSie</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-04-21T08:45:00+02:00" pubdate data-updated="true">Apr 21<span>st</span>, 2013</time>
-        
-         | <a href="/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie codziennej pracy. Część z nich cieszy się już sporą popularnością w świecie web developerów innych środowisk, zaś w świecie .NET stawiają swoje pierwsze kroki.</p>
-
-<p>Zanim zacznę właściwą część postu, chcę wszystkim przypomnieć o <a href="http://visualstudiogallery.msdn.microsoft.com/6ed4c78f-a23e-49ad-b5fd-369af0c2107f">Web Essentials</a>. Jest to absolutny <em>must have</em> jeżeli chodzi o web development w VS2012. Wiele z feature&#8217;ów opisywanych przeze mnie dalej jest już wbudowanych w to rozszerzenie.</p>
-
-<h2>Zen Coding</h2>
-
-<p>Jeżeli chodzi o kwestie tworzenia szablonów dynamicznych stron HTML, możemy podzielić programistów na dwie grupy. Pierwsza z nich to szczęściarze, mogący budować szablonych za pomocą czytelnych, przejżystych notacji (np. <a href="http://haml.info/">HAML</a> lub <a href="http://jade-lang.com/">Jade</a>). Druga (czyli reszta ;) ) to osoby zmuszane do osadzania dynamicznego kodu w otoczce pseudo-HTML. Z myślą o tej drugiej grupie powstał standard znany powszechnie jako Zen Coding. O co w nim chodzi? Załóżmy, że chcielibyśmy stworzyć kod HTML w następującej postaci:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;container&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;p&gt;</span>Menu<span class="nt">&lt;/p&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;menu&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;/ul&gt;</span>
-</span><span class='line'><span class="nt">&lt;/div&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Nie jestem chyba jedyną osobą, która uważa, że pisanie czegoś takiego z palca to strata czasu? Z pomocą ZenCoding możemy to uprościć do następującej postaci:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>#container&gt;p{Menu}+ul.menu&gt;(li&gt;a)*5
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W przypadku Web Essentials dla VS2012 jedyne co musimy zrobić, to umieścić takie wyrażenie w nowej linii oraz nacisnąć Tab (natychmiast po końcu wyrażenia bez spacji), aby wygenerować wynikowy HTML.</p>
-
-<h2>Prekompilowany CSS</h2>
-
-<p>Do niedawna była to jeszcze nowinka. Jednakże zalety notacji takich jak <a href="http://lesscss.org/">LESS</a> czy <a href="http://sass-lang.com/">SASS</a> szybko zapewniły im właściwe miejsce. Zastanówmy się, dlaczego warto z nich korzystać?</p>
-
-<ul>
-<li>Przyswajalność &ndash; że nauka nowej notacji zajmuje kilka godzin/dni.</li>
-<li>Usunięcie powtarzalności kodu &ndash; stosując zmienne, wartości wyliczane oraz zagłębione style, mozemy osiągnąć nasz cel szybciej oraz bez konieczności kopiowania tych samych linijek. W dodatku powstały w ten sposób kod jest bardziej podatny na zmiany niż jego statyczny odpowiednik.</li>
-<li>Hierarchizacja &ndash; stosowanie importów jest kolejnym krokiem usuwajacym powtarzalny kod, jak również umożliwia podział kodu CSS na konkretne jednostki odpowiedzialności. Pozwala również w pewnym stopniu usunąć konieczność łączenia plików CSS za pomocą bundlerów.</li>
-<li>Rozmiar &ndash; narzędzia takie jak Web Essentials automatycznie kompilują pliki .less do kodu CSS podczas zapisu zmian w pliku. Dodatkowo są w stanie skompilować je osobno do postaci z wcięciami (czytelnej dla developera) oraz zminimalizowanej (pozbawionej białych znaków) &ndash; doskonałej do zastosowania w środowisku produkcyjnym.</li>
-</ul>
-
-
-<p>W skrócie pozwala nam wprowadzić odrobinę porządku i organizacji w dziedzinę, która do tej pory jest powszechnie uważana za żmudną, powtarzalną i chaotyczną.</p>
-
-<h2>Palety barw</h2>
-
-<p>Nie ma co ukrywać. Programista nie jest artystą-grafikiem i nie powinno się oczekiwać od niego estetyki i twórczości na poziomie zawodowego designera. Czasem jednak okazuje się, że gotowy layout wykorzystywany na naszej stronie jest niewystarczający i musimy skombinować na szybko &ldquo;coś własnego&rdquo;, czy to w formie dodatkowego stylu czy motywu do odznaczenia części strony.</p>
-
-<p>W takim wypadku z pomocą przychodzi <a href="https://kuler.adobe.com/">Adobe Kuler</a>. Umożliwia on dostosowanie istniejącego lub zdefiniowanie własnego motywu kolorystycznego do wykorzystania na stronie zgodnie z powszechnymi regułami rządzącymi zasadami kompozycji barw.</p>
-
-<h2>CSS &ndash; czy wiesz z czego korzystasz?</h2>
-
-<p>Czy tworząc plik CSS zastanawialiście się, jak duża część opisanych przez was reguł faktycznie jest wykorzystywana na stronie? Chrome umożliwia sprawdzenie tego w dość prosty sposób. Wystarczy z poziomu Developer Tools uruchomić Audyt na zakładce o tej samej nazwie. Po kilku sekundach jesteśmy w stanie zauważyć coś w ten deseń:</p>
-
-<div class="separator" style="clear: both; text-align: center;"><a href="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s1600/chrome-devtool.jpg" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="150" src="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s320/chrome-devtool.jpg" width="320" /></a></div>
-
-
-<p>Jaki wynik osiągacie na swojej stronie? ;) Powiem szczerze, że wykorzystywanie około 40% dołączonych reguł można uznać za wysoki wynik.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1420,6 +1511,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/02/20/more-thoughts-on-knockout/">More thoughts on Knockout.js and JavaScript MVC</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/02/02/uncommon-static-type-feats/">Top features every statically typed language should have</a>
       </li>
     
@@ -1433,10 +1528,6 @@
     
       <li class="post">
         <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
       </li>
     
   </ul>

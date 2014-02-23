@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-02-05T23:27:39+01:00</updated>
+  <updated>2014-02-23T20:02:33+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,173 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[More thoughts on Knockout.js and JavaScript MVC]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/02/20/more-thoughts-on-knockout/"/>
+    <updated>2014-02-20T22:47:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/02/20/more-thoughts-on-knockout</id>
+    <content type="html"><![CDATA[<p>Today I want to share with my reflections on using <a href="http://knockoutjs.com/">Knockout.js</a> and client side MVVM pattern. Some of them refer to my previous post on the same <a href="http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia/">topic</a> (in Polish language). These are my advices to all entusiasts of JavaScipt rich applications, especially to those, who want to try Knockout in production environment.</p>
+
+<h1>Layered structure</h1>
+
+<p>Most of the frontent application logic, I&rsquo;ve got an occasion to look into, was pretty messy. Simple web pages usually are build of chunks of JavaScript code used to bound existing libraries and perform simple logic tasks. Everything is coupled, any kind of logic and DOM manipulations are mixed together. This is the place, where unicorns live and magic happens. But if you&rsquo;re into rich client side applications and frameworks such as Knockout.js, this is not an option. Why?</p>
+
+<p>Knockout.js, AngularJS, Backbone and other MV* frameworks are dedicated to create a web applications. This literaly means, that your client page is an application rather than an ordinary page, rendered only to display the data. There will be probably a <strong>lot</strong> of code and logic bound to HTML on the page. If you will manage your code in unstructurized manner, you&rsquo;ll soon find yourself in spot, where any further changes will the a depressing, time-consuming nightmare.</p>
+
+<p>To be able to manage a large chunks of code, you will need to decouple your JavaScript logic into layers. Beacuse Knockout doesn&rsquo;t provide any application layers off hand, responsibility of creating them lies on you. In rest of the post bellow I want to share my personal experiences developed during many months spent of using Knockout in production environment. Layers described by me can be exactly mapped onto specific patterns/groups of patterns and are described from top to bottom, beginning from layer used for server communication, through data management, HTML page partitioning to core used to bound everything together.</p>
+
+<h2>Gateway</h2>
+
+<p>The main goal of the Gateway object is to abstract server API to look like an ordinary JavaScript function. We would like to call the service in form of <code>usersApi.getUserById(1)</code> rather than cryptic <code>$.post(''api/users', { id: 1 })</code>. In my opinion this is more natural and gives us an easier way for further refactoring. What else can gateways do?</p>
+
+<p>First of all, they should be able to hide necessity of resolution parametrized URLs from view models. They should be able to resolve them or have some helpers attached (think about eqivalent of UrlHelpers, path methods etc.).</p>
+
+<p>In most of the cases I&rsquo;ve met, server communication is done by traditional ajax requests through jQuery ajax or similar calls. Since those functions always returns jQuery promises as a result, you may find that this is not what you want. Maybe you need a more detailed informations or a custom wrapper around promises. Or if you use <a href="https://github.com/Reactive-Extensions/RxJS">RxJS</a>, you probably may want <code>Rx.Observable</code> objects. For all of these cases Gateway is good place to implement.</p>
+
+<p>Gateways could be also used to perform mapping of JSON into fully qualified JavaScript objects you may want to use. This includes things like serializing/deserializing dates, adding additional computed properties, adding/removing recursive dependencies or even changing entire structure of object to beter fit our needs. From Knockout point of view, we can wrap/unwrap objects into ko.observables directly at this layer.</p>
+
+<p>When your data manipulation and mapping logic become more and more complex, consider using a dedicated Factory/Mapper objects to maintain code decoupling.</p>
+
+<h2>Data source</h2>
+
+<p>Data sources (or Data Access Objects) are alternatives to gateways, since they serve similar purpose, but provide much more complex mechanisms. When we speak about data represented on the page, we&rsquo;ll probably see problems associated with incomplete data representation on client side. Paginated tables, autocomplete suggestions, calendar pages, infinite scrolls etc. When used with remote source, all of these use server side requests to get data to be shown to end users. But on large data volumes we never retrieve all of the informations, instead using only those records, which need te be displayed. One of the roles of data sources is to store and manage data received this way, so the next time user goes back to previously displayed page or gets subset of records already provided, we may restore it from the local cache rather than repeating request to the server.</p>
+
+<p>If you want to see a possible ways to implement this pattern, I would recommend you to look at some of the existing implementations, like:</p>
+
+<ul>
+<li><a href="https://github.com/twitter/typeahead.js/blob/master/doc/bloodhound.md">Bloodhound</a> suggestion engine for Twitter&rsquo;s <a href="http://twitter.github.io/typeahead.js/">typeahead.js</a> library</li>
+<li>Kendo UI <a href="http://docs.telerik.com/kendo-ui/api/framework/datasource">DataSource</a> prototype</li>
+<li><a href="http://www.breezejs.com/">Breeze.js</a> framework</li>
+<li><a href="http://pouchdb.com/">PouchDB</a>, which is actually full in-browser database with remote sync option</li>
+</ul>
+
+
+<p>All of them provide interesting point of view of what separated data source managers are capable to.</p>
+
+<p>Among other advantages of data source separation we could mention sharing of common data between view models, which should not reference too each other directly, but also managing data objects lifecycle. Fetching data from the server, and synchronizing changes made localy by the client could be done easily this way.</p>
+
+<p>When it comes to data objects, I&rsquo;ve noticed that for purposes of data manipulation on the client side it&rsquo;s nice to have some kind of universal identifiers to manipulate enities. Those identifiers should uniquely identify single entity among all others on the page &ndash; this means, that database identifiers from the JSON object representing server side entities may not be sufficient, since in many cases the records id&rsquo;s (at least when we speak about relational databases with non-UUID primary keys) are guaranted to be unique only in single table/collection scope.</p>
+
+<p>In my case good solution of this problem seems to be an additional object property &ndash; lets call it <code>$id</code> &ndash; which serves only client side logic (server may ignore that value) and it&rsquo;s combination of unique identifier of the entity type and single entity identifier. Since it&rsquo;s called the same among all data objects in client side application, no matter of their type, we may also definie universal comparison operators and function for fetching and data integration. To do so it&rsquo;s also necessary that <code>$id</code> has to be generated in deterministic way &ndash; no matter how many times we create a JavaScript representation of the same database record, it should allways have the same <code>$id</code> value.</p>
+
+<h2>Partial View Models</h2>
+
+<p>Partial view models are used to separate model-view binding in domains of interests. Instead of unorganized bindings of all observed properties to single God Object, remember to use smaller pieces which actually fits a concrete parts of your page &ndash; menus, navbars, forms, modal windows etc.</p>
+
+<p>Don&rsquo;t ever mix a multiple view models in scope of single view component. The only exception from that rule is when you need to manipulate current view model in it&rsquo;s parent context, but even in that case you shouldn&rsquo;t access higher than direct parrent of current VM. If you do, that usually means, something is wrong.</p>
+
+<p>Avoid referencing between view models, especially when they share the same hierarchy level. View models should be an independent units of work. They don&rsquo;t need to know details of other view models to perform requested operations. Use Knockout contexts or dedicated objects as an inter-communication layer and share them between view models, when some message passing is needed.</p>
+
+<p>Don&rsquo;t create large nested objects inside view models. Inject them through constructors instead. Knockout view models lifetime is much longer than AngularJS controllers, but it&rsquo;s still a better solution to share large objects and &ndash; if they come with a lot of logic &ndash; to decouple them from view model. This also includes objects used to communicate with external world.</p>
+
+<h2>Application root</h2>
+
+<p>Since Knockout allows you to use only one View Model as root for whole page, my advice is to create dedicated view model, which won&rsquo;t be used with any visible parts of the page itself. It&rsquo;s role is to serve as a container for actual view models used to display data on the page and to provide universal features to be used by everyone. For me this option remains true even for small ingerention of Knockout logic into the page, because in the world of changing requirements formally small pages may grow rapidly in very short amount of time.</p>
+
+<p>When comes to integration of partial view models and application root, usually it&rsquo;s sufficient to create <strong>all</strong> partial VMs on root level. View models can be nested in large tree structures, but don&rsquo;t overuse this feature. Try to keep your view models dependency scopes as flat as you can. Application root is a good point to handle inner components creation and lifecycle. That also means, it should be able to access and provide all objects &ndash; gateways, data sources, factories, event buses, AJAX handlers etc. &ndash; directly to view models.</p>
+
+<h2>Appendix: Events and Pub/Sub pattern</h2>
+
+<p>There are few more things I wish to present in this post. One of them is a Publish/Subscribe pattern and event processing. It isn&rsquo;t bound to any specific layer since all of them can get advantage of using it. I also found it the best way of dealing with communication between various Knockout view models.</p>
+
+<p>Below I will show one of the simplest implementation used to handling custom events. If you want to be able to use more advanced techniques, you probably want to look for some dedicated libraries such as <a href="https://github.com/Reactive-Extensions/RxJS">RxJS</a>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">EventStream</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span> <span class="o">=</span> <span class="p">{};</span>    <span class="c1">// this could be made private</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// subscribe to channel</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$on</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">callback</span><span class="p">){</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="k">typeof</span> <span class="nx">callback</span> <span class="o">===</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
+</span><span class='line'>          <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
+</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">channel</span><span class="p">)</span>
+</span><span class='line'>              <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">]</span> <span class="o">=</span> <span class="p">[];</span>
+</span><span class='line'>          <span class="nx">channel</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">callback</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// unsubscribe from channel</span>
+</span><span class='line'>  <span class="c1">// this is tricky since anonymous functions, once subscribed cannot be removed</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$off</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">callback</span><span class="p">){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">],</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">channel</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">){</span>
+</span><span class='line'>          <span class="nx">channel</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">channel</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
+</span><span class='line'>              <span class="k">delete</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// publish an event</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$trigger</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">event</span><span class="p">){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">channel</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">){</span>
+</span><span class='line'>              <span class="k">try</span> <span class="p">{</span>
+</span><span class='line'>                  <span class="nx">channel</span><span class="p">[</span><span class="nx">i</span><span class="p">](</span><span class="nx">event</span><span class="p">);</span>
+</span><span class='line'>              <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">){</span>
+</span><span class='line'>                  <span class="c1">// an error occurred in subscriber function</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since we have whole event pub/sub feature in one separate prototype, we can now implement it in any object we wish, either through composition or as a mixin. Additionaly we can use globaly shared instances of <code>EventStream</code> in similar fashion we use an event buses.</p>
+
+<h1>Final thoughs</h1>
+
+<p>I want to end with a few short advices:</p>
+
+<ul>
+<li>All of my observations are based on observations of using Knockout and MVVM in non-SPA paradigm. As I&rsquo;ve said in previous posts, I wouldn&rsquo;t recommend Knockout for creating single page applications, because there are a lot of alternative frameworks, which suits better for this purpose.</li>
+<li><a href="https://github.com/Knockout-Contrib/Knockout-Validation">Knockout-validation</a> library &ndash; I&rsquo;ve found it pain in the ass almost everytime, I&rsquo;ve needed to create anything more complex than basic, flat structure validation. There are a lots of problems when it comes to nested objects validation, nullable objects and dealing with validation results caches &ndash; which btw. cannot be accessed via library API. So if you are determined to use it, consider yourself warned.</li>
+<li>Use unit tests any time you can. This not only will allow you to catch more potential errors (which are more likely to exist in language such as JavaScript) but are also a nice way to check if your code blocks are properly separated. And better prepare yourself, because client side logic tests are much more difficult to write than their backend cousins.</li>
+<li>Create a common prefix for properties used as helper fields and methods, but not directly responsible for view model page manipulations. I&rsquo;ve already shown examples such as <code>$id</code> field and event stream methods with <code>$</code> prefix. I&rsquo;ve found them quite usefull, but I don&rsquo;t want refer to them from view <code>data-bind</code> attributes or server side. They should remain transparent for both of these.</li>
+<li>I didn&rsquo;t mention about any kind of Service layer, used for performin business logic. The reason is simple &ndash; unless you&rsquo;re creating SPA with offline editing capabilities, due to reliability and security reasons you probably never wan&rsquo;t to inject a business logic into frontend.</li>
+</ul>
+
+
+<p>And last but not least. There are no universal rules. Form your own point of view, appropriate to your problems.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Top features every statically typed language should have]]></title>
@@ -2757,83 +2924,6 @@
 
 
 <p></details></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Jak wybrać stos frameworków pod projekt webowy (.NET)]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/"/>
-    <updated>2012-07-12T18:14:00+02:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt</id>
-    <content type="html"><![CDATA[<p>W życiu każdego web developera nadchodzi moment, kiedy należy się zdecydować na wybór platform i bibliotek wykorzystywanych w nowym projekcie. Nie ma w tym absolutnie nic złego, co więcej powinniśmy być zadowoleni, mając taką opcję. W aplikacjach biznesowych często jest on podejmowany &ndash; nie zawsze słusznie ani rozsądnie (przynajmniej z naszego punktu widzenia) &ndash; za nas, przez osoby trzecie. Tym bardziej warto doceniać sytuacje, w których mamy możliwość wygłoszenia swojej opinii.</p>
-
-<p>W takim razie rodzi się kolejne pytanie: co wybrać? W tym wątku postaram się rozwinąć swoje obserwacje na temat niektórych rozwiązań i stworzyć drobny przekrój technologii wykorzystywanych przez programistów .NET do budowy aplikacji sieciowych.</p>
-
-<h2>Hosting</h2>
-
-<p>Pierwsza sprawa to miejsce, w którym stać będzie nasza aplikacja. Czy będzie to standardowy wykupiony hosting, własny serwer czy może zechcemy udać się w podróż <em>into the cloud?</em> Nie rozwodzę się tutaj nad wykorzystywanym typem serwera, ponieważ praktycznie każdy rozsądny hosting oferuje IIS co najmniej od wersji 7. Hosting aplikacji na innych serwerach jest bardzo ograniczony. Osobiście nie udało mi się znaleźć strony oferującej serwery typu Mono Apache. Nadzieją na przyszłość dla alternatyw IIS może być framework <a href="http://nancyfx.org/">Nancy</a> &ndash; jeżeli się upowszechni, być może pojawią się oferty hostingowe na innych obsługiwanych przez niego serwerach.</p>
-
-<p>Kwestia hostingu aplikacji w chmurze to inna zabawa. Tutaj aplikacje .NETowe mają spore ograniczenie. W praktyce spotkałem tylko dwie chmury typu PaaS oferujące taki hosting: promowany przez Microsoft <a href="http://www.windowsazure.com/pl-pl/">Windows Azure</a> oraz oparty o chmurę Amazonu <a href="https://appharbor.com/">AppHarbor</a>.</p>
-
-<p>Cechą AppHarbor jest prostota &ndash; chmura ta bierze na siebie wiele z rozwiązań sprawdzonych już w Heroku i moim zdaniem jest to absolutny strzał w dziesiątkę. AppHarbor oferuje bardzo tanie jak na chmurę rozwiązania (najmniejsza, pojedyncza, współdzielona instancja jest zawsze za darmo), do tego oferuje szereg znanych technologii, o które można rozszerzyć naszą aplikację &ndash; są to głównie istniejące już na Amazonie usługi, oferty baz danych, systemów kolejkowych i innych (co ważne dla osób chcących je wykorzystać do celów prywatnych, niemal wszystkie w dysponują wersją darmową). Do tego wszystkiego wystarczy zamontować zwykłą aplikację ASP.NET (nie potrzebne są żadne specyficzne projekty). Skalowanie wykonywane jest przez proste zwiększenie liczby instancji oraz wykupienie droższych ofert u zewnętrznych usługodawców.</p>
-
-<p>W przypadku Windows Azure mamy do czynienia z kompletnie innym podejściem. Aplikacja umieszczona na Azure jest pisana z dedykacją dla tej chmury. Potrzebny jest do tego osobny projekt, konieczne jest również generowanie specjalnych paczek umieszczanych docelowo w chmurze. Do tego cała oferta jest znacznie droższa niż opisywany poprzednik, nie mamy również dostępu do tak szerokiego menu dodatkowych usług i są one z reguły kierowane specjalnie pod Azure (technologii tych nie zobaczymy nigdzie indziej). Jakie są więc zalety? Prawdopodobnie lepsze przystosowanie do aplikacji wymagających dużego skalowania i lepsze osiągi istniejących usług. Ostatecznie może to mieć znaczenie, zwłaszcza dla dużych aplikacji.</p>
-
-<h2>Framework</h2>
-
-<p>W tej sytuacji również wybór jest dość prosty. O Mono Rails nikt już nie pamięta (zresztą nie ma takiej potrzeby). W praktyce mamy parę rozwiązań:</p>
-
-<ul>
-<li><strong>ASP.NET Web Forms</strong> &ndash; stara technologia, która wywołuje dreszcze chyba u wszystkich, którzy mieli już okazję posmakować MVC. Istnieje garść bibliotek dla tej technologii, jednak osobiście nikomu bym jej nie polecił. Brak modularyzacji komponentów, praktyczny brak możliwości prowadzenia testów jednostkowych czy cała masa chybionych pomysłów (ViewState WTF?) powodują, że aplikacje pisane w Web Forms często są drogą przez mękę.</li>
-<li><strong>ASP.NET MVC</strong> &ndash; nowsze spojrzenie, wyraźnie inspirowane Ruby on Rails (co widać coraz wyraźniej w każdej następnej wersji). W dodatku często wykorzystywane, sprawdzone i wspierane zarówno przez sam Microsoft, jak i wiele firm zewnętrznych. Rozwiązanie w sam raz dla tych, którzy chcą rozwiązań pewnych i szybkich w pisaniu, jednocześnie nie tracąc poczucia elastyczności.</li>
-</ul>
-
-
-<p>Ponieważ programowanie do dynamiczna dyscyplina, warto również zwrócić uwagę na dwa stosunkowo nowe, wybijające się rozwiązania:</p>
-
-<ul>
-<li><strong>ASP.NET MVC Web API</strong> &ndash; dostępne od nadchodzącej wersji ASP MVC 4. Jedną z jego zalet jest znaczne uproszczenie w tworzeniu serwerów API (o których wspominałem w jednym z wcześniejszych wpisów), przez co stanowi pewien kontrast wobec tradycyjnego ASP MVC, jest jednak w chwili obecnej rozwiązaniem bardziej na czasie.</li>
-<li><strong>Nancy </strong>&ndash; framework inspirowany Sinatrą (kolejna platforma webowa na Ruby&#8217;ego). Cechy charakterystyczne to duża modularność (przydatna sprawa kiedy potrzebujemy przystosować środowisko specjalnie pod nasze potrzeby) oraz niewielki rozmiar. Rozwiązanie to jest jednak nowe (mniej sprawdzone do ASP). Stąd polecałbym go do mniejszych aplikacji oraz tam, gdzie rola serwera opiera się głównie na pośredniczeniu między klientem a bazą danych (patrz Server API).</li>
-</ul>
-
-
-<h2>Baza danych i ORM</h2>
-
-<p>Temat jest dość szeroki, dlatego nie będę się skupiał na niuansach dotyczących wyboru między bazami relacyjnymi i nierelacyjnymi &ndash; po pierwsze jest to temat na osobny artykuł, po za tym uważam, że z tymi drugimi wciąż miałem za mało do czynienia.</p>
-
-<p>W przypadku relacyjnych baz danych, przeważnie zostanie nam narzucone jakieś konkretne rozwiązanie. W momencie, gdy mamy dostęp do SqlServer, dalszy wybór nasuwa się praktycznie sam &ndash; <strong>Entity Framework</strong>. Polecam szczególnie przyjżeć się wersjom powyżej 4.0+. Widać (kolejną zresztą) inspirację Rubym (mam mianowicie na myśli świetny mechanizm migracji/kontroli wesji bazy danych ala Rake &ndash; szczególnie przydatny w sytuacji, kiedy członkowie zespołu mają mieć dostęp do własnych, niezależnych developerskich instancji bazy danych), jak również przejście na model POCO, co zwiększa elastyczność oraz daje mniejsze uzależnienie naszych modeli od konkretnej technologii.</p>
-
-<p>W przypadku innych typów baz, EF nie zawsze musi się to okazać najlepszym rozwiązaniem. Wynika to z faktu, że ten ORM tworzony były z myślą o bazie Microsoftu i często po macoszemu traktuje (ignoruje) technologie nie wykorzystywane przez SqlServer, ale wciąż dostępne w jego alternatywach. W tej dziedzinie można zauważyć sporą konkurencję ze strony<strong> (Fluent) NHibernate</strong>. Do ciekawostek należy mechanizm <a href="http://nhforge.org/blogs/nhibernate/archive/2009/12/17/queryover-in-nh-3-0.aspx">QueryOver</a>, mniej uniwersalny i bardziej niskopoziomowy od LINQ, jednakże lepiej przystosowany do generowania zapytań SQL pod konkretną bazę.</p>
-
-<p>Ostatecznie kiedy mowa o takich kobyłach jak EF czy NH, warto się zastanowić, czy naprawdę potrzebujemy czegoś tak wielkiego, czy może wystarczy nam mniejsze, prostsze rozwiązanie. W końcu nie każda aplikacja musi obsługiwać zaawansowane zapytania i dawać nam możliwość ingerencji w najdrobniejszy aspekt pracy z bazą danych. W takim wypadku powstało kilka MicroORMów, wśród których najpopularniejszym rozwiązaniem jest <a href="https://github.com/markrendle/Simple.Data/">Simple.Data</a>. Dynamicznie tworzone POCOsy, zapytania sterowane konwencją nazewniczą metod oraz wsparcie naprawdę dużej ilości baz danych &ndash; najpopularniejszych baz relacyjnych, dokumentowej bazy MongoDB i planowane wsparcie usług bazodanowych dostępnych na Azure &ndash; to mocne strony tego projektu. Coś w sam raz dla osób chcących skupić się na szybkim wykonaniu gotowego kodu do komunikacji z bazą z pominięciem wszystkich upierdliwych konfiguracji.</p>
-
-<h2>Prezentacja danych</div></h2>
-
-<p>Gdzie ma się znajdować logika odpowiedzialna za prezentację danych? W przypadku logiki umieszczonej po stronie serwera mamy do czynienia z dynamicznym generowaniem stron, a co za tym idzie, większym kosztem obliczeniowym po stronie serwera oraz z reguły większym rozmiarem przesyłanych odpowiedzi do klienta. Zaletą jest lepsza kontrola oraz dość rozbudowane możliwości większości komercyjnych kontrolek &ndash; przydatne zwłaszcza w rozwiązaniach typowo biznesowych. W tej dziedzinie znane są dwie marki:</p>
-
-<ul>
-<li><a href="http://www.telerik.com/products/aspnet-mvc.aspx">Telerik</a> MVC &ndash; całkiem dobra biblioteka dysponująca szerokimi możliwościami (bindowanie bezpośrednio do akcji po stronie serwera, usług WCF lub wywołań ajax), o całkiem sporych możliwościach własnego rozszerzania. Wadą mogą być pewne nieprzemyślane (z mojego punktu widzenia) decyzje np. duża różnica w obsłudze kolumn z danymi i komend oraz spore rozbieżności w kodzie generowanym przez wiązania ajaxowe i serwerowe.</li>
-<li><a href="http://www.devexpress.com/Subscriptions/DXperience/WhatsNew2012v1/asp.xml">DevExpress</a>. Nie spotkałem jeszcze nikogo, kto po kontakcie z Telerikiem, wybrałby DevExpress. Naprawdę ciężko usłyszeć o tej bibliotece cokolwiek dobrego. Generowany HTML nie ma wiele wspólnego z logiką, w razie potrzeb ciężko jest rozszerzyć istniejące opcje, zaś samo wsparcie techniczne jest dalekie od ideału.</li>
-</ul>
-
-
-<p>W przypadku kontrolek renderowanych po stronie klienta mamy prawdziwe zatrzęsienie dostępnych rozwiązań. Od jQuery UI, przez rozmaite formy wykresów, gridów czy grafów. Ciężko objąć je wszystkie dlatego postanowiłem znów wybrać dwa ciekawe rozwiązania przyjazne zwłaszcza z punktu widzenia biznesu:</p>
-
-<ul>
-<li><a href="http://www.kendoui.com/web.aspx">KendoUI</a> &ndash; kolejna biblioteka od twórców Telerika, tym razem skupiona jednak w całości po stronie klienta. Dostarcza dużych możliwości, w tym integrację z urządzeniami mobilnymi, frameworkiem MVVM Knockout.js (promowanym przez Microsoft wraz z nadchodzącym wypuszeniem ASP MVC 4) oraz obsługą HTML5.</li>
-<li><a href="http://www.sencha.com/products/extjs/">ExtJS</a> &ndash; duży framework oferujący bardzo rozbudowane możliwości kontroli logiki i prezentacji danych. Jego budowa jest bardziej &ldquo;obiektowa&rdquo; (w ujęciu tworzenia instancji klas/prototypów) niż KendoUI, jednak wydaje się również, że jest trudniejszy do opanowania od swojego konkurenta &ndash; poniekąd przez fakt, że wydaje się stanowić bardziej rozległe rozwiązanie.</li>
-</ul>
-
-
-<h2>Uzupełnienie</h2>
-
-<p>Pisząc uzupełnienie mam na myśli szereg bibliotek, które nieraz ułatwiają pracę, ale ciężko je podpisać pod którąkolwiek z poprzednich kategorii. W praktyce chciałem utworzyć jeszcze jedną dziedzinę, stworzoną specjalnie z myślą o rozbudowanych aplikacjach klienckich (Single Page Applications i stos MVC po stronie przeglądarki), ale ich opis zaprezentowałem we wcześniejszych postach.</p>
-
-<p>Jednym z najciekawszych spotkanych do tej pory projektów wydaje się być <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>.To prawdziwe wybawienie dla osób, które nie chcą za każdym razem walczyć ze stylami i kompozycjami, a w pełni wystarczy im zbiór najbardziej popularnych rozwiązań podanych <em>out of the box</em>.</p>
-
-<p>Osoby wykorzystujące API zewnętrznych portali (np. Facebook, Twitter) mogą być zaciekawione możliwościami oferowanymi przez <a href="http://andrewplummer.github.com/APIConnect/">Connect API</a>. Ta biblioteka javascriptowa pomaga zautomatyzować odwołania do zewnętrznych API, tworząc jednocześnie spójny interfejs dla tych usług.</p>
-
-<p>Na zakończenie, mówiąc o automatyzacji, ciekawym rozwiązaniem jest C#-owa biblioteka <a href="https://github.com/AutoMapper/AutoMapper">AutoMapper</a>. Świetnie nadaje się w sytuacjach kiedy musimy dokonywać częstych mapowań pomiędzy obiektami (jak również dokonywać kompozycji obiektów czy spłaszczeń &ndash; <em>flattening</em>) i świetnie pozwala zautomatyzować cały ten proces.</p>
 ]]></content>
   </entry>
   

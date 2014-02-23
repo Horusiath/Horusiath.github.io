@@ -4,7 +4,7 @@
   <title><![CDATA[Category: javascript | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-02-05T23:27:39+01:00</updated>
+  <updated>2014-02-23T20:02:33+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,137 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[More thoughts on Knockout.js and JavaScript MVC]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/02/20/more-thoughts-on-knockout/"/>
+    <updated>2014-02-20T22:47:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/02/20/more-thoughts-on-knockout</id>
+    <content type="html"><![CDATA[<p>Today I want to share with my reflections on using <a href="http://knockoutjs.com/">Knockout.js</a> and client side MVVM pattern. Some of them refer to my previous post on the same <a href="/blog/2013/03/09/knockoutjs-spostrzezenia/">topic</a> (in Polish language). These are my advices to all entusiasts of JavaScipt rich applications, especially to those, who want to try Knockout in production environment.</p>
+
+<h1>Layered structure</h1>
+
+<p>Most of the frontent application logic, I&rsquo;ve got an occasion to look into, was pretty messy. Simple web pages usually are build of chunks of JavaScript code used to bound existing libraries and perform simple logic tasks. Everything is coupled, any kind of logic and DOM manipulations are mixed together. This is the place, where unicorns live and magic happens. But if you&rsquo;re into rich client side applications and frameworks such as Knockout.js, this is not an option. Why?</p>
+
+<p>Knockout.js, AngularJS, Backbone and other MV* frameworks are dedicated to create a web applications. This literaly means, that your client page is an application rather than an ordinary page, rendered only to display the data. There will be probably a <strong>lot</strong> of code and logic bound to HTML on the page. If you will manage your code in unstructurized manner, you&rsquo;ll soon find yourself in spot, where any further changes will the a depressing, time-consuming nightmare.</p>
+
+<p>To be able to manage a large chunks of code, you will need to decouple your JavaScript logic into layers. Beacuse Knockout doesn&rsquo;t provide any application layers off hand, responsibility of creating them lies on you. In rest of the post bellow I want to share my personal experiences developed during many months spent of using Knockout in production environment. Layers described by me can be exactly mapped onto specific patterns/groups of patterns and are described from top to bottom, beginning from layer used for server communication, through data management, HTML page partitioning to core used to bound everything together.</p>
+
+<h2>Gateway</h2>
+
+<p>The main goal of the Gateway object is to abstract server API to look like an ordinary JavaScript function. We would like to call the service in form of <code>usersApi.getUserById(1)</code> rather than cryptic <code>$.post(''api/users', { id: 1 })</code>. In my opinion this is more natural and gives us an easier way for further refactoring. What else can gateways do?</p>
+
+<p>First of all, they should be able to hide necessity of resolution parametrized URLs from view models. They should be able to resolve them or have some helpers attached (think about eqivalent of UrlHelpers, path methods etc.).</p>
+
+<p>In most of the cases I&rsquo;ve met, server communication is done by traditional ajax requests through jQuery ajax or similar calls. Since those functions always returns jQuery promises as a result, you may find that this is not what you want. Maybe you need a more detailed informations or a custom wrapper around promises. Or if you use <a href="https://github.com/Reactive-Extensions/RxJS">RxJS</a>, you probably may want <code>Rx.Observable</code> objects. For all of these cases Gateway is good place to implement.</p>
+
+<p>Gateways could be also used to perform mapping of JSON into fully qualified JavaScript objects you may want to use. This includes things like serializing/deserializing dates, adding additional computed properties, adding/removing recursive dependencies or even changing entire structure of object to beter fit our needs. From Knockout point of view, we can wrap/unwrap objects into ko.observables directly at this layer.</p>
+
+<p>When your data manipulation and mapping logic become more and more complex, consider using a dedicated Factory/Mapper objects to maintain code decoupling.</p>
+
+<h2>Data source</h2>
+
+<p>Data sources (or Data Access Objects) are alternatives to gateways, since they serve similar purpose, but provide much more complex mechanisms. When we speak about data represented on the page, we&rsquo;ll probably see problems associated with incomplete data representation on client side. Paginated tables, autocomplete suggestions, calendar pages, infinite scrolls etc. When used with remote source, all of these use server side requests to get data to be shown to end users. But on large data volumes we never retrieve all of the informations, instead using only those records, which need te be displayed. One of the roles of data sources is to store and manage data received this way, so the next time user goes back to previously displayed page or gets subset of records already provided, we may restore it from the local cache rather than repeating request to the server.</p>
+
+<p>If you want to see a possible ways to implement this pattern, I would recommend you to look at some of the existing implementations, like:</p>
+
+<ul>
+<li><a href="https://github.com/twitter/typeahead.js/blob/master/doc/bloodhound.md">Bloodhound</a> suggestion engine for Twitter&rsquo;s <a href="http://twitter.github.io/typeahead.js/">typeahead.js</a> library</li>
+<li>Kendo UI <a href="http://docs.telerik.com/kendo-ui/api/framework/datasource">DataSource</a> prototype</li>
+<li><a href="http://www.breezejs.com/">Breeze.js</a> framework</li>
+<li><a href="http://pouchdb.com/">PouchDB</a>, which is actually full in-browser database with remote sync option</li>
+</ul>
+
+
+<p>All of them provide interesting point of view of what separated data source managers are capable to.</p>
+
+<p>Among other advantages of data source separation we could mention sharing of common data between view models, which should not reference too each other directly, but also managing data objects lifecycle. Fetching data from the server, and synchronizing changes made localy by the client could be done easily this way.</p>
+
+<p>When it comes to data objects, I&rsquo;ve noticed that for purposes of data manipulation on the client side it&rsquo;s nice to have some kind of universal identifiers to manipulate enities. Those identifiers should uniquely identify single entity among all others on the page &ndash; this means, that database identifiers from the JSON object representing server side entities may not be sufficient, since in many cases the records id&rsquo;s (at least when we speak about relational databases with non-UUID primary keys) are guaranted to be unique only in single table/collection scope.</p>
+
+<p>In my case good solution of this problem seems to be an additional object property &ndash; lets call it <code>$id</code> &ndash; which serves only client side logic (server may ignore that value) and it&rsquo;s combination of unique identifier of the entity type and single entity identifier. Since it&rsquo;s called the same among all data objects in client side application, no matter of their type, we may also definie universal comparison operators and function for fetching and data integration. To do so it&rsquo;s also necessary that <code>$id</code> has to be generated in deterministic way &ndash; no matter how many times we create a JavaScript representation of the same database record, it should allways have the same <code>$id</code> value.</p>
+
+<h2>Partial View Models</h2>
+
+<p>Partial view models are used to separate model-view binding in domains of interests. Instead of unorganized bindings of all observed properties to single God Object, remember to use smaller pieces which actually fits a concrete parts of your page &ndash; menus, navbars, forms, modal windows etc.</p>
+
+<p>Don&rsquo;t ever mix a multiple view models in scope of single view component. The only exception from that rule is when you need to manipulate current view model in it&rsquo;s parent context, but even in that case you shouldn&rsquo;t access higher than direct parrent of current VM. If you do, that usually means, something is wrong.</p>
+
+<p>Avoid referencing between view models, especially when they share the same hierarchy level. View models should be an independent units of work. They don&rsquo;t need to know details of other view models to perform requested operations. Use Knockout contexts or dedicated objects as an inter-communication layer and share them between view models, when some message passing is needed.</p>
+
+<p>Don&rsquo;t create large nested objects inside view models. Inject them through constructors instead. Knockout view models lifetime is much longer than AngularJS controllers, but it&rsquo;s still a better solution to share large objects and &ndash; if they come with a lot of logic &ndash; to decouple them from view model. This also includes objects used to communicate with external world.</p>
+
+<h2>Application root</h2>
+
+<p>Since Knockout allows you to use only one View Model as root for whole page, my advice is to create dedicated view model, which won&rsquo;t be used with any visible parts of the page itself. It&rsquo;s role is to serve as a container for actual view models used to display data on the page and to provide universal features to be used by everyone. For me this option remains true even for small ingerention of Knockout logic into the page, because in the world of changing requirements formally small pages may grow rapidly in very short amount of time.</p>
+
+<p>When comes to integration of partial view models and application root, usually it&rsquo;s sufficient to create <strong>all</strong> partial VMs on root level. View models can be nested in large tree structures, but don&rsquo;t overuse this feature. Try to keep your view models dependency scopes as flat as you can. Application root is a good point to handle inner components creation and lifecycle. That also means, it should be able to access and provide all objects &ndash; gateways, data sources, factories, event buses, AJAX handlers etc. &ndash; directly to view models.</p>
+
+<h2>Appendix: Events and Pub/Sub pattern</h2>
+
+<p>There are few more things I wish to present in this post. One of them is a Publish/Subscribe pattern and event processing. It isn&rsquo;t bound to any specific layer since all of them can get advantage of using it. I also found it the best way of dealing with communication between various Knockout view models.</p>
+
+<p>Below I will show one of the simplest implementation used to handling custom events. If you want to be able to use more advanced techniques, you probably want to look for some dedicated libraries such as <a href="https://github.com/Reactive-Extensions/RxJS">RxJS</a>.
+``` javascript
+var EventStream = function(){</p>
+
+<pre><code>this._channels = {};    // this could be made private
+
+// subscribe to channel
+this.$on = function(channelName, callback){
+    if(typeof callback === 'function'){
+        var channel = this._channels[channelName];
+        if(!channel) 
+            channel = this._channels[channelName] = [];
+        channel.push(callback);
+    }
+};
+
+// unsubscribe from channel
+// this is tricky since anonymous functions, once subscribed cannot be removed
+this.$off = function(channelName, callback){
+    var channel = this._channels[channelName], i;
+    if(channel &amp;&amp; (i = channel.indexOf(callback)) &gt; -1){
+        channel.splice(i, 1);
+        if(!channel.length) 
+            delete this._channels[channelName];
+    }
+};
+
+// publish an event
+this.$trigger = function(channelName, event){
+    var channel = this._channels[channelName];
+    if(channel)
+        for(var i = 0; i &lt; channel.length; i++){
+            try {
+                channel[i](event);
+            } catch(e){
+                // an error occurred in subscriber function
+            }
+        }
+};
+</code></pre>
+
+<p>}
+<code>``
+Since we have whole event pub/sub feature in one separate prototype, we can now implement it in any object we wish, either through composition or as a mixin. Additionaly we can use globaly shared instances of</code>EventStream` in similar fashion we use an event buses.</p>
+
+<h1>Final thoughs</h1>
+
+<p>I want to end with a few short advices:</p>
+
+<ul>
+<li>All of my observations are based on observations of using Knockout and MVVM in non-SPA paradigm. As I&rsquo;ve said in previous posts, I wouldn&rsquo;t recommend Knockout for creating single page applications, because there are a lot of alternative frameworks, which suits better for this purpose.</li>
+<li><a href="https://github.com/Knockout-Contrib/Knockout-Validation">Knockout-validation</a> library &ndash; I&rsquo;ve found it pain in the ass almost everytime, I&rsquo;ve needed to create anything more complex than basic, flat structure validation. There are a lots of problems when it comes to nested objects validation, nullable objects and dealing with validation results caches &ndash; which btw. cannot be accessed via library API. So if you are determined to use it, consider yourself warned.</li>
+<li>Use unit tests any time you can. This not only will allow you to catch more potential errors (which are more likely to exist in language such as JavaScript) but are also a nice way to check if your code blocks are properly separated. And better prepare yourself, because client side logic tests are much more difficult to write than their backend cousins.</li>
+<li>Create a common prefix for properties used as helper fields and methods, but not directly responsible for view model page manipulations. I&rsquo;ve already shown examples such as <code>$id</code> field and event stream methods with <code>$</code> prefix. I&rsquo;ve found them quite usefull, but I don&rsquo;t want refer to them from view <code>data-bind</code> attributes or server side. They should remain transparent for both of these.</li>
+<li>I didn&rsquo;t mention about any kind of Service layer, used for performin business logic. The reason is simple &ndash; unless you&rsquo;re creating SPA with offline editing capabilities, due to reliability and security reasons you probably never wan&rsquo;t to inject a business logic into frontend.</li>
+</ul>
+
+
+<p>And last but not least. There are no universal rules. Form your own point of view, appropriate to your problems.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Knockout.js - spostrzeżenia]]></title>
@@ -671,52 +802,6 @@ Tak zdefiniowana funkcja pozwala nam pobierać lub tworzyć hierarchie modułów
 
 
 <p>Środowisk do testów javascriptowych jest dość sporo. Osobiście mogę polecić <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, framework bazujący na rozwiązaniach znanych dla programistów Ruby z RSpeca. Jest łatwy do nauki i wprowadzenia w naszej aplikacji, a jednocześnie daje nam dużą swobodę w tworzeniu własnych rozwiązań.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[API Servery i MVC po stronie klienta]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/"/>
-    <updated>2012-06-30T22:32:00+02:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta</id>
-    <content type="html"><![CDATA[<p>Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w stronę klienta. Sprawę potęguje fakt, że coraz więcej powstaje narzędzi ułatwiających te czynności, zaś duże firmy, takie jak Google, Twitter czy Facebook, promują przenoszenie kolejnych funkcjonalności do przeglądarki.</p>
-
-<p>Zacznijmy od tego, jak wygląda &ldquo;tradycyjny&rdquo; model działania aplikacji WWW.</p>
-
-<p>Serwer odbiera żądanie. Aby na nie odpowiedzieć, wykonuje wiele operacji takich jak mapowanie routingu, uwierzytelnianie, czy pobranie elementów z bazy. Po ich wykonaniu nadchodzi czas na proces przygotowania odpowiedzi. W obecnych czasach serwery nie serwują praktycznie żadnych statycznych stron HTML, zawartość jest przeważnie generowana dynamicznie i wypełniana na podstawie danych dla każdego żądania. Warto zauważyć, że tak wygenerowana strona może mieć dość spory rozmiar. W przypadku kolejnych żądań serwer powtarza wszystkie kroki, w wyniku zwracając kolejną stronę HTML, w większości przypadków bardzo podobną do poprzedniej (za sprawą wspólnego Layoutu oraz dołączanych skryptów i stylów).</p>
-
-<p>To tradycyjne podejście ma kilka zalet:</p>
-
-<ul>
-<li>Ponieważ większość logiki związanej z prezentacją generowana jest w postaci HTML po stronie serwera, maszyna klienta nie musi borykać się z ciężkimi skryptami. Jest to pewien plus w przypadku słabych maszyn czy starych przeglądarek, źle radzących sobie z javascriptem.</li>
-<li>Nie ma co ukrywać, że utrzymywanie kodu JS jest znacznie bardziej wymagające niż odpowiadającego mu kodu w innych językach wykorzystywanych po stronie serwera.</li>
-<li>Niektóre roboty internetowe ignorują pewne fragmenty adresów url lub nie wykrywają tych adresów w miejscach innych niż linki. Dodatkowo indeksery mogą mieć problemy z przetwarzaniem treści innych niż strony HTML. Z tego powodu tradycyjnie serwowane strony są łatwe do rozpoznawania i indeksowania.</li>
-</ul>
-
-
-<p>Na czym więc polega w skrócie budowa oparta o &ldquo;ciężkiego&rdquo; klienta i serwer API. Chodzi mianowicie o zrzucenie z serwera odpowiedzialności za generowanie stron HTML (które mogą być w rzeczywistości ładowane dynamicznie). Ma on odpowiadać jedynie za przesyłanie szablonów stron HTML, skryptów czy stylów oraz (co najważniejsze) udostępniać API pozwalające sterować logiką za pomocą żądań HTTP i zwracające surowe informacje (przekazywane przeważnie w formacie JSON), których prezentacją zajmą się skrypty po stronie klienta.</p>
-
-<p>Jakie zalety ma takie podejście?</p>
-
-<ul>
-<li>Zmniejszenie obciążenia serwera &ndash; jeżeli jesteśmy w stanie przesyłać niezbędne elementy prezentacji w postaci statycznych szablonów HTML, nasze serwery nie muszą ich generować w czasie rzeczywistym.</li>
-<li>Zmniejszenie rozmiaru przesyłanych danych &ndash; od kiedy nie musimy za każdym razem serwować widoku całej strony, a jedynie skupić się na prostych szablonach oraz danych w formacie JSON (który powoduje znacząco mniejszy narzut niż HTML), wykorzystywane przez nas pasmo jest znacznie mniejsze. Jest to dobra wiadomość zarówno dla hosta, jak i dla wielu użytkowników, którzy coraz częściej przeglądają internet poza domem korzystając ze swoich smartfonów.</li>
-<li>Dobra integracja z innymi usługami &ndash; od kiedy nasz serwer udostępnia informacje w formie API opartego o otwarte standardy, zarówno my jak i inni programiści możemy oprzeć na nim usługi inne niż standardowe strony WWW (jest to dobra wiadomość zwłaszcza dla twórców aplikacji na urządzenia mobilne).</li>
-<li>Single Page Application jako aplikacja desktopowa &ndash; dzięki możliwościom najnowszych przeglądarek jesteśmy w stanie szybko wzbogacić naszą aplikację o możliwość pracy offline, nawet kiedy użytkownik nie ma dostępu do Internetu.</li>
-</ul>
-
-
-<p>Oczywiście nie każdemu odpowiadają te rozwiązania i często można słyszeć głosy sprzeciwu. Ale ponieważ Internet udostępnia pole do otwartej dyskusji, postaram się wysunąć kilka kontrargumentów na najczęściej spotykane zarzuty.</p>
-
-<ul>
-<li>Co ze starszymi przeglądarkami? &ndash; częste pytanie, głównie ze względu na to, że wiele bajerów dostępnych w nowych przeglądarkach może słabo lub wcale nie działać na starszych. Oczywiście takie rzeczy jak wolno działający javascript można optymalizować, jednakże kiedy dochodzi się do granic, może pojawić się potrzeba dodania popupa <em>&ldquo;Przestań przeglądać Internet za pomocą kartofla&rdquo;</em> dla tych kilku użytkowników, którzy jeszcze nie wiedzą, że istnieją przeglądarki inne niż IE.</li>
-<li>Co ze słabszym sprzętem? &ndash; w dzisiejszych czasach praktycznie każdego stać na sprzęt spełniający wymagania większości stron działających na wydajnych przeglądarkach. Ta teza dotyczy również urządzeń mobilnych &ndash; większość smartfonów niewiele odstaje osiągami od desktopów sprzed kilku lat.</li>
-<li>A co, jeżeli ktoś ma wyłączoną obsługę JavaScriptu? &ndash; zdziwiłem się, gdy zobaczyłem to jako dość częsty argument w dyskusjach. Dla osób które nie widzą w tu nic absurdalnego, proponuję jednak przeczytać znowu to pytanie ze zrozumieniem, aż do skutku.</li>
-<li><em>&ldquo;It&rsquo;s fucking JavaScript&rdquo;</em> &ndash; tak, utrzymywanie dużej ilości kodu JS jest trudne, po przekroczeniu pewnego progu jestem w stanie przyznać, że to zadanie prawie niemożliwe. Na szczęście społeczność programistów JS jest dość pomysłowa i można znaleźć multum ułatwień pozwalających zachować prosty, czytelny i działający kod &ndash; począwszy od różnego typu platform, przez języki kompilowane do Javascriptu, a kończąc na frameworkach umożliwiających testy jednostkowe po stronie przeglądarki.</li>
-</ul>
-
-
-<p>Podsumowując, nowe podejście oparte na budowaniu aplikacji na zasadzie konstrukcji bogatych stron klienckich wspieranych przez serwery API może okazać się ciekawym i obiecującym rozwiązaniem. Zarówno dla twórców, poprzez zmniejszenie kosztów za pomocą odciążenia logiki serwerowej, jak i dla użytkowników, wzbogacając ich doświadczenia w korzystaniu ze stron oraz usprawniając pracę poza domem.</p>
 ]]></content>
   </entry>
   

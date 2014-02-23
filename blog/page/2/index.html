@@ -9,7 +9,7 @@
   <meta name="author" content="Bartosz Sypytkowski">
 
   
-  <meta name="description" content="We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego &hellip;">
+  <meta name="description" content="W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -75,6 +75,111 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/">Parę Słów O HTMLu I CSSie</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-21T08:45:00+02:00" pubdate data-updated="true">Apr 21<span>st</span>, 2013</time>
+        
+         | <a href="/blog/2013/04/21/pare-sow-o-htmlu-i-cssie/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>W tym poście postanowiłem zebrać kilka technologii usprawniających zabawę stylami i HTMLem, wykorzystując Visual Studio 2012 jako narzędzie codziennej pracy. Część z nich cieszy się już sporą popularnością w świecie web developerów innych środowisk, zaś w świecie .NET stawiają swoje pierwsze kroki.</p>
+
+<p>Zanim zacznę właściwą część postu, chcę wszystkim przypomnieć o <a href="http://visualstudiogallery.msdn.microsoft.com/6ed4c78f-a23e-49ad-b5fd-369af0c2107f">Web Essentials</a>. Jest to absolutny <em>must have</em> jeżeli chodzi o web development w VS2012. Wiele z feature&#8217;ów opisywanych przeze mnie dalej jest już wbudowanych w to rozszerzenie.</p>
+
+<h2>Zen Coding</h2>
+
+<p>Jeżeli chodzi o kwestie tworzenia szablonów dynamicznych stron HTML, możemy podzielić programistów na dwie grupy. Pierwsza z nich to szczęściarze, mogący budować szablonych za pomocą czytelnych, przejżystych notacji (np. <a href="http://haml.info/">HAML</a> lub <a href="http://jade-lang.com/">Jade</a>). Druga (czyli reszta ;) ) to osoby zmuszane do osadzania dynamicznego kodu w otoczce pseudo-HTML. Z myślą o tej drugiej grupie powstał standard znany powszechnie jako Zen Coding. O co w nim chodzi? Załóżmy, że chcielibyśmy stworzyć kod HTML w następującej postaci:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;container&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;p&gt;</span>Menu<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;menu&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Nie jestem chyba jedyną osobą, która uważa, że pisanie czegoś takiego z palca to strata czasu? Z pomocą ZenCoding możemy to uprościć do następującej postaci:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>#container&gt;p{Menu}+ul.menu&gt;(li&gt;a)*5
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W przypadku Web Essentials dla VS2012 jedyne co musimy zrobić, to umieścić takie wyrażenie w nowej linii oraz nacisnąć Tab (natychmiast po końcu wyrażenia bez spacji), aby wygenerować wynikowy HTML.</p>
+
+<h2>Prekompilowany CSS</h2>
+
+<p>Do niedawna była to jeszcze nowinka. Jednakże zalety notacji takich jak <a href="http://lesscss.org/">LESS</a> czy <a href="http://sass-lang.com/">SASS</a> szybko zapewniły im właściwe miejsce. Zastanówmy się, dlaczego warto z nich korzystać?</p>
+
+<ul>
+<li>Przyswajalność &ndash; że nauka nowej notacji zajmuje kilka godzin/dni.</li>
+<li>Usunięcie powtarzalności kodu &ndash; stosując zmienne, wartości wyliczane oraz zagłębione style, mozemy osiągnąć nasz cel szybciej oraz bez konieczności kopiowania tych samych linijek. W dodatku powstały w ten sposób kod jest bardziej podatny na zmiany niż jego statyczny odpowiednik.</li>
+<li>Hierarchizacja &ndash; stosowanie importów jest kolejnym krokiem usuwajacym powtarzalny kod, jak również umożliwia podział kodu CSS na konkretne jednostki odpowiedzialności. Pozwala również w pewnym stopniu usunąć konieczność łączenia plików CSS za pomocą bundlerów.</li>
+<li>Rozmiar &ndash; narzędzia takie jak Web Essentials automatycznie kompilują pliki .less do kodu CSS podczas zapisu zmian w pliku. Dodatkowo są w stanie skompilować je osobno do postaci z wcięciami (czytelnej dla developera) oraz zminimalizowanej (pozbawionej białych znaków) &ndash; doskonałej do zastosowania w środowisku produkcyjnym.</li>
+</ul>
+
+
+<p>W skrócie pozwala nam wprowadzić odrobinę porządku i organizacji w dziedzinę, która do tej pory jest powszechnie uważana za żmudną, powtarzalną i chaotyczną.</p>
+
+<h2>Palety barw</h2>
+
+<p>Nie ma co ukrywać. Programista nie jest artystą-grafikiem i nie powinno się oczekiwać od niego estetyki i twórczości na poziomie zawodowego designera. Czasem jednak okazuje się, że gotowy layout wykorzystywany na naszej stronie jest niewystarczający i musimy skombinować na szybko &ldquo;coś własnego&rdquo;, czy to w formie dodatkowego stylu czy motywu do odznaczenia części strony.</p>
+
+<p>W takim wypadku z pomocą przychodzi <a href="https://kuler.adobe.com/">Adobe Kuler</a>. Umożliwia on dostosowanie istniejącego lub zdefiniowanie własnego motywu kolorystycznego do wykorzystania na stronie zgodnie z powszechnymi regułami rządzącymi zasadami kompozycji barw.</p>
+
+<h2>CSS &ndash; czy wiesz z czego korzystasz?</h2>
+
+<p>Czy tworząc plik CSS zastanawialiście się, jak duża część opisanych przez was reguł faktycznie jest wykorzystywana na stronie? Chrome umożliwia sprawdzenie tego w dość prosty sposób. Wystarczy z poziomu Developer Tools uruchomić Audyt na zakładce o tej samej nazwie. Po kilku sekundach jesteśmy w stanie zauważyć coś w ten deseń:</p>
+
+<div class="separator" style="clear: both; text-align: center;"><a href="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s1600/chrome-devtool.jpg" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="150" src="http://4.bp.blogspot.com/-eBhklZN4A_g/UXL2pqSMowI/AAAAAAAAAHQ/ztKUIviVimU/s320/chrome-devtool.jpg" width="320" /></a></div>
+
+
+<p>Jaki wynik osiągacie na swojej stronie? ;) Powiem szczerze, że wykorzystywanie około 40% dołączonych reguł można uznać za wysoki wynik.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -2045,112 +2150,6 @@
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/">Jak Wybrać Stos Frameworków Pod Projekt Webowy (.NET)</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-07-12T18:14:00+02:00" pubdate data-updated="true">Jul 12<span>th</span>, 2012</time>
-        
-         | <a href="/blog/2012/07/12/jak-wybrac-stos-frameworkow-pod-projekt/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>W życiu każdego web developera nadchodzi moment, kiedy należy się zdecydować na wybór platform i bibliotek wykorzystywanych w nowym projekcie. Nie ma w tym absolutnie nic złego, co więcej powinniśmy być zadowoleni, mając taką opcję. W aplikacjach biznesowych często jest on podejmowany &ndash; nie zawsze słusznie ani rozsądnie (przynajmniej z naszego punktu widzenia) &ndash; za nas, przez osoby trzecie. Tym bardziej warto doceniać sytuacje, w których mamy możliwość wygłoszenia swojej opinii.</p>
-
-<p>W takim razie rodzi się kolejne pytanie: co wybrać? W tym wątku postaram się rozwinąć swoje obserwacje na temat niektórych rozwiązań i stworzyć drobny przekrój technologii wykorzystywanych przez programistów .NET do budowy aplikacji sieciowych.</p>
-
-<h2>Hosting</h2>
-
-<p>Pierwsza sprawa to miejsce, w którym stać będzie nasza aplikacja. Czy będzie to standardowy wykupiony hosting, własny serwer czy może zechcemy udać się w podróż <em>into the cloud?</em> Nie rozwodzę się tutaj nad wykorzystywanym typem serwera, ponieważ praktycznie każdy rozsądny hosting oferuje IIS co najmniej od wersji 7. Hosting aplikacji na innych serwerach jest bardzo ograniczony. Osobiście nie udało mi się znaleźć strony oferującej serwery typu Mono Apache. Nadzieją na przyszłość dla alternatyw IIS może być framework <a href="http://nancyfx.org/">Nancy</a> &ndash; jeżeli się upowszechni, być może pojawią się oferty hostingowe na innych obsługiwanych przez niego serwerach.</p>
-
-<p>Kwestia hostingu aplikacji w chmurze to inna zabawa. Tutaj aplikacje .NETowe mają spore ograniczenie. W praktyce spotkałem tylko dwie chmury typu PaaS oferujące taki hosting: promowany przez Microsoft <a href="http://www.windowsazure.com/pl-pl/">Windows Azure</a> oraz oparty o chmurę Amazonu <a href="https://appharbor.com/">AppHarbor</a>.</p>
-
-<p>Cechą AppHarbor jest prostota &ndash; chmura ta bierze na siebie wiele z rozwiązań sprawdzonych już w Heroku i moim zdaniem jest to absolutny strzał w dziesiątkę. AppHarbor oferuje bardzo tanie jak na chmurę rozwiązania (najmniejsza, pojedyncza, współdzielona instancja jest zawsze za darmo), do tego oferuje szereg znanych technologii, o które można rozszerzyć naszą aplikację &ndash; są to głównie istniejące już na Amazonie usługi, oferty baz danych, systemów kolejkowych i innych (co ważne dla osób chcących je wykorzystać do celów prywatnych, niemal wszystkie w dysponują wersją darmową). Do tego wszystkiego wystarczy zamontować zwykłą aplikację ASP.NET (nie potrzebne są żadne specyficzne projekty). Skalowanie wykonywane jest przez proste zwiększenie liczby instancji oraz wykupienie droższych ofert u zewnętrznych usługodawców.</p>
-
-<p>W przypadku Windows Azure mamy do czynienia z kompletnie innym podejściem. Aplikacja umieszczona na Azure jest pisana z dedykacją dla tej chmury. Potrzebny jest do tego osobny projekt, konieczne jest również generowanie specjalnych paczek umieszczanych docelowo w chmurze. Do tego cała oferta jest znacznie droższa niż opisywany poprzednik, nie mamy również dostępu do tak szerokiego menu dodatkowych usług i są one z reguły kierowane specjalnie pod Azure (technologii tych nie zobaczymy nigdzie indziej). Jakie są więc zalety? Prawdopodobnie lepsze przystosowanie do aplikacji wymagających dużego skalowania i lepsze osiągi istniejących usług. Ostatecznie może to mieć znaczenie, zwłaszcza dla dużych aplikacji.</p>
-
-<h2>Framework</h2>
-
-<p>W tej sytuacji również wybór jest dość prosty. O Mono Rails nikt już nie pamięta (zresztą nie ma takiej potrzeby). W praktyce mamy parę rozwiązań:</p>
-
-<ul>
-<li><strong>ASP.NET Web Forms</strong> &ndash; stara technologia, która wywołuje dreszcze chyba u wszystkich, którzy mieli już okazję posmakować MVC. Istnieje garść bibliotek dla tej technologii, jednak osobiście nikomu bym jej nie polecił. Brak modularyzacji komponentów, praktyczny brak możliwości prowadzenia testów jednostkowych czy cała masa chybionych pomysłów (ViewState WTF?) powodują, że aplikacje pisane w Web Forms często są drogą przez mękę.</li>
-<li><strong>ASP.NET MVC</strong> &ndash; nowsze spojrzenie, wyraźnie inspirowane Ruby on Rails (co widać coraz wyraźniej w każdej następnej wersji). W dodatku często wykorzystywane, sprawdzone i wspierane zarówno przez sam Microsoft, jak i wiele firm zewnętrznych. Rozwiązanie w sam raz dla tych, którzy chcą rozwiązań pewnych i szybkich w pisaniu, jednocześnie nie tracąc poczucia elastyczności.</li>
-</ul>
-
-
-<p>Ponieważ programowanie do dynamiczna dyscyplina, warto również zwrócić uwagę na dwa stosunkowo nowe, wybijające się rozwiązania:</p>
-
-<ul>
-<li><strong>ASP.NET MVC Web API</strong> &ndash; dostępne od nadchodzącej wersji ASP MVC 4. Jedną z jego zalet jest znaczne uproszczenie w tworzeniu serwerów API (o których wspominałem w jednym z wcześniejszych wpisów), przez co stanowi pewien kontrast wobec tradycyjnego ASP MVC, jest jednak w chwili obecnej rozwiązaniem bardziej na czasie.</li>
-<li><strong>Nancy </strong>&ndash; framework inspirowany Sinatrą (kolejna platforma webowa na Ruby&#8217;ego). Cechy charakterystyczne to duża modularność (przydatna sprawa kiedy potrzebujemy przystosować środowisko specjalnie pod nasze potrzeby) oraz niewielki rozmiar. Rozwiązanie to jest jednak nowe (mniej sprawdzone do ASP). Stąd polecałbym go do mniejszych aplikacji oraz tam, gdzie rola serwera opiera się głównie na pośredniczeniu między klientem a bazą danych (patrz Server API).</li>
-</ul>
-
-
-<h2>Baza danych i ORM</h2>
-
-<p>Temat jest dość szeroki, dlatego nie będę się skupiał na niuansach dotyczących wyboru między bazami relacyjnymi i nierelacyjnymi &ndash; po pierwsze jest to temat na osobny artykuł, po za tym uważam, że z tymi drugimi wciąż miałem za mało do czynienia.</p>
-
-<p>W przypadku relacyjnych baz danych, przeważnie zostanie nam narzucone jakieś konkretne rozwiązanie. W momencie, gdy mamy dostęp do SqlServer, dalszy wybór nasuwa się praktycznie sam &ndash; <strong>Entity Framework</strong>. Polecam szczególnie przyjżeć się wersjom powyżej 4.0+. Widać (kolejną zresztą) inspirację Rubym (mam mianowicie na myśli świetny mechanizm migracji/kontroli wesji bazy danych ala Rake &ndash; szczególnie przydatny w sytuacji, kiedy członkowie zespołu mają mieć dostęp do własnych, niezależnych developerskich instancji bazy danych), jak również przejście na model POCO, co zwiększa elastyczność oraz daje mniejsze uzależnienie naszych modeli od konkretnej technologii.</p>
-
-<p>W przypadku innych typów baz, EF nie zawsze musi się to okazać najlepszym rozwiązaniem. Wynika to z faktu, że ten ORM tworzony były z myślą o bazie Microsoftu i często po macoszemu traktuje (ignoruje) technologie nie wykorzystywane przez SqlServer, ale wciąż dostępne w jego alternatywach. W tej dziedzinie można zauważyć sporą konkurencję ze strony<strong> (Fluent) NHibernate</strong>. Do ciekawostek należy mechanizm <a href="http://nhforge.org/blogs/nhibernate/archive/2009/12/17/queryover-in-nh-3-0.aspx">QueryOver</a>, mniej uniwersalny i bardziej niskopoziomowy od LINQ, jednakże lepiej przystosowany do generowania zapytań SQL pod konkretną bazę.</p>
-
-<p>Ostatecznie kiedy mowa o takich kobyłach jak EF czy NH, warto się zastanowić, czy naprawdę potrzebujemy czegoś tak wielkiego, czy może wystarczy nam mniejsze, prostsze rozwiązanie. W końcu nie każda aplikacja musi obsługiwać zaawansowane zapytania i dawać nam możliwość ingerencji w najdrobniejszy aspekt pracy z bazą danych. W takim wypadku powstało kilka MicroORMów, wśród których najpopularniejszym rozwiązaniem jest <a href="https://github.com/markrendle/Simple.Data/">Simple.Data</a>. Dynamicznie tworzone POCOsy, zapytania sterowane konwencją nazewniczą metod oraz wsparcie naprawdę dużej ilości baz danych &ndash; najpopularniejszych baz relacyjnych, dokumentowej bazy MongoDB i planowane wsparcie usług bazodanowych dostępnych na Azure &ndash; to mocne strony tego projektu. Coś w sam raz dla osób chcących skupić się na szybkim wykonaniu gotowego kodu do komunikacji z bazą z pominięciem wszystkich upierdliwych konfiguracji.</p>
-
-<h2>Prezentacja danych</div></h2>
-
-<p>Gdzie ma się znajdować logika odpowiedzialna za prezentację danych? W przypadku logiki umieszczonej po stronie serwera mamy do czynienia z dynamicznym generowaniem stron, a co za tym idzie, większym kosztem obliczeniowym po stronie serwera oraz z reguły większym rozmiarem przesyłanych odpowiedzi do klienta. Zaletą jest lepsza kontrola oraz dość rozbudowane możliwości większości komercyjnych kontrolek &ndash; przydatne zwłaszcza w rozwiązaniach typowo biznesowych. W tej dziedzinie znane są dwie marki:</p>
-
-<ul>
-<li><a href="http://www.telerik.com/products/aspnet-mvc.aspx">Telerik</a> MVC &ndash; całkiem dobra biblioteka dysponująca szerokimi możliwościami (bindowanie bezpośrednio do akcji po stronie serwera, usług WCF lub wywołań ajax), o całkiem sporych możliwościach własnego rozszerzania. Wadą mogą być pewne nieprzemyślane (z mojego punktu widzenia) decyzje np. duża różnica w obsłudze kolumn z danymi i komend oraz spore rozbieżności w kodzie generowanym przez wiązania ajaxowe i serwerowe.</li>
-<li><a href="http://www.devexpress.com/Subscriptions/DXperience/WhatsNew2012v1/asp.xml">DevExpress</a>. Nie spotkałem jeszcze nikogo, kto po kontakcie z Telerikiem, wybrałby DevExpress. Naprawdę ciężko usłyszeć o tej bibliotece cokolwiek dobrego. Generowany HTML nie ma wiele wspólnego z logiką, w razie potrzeb ciężko jest rozszerzyć istniejące opcje, zaś samo wsparcie techniczne jest dalekie od ideału.</li>
-</ul>
-
-
-<p>W przypadku kontrolek renderowanych po stronie klienta mamy prawdziwe zatrzęsienie dostępnych rozwiązań. Od jQuery UI, przez rozmaite formy wykresów, gridów czy grafów. Ciężko objąć je wszystkie dlatego postanowiłem znów wybrać dwa ciekawe rozwiązania przyjazne zwłaszcza z punktu widzenia biznesu:</p>
-
-<ul>
-<li><a href="http://www.kendoui.com/web.aspx">KendoUI</a> &ndash; kolejna biblioteka od twórców Telerika, tym razem skupiona jednak w całości po stronie klienta. Dostarcza dużych możliwości, w tym integrację z urządzeniami mobilnymi, frameworkiem MVVM Knockout.js (promowanym przez Microsoft wraz z nadchodzącym wypuszeniem ASP MVC 4) oraz obsługą HTML5.</li>
-<li><a href="http://www.sencha.com/products/extjs/">ExtJS</a> &ndash; duży framework oferujący bardzo rozbudowane możliwości kontroli logiki i prezentacji danych. Jego budowa jest bardziej &ldquo;obiektowa&rdquo; (w ujęciu tworzenia instancji klas/prototypów) niż KendoUI, jednak wydaje się również, że jest trudniejszy do opanowania od swojego konkurenta &ndash; poniekąd przez fakt, że wydaje się stanowić bardziej rozległe rozwiązanie.</li>
-</ul>
-
-
-<h2>Uzupełnienie</h2>
-
-<p>Pisząc uzupełnienie mam na myśli szereg bibliotek, które nieraz ułatwiają pracę, ale ciężko je podpisać pod którąkolwiek z poprzednich kategorii. W praktyce chciałem utworzyć jeszcze jedną dziedzinę, stworzoną specjalnie z myślą o rozbudowanych aplikacjach klienckich (Single Page Applications i stos MVC po stronie przeglądarki), ale ich opis zaprezentowałem we wcześniejszych postach.</p>
-
-<p>Jednym z najciekawszych spotkanych do tej pory projektów wydaje się być <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>.To prawdziwe wybawienie dla osób, które nie chcą za każdym razem walczyć ze stylami i kompozycjami, a w pełni wystarczy im zbiór najbardziej popularnych rozwiązań podanych <em>out of the box</em>.</p>
-
-<p>Osoby wykorzystujące API zewnętrznych portali (np. Facebook, Twitter) mogą być zaciekawione możliwościami oferowanymi przez <a href="http://andrewplummer.github.com/APIConnect/">Connect API</a>. Ta biblioteka javascriptowa pomaga zautomatyzować odwołania do zewnętrznych API, tworząc jednocześnie spójny interfejs dla tych usług.</p>
-
-<p>Na zakończenie, mówiąc o automatyzacji, ciekawym rozwiązaniem jest C#-owa biblioteka <a href="https://github.com/AutoMapper/AutoMapper">AutoMapper</a>. Świetnie nadaje się w sytuacjach kiedy musimy dokonywać częstych mapowań pomiędzy obiektami (jak również dokonywać kompozycji obiektów czy spłaszczeń &ndash; <em>flattening</em>) i świetnie pozwala zautomatyzować cały ten proces.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -2168,6 +2167,10 @@
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/02/20/more-thoughts-on-knockout/">More thoughts on Knockout.js and JavaScript MVC</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/02/02/uncommon-static-type-feats/">Top features every statically typed language should have</a>
       </li>
     
@@ -2181,10 +2184,6 @@
     
       <li class="post">
         <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść pro tipów przydatnych podczas tworzenia aplikacji</a>
       </li>
     
   </ul>
