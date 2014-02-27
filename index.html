@@ -1,91 +1,113 @@
 
-<!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <title>Simple Solutions</title>
-  <meta name="author" content="Bartosz Sypytkowski">
+<!DOCTYPE HTML>
 
-  
-  <meta name="description" content="Today I want to share with my reflections on using Knockout.js and client side MVVM pattern. Some of them refer to my previous post on the same topic &hellip;">
-  
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Simple Solutions</title>
+	<meta name="author" content="Bartosz Sypytkowski">
+
+	
+	<meta name="description" content="Feb 20th, 2014 javascript Comments More Thoughts on Knockout.js and JavaScript MVVM Today I want to share with my reflections on using Knockout.js &hellip;">
+	
 
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
   <meta name="MobileOptimized" content="320">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+	<link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://bartoszsypytkowski.com/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<link href="/stylesheets/font-awesome.min.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
   
-  <link rel="canonical" href="http://bartoszsypytkowski.com">
-  <link href="/favicon.png" rel="icon">
-  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
-  <script src="/javascripts/modernizr-2.0.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
-  <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-47294845-1']);
-     _gaq.push(['_setDomainName','bartoszsypytkowski.com']);
-    _gaq.push(['_trackPageview']);
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-47294845-1']);
+		_gaq.push(['_trackPageview']);
 
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
 
 
 </head>
 
-<body   class="collapse-sidebar sidebar-footer" >
-  <header role="banner"><hgroup>
-  <h1><a href="/">Simple Solutions</a></h1>
-  
-</hgroup>
 
-</header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
-  
-</ul>
-  
-<form action="http://google.com/search" method="get">
-  <fieldset role="search">
-    <input type="hidden" name="q" value="site:bartoszsypytkowski.com" />
-    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
-  </fieldset>
-</form>
-  
-<ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-</ul>
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><h1 id="profile-name"><a href="/">Bartosz Sypytkowski</a></h1>
+<div class="profilepic">
+	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("b.sypytkowski@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+	
+</div>
 
+<nav id="main-nav"><ul class="main">
+    <li><a href="/">Blog</a></li>
+    <li><a href="/blog/archives">Archives</a></li>
+</ul>
 </nav>
-  <div id="main">
-    <div id="content">
-      <div class="blog-index">
-  
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/02/20/more-thoughts-on-knockout/">More Thoughts on Knockout.js and JavaScript MVVM</a></h1>
-    
-    
-      <p class="meta">
-        
+<nav id="sub-nav">
+	<div class="social">
+		
+			<a class="email" href="mailto:b.sypytkowski@gmail.com" title="Email">Email</a>
+		
+		
+		
+			<a class="google" href="https://plus.google.com/b.sypytkowski@gmail.com" rel="author" title="Google+">Google+</a>
+		
+		
+			<a class="twitter" href="http://twitter.com/horusiath" title="Twitter">Twitter</a>
+		
+		
+			<a class="github" href="https://github.com/horusiath" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+			<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner">
+<div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
 
 
 
@@ -97,16 +119,21 @@
   
 
 
-<time datetime="2014-02-20T22:47:00+01:00" pubdate data-updated="true">Feb 20<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/02/20/more-thoughts-on-knockout/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
+<time datetime="2014-02-20T22:47:00+01:00" data-updated="true" itemprop="datePublished">Feb 20<span>th</span>, 2014</time></div>
+		<div class="tags">
 
 
-  <div class="entry-content"><p>Today I want to share with my reflections on using <a href="http://knockoutjs.com/">Knockout.js</a> and client side MVVM pattern. Some of them refer to my previous post on the same <a href="/blog/2013/03/09/knockoutjs-spostrzezenia/">topic</a> (in Polish language). These are my advices to all entusiasts of JavaScipt rich applications, especially to those, who want to try Knockout in production environment.</p>
+	<a class='category' href='/blog/categories/javascript/'>javascript</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2014/02/20/more-thoughts-on-knockout/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/02/20/more-thoughts-on-knockout/" itemprop="url">More Thoughts on Knockout.js and JavaScript MVVM</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Today I want to share with my reflections on using <a href="http://knockoutjs.com/">Knockout.js</a> and client side MVVM pattern. Some of them refer to my previous post on the same <a href="/blog/2013/03/09/knockoutjs-spostrzezenia/">topic</a> (in Polish language). These are my advices to all entusiasts of JavaScipt rich applications, especially to those, who want to try Knockout in production environment.</p>
 
 <h1>Layered structure</h1>
 
@@ -249,7 +276,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Since we have whole event pub/sub feature in one separate prototype, we can now implement it in any object we wish, either through composition or as a mixin. Additionaly we can use globaly shared instances of <code>EventStream</code> in similar fashion we use an event buses.</p>
+<p>Since we have whole event pub/sub feature in one separate prototype, we can now implement it in any object we wish, either through composition or as a mixin. Additionaly we can use globaly shared instances of <code>EventStream</code> in similar fashion we use an event buses. For Knockout applications there is also an alternative in form of <a href="https://github.com/rniemeyer/knockout-postbox">knockout-postbox</a>.</p>
 
 <h1>Final thoughs</h1>
 
@@ -265,44 +292,43 @@
 
 
 <p>And last but not least. There are no universal rules. Form your own point of view, appropriate to your problems.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-02T15:29:00+01:00" data-updated="true" itemprop="datePublished">Feb 2<span>nd</span>, 2014</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/programming-languages/'>programming languages</a>
+
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/02/02/uncommon-static-type-feats/">Top Features Every Statically Typed Language Should Have</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-02-02T15:29:00+01:00" pubdate data-updated="true">Feb 2<span>nd</span>, 2014</time>
-        
-         | <a href="/blog/2014/02/02/uncommon-static-type-feats/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In this post I want to focus on features of statically typed languages which I consider interesting and usefull, but still uncommon and rare among most popular ones in dev environment. First of all, lets try to answer the question: why static typing? We need to realize, what advantages of static typing do we embrace, so we can look for further improvements.</p>
+		
+			<span class="comments"><a href="/blog/2014/02/02/uncommon-static-type-feats/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/02/02/uncommon-static-type-feats/" itemprop="url">Top Features Every Statically Typed Language Should Have</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>In this post I want to focus on features of statically typed languages which I consider interesting and usefull, but still uncommon and rare among most popular ones in dev environment. First of all, lets try to answer the question: why static typing? We need to realize, what advantages of static typing do we embrace, so we can look for further improvements.</p>
 
 <ol>
 <li>Performance &ndash; of course this is first notable difference. Since static typing gives a compiler much more informations about generated program, we have both much heavier optimizations that could be done at compile time and less need of type checking at runtime.</li>
@@ -363,44 +389,39 @@
 <h2>Great absent</h2>
 
 <p>Actually I didn&rsquo;t mentioned some of most core features, which benefit all statically typed languages, such as types as first-class citizens, type inference or language macros/templates. The reason of this is, that those thing are well known and more or less present in many of the popular languages we have today. My goal was to describe some potential advantages of powerfull, yet less known features we may see with hope they would be more often met and used in the future.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-12T23:03:00+01:00" data-updated="true" itemprop="datePublished">Jan 12<span>th</span>, 2014</time></div>
+		<div class="tags">
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/01/12/przenosiny/">Przenosiny</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-01-12T23:03:00+01:00" pubdate data-updated="true">Jan 12<span>th</span>, 2014</time>
-        
-         | <a href="/blog/2014/01/12/przenosiny/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Od ostatniego posta minęło trochę czasu, było to jednak związane z ambitnymi zmianami jakie od dawna planowałem wobec bloga. <a href="http://horusiath.blogspot.com">Mój poprzedni blog</a> naprawdę dawał się już we znaki, głównie przez rozrośnięty i archaiczny silnik, który sprawiał naprawdę sporo kłopotów kiedy przychodziło do odrobiny bardziej zaawansowanej konfiguracji.</p>
+		
+			<span class="comments"><a href="/blog/2014/01/12/przenosiny/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/01/12/przenosiny/" itemprop="url">Przenosiny</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Od ostatniego posta minęło trochę czasu, było to jednak związane z ambitnymi zmianami jakie od dawna planowałem wobec bloga. <a href="http://horusiath.blogspot.com">Mój poprzedni blog</a> naprawdę dawał się już we znaki, głównie przez rozrośnięty i archaiczny silnik, który sprawiał naprawdę sporo kłopotów kiedy przychodziło do odrobiny bardziej zaawansowanej konfiguracji.</p>
 
 <p>Chciałem zamienić swojego bloga w coś prostego w obsłudze, a jednocześnie dającego możliwości sporej personalizacji. Po drodze szukałem różnych rozwiązań. W praktyce wziąłem pod uwagę 3 z nich:</p>
 
@@ -416,44 +437,43 @@
 <p>Postanowiłem, że wraz z pozostałymi zmianami zmienię nieco samą ideę bloga. O ile przeniosłem większość starych wpisów, o tyle <strong>chciałem aby wszystkie kolejne posty były umieszczane po angielsku</strong>. Jest to decyzja ze względów praktycznych &ndash; większość programistów (w tym ja), kiedy napotyka jakiś problem, nie traci czasu na informacji w polskiej blogosferze, zamiast tego od razu sięgając do anglojęzycznych źródeł. Dodatkowo jest to dla mnie pewnego rodzaju wyzwanie oraz szansa na popracowanie nad językiem. Co do pozostałych problemów (statystyki, komentarze, itp.), wiele rzeczy wciąż czeka na dokończenie i może minąć nieco czasu, żeby postawić wszystko na nogi.</p>
 
 <p>Podsumowując, witam na moim odświeżonym blogu w nowej formule.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-20T09:49:00+02:00" data-updated="true" itemprop="datePublished">Oct 20<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/asp/'>asp</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O Pomyłkach I Wnioskach Z Pracy W ASP.NET MVC</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-20T09:49:00+02:00" pubdate data-updated="true">Oct 20<span>th</span>, 2013</time>
-        
-         | <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
+		
+			<span class="comments"><a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/" itemprop="url">O Pomyłkach I Wnioskach Z Pracy W ASP.NET MVC</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
 
 <p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
 
@@ -558,44 +578,43 @@
 <li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
 </ul>
 
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-10T20:14:00+02:00" data-updated="true" itemprop="datePublished">Aug 10<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/servicestack/'>ServiceStack</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - Alternatywa Dla ASP.NET</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-10T20:14:00+02:00" pubdate data-updated="true">Aug 10<span>th</span>, 2013</time>
-        
-         | <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
+		
+			<span class="comments"><a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/" itemprop="url">ServiceStack - Alternatywa Dla ASP.NET</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
 
 <ul>
 <li><a href="http://www.servicestack.net/">ServiceStack</a> &ndash; najbardziej znana alternatywa, o której opowiem więcej w dalszej części posta.</li>
@@ -656,44 +675,43 @@
 <p>Nie oznacza to jednak, że decydując się na SS, musimy rezygnować z naszej dotychczasowej aplikacji napisanej w ASP.NET. Równie dobrze możemy uruchomić hosta ServiceStack wewnątrz Global.asax i używać go np. tylko jako zamiennika warstwy nośnej dla usług WCF.</p>
 
 <p>Całość doskonale wpisuje się w naturę technologii webowych, ich otwartość i multiplatformowość. Dodatkowo umożliwia ona optymalizację kosztów (hosting linuxowy jest średnio 5-krotnie tańszy niż porównywalny windowsowy) i otwiera nowe możliwości na rynku, który w przypadku .NET w ogromnej części składa się z aplikacji biznesowych.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-26T22:49:00+02:00" data-updated="true" itemprop="datePublished">Jun 26<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/free-talk/'>free talk</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/">Garść Pro Tipów Przydatnych Podczas Tworzenia Aplikacji</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-26T22:49:00+02:00" pubdate data-updated="true">Jun 26<span>th</span>, 2013</time>
-        
-         | <a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
+		
+			<span class="comments"><a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/" itemprop="url">Garść Pro Tipów Przydatnych Podczas Tworzenia Aplikacji</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
 
 <p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
 
@@ -744,44 +762,43 @@
 <p>Po drugie pamiętaj o złotej zasadzie &ndash; czego user nie dotknie, tego sercu nie żal. Przykład-anegdota: swego czasu aplikacje na urządzenia Apple były podawane jako wzór szybko uruchamiających się programów. Aplikacja, która na innych systemach uruchamiała się w kilka sekund, na iPhone była gotowa w ułamku tego czasu. Na czym polegał sekret? Otóż w rzeczywistości to, co widział użytkownik, było w rzeczywistości zrzutem ekranu z działającej aplikacji, bez jakichkolwiek możliwości interakcji. Dzięki temu użytkownik miał wrażenie, że aplikacja uruchamia się niemal natychmiast. W rzeczywistości, zanim wykonał on jakąkolwiek akcję w UI, mijało parę sekund, w trakcie których program miał czas, aby się załadować i podstawić pod &ldquo;zaślepkę&rdquo; faktyczny interfejs użytkownika.</p>
 
 <p>Liczę na to, że lektura ta okazała się ciekawa i być może uda mi się w przyszłości opisać dalsze koncepty i przemyślenia.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-16T12:28:00+02:00" data-updated="true" itemprop="datePublished">Jun 16<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/">Czego Programiści .NET Mogliby Nauczyć Się Od Rubystów?</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-16T12:28:00+02:00" pubdate data-updated="true">Jun 16<span>th</span>, 2013</time>
-        
-         | <a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>.NET był wybraną przeze mnie technologią niemal od początku mojej przygody z programowaniem. Uważam jednak, że programista nie powinien się zamykać w jednej szyfladce i poznawać szerokie spectrum technologii. Porównywać je i znać wady oraz zalety każdej z nich. Ostatecznie zaś umieć dobrać właściwą technologię do rozwiązania napotykanych problemów &ndash; nie odwrotnie ;)</p>
+		
+			<span class="comments"><a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/" itemprop="url">Czego Programiści .NET Mogliby Nauczyć Się Od Rubystów?</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>.NET był wybraną przeze mnie technologią niemal od początku mojej przygody z programowaniem. Uważam jednak, że programista nie powinien się zamykać w jednej szyfladce i poznawać szerokie spectrum technologii. Porównywać je i znać wady oraz zalety każdej z nich. Ostatecznie zaś umieć dobrać właściwą technologię do rozwiązania napotykanych problemów &ndash; nie odwrotnie ;)</p>
 
 <p>Stąd też pytanie w temacie. Czy faktycznie programiści .NET mogą nauczyć się czegoś ze środowiska Ruby, języka, który ostatnimi czasy zbiera niemało batów (głównie związanych z wydajnością oraz bezpieczeństwem jego najpopularniejszej platformy, RoRa)? Otóż jak się okazuje całkiem sporo, nawet pomimo już istniejącego trendu absorbowania do platformy .NET sporej ilości rozwiązań napotykanych w konkurencyjnych gałęziach. Poniżej postaram się wymienić te, które moim zdaniem są warte odnotowania.</p>
 
@@ -800,44 +817,43 @@
 <p>To co najbardziej spodobało mi się we współpracy z programistami Ruby, to otwartość na nowinki, chęć wypróbowania innych podejść. Wiąże się z tym pewne ryzyko, ale również określony zysk. Tutaj powstaje pewien problem &ndash; ryzyko w skostniałym świecie aplikacji biznesowych z reguły jest czymś nie do przyjęcia. Dodatkowym hamulcem jest tutaj fakt, że wielu starszych programistów ze środowiska .NET nieprzychylnie patrzy na rozwiązania open source (w końcu kogo wtedy pociągnąć do odpowiedzialności?) oraz ogólnie technologiom spoza kółka Microsoftu.</p>
 
 <p>Nie należy bać się zmian. Nawet jeżeli ryzyko jest nieakceptowalne w aplikacjach dla klientów zewnętrznych, wciąż możemy wprowadzać drobne zmiany dla systemów używanych wewnątrz firmy oraz wypróbowywać tam nowe podejścia. Z jednej strony może to przełożyć się na zysk w przyszłości, z drugiej działa to jak magnes na programistów-pasjonatów, a takich nigdy nie ma za wielu, prawda? ;)</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-17T21:20:00+02:00" data-updated="true" itemprop="datePublished">May 17<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/shell/'>shell</a>
+
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/05/17/powershell-okiem-programisty-net/">PowerShell Okiem Programisty .NET</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-17T21:20:00+02:00" pubdate data-updated="true">May 17<span>th</span>, 2013</time>
-        
-         | <a href="/blog/2013/05/17/powershell-okiem-programisty-net/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Artykuł ten tworzę z dość prostego powodu. Wraz z mijającym czasem w każdym programiście rośnie opór oraz lenistwo wobec powtarzalnych czynności wykonywanych codziennie w pracy. Stąd też szukamy sposobów na zautomatyzowanie choć części z tych zadań. PowerShell może być jednym ze sposobów na osiągnięcie tego celu. Z tego powodu warto lepiej się z nim zapoznać.</p>
+		
+			<span class="comments"><a href="/blog/2013/05/17/powershell-okiem-programisty-net/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/05/17/powershell-okiem-programisty-net/" itemprop="url">PowerShell Okiem Programisty .NET</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Artykuł ten tworzę z dość prostego powodu. Wraz z mijającym czasem w każdym programiście rośnie opór oraz lenistwo wobec powtarzalnych czynności wykonywanych codziennie w pracy. Stąd też szukamy sposobów na zautomatyzowanie choć części z tych zadań. PowerShell może być jednym ze sposobów na osiągnięcie tego celu. Z tego powodu warto lepiej się z nim zapoznać.</p>
 
 <p>Zanim zacznę, chcę zaznaczyć, że nie jestem mistrzem PS. Postanowiłem jednak podzielić się swoimi doświadczeniami z punktu widzenia typowego programisty .NET i w miarę zwięźle pokazać, w jaki sposób przenieść niektóre z najpopularniejszych operacji występujących w tym świecie na ich odpowiedniki w PowerShellu. Zaczynajmy.</p>
 
@@ -1325,44 +1341,43 @@
 
 
 <p>PS: W niektórych z powyższych komend wykorzystałem jeden z feature&#8217;ów PowerShella, którego wcześniej nie opisałem &ndash; <strong>pipeline operator</strong>. Jest on reprezentowany przez symbol <code>|</code> i służy do przekazywania wyniku jednej funkcji/polecenia jako wejścia do następnej.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-14T20:02:00+02:00" data-updated="true" itemprop="datePublished">May 14<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ruby/'>ruby</a>
+
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/">Zapowiedź Ruby 2.1 - Generational Heap</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-14T20:02:00+02:00" pubdate data-updated="true">May 14<span>th</span>, 2013</time>
-        
-         | <a href="/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Nie minęło wiele czasu od wydania Ruby&#8217;ego w wersji 2.0, a już pojawiła się ciekawa nowinka &ndash; od wersji 2.1 MRI ma wspierać generacje na zarządzanej stercie. Była to dla mnie wiadomość o tyle ciekawsza, że do tej pory sądziłem, że nie jest to możliwe bez zerwania kompatybilności z niskopoziomowymi rozszerzeniami języka C, które znajdują się w niektórych bibliotekach &ndash; tymczasem zapewniono, że żadna tego typu sytuacja nie będzie mieć miejsca.</p>
+		
+			<span class="comments"><a href="/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/" itemprop="url">Zapowiedź Ruby 2.1 - Generational Heap</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Nie minęło wiele czasu od wydania Ruby&#8217;ego w wersji 2.0, a już pojawiła się ciekawa nowinka &ndash; od wersji 2.1 MRI ma wspierać generacje na zarządzanej stercie. Była to dla mnie wiadomość o tyle ciekawsza, że do tej pory sądziłem, że nie jest to możliwe bez zerwania kompatybilności z niskopoziomowymi rozszerzeniami języka C, które znajdują się w niektórych bibliotekach &ndash; tymczasem zapewniono, że żadna tego typu sytuacja nie będzie mieć miejsca.</p>
 
 <h2>Generacje w Rubym (MRI)</h2>
 
@@ -1379,44 +1394,43 @@
 <p>Przypomina to znane z innych środowisk mechanizmy współpracy pomiędzy kodem wysoko- i niskopoziomowym (w .NET takie &ldquo;nieprzenaszalne&rdquo; obiekty noszą nazwę <em>pinned objects</em>).</p>
 
 <p>Jaki ma to wpływ na wydajność? Dotychczas nie stworzono oficjalnych benchmarków, nieoficjalnie mówi się o kilku procentowej poprawie względem poprzedniego rozwiązania. Należy jednak pamiętać, że prace wciąż trwają i wiele może się jeszcze zmienić.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-23T21:35:00+02:00" data-updated="true" itemprop="datePublished">Apr 23<span>rd</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+
+
 </div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/">O Redundancji W Wyrażeniach LINQ</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-04-23T21:35:00+02:00" pubdate data-updated="true">Apr 23<span>rd</span>, 2013</time>
-        
-         | <a href="/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
+		
+			<span class="comments"><a href="/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/" itemprop="url">O Redundancji W Wyrażeniach LINQ</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
 
 <h2>Przykład</h2>
 
@@ -1489,157 +1503,29 @@
 <p>Innym sposobem na rozwiązanie powyższego problemu jest naturalnie przeniesienie filtru bezpośrednio do kontekstu danych:<code>var data = DataContext.GetExpiredDocuments();</code>. Na czym jednak polega przewaga monkey patchingu? Po pierwsze nie jesteśmy twardo związani ze źródłem danych &ndash; napisany wcześniej stereotyp może być zastosowany dla dowolnej kolekcji, nawet takiej która powstała w wyniku deserializacji żądania HTTP. Po drugie rozwinięcie to można wstawić w dowolnym momencie tworzonego zapytania, z dowolnej encji posiadające odpowiednią relację.</p>
 
 <p>W rezultacie otrzymujemy rozwiązanie bardziej uniwersalne i podatne na zmiany.</p>
+
+		
+		
+	</div>
+
+</article>
+
 </div>
-  
-  
-
-
-    </article>
-  
-  <div class="pagination">
+<nav id="pagenavi">
     
-      <a class="prev" href="/blog/page/2/">&larr; Older</a>
     
-    <a href="/blog/archives">Blog Archives</a>
+        <a href="/blog/page/2/" class="next">Next</a>
     
-  </div>
-</div>
-<aside class="sidebar">
-  
-    <section>
-  <h1>Recent Posts</h1>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2014/02/20/more-thoughts-on-knockout/">More thoughts on Knockout.js and JavaScript MVVM</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/02/02/uncommon-static-type-feats/">Top features every statically typed language should have</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/01/12/przenosiny/">Przenosiny</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/">O pomyłkach i wnioskach z pracy w ASP.NET MVC</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/">ServiceStack - alternatywa dla ASP.NET</a>
-      </li>
-    
-  </ul>
-</section>
+    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
+</nav></div>
+			</div>
+			<footer id="footer" class="inner">Copyright &copy; 2014
 
-<section>
-  <h1>GitHub Repos</h1>
-  <ul id="gh_repos">
-    <li class="loading">Status updating&#8230;</li>
-  </ul>
-  
-  <a href="https://github.com/horusiath">@horusiath</a> on GitHub
-  
-  <script type="text/javascript">
-    $(document).ready(function(){
-        if (!window.jXHR){
-            var jxhr = document.createElement('script');
-            jxhr.type = 'text/javascript';
-            jxhr.src = '/javascripts/libs/jXHR.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(jxhr, s);
-        }
-
-        github.showRepos({
-            user: 'horusiath',
-            count: 0,
-            skip_forks: true,
-            target: '#gh_repos'
-        });
-    });
-  </script>
-  <script src="/javascripts/github.js" type="text/javascript"> </script>
-</section>
+    Bartosz Sypytkowski
 
 
-
-<section class="googleplus">
-  <h1>
-    <a href="https://plus.google.com/b.sypytkowski@gmail.com?rel=author">
-      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
-      Google+
-    </a>
-  </h1>
-</section>
-
-
-
-  
-</aside>
-
-    </div>
-  </div>
-  <footer role="contentinfo"><p>
-  Copyright &copy; 2014 - Bartosz Sypytkowski -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-</footer>
-  
-
-<script type="text/javascript">
-      var disqus_shortname = 'bartoszsypytkowski';
-      
-        
-        var disqus_script = 'count.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
-
-
-
-
-
-
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id; js.async = true;
-  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
-
-
+Design based on: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+		</div>
+	</div>
 </body>
 </html>

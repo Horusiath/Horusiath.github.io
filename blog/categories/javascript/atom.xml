@@ -4,7 +4,7 @@
   <title><![CDATA[Category: javascript | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-02-23T20:04:58+01:00</updated>
+  <updated>2014-02-27T22:49:05+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -125,7 +125,7 @@ this.$trigger = function(channelName, event){
 
 <p>}
 <code>``
-Since we have whole event pub/sub feature in one separate prototype, we can now implement it in any object we wish, either through composition or as a mixin. Additionaly we can use globaly shared instances of</code>EventStream` in similar fashion we use an event buses.</p>
+Since we have whole event pub/sub feature in one separate prototype, we can now implement it in any object we wish, either through composition or as a mixin. Additionaly we can use globaly shared instances of</code>EventStream` in similar fashion we use an event buses. For Knockout applications there is also an alternative in form of <a href="https://github.com/rniemeyer/knockout-postbox">knockout-postbox</a>.</p>
 
 <h1>Final thoughs</h1>
 
