@@ -1,0 +1,56 @@
+<p>In this post I&rsquo;ll try to deal with few of the myths lying beneath common understanding of how C# structures works in reality. Many of new .NET acolytes are thought about differences between structs and classes. For easier understanding many of those concepts are simplified and therefore doesn&rsquo;t necessary tell all truth about underlying mechanism.</p>
+
+<p>Here are some of them.</p>
+
+<h1>Structs may not be stack allocated</h1>
+
+<p>Think about following example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">struct</span> <span class="nc">MyStruct</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">X</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">Example1</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyStruct</span> <span class="p">{</span> <span class="n">X</span> <span class="p">=</span> <span class="m">3</span> <span class="p">};</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">()</span> <span class="p">=&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">X</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="p">++</span><span class="n">a</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you remember, one of the well known side effects of stack-allocated values is that they&rsquo;re destroyed automatically, when we leave scope, where they were created. This remains true in .NET environment &ndash; it assures that no more but one value or pointer may be found on top of the stack when returning from method execution.</p>
+
+<p>But what happens, when we execute <code>Example1</code> method and then call lambda returned? <code>a</code> variable as stack allocated structure, should be already destroyed at that moment (it&rsquo;s out of it&rsquo;s creation scope and has not been returned explicitly). But that&rsquo;s not what really happens. Actually .NET environment performs an <strong>escape analysis</strong> to determine if any references to that structure didn&rsquo;t leave it&rsquo;s scope. In that case it would be rather heap allocated in order to prevent premature destruction.</p>
+
+<p>Other known case, when structs become heap allocated values, are allocations of large amounts of memory dedicated to handle values. Since stack memory is very limited (by default it&rsquo;s about 1MB per thread on Windows OS), massive structure allocations would potentially cause a StackOverflowException. What .NET environment does in that case, is fallback to safer heap-based allocations.</p>
+
+<p><em>NOTE</em>: Unfortunatelly at the present moment C# doesn&rsquo;t provide escape analysis to determine if class instances could be stack allocated. Java, even though hasn&rsquo;t got custom value types yet, can provide that feature for specific conditions.</p>
+
+<h1>Struct and class method calls differs significantly</h1>
+
+<p>Next exercise. Think about two types, struct and a class. Both of them have non-static method with identical signature and implementation. When you create instances of both types and call mentioned methods, which call will be faster? If you&rsquo;d thought, that struct method call will be slightly faster, you&rsquo;re right. But why?</p>
+
+<p>Answer lies in low level difference between CIL instructions <code>call</code> and <code>callvirt</code>. Standard class methods use <code>callvirt</code> (name is misleading &ndash; it&rsquo;s used even for non-virtual methods). Since CLR cannot absolutely guarantee, if instance method is overridden or shadowed, it has to perform explicit check by seeking class VTable for function pointer. Actual VTable pointer is one of the internal members of each object. Therefore it requires null check to be performed.</p>
+
+<p>Since struct cannot be null, we don&rsquo;t have to perform null checking. However it&rsquo;s not necessary. Since value types cannot declare or override virtual methods &ndash; struct have fixed inheritance chain &ndash; we don&rsquo;t have to access their VTables. Actually lack of inheritance is so useful, that structure instances don&rsquo;t need to have any pointers to VTable at all. All of these save time necessary to perform a method call.</p>
+
+<p>From that perspective struct method calls are much closer to static methods &ndash; also invoked through <code>call</code> instruction &ndash; than instantiated ones.</p>

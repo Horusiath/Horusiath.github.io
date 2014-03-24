@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Feb 25th, 2011 algorytmy, silverlight Comments Silverlight - Detekcja Krawędzi W dzisiejszym poście postaram się opisać, w jaki sposób &hellip;">
+	<meta name="description" content="Mar 1st, 2011 xml Comments Transformata XSL W dzisiejszym poście przedstawię problem, z którym przyszło mi się ostatnio zmierzyć. Miałem do &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,124 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-03-01T19:58:00+01:00" data-updated="true" itemprop="datePublished">Mar 1<span>st</span>, 2011</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/xml/'>xml</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2011/03/01/transformata-xsl/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2011/03/01/transformata-xsl/" itemprop="url">Transformata XSL</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>W dzisiejszym poście przedstawię problem, z którym przyszło mi się ostatnio zmierzyć. Miałem do wykonania proste zadanie &ndash; Musiałem dokonać transformacji danych z jednego pliku XML na inny plik XML za pomocą stworzonego przez siebie pliku <strong>transformaty XSL</strong>.</p>
+
+<p>Nie ma w tym większej filozofii, gdyby nie kilka ciekawostek:</p>
+
+<ul>
+<li>W sieci jest stosunkowo dużo materiałów i przykładów odnośnie konwersji <strong>XML to HTML</strong>, ale o wiele rzadziej można się natknąć na przydatne informacje odnośnie transformacji <strong>XML to XML</strong>.</li>
+<li>W pliku podczas transformacji natrafiłem na potrzebę stworzenia węzła wynikowego, którego nazwa była w postaci wartości w jednym z węzłów źródłowych, zatem nie była znana w momencie pisania pliku XSLT</li>
+<li>Podczas iterowania po dzieciach danego węzła musiałem mieć możliwość odczytania ich aktualnego indeksu na liście węzłów-dzieci należących do danego rodzica.</li>
+</ul>
+
+
+<p>Zacznijmy jednak od krótkiej definicji <strong>XSLT</strong>. Jest to prosty język znacznikowy oparty na <strong>XML</strong>. Służy on formowaniu przekształceń (transformat) plików <strong>XML</strong> na inne typy plików (m.in. html, czysty tekst, czy inne pliki xml). Jest to wygodne rozwiązanie, zwłaszcza gdy przychodzi nam do stworzenia strony w htmlu zawierającej dane w postaci xml. <strong>XSLT</strong> służy wtedy wygodnemu tworzeniu wzorca takiej strony.</p>
+
+<p>Poniżej przedstawię parę prostych porad odnośnie tworzenia transformaty dla plików <strong>XML</strong>. Są to w zasadzie podstawy, ale mam nadzieję, że pozwolą zaoszczędzić nieco czasu osobom, które stawiają pierwsze kroki w tej dziedzinie.</p>
+
+<h2>XML to XML</h2>
+
+<p>Pierwszym krokiem powinno być zdefiniowanie w naszej transformacie formatu wyjściowego transformowanych plików. Służy do tego następująca konstrukcja:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&#39;1.0&#39;?&gt;</span>
+</span><span class='line'><span class="nt">&lt;xsl:stylesheet</span> <span class="na">version=</span><span class="s">&quot;1.0&quot;</span> <span class="na">xmlns:xsl=</span><span class="s">&quot;http://www.w3.org/1999/XSL/Transform&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;xsl:output</span> <span class="na">method=</span><span class="s">&quot;xml&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;/xsl:stylesheet&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Atrybut method znacznika <code>xsl:output</code> pozwala nam zdefiniować format pliku wyjściowego.</p>
+
+<p>Drugim podstawowym krokiem jest konstrukcja węzła xml. W tym celu posłużymy się znacznikiem <code>xsl:element</code> z atrybutem name. Przykład:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;xsl:element</span> <span class="na">name=</span><span class="s">&quot;pozycja&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">&quot;root/position&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/xsl:element&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Powyższy fragment spowoduje stworzenie węzła o nazwie pozycja, mającego za swoją wartość wartość odpowiadającego węzła position, będącego dzieckiem węzła root. Tyle odnośnie podstaw.</p>
+
+<h2>Dynamiczne nazywanie węzłów</h2>
+
+<p>Następną ciekawostką jest wspomniana przeze mnie wcześniej możliwość dynamicznego nazywania węzłów za pomocą wyrażeń <strong><strong>XSLT</strong></strong>. Aby przykład był jaśniejszy, zobrazuję go tak:</p>
+
+<p>Załóżmy, że mamy węzeł <code>pos</code> zawierający wartośc <code>geo1</code>. Chcielibyśmy, aby w wynikowym pliku xml pojawił się węzeł o nazwie <code>pos_geo1</code>, dodatkowo, żeby jego nazwa mogła ulegać zmianie w zależności od wartości przechowywanej w <code>pos</code>. Niestety, wyrażenie <code>value-of</code> tutaj nie zadziała. Na szczęście w xslt istnieje jednak jego odpowiednik, który można stosować do atrybutów węzłów &ndash; chodzi o parę nawiasów <strong>{}</strong>. Są one atrybutowym odpowiednikiem <code>value-of</code>, tzn. doklejają wartość przechowywaną pod wyrażeniem, które znajduje się wewnątrz tych nawiasów jako element stringa w atrybucie. Przykład:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;xsl:element</span> <span class="na">name=</span><span class="s">&quot;pos_{pos}&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;/xsl:element&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p> W przypadku, kiedy wewnątrz węzła źródłowego znajduje się wartość <code>geo1</code>, powyższy kod spowoduje stworzenie węzła o nazwie <code>pos_geo1</code>.</p>
+
+<h2>Index iterowanego elementu</h2>
+
+<p>Ostatnim przykładem będzie wydobycie numeru indeksu aktualnie iterowanego elementu. Jak wiemy, do iterowania po elementach-dzieciach danego węzła służy konstrukcja <code>xsl:for-each</code>. Jednakże, tak jak pętle foreach znane z normalnych języków programowania, nie posiada ona żadnej (jawnej) wartości inkrementowanej. Skąd więc ją wydobyć? Służy do tego metoda <code>position()</code> , którą zawieramy wewnątrz poznanych wcześniej sześciennych nawiasów <strong>{}</strong>. Należy pamiętać, że w przeciwieństwie do większości języków programowania pierwszy indeks będzie miał numer 1 a nie zero. Przykład:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;xsl:for-each</span> <span class="na">select=</span><span class="s">&quot;kryteria&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;xsl:element</span> <span class="na">name=</span><span class="s">&quot;kryt_{position()-1}&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;xsl:value-of</span> <span class="na">select=</span><span class="s">&quot;kryterium&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/xsl:element&gt;</span>
+</span><span class='line'><span class="nt">&lt;/xsl:for-each&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Powyższy przykład spowoduje zamianę seri znacznika <strong>kryteria</strong> z dziećmi <strong>kryterium</strong> na serię znaczników o nazwie <strong>kryt</strong>_nr gdzie nr będzie aktualnym indeksem danego <strong>kryterium</strong> na liście dzieci węzła <strong>kryteria</strong>. Dodatkowo odejmując 1 spowodujemy, że odliczanie numeru nr zacznie się od 0.</p>
+
+<p>To wszystko na dzisiaj. Mam nadzieję, że te informacje trochę pomogą i skrócą wasz czas nauki narzędzia, jakim jest <strong><strong>XSLT</strong></strong>.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
