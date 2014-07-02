@@ -142,15 +142,15 @@
 
 <p>Type unions allows us to do the most important thing, most of the non-functional languages do wrong &ndash; proper null handling. In Ceylon <code>Null</code> have it&rsquo;s own type (however it&rsquo;s optimized away during compilation) and is subject to all mentioned rules. All reference variables and field are non-nullable by default &ndash; thanks to unions this behavior could be changed by using notation <code>T|Null</code> or it&rsquo;s simplified form <code>T?</code> for variable type declaration. It&rsquo;s actually a good thing, since this is what we expect from variables in our code for 90% of the time. So why we have to code in continous risk of null exceptions (unless we perform explicit checking), if we may tell compiler to ensure that for us before our code even run? On the other hand, there are a nullable value types, which are also quite usefull at some times. Many languages allow us to use some kind of built-in nullable wrappers, sorrounded with specific compiler magic for programmer convinience (eg. C#). But in my opinion this is not the right way of doing things. If compiler is allowed to use some nice tricks, then we as the programmers also should be able to do so.</p>
 
-<h2>Refinement/dependent types</h2>
+<h2>Type constraints / Value dependent types</h2>
 
-<p>Languages: (experimentally through extensions) all ML-familly languages including Haskell, F#, <a href="http://www.idris-lang.org/">Idris</a></p>
+<p>Languages: Ada, Eiffel, (experimentally through extensions) all ML-familly languages including Haskell, F*, <a href="http://www.idris-lang.org/">Idris</a></p>
 
 <p>Since we already have a unions and intersections, it would be nice to allow other operations to be performed directly on types. What about conditions?</p>
 
-<p>Lets say I&rsquo;ve got an <code>int</code> type, so I could verify at compile time, that all of the necessary values are restricted to be integers. Ok. Lets go further. What if I want to narrow those integers to omit negative numbers? Actually this is still easy in most of the languages (Java, you have one job&hellip;), since they already have some kind of <code>unsigned int</code> type. But what when I want to go a step further: I want to ensure that my integers are only positive numbers, that means they&rsquo;re neither negatives nor 0. It should be easy, but it&rsquo;s not. Almost all of the languages fail at that moment, requiring programmer to manually check that condition through code at runtime. And this is where refinement (or value-dependent) types comes to play.</p>
+<p>Lets say I&rsquo;ve got an <code>int</code> type, so I could verify at compile time, that all of the necessary values are restricted to be integers. Ok. Lets go further. What if I want to narrow those integers to omit negative numbers? Actually this is still easy in most of the languages (Java, you have one job&hellip;), since they already have some kind of <code>unsigned int</code> type. But what when I want to go a step further: I want to ensure that my integers are only positive numbers, that means they&rsquo;re neither negatives nor 0. It should be easy, but it&rsquo;s not. Almost all of the languages fail at that moment, requiring programmer to manually check that condition through code at runtime. And this is where type constraints comes to play.</p>
 
-<p>Refinement types allow programmer to define specific constraints on values, they refer to. Let me precise this on some pseudocode examples:</p>
+<p>They allow programmer to define specific constraints on values, they refer to. Let me precise this on some pseudocode examples:</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>

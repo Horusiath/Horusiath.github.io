@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Sep 19th, 2011 .net, eksploracja danych, programowanie Comments [C#] Prosta Implementacja Silnika Do Wyszukiwania Pełnotekstowego W dzisiejszym &hellip;">
+	<meta name="description" content="Oct 19th, 2011 bazy danych, kontrola wersji Comments FluentMigrator - Wersjonowanie Bazy Danych W dzisiejszym poście pokrótce postaram się opisać &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,85 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-19T21:25:00+02:00" data-updated="true" itemprop="datePublished">Oct 19<span>th</span>, 2011</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/bazy-danych/'>bazy danych</a>, <a class='category' href='/blog/categories/kontrola-wersji/'>kontrola wersji</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2011/10/19/fluentmigrator-wersjonowanie-bazy/" itemprop="url">FluentMigrator - Wersjonowanie Bazy Danych</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>W dzisiejszym poście pokrótce postaram się opisać narzędzie, jakim jest FluentMigrator oraz dlaczego warto korzystać z niego podczas pisania projektów (zwłaszcza kiedy mowa o projektach zespołowych).</p>
+
+<p>W sytuacjach kiedy zespół programistów tworzy aplikację wykorzystującą dostęp do wspólnej bazy danych, wszelkie zmiany wykonywane przez każdego z nich (np. dodawanie nowych tabel, kolumn czy zmiana nazw już istniejących) mogą powodować problemy w kompatybilności &ndash; zwłaszcza w przypadku wykorzysytwania modeli ORM. W tym celu warto się zabezpieczyć (a w dłuższej mierze czasu również znacząco przyspieszyć szybkość wprowadzanych zmian i aktualizacji systemu), korzystając z narzędzi umożliwiających wersjonowanie bazy danych w sposób &ndash; przynajmniej ideologicznie &ndash; podobny do tradycyjnych systemów kontroli wersji.</p>
+
+<p>FluentMigrator (<a href="https://github.com/schambers/fluentmigrator/wiki">link</a>) jest właśnie takim narzędziem. Jednakże w przeciwieństwie do standardowych systemów kontroli wersji, gdzie zmiany są utrzymywane i aktualizowane za pomocą kilku prostych komend, tutaj czeka nas nieco więcej pracy.</p>
+
+<h2>Migracje i Profile</h2>
+
+<p>Podstawowym terminem występującym we fluent migratorze jest tzw. migracja. Reprezentuje ona pojedyńczy zestaw zmian (coś na kształt jednego <em>commitu</em> w systemach kontroli wersji). W rzeczywistości jest to klasa dziedzicząca po abstrakcyjnej klasie <strong>Migrator</strong> (lub którejś z jego pochodnych), w której wprowadzamy kod wykonujący interesujące nas zmiany. Aby wiązanie to było możliwe zobowiązani jesteśmy zaimplementować 2 metody:</p>
+
+<ul>
+<li><strong>Up</strong> &ndash; jest to metoda odpowiedzialna wprowadzenie zmian (<em>upgrade</em>) przed podniesieniem aktualnej wersji bazy danych.</li>
+<li><strong>Down</strong> &ndash; metoda opozycyjna do Up, odpowiada za <em>downgrade</em> wersji naszej bazy. Jej zadaniem jest cofnięcie wszystkich zmian, które wykonaliśmy w Up&#8217;ie.</li>
+</ul>
+
+
+<p>W niektórych sytuacjach możliwe jest zautomatyzowanie tego procesu i automatyczne generowanie methody down na podstawie zmian wykonanych podczas Up. Drugą ważną sprawą związaną z migracjami jest atrybut <strong>MigrationAttribute</strong>. Pobiera on jeden parametr &ndash; liczbę typu long, która określa aktualny numer migracji. Umożliwia nam to wykonywanie up/down w sposób uporządkowany z zachowaniem odpowiednich współzależności między kolejnymi wersjami.</p>
+
+<p>Innym ciekawym uzupełnieniem powyższych funkcjonalności jest atrybut <strong>Profile</strong>, który w pewien sposób kojarzy mi się z branchami znanymi z systemów kontroli wersji. Dodając profil do konkretnych migracji jesteśmy w stanie tworzyć alternatywne przebiegi migracji tzn. wykonywać tylko te upgrade&#8217;y, które znajdują się w ramach danego profilu.</p>
+
+<h2>Fluent Interface</h2>
+
+<p>Dalszym rozszerzeniem istniejących plusów jest zestaw interfejsów umożliwiających budowę tabel, ich uzupełnianie oraz wykonywanie stworzonych przez nas skryptów. Zaletą tego rozwiązania jest to, że nie wymaga ono od nas pisania skryptów Sql pod konkretną bazę danych, ponieważ jesteśmy w stanie wygenerować je za pośrednictwem fluent interface. Co do wad, jest ich kilka, dlatego też wszelkie wykonywane przez nas zmiany muszą być wykonywane z rozwagą i przy dobrym zrozumieniu możliwości posiadanego przez nas narzędzia:</p>
+
+<ul>
+<li>Fluent interface nie jest w stanie samodzielnie wygenerować elementów bazy specyficznych dla danego dialektu sql np. możemy wygenerować tabele dla baz MSSql oraz Oracle, jednak takie rzeczy jak sekwencje i triggery Oracle&#8217;a muszą być wykonane za pośrednictwem skryptów.</li>
+<li>Fluent interface nie gwarantuje zgodności z EntityFramework ani innymi frameworkami ORM. Przykładem może być metoda <code>.AsInt32()</code>dostępna poprzez interface. Mimo nazwy, kolumna wygenerowana przez tą metodę może być typu <code>Number(10,0)</code>, co z kolei EF4 przekształci jako Int64, mimo że nie było to naszym celem.</li>
+<li>Wykonywanie skryptów z użyciem właściwości <em>Execute</em> nie gwarantuje pomyślności, nawet w sytuacjach kiedy te skrypty wprowadzane ręcznie do bazy wykonywane są prawidłowo. Wynika to z faktu, że w komunikacji z bazą FluentInterface korzysta z istniejących bibliotek .dll, które pełnią w naszym projekcie rolę adaptera dla klienta bazy danych.</li>
+</ul>
+
+
+<p>Dobrym pomysłem może być podpięcie narzędzia migrate.exe (jego projekt jest dostępny na stronie projektu na githubie) do post-buildu naszego projektu. Robimy to wchodząc we właściwości (<em>Project&rArr;nazwa_projektu&rArr;Properties</em>), następnie klikamy zakładkę <em>Build Events</em> i w oknie <em>Post-build event command line</em> wywołujemy migrate.exe w właściwymi parametrami np.:<code>ścieżka_do_migrate/migrate.exe -a ścieżka_do_naszej_biblioteki/nazwa_biblioteki.dll -db typ_bazy_danych -c connection_string -profile Profil -version nr_versji</code>, gdzie:</p>
+
+<ul>
+<li><strong>a</strong> &ndash; określa fizyczną scieżkę pod którą możemy znaleźć skompilowaną bibliotekę zawierającą zdefiniowane przez nas migracje</li>
+<li><strong>db</strong> &ndash; określa rodzaj bazy danych, jest wykorzystywana potem przez fabrykę FluentMigratora, która na podstawie przekazanego parametru próbuje stworzyć obiekt adaptera dla naszej bazy danych</li>
+<li><strong>c</strong> &ndash; connectionString umożliwiający dostęp do naszej bazy danych.</li>
+<li><strong>profile</strong> &ndash; (parametr opcjonalny) określa profil migracji, które mają zostać wykonane</li>
+<li><strong>version</strong> &ndash; (parametr opcjonalny) określa wersję, do której ma zostać wykonany upgrade. Jeżeli przyjmuje wartość 0, oznacza to, że wykonane zostaną wszystkie migracje znalezione w danej bibliotece .dll.</li>
+</ul>
+
+
+<p>Rozwiązanie takie oferuje tą zaletę, że wymusza, aby w trakcie wykoniania buildu biblioteki, zostały wprowadzone zmiany do bazy. Jeżeli napisane przez nas migracje są nieprawidłowe lub nie zostały wprowadzone, projekt nie zostanie zbudowany.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1492,106 +1571,6 @@ Zalety:</li>
 
 
 <p>Jak widać rozwiązanie jest proste. Sądze, że jedyne co wymaga wyjaśnienia, to wykorzystanie OrderBy. Jest to potrzebne, ponieważ ponieważ stałe pomijanie (metoda Skip) pewnych elementów kolekcji wymaga jej poprzedniego posortowania.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-03-10T23:45:00+01:00" data-updated="true" itemprop="datePublished">Mar 10<span>th</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/silverlight/'>silverlight</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/03/10/silverlight-parametry-inicjalizacyjne-w/" itemprop="url">Silverlight - Parametry Inicjalizacyjne W HTML</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>W dzisiejszym poście opiszę krótko obsługę parametrów inicjalizacyjnych w aplikacjach silverlight znajdujących się na naszych stronach. Stanowią one wygodny sposób przekazywania pewnych wartości do aplikacji, gdyż jesteśmy w stanie zapisać je już na poziomie kodu html. Ale do rzeczy.</p>
-
-<p>Jeżeli przeglądaliście kiedyś stronę html z osadzoną na niej kontrolką silverlight, na pewno zauważyliście, że wewnątrz znaczników object zdefiniowane mamy różne parametry aplikacji. Wśród tych wygenerowanych domyślnie mamy m.in:</p>
-
-<ul>
-<li><strong>source</strong> &ndash; określa położenie pliku .xap zawierającego aplikację silverlight</li>
-<li><strong>onerror</strong> &ndash; określa reakcję na wystąpienie błędu w aplikacji</li>
-<li><strong>background</strong> &ndash; określa domyślny kolor tła</li>
-</ul>
-
-
-<p>Są oczywiście jeszcze inne, my skupimy się jednak na wykorzystaniu parametrów inicjalizacyjnych (<strong>InitParams</strong>). Ich sposób zapisu w kodzie html wygląda następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;param</span> <span class="na">name=</span><span class="s">&quot;InitParams&quot;</span> <span class="na">value=</span><span class="s">&quot;key1=value1,</span>
-</span><span class='line'><span class="s">      key2=value2,</span>
-</span><span class='line'><span class="s">      key3=value3,</span>
-</span><span class='line'><span class="s">      key4=value4&quot;</span> <span class="nt">/&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Ponieważ wszystkie nazwy parametrów są znaczące, nazwa name musi zawierać wartośc <strong>InitParams</strong>. Dzięki niej nasza aplikacja rozpozna, że ma do czynienia z odpowiednim typem parametrów, które będziemy mogli obsłużyć. Atrybut <strong>value</strong> parametru zawiera serię par klucz-wartość oddzielonych przecinkami, które potem będziemy w stanie odczytać i odpowiednio zapisać w naszej kontrolce.</p>
-
-<p>Teraz kiedy wykonalismy, co należało po stronie html, należy przejść do kodu po stronie aplikacji. Należy pamiętać, że zapisana przez nas lista par nie zostaje zapisana automatycznie w aplikacji. W rzeczywistości pary te zapisane są we właściwości <strong>InitParams</strong> obiektu <strong>StartupEventArgs</strong>, który jest przekazywany przez zdarzenie Startup aplikacji. Wydaje się to trochę zagmatwane, dlatego przejdźmy do rzeczy. Otwieramy plik <strong>App.xaml.cs</strong> (plik z kodem aplikacji, nie kontrolki użytkownika). W konstruktorze klasy dodajemy linijkę:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">this</span><span class="p">.</span><span class="n">Startup</span> <span class="p">+=</span> <span class="k">this</span><span class="p">.</span><span class="n">Application_Startup</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Ma tu miejsce oczywiście niejawne przypisanie delegata obsługującego metodę <strong>Application_Startup</strong> do zdarzenia <strong>Startup</strong> obiektu klasy <strong>App</strong> (który dziedziczy to zdarzenie po swojej klasie bazowej <strong>Application</strong>). Dalej opisujemy działanie powyższej metody:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">void</span> <span class="nf">Application_Startup</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">StartupEventArgs</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>   <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">InitParams</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">para</span> <span class="k">in</span> <span class="n">e</span><span class="p">.</span><span class="n">InitParams</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>              <span class="k">this</span><span class="p">.</span><span class="n">Resources</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">para</span><span class="p">.</span><span class="n">Key</span><span class="p">,</span> <span class="n">para</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>   <span class="p">}</span>
-</span><span class='line'>   <span class="c1">//poniższy kod jest generowany automatycznie</span>
-</span><span class='line'>   <span class="k">this</span><span class="p">.</span><span class="n">RootVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MainPage</span><span class="p">();</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widać wpierw pobieramy tu pary klucz-wartość (dokładnie te same które zdefiniowaliśmy wewnątrz atrybutu <strong>value</strong> parametru <strong>InitParams</strong> w kodzie html), a następnie zapisujemy je wewnątrz słownika <strong>Resources</strong> aplikacji. Stąd będziemy mieli do nich prosty dostęp. Aby nasza silverlight&#8217;owa kontrolka była w stanie pobrać te wartości, wystarczy wpisać poniższą linijkę wewnątrz naszej aplikacji:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="k">value</span> <span class="p">=</span> <span class="n">App</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Resources</span><span class="p">[</span><span class="n">key</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>Value</strong> stanowi wartość zwracaną przez słownik dla danego klucza <strong>key</strong>. Jak się okazało, wykorzystanie parametrów inicjalizacyjnych jest proste i pozwala na przejżyste przekazywanie wartości za pośrednictwem kodu html.</p>
 
 		
 		

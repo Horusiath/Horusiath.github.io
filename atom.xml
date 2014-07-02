@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-04-01T20:51:35+02:00</updated>
+  <updated>2014-07-03T00:19:35+02:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,69 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Value absence - why Scala/F# approach is bad?]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values/"/>
+    <updated>2014-07-03T00:05:00+02:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values</id>
+    <content type="html"><![CDATA[<p>Handling an absent values is one of the most common problems in programming languages. Why we consider this so important? It&rsquo;s because data processing is essential task of every program ever made. And one of the main reasons of systems errors and undefined behaviors are values not present in the system. Most of the modern programming languages tries to aim programmers with solution to handle those cases. Lets look at the most common way of dealing with them:</p>
+
+<ol>
+<li><strong>Null pointer reference</strong> &ndash; also called a &ldquo;billion-dollar mistake&rdquo;, introduced by Tony Hoare. It allows to represent an absence of the heap allocated values (objects) in form of pointer referring to not a valid instance of represented type. In most of the mainstream programming languages all heap objects are nullable by default &ndash; no matter if you want it or not.</li>
+<li><strong>Option/Maybe type</strong> &ndash; this approach is characteristic for most of the functional languages. Instead of creating null pointer, it defines a special generic type (eg. Option), represented by either one of it&rsquo;s subtypes (Some as wrapper for existing underlying value, or None if value is not present).</li>
+</ol>
+
+
+<p>So why we consider a dedicated Option type a better solution? Because it&rsquo;s explicit, propagates type information about value nullability and &ndash; most of all &ndash; it&rsquo;s non-default. By the most of the time, we expect to have a meaningful references to our data. Their absence is not a desired and certainly should not be an expected behavior. Problem in nullable references is that literally any instance in our code could represent a non-existing value. Analogously to functional approach, all of our objects always represent an Option type.</p>
+
+<p>Currently, after decades on living in shadows, functional paradigm is gaining more and more ground of the field of mainstream programming languages. This also reflects in two of the most popular programming environments, JVM and .NET. Their functional representatives, Scala and F#, claims to combine best of both programming paradigms. This way they also introduced and popularized an Option types among object oriented approach.</p>
+
+<p>But something has been missed along the way, and (in my opinion) both Scala and F# had failed in face of the problem of value absence. Why? Because of their dualism. Since they are functional languages, both of them allows you to create an Option types with full support expected from a functional language. But while they also are object oriented and built on top of object oriented VMs, they allow you to use and create a nullable references. This leads to false sense of security, when using Option types. Lets look at the following example (F#):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">value</span><span class="o">:</span> <span class="nc">String</span> <span class="n">option</span> <span class="o">=</span> <span class="nc">Some</span> <span class="n">doSmthAndReturnString</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>How can you be sure that function <code>doSmthAndReturnString</code> won&rsquo;t return a null? Actually you can&rsquo;t until you perform an explicit null check. From the runtime perspective <code>Some null</code> is a perfectly valid record. Does it sound rational? No. So why is this even possible?</p>
+
+<h2>How to combine functional and object oriented worlds?</h2>
+
+<p>From my perspective, the best solution of that problem came with <a href="http://ceylon-lang.org/">Ceylon</a> language. It&rsquo;s based on the concept of <a href="http://ceylon-lang.org/documentation/1.0/tour/types/#union_types">Union Types</a>, one of the key features of Ceylon. For <strong>tl;dr</strong> people &ndash; union type of <code>X|Y</code> is a supertype of both types <code>X</code> and <code>Y</code>. How does it correspond to null/options?</p>
+
+<p>In Ceylon <code>null</code> have it&rsquo;s own unique type <code>Null</code> (just like in Scala). By default all reference types are non-nullable (similarly to functional languages). However they may be nulled if referenced as union type of <code>T|Null</code> (or <code>T?</code> using some syntax suggar). This concept is basically &ndash; however not entirely &ndash; equivalent of Scala <code>Either[T,Null]</code> but without verbose requirement for object wrapping. Moreover, Ceylon compiler is able to optimize this away to standard JVM null references, without any overhead.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="c1">// Scala - Either</span>
+</span><span class='line'><span class="n">var</span> <span class="n">m</span><span class="o">:</span> <span class="nc">Either</span><span class="o">[</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Null</span><span class="o">]</span> <span class="o">=</span> <span class="nc">Left</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+</span><span class='line'><span class="n">var</span> <span class="n">n</span><span class="o">:</span> <span class="nc">Either</span><span class="o">[</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Null</span><span class="o">]</span> <span class="o">=</span> <span class="nc">Right</span><span class="o">(</span><span class="k">null</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Scala - Option type</span>
+</span><span class='line'><span class="n">var</span> <span class="n">m</span><span class="o">:</span> <span class="nc">Option</span><span class="o">[</span><span class="nc">Integer</span><span class="o">]</span> <span class="o">=</span> <span class="nc">Some</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+</span><span class='line'><span class="n">var</span> <span class="n">n</span><span class="o">:</span> <span class="nc">Option</span><span class="o">[</span><span class="nc">Integer</span><span class="o">]</span> <span class="o">=</span> <span class="nc">None</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Ceylon</span>
+</span><span class='line'><span class="nc">Integer</span><span class="o">|</span><span class="nc">Null</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>     <span class="c1">// no need for value wrapping</span>
+</span><span class='line'><span class="nc">Integer</span><span class="o">?</span> <span class="n">n</span> <span class="o">=</span> <span class="k">null</span><span class="o">;</span>     <span class="c1">// Integer? -&gt; Integer|Null</span>
+</span><span class='line'><span class="nc">String</span> <span class="n">f</span> <span class="o">=</span> <span class="k">null</span><span class="o">;</span>        <span class="c1">// compile time error, references are not nullable by default</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see on the example above, this way we combined advantages of safe, explicitly nullable types with verbosity and performance of null referenced types. In my opinion this is a proper, yet still not widespread, solution of one of the most common problem in languages theory.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Things you may not know about CSharp value types]]></title>
@@ -270,15 +333,15 @@
 
 <p>Type unions allows us to do the most important thing, most of the non-functional languages do wrong &ndash; proper null handling. In Ceylon <code>Null</code> have it&rsquo;s own type (however it&rsquo;s optimized away during compilation) and is subject to all mentioned rules. All reference variables and field are non-nullable by default &ndash; thanks to unions this behavior could be changed by using notation <code>T|Null</code> or it&rsquo;s simplified form <code>T?</code> for variable type declaration. It&rsquo;s actually a good thing, since this is what we expect from variables in our code for 90% of the time. So why we have to code in continous risk of null exceptions (unless we perform explicit checking), if we may tell compiler to ensure that for us before our code even run? On the other hand, there are a nullable value types, which are also quite usefull at some times. Many languages allow us to use some kind of built-in nullable wrappers, sorrounded with specific compiler magic for programmer convinience (eg. C#). But in my opinion this is not the right way of doing things. If compiler is allowed to use some nice tricks, then we as the programmers also should be able to do so.</p>
 
-<h2>Refinement/dependent types</h2>
+<h2>Type constraints / Value dependent types</h2>
 
-<p>Languages: (experimentally through extensions) all ML-familly languages including Haskell, F#, <a href="http://www.idris-lang.org/">Idris</a></p>
+<p>Languages: Ada, Eiffel, (experimentally through extensions) all ML-familly languages including Haskell, F*, <a href="http://www.idris-lang.org/">Idris</a></p>
 
 <p>Since we already have a unions and intersections, it would be nice to allow other operations to be performed directly on types. What about conditions?</p>
 
-<p>Lets say I&rsquo;ve got an <code>int</code> type, so I could verify at compile time, that all of the necessary values are restricted to be integers. Ok. Lets go further. What if I want to narrow those integers to omit negative numbers? Actually this is still easy in most of the languages (Java, you have one job&hellip;), since they already have some kind of <code>unsigned int</code> type. But what when I want to go a step further: I want to ensure that my integers are only positive numbers, that means they&rsquo;re neither negatives nor 0. It should be easy, but it&rsquo;s not. Almost all of the languages fail at that moment, requiring programmer to manually check that condition through code at runtime. And this is where refinement (or value-dependent) types comes to play.</p>
+<p>Lets say I&rsquo;ve got an <code>int</code> type, so I could verify at compile time, that all of the necessary values are restricted to be integers. Ok. Lets go further. What if I want to narrow those integers to omit negative numbers? Actually this is still easy in most of the languages (Java, you have one job&hellip;), since they already have some kind of <code>unsigned int</code> type. But what when I want to go a step further: I want to ensure that my integers are only positive numbers, that means they&rsquo;re neither negatives nor 0. It should be easy, but it&rsquo;s not. Almost all of the languages fail at that moment, requiring programmer to manually check that condition through code at runtime. And this is where type constraints comes to play.</p>
 
-<p>Refinement types allow programmer to define specific constraints on values, they refer to. Let me precise this on some pseudocode examples:</p>
+<p>They allow programmer to define specific constraints on values, they refer to. Let me precise this on some pseudocode examples:</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -2358,125 +2421,6 @@
 </span><span class='line'><span class="p">});</span>
 </span></code></pre></td></tr></table></div></figure>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Javascript - porady i uwagi]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2012/09/09/javascript-porady-i-uwagi/"/>
-    <updated>2012-09-09T15:16:00+02:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2012/09/09/javascript-porady-i-uwagi</id>
-    <content type="html"><![CDATA[<p>Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z kodem JavaScriptu, z jakim przyszło mi się spotykać w pracy i na uczelni. Zauważyłem, że wiele osób skupia się na logice serwerowej, trzymając się wielu kanonów określających jak powinno się pisać czysty i rozwijalny kod. Z drugiej strony jednocześnie traktują one skrypty JS po macoszemu, jako coś przez co trzeba jakoś przebrnąć.</p>
-
-<p>Nie ma co ukrywać, że utrzymanie przejrzystości i rozszerzalności modułów w JavaScriptcie jest o wiele trudniejsze niż w standardowych językach wykonywanych po stronie serwera. Dlatego właśnie uważam, że tym bardziej wymagają one uwagi i wkładu w zachowanie jakości. Poniżej przedstawię kilka uwag/wskazówek dla programistów, którzy chcieliby poprawić jakość pisanego kodu.</p>
-
-<h2>1. Zapoznaj się z <a href="http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml">Google Style Guide</a></h2>
-
-<p>Myślę, że to powinien być pierwszy krok dla każdego programisty frontendowego (i nie tylko). W każdym języku istnieją pewne konwencje i złote rady i JS nie jest tu żadnym wyjątkiem. Poradnik Google&#8217;a to nic innego jak zbiór powszechnie wypracowanych, przemyślanych zasad, którymi warto kierować się w trakcie pisania aplikacji WWW. Część z moich dalszych uwag będzie też rozwinięciem punktów z tego podręcznika.</p>
-
-<h2>2. Zamykaj skrypty we własnych zakresach (scopes)</h2>
-
-<p>Ten punkt dotyczy częstej sytuacji w której tworząc skrypty do aplikacji często definiujemy wiele zmiennych i funkcji globalnych o tymczasowym zastosowaniu. Tworzy to całą masę śmieciowego kodu, który jest dostępny w innych częściach aplikacji i w przyszłości może poskutkować zmniejszeniem czytelności, kłopotami z dalszą rozwijalnością kodu i zwiększeniem ryzyka powstawania błędów.</p>
-
-<p>Rozwiązaniem tego problemu jest posłużenie się wzorcem funkcji natychmiastowych (wykonywanych natychmiast po ich zdefiniowaniu). Poniżej zaprezentowałem przykład obrazujący to rozwiązanie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span><span class="o">&gt;</span>
-</span><span class='line'><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nb">window</span><span class="p">,</span> <span class="nx">$</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="s1">&#39;use strict&#39;</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">someVariable</span><span class="p">;</span>
-</span><span class='line'>    <span class="c1">// reszta kodu</span>
-</span><span class='line'><span class="p">})(</span><span class="nb">window</span><span class="p">,</span> <span class="nx">$</span><span class="p">);</span>
-</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Utworzyliśmy w ten sposób odrębny zakres (<em>scope</em>), w którym wykonywane są funkcje skryptu. Oznacza to m.in., że zadeklarowana w przykładzie zmienna <em>someVariable</em> nie będzie widoczna przez inne skrypty spoza tego zakresu. Wpis <em>&lsquo;use strict&rsquo;</em> jest pomijany przez starsze przeglądarki, zaś w nowszych sprawia, że pisany kod będzie znacznie bardziej restrykcyjnie traktowany przez kompilator, przez co łatwiej można w nim wyłapać błędy i niejasności. Więcej na ten temat można przeczytać <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Functions_and_function_scope/Strict_mode?redirectlocale=en-US&amp;amp;redirectslug=JavaScript%2FStrict_mode">tutaj</a>.</p>
-
-<p>Można się zatem zapytać, po co w argumentach funkcji umieszczone są redefinicje zmiennych <em>window </em>i<em> jQuery</em>? Odpowiedź jest prosta: przejrzystość. Podając jawnie globalne typy z innych bibliotek i zmiennych środowiskowych możemy w mgnieniu oka określić powiązania pomiędzy naszym skryptem, a zewnętrznymi modułami.</p>
-
-<h2>3. Organizuj zmienne globalne w modułach/przestrzeniach nazw</h2>
-
-<p>Kolejnym krokiem w stronę dobrej organizacji kodu jest wykorzystanie powszechnie stosowanej w językach <em>server-side</em> opcji cięcia kodu w moduły i przestrzenie nazw. Może się to wydawać mało zrozumiałe, ponieważ JavaScript nie definiuje jawnie takich konstrukcji językowych. Jednakże możliwości tego języka są praktycznie nieograniczone, co daje nam możliwość rozwiązania tego problemu w inny sposób.</p>
-
-<p>Pierwsza propozycja przedstawiona jest poniżej. Osobiście nie polecam jej, jednakże w przypadku, gdy mamy niewiele modułów w naszej aplikacji, może się okazać wystarczająca.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">MyModule</span> <span class="o">=</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">MyModule</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">MyModule</span> <span class="o">||</span> <span class="p">{});</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">MySubModule</span> <span class="o">=</span> <span class="p">(</span><span class="nx">MyModule</span><span class="p">.</span><span class="nx">MySubModule</span> <span class="o">=</span> <span class="nx">MyModule</span><span class="p">.</span><span class="nx">MySubModule</span> <span class="o">||</span> <span class="p">{});</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jest to prosta konstrukcja językowa wydobywająca moduł (reprezentowany w praktyce przez obiekt) z tzw. korzenia (<em>root</em> &ndash; w tym wypadku zmienna <em>window</em>) lub tworząca go w przypadku, gdy dany moduł nie został jeszcze utworzony. Zwrócony obiekt służy następnie jako uchwyt dla pozostałych definiowanych przez nas funkcji i zmiennych.</p>
-
-<p>Innym rozwiązaniem jest stworzenie predefiniowanej metody pozwalającej wydobywać/tworzyć moduły na zawołanie, wraz z zachowaniem ich hierarchii. Ten prosty wzorzec, nazywany jak nie ciężko się domyślić przestrzenią nazw (<em>namespace</em>), może być sprowadzony do postaci pojedyńczej funkcji:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nb">window</span><span class="p">.</span><span class="nx">namespace</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">root</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">parent</span> <span class="o">=</span> <span class="nx">root</span> <span class="o">||</span> <span class="nb">window</span><span class="p">;</span>    <span class="c1">// jeżeli nie podaliśmy korzenia, korzystamy z obiektu okna</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">modules</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">);</span>
-</span><span class='line'>    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">modules</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="kd">var</span> <span class="nx">module</span> <span class="o">=</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-</span><span class='line'>        <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">||</span> <span class="p">{});</span>
-</span><span class='line'>        <span class="nx">parent</span> <span class="o">=</span> <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">parent</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Tak zdefiniowana funkcja pozwala nam pobierać lub tworzyć hierarchie modułów na żądanie. Przykładowe użycie może wyglądać następująco: <code>var regexes = namespace(&lsquo;System.Text.RegularExpressions&rsquo;);</code></p>
-
-<h2>4. Komunikuj się poprzez obiekty</h2>
-
-<p>Jest to dość wieloznaczne stwierdzenie, w praktyce jednak chodzi o prostą ideę: wykorzystanie proxy w komunikacji z zewnętrznymi serwisami, a nawet między różnymi modułami. Jest to wygodny sposób zachowanie luźnych powiązań.</p>
-
-<p>W ramach przykładu załóżmy, że wykorzystujemy obiekt pośredniczący w obsłudze żądań ajaxowych z różnych modułów naszej aplikacji. Niestety z jakiegoś powodu biblioteka jQuery, z której korzystaliśmy do obsługi tych wywołań, generuje błędy lub posiada zbyt ubogie funkcje. Dzięki wykorzystaniu proxy możemy ją zamienić na inną (lub napisać własną) bez potrzeby przepisywania kodu we wszystkich miejscach, które do tej pory wykorzystywały ją do komunikacji.</p>
-
-<p>Kolejną wynikającą z tego zaletą jest możliwość przeprowadzania testów jednostkowych dla skryptów klienckich. Nie ma przecież żadnych przeciwwskazań, aby stworzyć mocki, które będziemy mogli podstawiać w miejsce obiektu komunikatora.</p>
-
-<p>Innym zastosowaniem takiego rozwiązania jest możliwość reagowania na nadchodzące wiadomości w bardziej wyrafinowany sposób. Zastanówcie się, jak do tej pory reagowaliście, jeżeli w odpowiedzi na wasze żądanie na serwer zamiast upragnionego JSONa dostawaliście stringa zawierającego stronę z błędem? Oczywiście należałoby jakoś powiadomić użytkownika o wystąpieniu błędu lub wywołać odpowiednią reakcję systemu. To z kolei wiąże się z koniecznością każdorazowego sprawdzenia, czy zwrócona wiadomość jest prawidłowa. Wykorzystując interfejs pośredniczący moglibyśmy odpowiednio reagować na takie sytuacje <strong>zanim </strong>wiadomość zostanie przekazana dalej do oczekujących na nią elementów, a nawet za pomocą wzorca Publish/Subscribe tworzyć listy obiektów oczekujących i reagujących na konkretne rodzaje komunikatów.</p>
-
-<h2>5. Dokumentuj skrypty</h2>
-
-<p>Może to zabrzmi dziwnie, ale taka jest prawda. Kiedy rozwijasz duże aplikacje, bardzo możliwe że na przestrzeni miesięcy będziesz musiał wrócić do dawno nie oglądanego kodu lub twoja praca zostanie odziedziczona przez innego programistę, który nie ma zielonego pojęcia o tym co i jak działa. Z tego powodu w momencie, gdy skrypty nie są okraszone stosownymi komentarzami, ilość WTFów/min. znacznie wzrasta. Nie powinniśmy się przejmować wzrostem rozmiaru plików JS, ponieważ niemal każdy minifier załatwi ten problem za nas. Warto przyjąć sobie jakiś konkretny format pisania komentarzy, a w tej dziedzinie standardem wydaje się <a href="http://en.wikipedia.org/wiki/JSDoc">JSDoc</a>.</p>
-
-<h2>6. Minimalizuj skrypty</h2>
-
-<p>Kolejna sprawa, która powinna być dość oczywista w praktyce, często jest jednak pomijana. Minimalizowanie skryptów oraz styli pozwala nawet kilkukrotnie zmniejszyć rozmiar wymaganych do pobrania plików. Jak wiadomo im mniejszy rozmiar, tym mniej danych trzeba przesłać przez sieć i tym szybciej dana strona zostanie załadowana. Ma to znaczenie zwłaszcza dla użytkowników korzystających z urządzeń mobilnych, które często są wykorzystywane w otwartych obszarach np. miejskich hot-spotach, gdzie udźwig łącza stanowi pewien problem.</p>
-
-<p>Innym dobrym pomysłem jest łączenie wielu plików ze skryptami do jednego pliku. Znowu wynika to z faktu, że większa ilość plików wymaga wygenerowanie przez przeglądarkę większej ilości zapytań. W przypadku gdy przeglądarka klienta lub serwer hostujący nie obsługują protokołu <a href="https://sites.google.com/a/chromium.org/dev/spdy/spdy-whitepaper">SPDY</a>, oznacza to, że każdy żądany zasób będzie wymagał ustanowienia nowego połączenia TCP, co jest dość kosztowne i negatywnie przekłada się na czas transmisji, zwłaszcza na dużych dystansach między klientem a serwerem. Z tego powodu wskazane jest zarówno łączenie jak i minimalizacja skryptów i stylów w środowisku produkcyjnym.</p>
-
-<h2>7. Testuj skrypty</h2>
-
-<p>Nie jest chyba dla nikogo niespodzianką, że w życiu programisty dużą część czasu poświęca się nie tylko na pisaniu kodu, ale również na sprawdzeniu jego poprawności. Aby zautomatyzować ten proces, powstało wiele frameworków umożliwiających przeprowadzanie szybkich testów. Ponieważ w dzisiejszych aplikacjach webowych coraz większa część logiki zaczyna być wykonywana po stronie klienta, dobrą praktyką jest przygotowywanie testów również dla skryptów JS. Zalet tego podejścia jest sporo, warto wymienić chociaż kilka z nich:</p>
-
-<ul>
-<li>Przeprowadzanie testów jednostkowych wymusza budowanie modularnych aplikacji opartych o luźne powiązania między obiektami. Jest to bardzo dobra metodyka programowania i pomaga poprawić czytelność oraz jakość pisanego kodu.</li>
-<li>Od kiedy JavaScript umożliwia nam zdalne wywoływanie zdarzeń związanych z akcjami użytkownika, możliwe jest również przynajmniej częściowe zautomatyzowanie testów wymagających podejmowania działań po stronie klienta.</li>
-<li>W przypadku scalania i minimalizacji skryptów (zwłaszcza tych wykorzystujących niezminimalizowane biblioteki zewnętrzne do developingu i zminimalizowane w środowisku produkcyjnym) nigdy nie możemy mieć 100% pewności, że nasz scalony/zminimalizowany skrypt będzie dalej działał dokładnie tak jak sprawdzaliśmy.</li>
-</ul>
-
-
-<p>Środowisk do testów javascriptowych jest dość sporo. Osobiście mogę polecić <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, framework bazujący na rozwiązaniach znanych dla programistów Ruby z RSpeca. Jest łatwy do nauki i wprowadzenia w naszej aplikacji, a jednocześnie daje nam dużą swobodę w tworzeniu własnych rozwiązań.</p>
 ]]></content>
   </entry>
   

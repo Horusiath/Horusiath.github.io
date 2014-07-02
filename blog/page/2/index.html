@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Apr 23rd, 2013 .net, wzorce projektowe Comments O Redundancji W Wyrażeniach LINQ O tym, czym jest redundacja wie chyba każdy programista. Każdy z &hellip;">
+	<meta name="description" content="May 14th, 2013 ruby Comments Zapowiedź Ruby 2.1 - Generational Heap Nie minęło wiele czasu od wydania Ruby&#8217;ego w wersji 2.0, a już pojawiła &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,59 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-14T20:02:00+02:00" data-updated="true" itemprop="datePublished">May 14<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ruby/'>ruby</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/05/14/zapowiedz-ruby-21-generational-heap/" itemprop="url">Zapowiedź Ruby 2.1 - Generational Heap</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Nie minęło wiele czasu od wydania Ruby&#8217;ego w wersji 2.0, a już pojawiła się ciekawa nowinka &ndash; od wersji 2.1 MRI ma wspierać generacje na zarządzanej stercie. Była to dla mnie wiadomość o tyle ciekawsza, że do tej pory sądziłem, że nie jest to możliwe bez zerwania kompatybilności z niskopoziomowymi rozszerzeniami języka C, które znajdują się w niektórych bibliotekach &ndash; tymczasem zapewniono, że żadna tego typu sytuacja nie będzie mieć miejsca.</p>
+
+<h2>Generacje w Rubym (MRI)</h2>
+
+<p>Jak więc ma wyglądać nowy mechanizm GC? Do tej pory wiadomo niewiele, dlatego postaram się podzielić szczegółami, które udało mi się zebrać. Nowy garbage collector nosi nazwę <strong>RGenGC</strong> i domyślnie będzie dzielił stertę na dwie generacje &ndash; często odśmiecana przestrzeń niewielkiego rozmiaru dla obiektów krótkotrwałych (obiekty tworzone w zakresach lokalnych metod często kończą tu swój żywot) oraz przestrzeń obiektów długotrwałych, awansowanych z pierwszej generacji.</p>
+
+<p>Dotychczasowym problemem była konieczność zmiany adresów obiektów, związana z przenoszeniem obiektu pomiędzy generacjami. O ile MRI mogłoby śledzić takie &ldquo;ruchome&rdquo; instancje, o tyle rozszerzenia napisane w języku C nie są w stanie tego zrobić (wewnętrznie referencje na obiekty w Rubym są po prostu zwykłymi wskaźnikami). Jak rozwiązano ten problem? Postanowiono podzielić referencje na obiekty na dwie klasy:</p>
+
+<ul>
+<li>Lśniące (<em>shiny</em>) &ndash; obiekty z takimi referencjami mogą być swobodnie śledzone i przenoszone pomiędzy generacjami zarządzanej sterty.</li>
+<li>Ciemne (<em>shady</em>) &ndash; w momencie, kiedy jakiś obiekt zostanie wykorzystany z poziomu C, zostaje on przypisany do tej klasy. Obiekty tego typu nie mogą być przenoszone ani zebrane przez kolektor, dopóki są wykorzystywane przez kod niezarządzany.</li>
+</ul>
+
+
+<p>Przypomina to znane z innych środowisk mechanizmy współpracy pomiędzy kodem wysoko- i niskopoziomowym (w .NET takie &ldquo;nieprzenaszalne&rdquo; obiekty noszą nazwę <em>pinned objects</em>).</p>
+
+<p>Jaki ma to wpływ na wydajność? Dotychczas nie stworzono oficjalnych benchmarków, nieoficjalnie mówi się o kilku procentowej poprawie względem poprzedniego rozwiązania. Należy jednak pamiętać, że prace wciąż trwają i wiele może się jeszcze zmienić.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1599,153 +1652,6 @@
 </span><span class='line'><span class="p">});</span>
 </span></code></pre></td></tr></table></div></figure>
 
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-09T15:16:00+02:00" data-updated="true" itemprop="datePublished">Sep 9<span>th</span>, 2012</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2012/09/09/javascript-porady-i-uwagi/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2012/09/09/javascript-porady-i-uwagi/" itemprop="url">Javascript - Porady I Uwagi</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z kodem JavaScriptu, z jakim przyszło mi się spotykać w pracy i na uczelni. Zauważyłem, że wiele osób skupia się na logice serwerowej, trzymając się wielu kanonów określających jak powinno się pisać czysty i rozwijalny kod. Z drugiej strony jednocześnie traktują one skrypty JS po macoszemu, jako coś przez co trzeba jakoś przebrnąć.</p>
-
-<p>Nie ma co ukrywać, że utrzymanie przejrzystości i rozszerzalności modułów w JavaScriptcie jest o wiele trudniejsze niż w standardowych językach wykonywanych po stronie serwera. Dlatego właśnie uważam, że tym bardziej wymagają one uwagi i wkładu w zachowanie jakości. Poniżej przedstawię kilka uwag/wskazówek dla programistów, którzy chcieliby poprawić jakość pisanego kodu.</p>
-
-<h2>1. Zapoznaj się z <a href="http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml">Google Style Guide</a></h2>
-
-<p>Myślę, że to powinien być pierwszy krok dla każdego programisty frontendowego (i nie tylko). W każdym języku istnieją pewne konwencje i złote rady i JS nie jest tu żadnym wyjątkiem. Poradnik Google&#8217;a to nic innego jak zbiór powszechnie wypracowanych, przemyślanych zasad, którymi warto kierować się w trakcie pisania aplikacji WWW. Część z moich dalszych uwag będzie też rozwinięciem punktów z tego podręcznika.</p>
-
-<h2>2. Zamykaj skrypty we własnych zakresach (scopes)</h2>
-
-<p>Ten punkt dotyczy częstej sytuacji w której tworząc skrypty do aplikacji często definiujemy wiele zmiennych i funkcji globalnych o tymczasowym zastosowaniu. Tworzy to całą masę śmieciowego kodu, który jest dostępny w innych częściach aplikacji i w przyszłości może poskutkować zmniejszeniem czytelności, kłopotami z dalszą rozwijalnością kodu i zwiększeniem ryzyka powstawania błędów.</p>
-
-<p>Rozwiązaniem tego problemu jest posłużenie się wzorcem funkcji natychmiastowych (wykonywanych natychmiast po ich zdefiniowaniu). Poniżej zaprezentowałem przykład obrazujący to rozwiązanie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span><span class="o">&gt;</span>
-</span><span class='line'><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nb">window</span><span class="p">,</span> <span class="nx">$</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="s1">&#39;use strict&#39;</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">someVariable</span><span class="p">;</span>
-</span><span class='line'>    <span class="c1">// reszta kodu</span>
-</span><span class='line'><span class="p">})(</span><span class="nb">window</span><span class="p">,</span> <span class="nx">$</span><span class="p">);</span>
-</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Utworzyliśmy w ten sposób odrębny zakres (<em>scope</em>), w którym wykonywane są funkcje skryptu. Oznacza to m.in., że zadeklarowana w przykładzie zmienna <em>someVariable</em> nie będzie widoczna przez inne skrypty spoza tego zakresu. Wpis <em>&lsquo;use strict&rsquo;</em> jest pomijany przez starsze przeglądarki, zaś w nowszych sprawia, że pisany kod będzie znacznie bardziej restrykcyjnie traktowany przez kompilator, przez co łatwiej można w nim wyłapać błędy i niejasności. Więcej na ten temat można przeczytać <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Functions_and_function_scope/Strict_mode?redirectlocale=en-US&amp;amp;redirectslug=JavaScript%2FStrict_mode">tutaj</a>.</p>
-
-<p>Można się zatem zapytać, po co w argumentach funkcji umieszczone są redefinicje zmiennych <em>window </em>i<em> jQuery</em>? Odpowiedź jest prosta: przejrzystość. Podając jawnie globalne typy z innych bibliotek i zmiennych środowiskowych możemy w mgnieniu oka określić powiązania pomiędzy naszym skryptem, a zewnętrznymi modułami.</p>
-
-<h2>3. Organizuj zmienne globalne w modułach/przestrzeniach nazw</h2>
-
-<p>Kolejnym krokiem w stronę dobrej organizacji kodu jest wykorzystanie powszechnie stosowanej w językach <em>server-side</em> opcji cięcia kodu w moduły i przestrzenie nazw. Może się to wydawać mało zrozumiałe, ponieważ JavaScript nie definiuje jawnie takich konstrukcji językowych. Jednakże możliwości tego języka są praktycznie nieograniczone, co daje nam możliwość rozwiązania tego problemu w inny sposób.</p>
-
-<p>Pierwsza propozycja przedstawiona jest poniżej. Osobiście nie polecam jej, jednakże w przypadku, gdy mamy niewiele modułów w naszej aplikacji, może się okazać wystarczająca.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">MyModule</span> <span class="o">=</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">MyModule</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">MyModule</span> <span class="o">||</span> <span class="p">{});</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">MySubModule</span> <span class="o">=</span> <span class="p">(</span><span class="nx">MyModule</span><span class="p">.</span><span class="nx">MySubModule</span> <span class="o">=</span> <span class="nx">MyModule</span><span class="p">.</span><span class="nx">MySubModule</span> <span class="o">||</span> <span class="p">{});</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jest to prosta konstrukcja językowa wydobywająca moduł (reprezentowany w praktyce przez obiekt) z tzw. korzenia (<em>root</em> &ndash; w tym wypadku zmienna <em>window</em>) lub tworząca go w przypadku, gdy dany moduł nie został jeszcze utworzony. Zwrócony obiekt służy następnie jako uchwyt dla pozostałych definiowanych przez nas funkcji i zmiennych.</p>
-
-<p>Innym rozwiązaniem jest stworzenie predefiniowanej metody pozwalającej wydobywać/tworzyć moduły na zawołanie, wraz z zachowaniem ich hierarchii. Ten prosty wzorzec, nazywany jak nie ciężko się domyślić przestrzenią nazw (<em>namespace</em>), może być sprowadzony do postaci pojedyńczej funkcji:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nb">window</span><span class="p">.</span><span class="nx">namespace</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">root</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">parent</span> <span class="o">=</span> <span class="nx">root</span> <span class="o">||</span> <span class="nb">window</span><span class="p">;</span>    <span class="c1">// jeżeli nie podaliśmy korzenia, korzystamy z obiektu okna</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">modules</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">);</span>
-</span><span class='line'>    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">modules</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="kd">var</span> <span class="nx">module</span> <span class="o">=</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-</span><span class='line'>        <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">||</span> <span class="p">{});</span>
-</span><span class='line'>        <span class="nx">parent</span> <span class="o">=</span> <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">];</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">parent</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Tak zdefiniowana funkcja pozwala nam pobierać lub tworzyć hierarchie modułów na żądanie. Przykładowe użycie może wyglądać następująco: <code>var regexes = namespace(&lsquo;System.Text.RegularExpressions&rsquo;);</code></p>
-
-<h2>4. Komunikuj się poprzez obiekty</h2>
-
-<p>Jest to dość wieloznaczne stwierdzenie, w praktyce jednak chodzi o prostą ideę: wykorzystanie proxy w komunikacji z zewnętrznymi serwisami, a nawet między różnymi modułami. Jest to wygodny sposób zachowanie luźnych powiązań.</p>
-
-<p>W ramach przykładu załóżmy, że wykorzystujemy obiekt pośredniczący w obsłudze żądań ajaxowych z różnych modułów naszej aplikacji. Niestety z jakiegoś powodu biblioteka jQuery, z której korzystaliśmy do obsługi tych wywołań, generuje błędy lub posiada zbyt ubogie funkcje. Dzięki wykorzystaniu proxy możemy ją zamienić na inną (lub napisać własną) bez potrzeby przepisywania kodu we wszystkich miejscach, które do tej pory wykorzystywały ją do komunikacji.</p>
-
-<p>Kolejną wynikającą z tego zaletą jest możliwość przeprowadzania testów jednostkowych dla skryptów klienckich. Nie ma przecież żadnych przeciwwskazań, aby stworzyć mocki, które będziemy mogli podstawiać w miejsce obiektu komunikatora.</p>
-
-<p>Innym zastosowaniem takiego rozwiązania jest możliwość reagowania na nadchodzące wiadomości w bardziej wyrafinowany sposób. Zastanówcie się, jak do tej pory reagowaliście, jeżeli w odpowiedzi na wasze żądanie na serwer zamiast upragnionego JSONa dostawaliście stringa zawierającego stronę z błędem? Oczywiście należałoby jakoś powiadomić użytkownika o wystąpieniu błędu lub wywołać odpowiednią reakcję systemu. To z kolei wiąże się z koniecznością każdorazowego sprawdzenia, czy zwrócona wiadomość jest prawidłowa. Wykorzystując interfejs pośredniczący moglibyśmy odpowiednio reagować na takie sytuacje <strong>zanim </strong>wiadomość zostanie przekazana dalej do oczekujących na nią elementów, a nawet za pomocą wzorca Publish/Subscribe tworzyć listy obiektów oczekujących i reagujących na konkretne rodzaje komunikatów.</p>
-
-<h2>5. Dokumentuj skrypty</h2>
-
-<p>Może to zabrzmi dziwnie, ale taka jest prawda. Kiedy rozwijasz duże aplikacje, bardzo możliwe że na przestrzeni miesięcy będziesz musiał wrócić do dawno nie oglądanego kodu lub twoja praca zostanie odziedziczona przez innego programistę, który nie ma zielonego pojęcia o tym co i jak działa. Z tego powodu w momencie, gdy skrypty nie są okraszone stosownymi komentarzami, ilość WTFów/min. znacznie wzrasta. Nie powinniśmy się przejmować wzrostem rozmiaru plików JS, ponieważ niemal każdy minifier załatwi ten problem za nas. Warto przyjąć sobie jakiś konkretny format pisania komentarzy, a w tej dziedzinie standardem wydaje się <a href="http://en.wikipedia.org/wiki/JSDoc">JSDoc</a>.</p>
-
-<h2>6. Minimalizuj skrypty</h2>
-
-<p>Kolejna sprawa, która powinna być dość oczywista w praktyce, często jest jednak pomijana. Minimalizowanie skryptów oraz styli pozwala nawet kilkukrotnie zmniejszyć rozmiar wymaganych do pobrania plików. Jak wiadomo im mniejszy rozmiar, tym mniej danych trzeba przesłać przez sieć i tym szybciej dana strona zostanie załadowana. Ma to znaczenie zwłaszcza dla użytkowników korzystających z urządzeń mobilnych, które często są wykorzystywane w otwartych obszarach np. miejskich hot-spotach, gdzie udźwig łącza stanowi pewien problem.</p>
-
-<p>Innym dobrym pomysłem jest łączenie wielu plików ze skryptami do jednego pliku. Znowu wynika to z faktu, że większa ilość plików wymaga wygenerowanie przez przeglądarkę większej ilości zapytań. W przypadku gdy przeglądarka klienta lub serwer hostujący nie obsługują protokołu <a href="https://sites.google.com/a/chromium.org/dev/spdy/spdy-whitepaper">SPDY</a>, oznacza to, że każdy żądany zasób będzie wymagał ustanowienia nowego połączenia TCP, co jest dość kosztowne i negatywnie przekłada się na czas transmisji, zwłaszcza na dużych dystansach między klientem a serwerem. Z tego powodu wskazane jest zarówno łączenie jak i minimalizacja skryptów i stylów w środowisku produkcyjnym.</p>
-
-<h2>7. Testuj skrypty</h2>
-
-<p>Nie jest chyba dla nikogo niespodzianką, że w życiu programisty dużą część czasu poświęca się nie tylko na pisaniu kodu, ale również na sprawdzeniu jego poprawności. Aby zautomatyzować ten proces, powstało wiele frameworków umożliwiających przeprowadzanie szybkich testów. Ponieważ w dzisiejszych aplikacjach webowych coraz większa część logiki zaczyna być wykonywana po stronie klienta, dobrą praktyką jest przygotowywanie testów również dla skryptów JS. Zalet tego podejścia jest sporo, warto wymienić chociaż kilka z nich:</p>
-
-<ul>
-<li>Przeprowadzanie testów jednostkowych wymusza budowanie modularnych aplikacji opartych o luźne powiązania między obiektami. Jest to bardzo dobra metodyka programowania i pomaga poprawić czytelność oraz jakość pisanego kodu.</li>
-<li>Od kiedy JavaScript umożliwia nam zdalne wywoływanie zdarzeń związanych z akcjami użytkownika, możliwe jest również przynajmniej częściowe zautomatyzowanie testów wymagających podejmowania działań po stronie klienta.</li>
-<li>W przypadku scalania i minimalizacji skryptów (zwłaszcza tych wykorzystujących niezminimalizowane biblioteki zewnętrzne do developingu i zminimalizowane w środowisku produkcyjnym) nigdy nie możemy mieć 100% pewności, że nasz scalony/zminimalizowany skrypt będzie dalej działał dokładnie tak jak sprawdzaliśmy.</li>
-</ul>
-
-
-<p>Środowisk do testów javascriptowych jest dość sporo. Osobiście mogę polecić <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, framework bazujący na rozwiązaniach znanych dla programistów Ruby z RSpeca. Jest łatwy do nauki i wprowadzenia w naszej aplikacji, a jednocześnie daje nam dużą swobodę w tworzeniu własnych rozwiązań.</p>
 
 		
 		
