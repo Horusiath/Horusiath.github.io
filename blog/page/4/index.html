@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Oct 19th, 2011 bazy danych, kontrola wersji Comments FluentMigrator - Wersjonowanie Bazy Danych W dzisiejszym poście pokrótce postaram się opisać &hellip;">
+	<meta name="description" content="Nov 2nd, 2011 asp, javascript Comments [Ajax] Post Tablicy Do Akcji Podczas pracy nad łączeniem wywołań ajaxowych z frameworkiem ASP MVC 3 natknąłem &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,96 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-02T17:22:00+01:00" data-updated="true" itemprop="datePublished">Nov 2<span>nd</span>, 2011</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/asp/'>asp</a>, <a class='category' href='/blog/categories/javascript/'>javascript</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2011/11/02/ajax-post-tablicy-do-akcji/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2011/11/02/ajax-post-tablicy-do-akcji/" itemprop="url">[Ajax] Post Tablicy Do Akcji</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Podczas pracy nad łączeniem wywołań ajaxowych z frameworkiem ASP MVC 3 natknąłem się na dość interesujący problem &ndash; rozpatrzmy scenariusz, w którym mamy zamiar przekazać tablicę obiektów jakiegoś prostego typu (liczba, string) za pośrednictwem ajaxowego posta do jednej z akcji kontrolera. Taki przykład można zaprezentować w następujący sposób:</p>
+
+<p>Client side:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">array</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">,</span> <span class="s1">&#39;two&#39;</span><span class="p">,</span> <span class="s1">&#39;three&#39;</span><span class="p">];</span>
+</span><span class='line'><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="s1">&#39;@Url.Action(&quot;AjaxPost&quot;)&#39;</span><span class="p">,</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">data</span><span class="o">:</span> <span class="nx">array</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Server side:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[HttpPost]</span>
+</span><span class='line'><span class="k">public</span> <span class="n">JsonResult</span> <span class="nf">AjaxPost</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">array</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="n">array</span> <span class="p">!=</span> <span class="k">null</span><span class="p">){</span>
+</span><span class='line'>      <span class="c1">// to do</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W praktyce takie coś nie przejdzie, domyślny binder nie jest w stanie zrozumieć argumentów przekazanych w powyższym kodzie javascriptu. Powodem jest linijka zwierająca opis parametru &ndash; data : array. Wydawać by się mogło, że zapis ten można naprawić parsując naszą tablicę do notacji JSON, jednakże standardowe mechanizmy również nie sprawdzają się w tej roli. Z tego powodu następujące zapisy będą błędne:</p>
+
+<ul>
+<li>wykorzystanie <code>JSON.stringify(array)</code> lub <code> JSON.stringify({ &lsquo;array&rsquo; : array})</code></li>
+<li>wykorzystanie zewnętrznych bibliotek np. <code>$.parseJSON(array)</code>, <code>$.parseJSON({&lsquo;array&rsquo; : array})</code></li>
+</ul>
+
+
+<p>Rozwiązaniem tego problemu jest wykorzystanie funkcji z biblioteki jQuery o nazwie <a href="http://api.jquery.com/jQuery.param/">param</a>. Z jej wykorzystaniem nasza linijka powinna wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">data</span><span class="o">:</span> <span class="nx">$</span><span class="p">.</span><span class="nx">param</span><span class="p">({</span><span class="s1">&#39;array&#39;</span> <span class="o">:</span> <span class="nx">array</span><span class="p">},</span> <span class="kc">true</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Umieszczenie tablicy w obiekcie JSON jest wymagane, w dodatku nazwa pola musi odpowiadać nazwie parametru przekazywanego do naszej metody po stronie serwera (w przeciwnym razie binder nie rozpozna, którą zmienną zmapować na dany parametr).</p>
+
+<p>Można to oczywiście wykonać nie korzystając z gotowych bibliotek. W takim wypadku przekazywane przez nas parametry zapisane w postaci tekstu, w podanym przeze mnie przypadku, powinny mieć następującą postać: <code>array=one&amp;array=two&amp;array=three</code></p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1497,80 +1587,6 @@ Zalety:</li>
 
 
 <p>Krótko mówiąc jest to bardzo przyjazna biblioteka, która zrzuca z nas większość ciężaru związanego z ręczną implementacją wielu przydatnych rozwiązań. Proponuję dobrze się jej przyjżeć, a może unikniemy w ten sposób potrzeby wymyślania koła na nowo ;) .</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-03-24T19:48:00+01:00" data-updated="true" itemprop="datePublished">Mar 24<span>th</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/bazy-danych/'>bazy danych</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/03/24/pobieranie-duzych-zbiorow-w-entity/" itemprop="url">Pobieranie Dużych Zbiorów W Entity Framework</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Siedząc dzisiaj w pracy natknąłem się na pewien problem. Otóż spotkałem się z koniecznością pobrania wierszy z bazy i zapisania jej w pliku. Problem w zasadzie trywialny, lecz kiedy mówimy o konieczności zapisania kilkuset tysięcy wierszy, nie jest już tak łatwo. Żadne standardowe odwołanie nie zda tutaj egzaminu, ponieważ wcześniej czy później nasz program zapełni całą dostępną pamięć.</p>
-
-<p>Znajomy polecił mi wykorzystać funkcjonalność, jaką dostarczają metody Skip i Take, dostępne w LINQ. Dzięki nim możemy w prosty sposób podzielić przetwarzaną przez nas bazę na mniejsze fragmenty, które następnie przetwarzamy.</p>
-
-<p>Poniżej przedstawiam przykładowy kod rozwiązania:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">using</span><span class="p">(</span><span class="n">Entities</span> <span class="n">context</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Entities</span><span class="p">())</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>   <span class="kt">var</span> <span class="n">package</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="m">1</span><span class="p">];</span>
-</span><span class='line'>   <span class="kt">int</span> <span class="n">count</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>          <span class="c1">// licznik</span>
-</span><span class='line'>   <span class="kt">int</span> <span class="n">resolution</span> <span class="p">=</span> <span class="m">1000</span><span class="p">;</span>  <span class="c1">// &quot;rozmiar&quot; paczki</span>
-</span><span class='line'>   <span class="k">do</span>
-</span><span class='line'>   <span class="p">{</span>
-</span><span class='line'>        <span class="n">package</span> <span class="p">=</span> <span class="p">(</span><span class="k">from</span> <span class="n">d</span> <span class="k">in</span> <span class="n">context</span><span class="p">.</span><span class="n">Data</span>
-</span><span class='line'>                       <span class="k">select</span> <span class="n">d</span><span class="p">).</span><span class="n">OrderBy</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">)</span>
-</span><span class='line'>              <span class="p">.</span><span class="n">Skip</span><span class="p">(</span><span class="n">count</span><span class="p">).</span><span class="n">Take</span><span class="p">(</span><span class="n">resolution</span><span class="p">).</span><span class="n">ToArray</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">count</span> <span class="p">+=</span> <span class="n">resolution</span><span class="p">;</span>
-</span><span class='line'>   <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">package</span><span class="p">.</span><span class="n">Lenght</span> <span class="p">==</span> <span class="n">resolution</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widać rozwiązanie jest proste. Sądze, że jedyne co wymaga wyjaśnienia, to wykorzystanie OrderBy. Jest to potrzebne, ponieważ ponieważ stałe pomijanie (metoda Skip) pewnych elementów kolekcji wymaga jej poprzedniego posortowania.</p>
 
 		
 		

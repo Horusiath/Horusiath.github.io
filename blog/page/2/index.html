@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="May 14th, 2013 ruby Comments Zapowiedź Ruby 2.1 - Generational Heap Nie minęło wiele czasu od wydania Ruby&#8217;ego w wersji 2.0, a już pojawiła &hellip;">
+	<meta name="description" content="May 17th, 2013 shell Comments PowerShell Okiem Programisty .NET Artykuł ten tworzę z dość prostego powodu. Wraz z mijającym czasem w każdym &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,530 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-17T21:20:00+02:00" data-updated="true" itemprop="datePublished">May 17<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/shell/'>shell</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2013/05/17/powershell-okiem-programisty-net/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/05/17/powershell-okiem-programisty-net/" itemprop="url">PowerShell Okiem Programisty .NET</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Artykuł ten tworzę z dość prostego powodu. Wraz z mijającym czasem w każdym programiście rośnie opór oraz lenistwo wobec powtarzalnych czynności wykonywanych codziennie w pracy. Stąd też szukamy sposobów na zautomatyzowanie choć części z tych zadań. PowerShell może być jednym ze sposobów na osiągnięcie tego celu. Z tego powodu warto lepiej się z nim zapoznać.</p>
+
+<p>Zanim zacznę, chcę zaznaczyć, że nie jestem mistrzem PS. Postanowiłem jednak podzielić się swoimi doświadczeniami z punktu widzenia typowego programisty .NET i w miarę zwięźle pokazać, w jaki sposób przenieść niektóre z najpopularniejszych operacji występujących w tym świecie na ich odpowiedniki w PowerShellu. Zaczynajmy.</p>
+
+<p>Rzecz, którą nieraz warto zrobić przed rozpoczęciem właściwej pracy, to uruchomienie PowerShella w trybie administratora. Możemy to zrobić bezpośrednio z poziomu <strong>cmd.exe</strong> za pomocą komendy:<code>powershell &ldquo;Start-Process powershell -Verb runAs&rdquo;</code>.</p>
+
+<h3>Wypisanie textu na konsolę</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">System</span><span class="p">.</span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Hello world!&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nb">Write-Host</span> <span class="s2">&quot;Hello world!&quot;</span>
+</span><span class='line'><span class="c"># lub krócej</span>
+</span><span class='line'><span class="s2">&quot;Hello world!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Zmienne</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">int</span> <span class="n">a</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span> <span class="n">b</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="kt">var</span> <span class="n">b</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$a</span> <span class="p">=</span> <span class="n">1</span>
+</span><span class='line'><span class="nv">$b</span> <span class="p">=</span> <span class="n">2</span>
+</span><span class='line'><span class="nv">$a</span><span class="p">,</span> <span class="nv">$b</span> <span class="p">=</span> <span class="n">1</span><span class="p">,</span> <span class="n">2</span>    <span class="c"># Python-like</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Tablice</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">array</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span> <span class="m">1</span><span class="p">,</span> <span class="s">&quot;text&quot;</span><span class="p">,</span> <span class="m">3.14</span> <span class="p">};</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="n">array</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">iter</span> <span class="p">=</span> <span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$array</span> <span class="p">=</span> <span class="n">1</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">3</span><span class="p">.</span><span class="n">14</span>
+</span><span class='line'><span class="nv">$array</span> <span class="p">=</span> <span class="err">@</span><span class="p">(</span><span class="n">1</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">3</span><span class="p">.</span><span class="n">14</span><span class="p">)</span> <span class="c"># jawny zapis</span>
+</span><span class='line'><span class="nv">$a</span> <span class="p">=</span> <span class="nv">$array</span><span class="p">[</span><span class="n">0</span><span class="p">]</span>
+</span><span class='line'><span class="nv">$iter</span> <span class="p">=</span> <span class="p">(</span><span class="n">1</span><span class="p">..</span><span class="n">10</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Słowniki</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">dictionary</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="kt">string</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="p">{</span><span class="s">&quot;key 1&quot;</span><span class="p">,</span> <span class="s">&quot;value 1&quot;</span><span class="p">},</span>
+</span><span class='line'>  <span class="p">{</span><span class="s">&quot;key 2&quot;</span><span class="p">,</span> <span class="s">&quot;value 2&quot;</span><span class="p">}</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="n">dictionary</span><span class="p">[</span><span class="s">&quot;key 1&quot;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$dictionary</span> <span class="p">=</span> <span class="err">@</span><span class="p">{</span><span class="s2">&quot;key 1&quot;</span> <span class="p">=</span> <span class="s2">&quot;value 1&quot;</span><span class="err">;</span> <span class="s2">&quot;key 2&quot;</span> <span class="p">=</span> <span class="s2">&quot;value 2&quot;</span><span class="p">}</span>
+</span><span class='line'><span class="nv">$dictionary</span><span class="p">[</span><span class="s2">&quot;key 1&quot;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Operatory logiczne, warunkowe i binarne</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">true</span> <span class="p">==</span> <span class="k">true</span>    <span class="c1">// równy</span>
+</span><span class='line'><span class="k">true</span> <span class="p">!=</span> <span class="k">false</span>   <span class="c1">// różny</span>
+</span><span class='line'><span class="m">1</span> <span class="p">&gt;</span> <span class="m">0</span>           <span class="c1">// większy</span>
+</span><span class='line'><span class="m">0</span> <span class="p">&lt;</span> <span class="m">1</span>           <span class="c1">// mniejszy</span>
+</span><span class='line'><span class="m">1</span> <span class="p">&gt;=</span> <span class="m">0</span>          <span class="c1">// większy lub równy</span>
+</span><span class='line'><span class="m">0</span> <span class="p">&lt;=</span> <span class="m">1</span>          <span class="c1">// mniejszy lub równy</span>
+</span><span class='line'><span class="p">!</span><span class="k">true</span>           <span class="c1">// negacja</span>
+</span><span class='line'><span class="k">true</span> <span class="p">&amp;&amp;</span> <span class="k">true</span>    <span class="c1">// koniunkcja (logiczny)</span>
+</span><span class='line'><span class="k">true</span> <span class="p">||</span> <span class="k">false</span>   <span class="c1">// alternatywa (logiczny)</span>
+</span><span class='line'><span class="m">1</span> <span class="p">^</span> <span class="m">1</span>           <span class="c1">// alternatywa wykluczająca </span>
+</span><span class='line'><span class="m">1</span> <span class="p">|</span> <span class="m">1</span>           <span class="c1">// alternatywa (binarny)</span>
+</span><span class='line'><span class="m">1</span> <span class="p">&amp;</span> <span class="m">1</span>           <span class="c1">// koniunkcja (binarny)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$True</span> <span class="o">-eq</span> <span class="nv">$True</span>    <span class="c"># równy</span>
+</span><span class='line'><span class="nv">$True</span> <span class="o">-ne</span> <span class="nv">$False</span>   <span class="c"># różny</span>
+</span><span class='line'><span class="n">1</span> <span class="o">-gt</span> <span class="n">0</span>            <span class="c"># większy</span>
+</span><span class='line'><span class="n">0</span> <span class="o">-lt</span> <span class="n">1</span>            <span class="c"># mniejszy </span>
+</span><span class='line'><span class="n">1</span> <span class="o">-ge</span> <span class="n">0</span>            <span class="c"># większy lub równy</span>
+</span><span class='line'><span class="n">0</span> <span class="o">-le</span> <span class="n">1</span>            <span class="c"># mniejszy lub równy</span>
+</span><span class='line'><span class="o">-not</span> <span class="nv">$True</span>         <span class="c"># negacja</span>
+</span><span class='line'><span class="nv">$True</span> <span class="o">-and</span> <span class="nv">$True</span>   <span class="c"># koniunkcja (logiczny)</span>
+</span><span class='line'><span class="nv">$True</span> <span class="o">-or</span> <span class="nv">$False</span>   <span class="c"># alternatywa (logiczny)</span>
+</span><span class='line'><span class="nv">$True</span> <span class="n">-xor</span> <span class="nv">$False</span>  <span class="c"># alternatywa wykluczająca (logiczny)</span>
+</span><span class='line'><span class="n">1</span> <span class="o">-bxor</span> <span class="n">2</span>          <span class="c"># alternatywa wykluczająca (binarny)</span>
+</span><span class='line'><span class="n">1</span> <span class="o">-bor</span> <span class="n">1</span>           <span class="c"># alternatywa (binarny)</span>
+</span><span class='line'><span class="n">1</span> <span class="o">-band</span> <span class="n">1</span>          <span class="c"># koniunkcja (binarny)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Instrukcje warunkowe</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">if</span><span class="p">(</span><span class="err">$</span><span class="n">a</span> <span class="p">==</span> <span class="k">true</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Statement 1&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">else</span> <span class="nf">if</span><span class="p">(</span><span class="err">$</span><span class="n">b</span> <span class="p">==</span> <span class="k">true</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Statement 2&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">else</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Statement 3&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="k">If</span><span class="p">(</span><span class="nv">$a</span> <span class="o">-eq</span> <span class="nv">$True</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="s2">&quot;Statement 1&quot;</span>
+</span><span class='line'><span class="p">}</span> <span class="k">ElseIf</span><span class="p">(</span><span class="nv">$b</span> <span class="o">-eq</span> <span class="nv">$True</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="s2">&quot;Statement 2&quot;</span>
+</span><span class='line'><span class="p">}</span> <span class="k">Else</span> <span class="p">{</span>
+</span><span class='line'>  <span class="s2">&quot;Statement 3&quot;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Pętle</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">=</span><span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">foreach</span><span class="p">(</span><span class="kt">var</span> <span class="n">element</span> <span class="k">in</span> <span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">element</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i</span><span class="p">++);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">i</span><span class="p">++);</span>
+</span><span class='line'><span class="p">}</span> <span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="k">for</span><span class="p">(</span><span class="nv">$i</span><span class="p">=</span><span class="n">1</span><span class="err">;</span> <span class="nv">$i</span> <span class="o">-lt</span> <span class="n">10</span><span class="err">;</span> <span class="nv">$i</span><span class="p">++)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">foreach</span><span class="p">(</span><span class="nv">$i</span> <span class="k">in</span> <span class="p">(</span><span class="n">1</span><span class="p">..</span><span class="n">10</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">while</span><span class="p">(</span><span class="nv">$i</span> <span class="o">-lt</span> <span class="n">10</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'>  <span class="nv">$i</span><span class="p">++</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'>  <span class="nv">$i</span><span class="p">++</span>
+</span><span class='line'><span class="p">}</span> <span class="k">while</span><span class="p">(</span><span class="nv">$i</span> <span class="o">-lt</span> <span class="n">10</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nb">Write-Host</span> <span class="nv">$i</span>
+</span><span class='line'>  <span class="nv">$i</span><span class="p">++</span>
+</span><span class='line'><span class="p">}</span> <span class="k">until</span><span class="p">(</span><span class="nv">$i</span> <span class="o">-eq</span> <span class="n">10</span><span class="p">)</span>   <span class="c"># odpowiednik: do {} while(-not ($i -ne 10))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Definicje własnych metod/funkcji</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="c1">// C# wymaga &quot;opakowania funkcji&quot; w klasę</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">A</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">public</span> <span class="kt">int</span> <span class="nf">Fib</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span> <span class="p">=</span> <span class="m">1</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="n">n</span> <span class="p">&lt;</span> <span class="m">2</span><span class="p">)</span> <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nf">Fib</span><span class="p">(</span><span class="n">n</span> <span class="p">-</span> <span class="m">2</span><span class="p">)</span> <span class="p">+</span> <span class="n">Fib</span><span class="p">(</span><span class="n">n</span> <span class="p">-</span> <span class="m">1</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="p">(</span><span class="k">new</span> <span class="n">A</span><span class="p">()).</span><span class="n">Fib</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>    <span class="c1">// wynik: 55</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="k">Function</span> <span class="n">Fib</span><span class="p">(</span><span class="nv">$n</span> <span class="p">=</span> <span class="n">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="nv">$n</span> <span class="o">-lt</span> <span class="n">2</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nv">$n</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="p">((</span><span class="n">Fib</span><span class="p">(</span><span class="nv">$n</span> <span class="p">-</span> <span class="n">2</span><span class="p">))</span> <span class="p">+</span> <span class="p">(</span><span class="n">Fib</span><span class="p">(</span><span class="nv">$n</span> <span class="p">-</span> <span class="n">1</span><span class="p">)))</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="n">Fib</span><span class="p">(</span><span class="n">10</span><span class="p">)</span>    <span class="c"># wynik: 55</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Wywołania statycznych klas .NET</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">System</span><span class="p">.</span><span class="n">DateTime</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="s">&quot;10-01-2012&quot;</span><span class="p">);</span>    <span class="c1">// 1 Października 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="no">[System.DateTime]</span><span class="err">::</span><span class="n">Parse</span><span class="p">(</span><span class="s2">&quot;10-01-2012&quot;</span><span class="p">)</span><span class="err">;</span>   <span class="c"># 1 Października 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Tworzenie nowych obiektów za pomocą konstruktorów</h3>
+
+<p>C#:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">date</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DateTime</span><span class="p">(</span><span class="m">2012</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">1</span><span class="p">);</span>    <span class="c1">// 1 Października 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PowerShell (przestrzeń nazw System jest domyślnie zaimportowana):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$date</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">DateTime</span><span class="p">(</span><span class="n">2012</span><span class="p">,</span> <span class="n">10</span><span class="p">,</span> <span class="n">1</span><span class="p">)</span>   <span class="c"># 1 Października 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Kilka przydatnych cmdletów</h3>
+
+<p>Na koniec chciałbym pokazać kilka cmdletów, które nieraz ułatwiają pracę. Warto zauważyć, że nieraz cmdlet dostępny jest również poprzez alias (przeważnie więcej niż jeden). Niektóre z nich zostały tutaj przedstawione.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="s2">&quot;A = {0} hours {1} minutes&quot;</span> <span class="o">-f</span> <span class="n">10</span><span class="p">,</span> <span class="n">20</span>  <span class="c"># odpowiednik string.Format</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">#tworzenie nowego pliku/katalogu</span>
+</span><span class='line'><span class="nb">New-Item</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">new_file</span><span class="p">.</span><span class="n">txt</span> <span class="n">-Type</span> <span class="n">File</span>
+</span><span class='line'><span class="nb">New-Item</span> <span class="s2">&quot;c:\directories&quot;</span> <span class="n">-Type</span> <span class="n">Directory</span>
+</span><span class='line'><span class="n">ni</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">new</span><span class="p">.</span><span class="n">txt</span> <span class="n">-type</span> <span class="n">file</span> <span class="c"># skrótowy zapis</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># kopiujemy wszystkie pliki z c:\files do c:\directories</span>
+</span><span class='line'><span class="nb">Copy-Item</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\*</span> <span class="n">c</span><span class="p">\</span><span class="n">directories</span>
+</span><span class='line'><span class="n">copy</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\*</span> <span class="n">c</span><span class="p">\</span><span class="n">directories</span>    <span class="c"># skrótowy zapis</span>
+</span><span class='line'><span class="n">cp</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\*</span> <span class="n">c</span><span class="p">\</span><span class="n">directories</span>      <span class="c"># skrótowy zapis</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># usunięcie pliku lub katalogu</span>
+</span><span class='line'><span class="nb">Remove-Item</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">new</span><span class="p">.</span><span class="n">txt</span>
+</span><span class='line'><span class="n">rm</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">new</span><span class="p">.</span><span class="n">txt</span>    <span class="c"># alternatywa</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># przenoszenie plików lub folderów</span>
+</span><span class='line'><span class="nb">Move-Item</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">old</span><span class="p">.</span><span class="n">txt</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files2</span><span class="p">\</span>
+</span><span class='line'><span class="n">move</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">old</span><span class="p">.</span><span class="n">txt</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files2</span><span class="p">\</span>    <span class="c"># skrótowy zapis</span>
+</span><span class='line'><span class="n">mv</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">old</span><span class="p">.</span><span class="n">txt</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files2</span><span class="p">\</span>      <span class="c"># skrótowy zapis</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># pobranie zawartości pliku</span>
+</span><span class='line'><span class="nb">Get-Content</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\</span><span class="n">file</span><span class="p">.</span><span class="n">txt</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># wpisanie tekstu do pliku</span>
+</span><span class='line'><span class="nb">Set-Content</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span> <span class="s2">&quot;file content&quot;</span>
+</span><span class='line'><span class="s2">&quot;file content&quot;</span> <span class="p">|</span> <span class="nb">Out-File</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># sprawdzenie istnienia pliku lub folderu pasującego do podanego wzorca</span>
+</span><span class='line'><span class="nb">Test-Path</span> <span class="n">c</span><span class="err">:</span><span class="p">\</span><span class="n">files</span><span class="p">\*.</span><span class="n">txt</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># wyszukanie linijki z pliku źródłowego, zawierającego szukaną frazę</span>
+</span><span class='line'><span class="nb">Get-Content</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span> <span class="p">|</span> <span class="nb">Select-String</span> <span class="s2">&quot;fraza&quot;</span>
+</span><span class='line'><span class="c"># zwaraca True, jeżeli znaleziono dopasowanie</span>
+</span><span class='line'><span class="nb">Get-Content</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span> <span class="p">|</span> <span class="nb">Select-String</span> <span class="s2">&quot;fraza&quot;</span> <span class="n">-quiet</span>
+</span><span class='line'><span class="c"># rozróżnienie wielkości liter</span>
+</span><span class='line'><span class="nb">Get-Content</span> <span class="n">file</span><span class="p">.</span><span class="n">txt</span> <span class="p">|</span> <span class="nb">Select-String</span> <span class="s2">&quot;fraza&quot;</span> <span class="o">-casesensitive</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">Get-Date</span>    <span class="c"># pobieramy bierzącą datę z zegara systemowego: DateTime.Now</span>
+</span><span class='line'><span class="nb">Get-Date</span> <span class="n">-displayhint</span> <span class="n">date</span>   <span class="c"># jak powyżej, ale pobieramy samą datę: DateTime.Today</span>
+</span><span class='line'><span class="nb">Get-Date</span> <span class="n">-displayhist</span> <span class="n">time</span>   <span class="c"># analogicznie dla czasu</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># ustawia zegar systemowy na hh:mm:ss do przodu (w przykładzie 1h10m)</span>
+</span><span class='line'><span class="nb">Set-Date</span> <span class="n">-adjust</span> <span class="n">1</span><span class="err">:</span><span class="n">10</span><span class="err">:</span><span class="n">00</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># informacje o procesie</span>
+</span><span class='line'><span class="nb">Get-Process</span> <span class="n">process1</span><span class="p">,</span> <span class="n">process2</span>    <span class="c"># jawne wyliczenie szukanych nazw</span>
+</span><span class='line'><span class="nb">Get-Process</span> <span class="n">proc</span><span class="p">*</span>                 <span class="c"># szukanie wg. wzorca</span>
+</span><span class='line'><span class="n">ps</span> <span class="n">proc</span><span class="p">*</span>                          <span class="c"># skrótowy zapis</span>
+</span><span class='line'><span class="n">ps</span> <span class="n">proc</span><span class="p">*</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># zakończ process(-y)</span>
+</span><span class='line'><span class="nb">Stop-Process</span> <span class="n">-processname</span> <span class="k">process</span><span class="p">*</span>   <span class="c"># zakończ procesy o nazwie zgodnej z wzorcem</span>
+</span><span class='line'><span class="n">kill</span> <span class="n">3888</span>          <span class="c"># skrótowy zapis, zakończ process o Id równym 3888</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>PS: W niektórych z powyższych komend wykorzystałem jeden z feature&#8217;ów PowerShella, którego wcześniej nie opisałem &ndash; <strong>pipeline operator</strong>. Jest on reprezentowany przez symbol <code>|</code> i służy do przekazywania wyniku jednej funkcji/polecenia jako wejścia do następnej.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1378,280 +1902,6 @@
 <h2>Podsumowanie</h2>
 
 <p>Po analizie dostępnych rozwiązań to co najbardziej mnie uderzyło, to fakt jak wiele z najpopularniejszych bibliotek prezentuje się zaskakująco żenująco w testach dotyczących wydajności. Za swoje małe odkrycie mogę uznać z kolei stos zaoferowany przez ServiceStack, dla których wydajność wydaje się priorytetem w każdej kategorii, w której podjęli się konkurować. Niestety nie miałem do tej pory dużo do czynienia z tym frameworkiem, co jednak bardzo przypadło mi do gustu, to fakt że jest to rozwiązanie kompletne, oferujące możliwość kompletnego zastąpienia każdego modułu w tradycyjnym stosie ASP.NET MVC/WCF/EntityFramework swoim własnym, spójnym zbiorem bibliotek. Do tego w całości działającym pod Mono na Linuxie.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-12-30T10:09:00+01:00" data-updated="true" itemprop="datePublished">Dec 30<span>th</span>, 2012</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2012/12/30/nodejs-renderowanie-layoutow-z/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2012/12/30/nodejs-renderowanie-layoutow-z/" itemprop="url">node.js - Renderowanie Layoutów Z Wykorzystaniem doT.js</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Stało się. Po wielu podejściach skłoniłem się do <a href="http://nodejs.org/">node.js</a> i postanowiłem napisać w nim swoją pierwszą aplikację z prawdziwego zdarzenia. O moich motywach i wątpliwościach, jakie towarzyszyły wykorzystaniu javascriptu do tworzenia logiki po stronie serwera opowiem innym razem. W tym poście postaram się skupić na innym zagadnieniu.</p>
-
-<p>Po dość długim rekonesansie związanym z technologiami używanymi w node.js zdecydowałem się, że moja aplikacja zostanie oparta o bibliotekę <a href="http://expressjs.com/">express.js</a>. Jest to chyba najpopularniejszy framework w tym środowisku (ideowo czerpiący z Sinatry znanej wśród programistów Ruby&#8217;ego), którego głównymi zaletami są niewielki narzut obliczeniowy, łatwość konfiguracji, duża ilość zewnętrznych rozszerzeń oraz spora społeczność. W tym momencie należało również dokonać kilku dość istotnych wyborów. Ten, którego dotyczy mój wpis, dotyczył wyboru silnika renderującego. Z początku myślałem o najprostszym rozwiązaniu tzn. serwowaniu statycznych stron html. Jednakże takie rozwiązanie sprawia pewne problemy, z czego najbardziej upierdliwym jest chyba brak layoutów (ponieważ duża część widoków jest współdzielona, zmiana jednego z takich fragmentów wymagała by synchronizacji we wszystkich pozostałych stronach). Stąd postawiłem kilka warunków, jakie powinien spełniać silnik dla mojej aplikacji:</p>
-
-<ul>
-<li>Musi wspierać layouty/partiale</li>
-<li>Musi być szybki (ideałem byłaby prekompilacja, ale cache&#8217;owanie widoków też jest ok)</li>
-<li>Powinien zapewniać przynajmniej podstawową logikę w wykorzystywanych szablonach tzn. wyrażenia warunkowe i pętle.</li>
-</ul>
-
-
-<p>Nie uwzględniam tutaj problemu generowania dynamicznych widoków dla każdego użytkownika, ponieważ uważam, że tak specyficzna logika powinna być renderowana po stronie klienta (klient sam zajmuje się wyświetlaniem tego, to jest właściwe tylko dla niego &ndash; brzmi logicznie, prawda?). Po długich przygodach wybór padł ostatecznie na <a href="http://olado.github.com/doT/">doT.js</a>. Jest on obecnie uważany za jeden z najszybszych istniejących silników renderujących dla node.js (co potwierdzają benchmarki).</p>
-
-<p>Niestety dłuższe zabawy wykazały, że ciężko jest wykorzystać domyślne API doT.js do renderowania widoków w expressie. Z tego powodu postanowiłem stworzyć własne rozwiązanie. Zacząłem od wydzielenia logiki odpowiedzialnej za rendering do osobnego modułu <strong>renderer.js</strong><em> </em>umiejscowionego w głównym katalogu aplikacji. Początkowa definicja wyglądała następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">path</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">),</span> <span class="c1">// operowanie na ścieżkach systemowych</span>
-</span><span class='line'><span class="nx">fs</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">),</span>     <span class="c1">// I/O na plikach</span>
-</span><span class='line'><span class="nx">defaultLayout</span><span class="p">,</span>          <span class="c1">// domyślna nazwa layoutu</span>
-</span><span class='line'><span class="nx">extension</span><span class="p">,</span>              <span class="c1">// domyślne rozszerzenie plików-szablonów</span>
-</span><span class='line'><span class="nx">viewsPath</span><span class="p">,</span>              <span class="c1">// ścieżka, gdzie składowane są widoki</span>
-</span><span class='line'><span class="nx">cacheViews</span><span class="p">,</span>             <span class="c1">// flaga, czy cache&#39;ować kompilowane widoki</span>
-</span><span class='line'><span class="nx">compiledViewsCache</span><span class="p">;</span>     <span class="c1">// cache na skompilowane widoki</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Następnym krokiem jest funkcja inicjalizująca:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">setup</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">){</span>
-</span><span class='line'>  <span class="nx">extension</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">extension</span> <span class="o">||</span> <span class="s1">&#39;html&#39;</span><span class="p">;</span>
-</span><span class='line'>  <span class="nx">defaultLayout</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">layout</span> <span class="o">||</span> <span class="s1">&#39;layout&#39;</span><span class="p">;</span>
-</span><span class='line'>  <span class="nx">viewsPath</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span> <span class="nx">options</span><span class="p">.</span><span class="nx">path</span> <span class="o">||</span> <span class="s1">&#39;views&#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="nx">cacheViews</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">cacheViews</span> <span class="o">||</span> <span class="kc">true</span><span class="p">;</span>
-</span><span class='line'>  <span class="nx">compiledViewsCache</span> <span class="o">=</span> <span class="nx">cacheViews</span> <span class="o">?</span> <span class="p">{}</span> <span class="o">:</span> <span class="kc">undefined</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Określiliśmy w niej kilka opcji, które wykorzystywane będą podczas renderowania:</p>
-
-<ul>
-<li>extension &ndash; nazwa rozszerzenia wykorzystywanego przez kompilowane szablony (domyślnie: html)</li>
-<li>defaultLayout &ndash; nazwa pliku layoutu (domyślnie: layout). Należy tutaj zaznaczyć, że w moim rozwiązaniu istnieje tylko 1 plik główny, nie istnieje domyślna obsługa zagnieżdżania widoków, mimo że wciąż jest taka możliwość.</li>
-<li>viewsPath &ndash; scieżka względna do katalogu z widokami (domyślnie: /views).</li>
-<li>cacheViews &ndash; czy skompilowany widok powinien zostać cache&#8217;owany? (domyślnie: tak)</li>
-</ul>
-
-
-<p>Teraz nadchodzi magia. Tworzymy funkcję, której zadaniem będzie wyrenderowanie podanego nam widoku:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">render</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">viewname</span><span class="p">,</span> <span class="nx">model</span><span class="p">,</span> <span class="nx">layout</span><span class="p">){</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">layoutPath</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">viewsPath</span><span class="p">,</span> <span class="p">(</span><span class="nx">layout</span> <span class="o">||</span> <span class="nx">defaultLayout</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="nx">extension</span><span class="p">);</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">viewPath</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">viewsPath</span><span class="p">,</span> <span class="nx">viewname</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="nx">extension</span><span class="p">);</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">c</span><span class="p">;</span>
-</span><span class='line'>  <span class="c1">// czy dany widok został znaleziony w cache</span>
-</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="nx">cacheViews</span> <span class="o">&amp;</span><span class="nx">amp</span><span class="p">;</span><span class="o">&amp;</span><span class="nx">amp</span><span class="p">;</span> <span class="k">typeof</span> <span class="p">(</span><span class="nx">c</span><span class="o">=</span><span class="nx">compiledViewsCache</span><span class="p">[</span><span class="nx">viewPath</span><span class="p">])</span> <span class="o">===</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
-</span><span class='line'>      <span class="nx">res</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">c</span><span class="p">(</span><span class="nx">model</span><span class="p">));</span>
-</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>      <span class="c1">// asynchroniczne odczytanie widoku</span>
-</span><span class='line'>      <span class="nx">fs</span><span class="p">.</span><span class="nx">readFile</span><span class="p">(</span><span class="nx">viewPath</span><span class="p">,</span> <span class="s1">&#39;utf8&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">viewData</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>              <span class="c1">// błąd przy pobraniu pliku z widokiem</span>
-</span><span class='line'>          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>              <span class="c1">// asynchroniczne odczytanie layoutu</span>
-</span><span class='line'>              <span class="nx">fs</span><span class="p">.</span><span class="nx">readFile</span><span class="p">(</span><span class="nx">layoutPath</span><span class="p">,</span> <span class="s1">&#39;utf8&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">layoutData</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>                  <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">){</span>
-</span><span class='line'>                      <span class="c1">// błąd przy pobraniu layoutu</span>
-</span><span class='line'>                  <span class="p">}</span><span class="k">else</span><span class="p">{</span>
-</span><span class='line'>                      <span class="c1">// skompiluj layout z widokiem</span>
-</span><span class='line'>                      <span class="kd">var</span> <span class="nx">compiled</span> <span class="o">=</span> <span class="nx">dot</span><span class="p">.</span><span class="nx">template</span><span class="p">(</span>
-</span><span class='line'>                          <span class="nx">layoutData</span><span class="p">.</span><span class="nx">toString</span><span class="p">(),</span>
-</span><span class='line'>                          <span class="kc">undefined</span><span class="p">,</span>
-</span><span class='line'>                          <span class="p">{</span> <span class="nx">content</span><span class="o">:</span> <span class="nx">viewData</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">}</span>
-</span><span class='line'>                      <span class="p">);</span>
-</span><span class='line'>                      <span class="k">if</span><span class="p">(</span><span class="nx">cacheViews</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>                          <span class="c1">// dodaj widok do cache</span>
-</span><span class='line'>                          <span class="nx">compiledViewsCache</span><span class="p">[</span><span class="nx">viewPath</span><span class="p">]</span> <span class="o">=</span> <span class="nx">compiled</span><span class="p">;</span>
-</span><span class='line'>                      <span class="p">}</span>
-</span><span class='line'>                      <span class="c1">// wyświetl wyrenderowany widok</span>
-</span><span class='line'>                      <span class="nx">res</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">compiled</span><span class="p">(</span><span class="nx">model</span><span class="p">));</span>
-</span><span class='line'>                  <span class="p">}</span>
-</span><span class='line'>              <span class="p">});</span>
-</span><span class='line'>          <span class="p">}</span>
-</span><span class='line'>      <span class="p">});</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Funkcja ta przyjmuje 4 parametry: obiekt express.response, nazwę widoku, model, z którym widok powinien być skompilowany, oraz nazwę layoutu (jeżeli domyślny nam nie odpowiada). Dwa ostatnie parametry są opcjonalne. Wewnątrz funkcji wykonujemy następujące operacje:</p>
-
-<ol>
-<li>Jeżeli dany widok został zcache&#8217;owany, odczytujemy go z cache i kompilujemy z podanym modelem. Warto tutaj nadmienić, że cache nie służy nam do zachowywania gotowego htmla, a jedynie skompilowanej funkcji szablonu, która generuje ten html na podstawie otrzymanego modelu. W tym wypadku zyskujemy na czasie, jaki należałoby poświęcić na odczytanie i skompilowanie szablonów zawartych w plikach.</li>
-<li>Jeżeli widok nie był zcache&#8217;owany, odczytujemy kolejno plik szablonu z widokiem oraz layoutem (obie operacje odczytania pliku wykonywane są asynchronicznie), następie kompilujemy sam szablon, aby na koniec na jego podstawie wygenerować wynikowy html oraz wysłać odpowiedź.</li>
-</ol>
-
-
-<p>Aby moduł można uznać za gotowy, wystarczy udostępnić funkcje <em>setup</em> oraz <em>render</em> (dodając te funkcje do zmiennej <em>exports</em>).</p>
-
-<p>Konfiguracja tego modułu w aplikacji może wyglądać następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">express</span>  <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;express&#39;</span><span class="p">),</span>
-</span><span class='line'>  <span class="nx">renderer</span><span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./renderer&#39;</span><span class="p">),</span>
-</span><span class='line'>  <span class="nx">app</span>  <span class="o">=</span> <span class="nx">express</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'><span class="nx">renderer</span><span class="p">.</span><span class="nx">setup</span><span class="p">({</span>
-</span><span class='line'>  <span class="nx">extension</span><span class="o">:</span> <span class="s1">&#39;html&#39;</span><span class="p">,</span>
-</span><span class='line'>  <span class="nx">layout</span><span class="o">:</span> <span class="s1">&#39;layout&#39;</span><span class="p">,</span>
-</span><span class='line'>  <span class="nx">viewsPath</span><span class="o">:</span> <span class="s1">&#39;/views&#39;</span><span class="p">,</span>
-</span><span class='line'>  <span class="nx">cacheViews</span><span class="o">:</span> <span class="kc">true</span>
-</span><span class='line'><span class="p">});</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// dodanie do obiektu express.response funkcjonalności naszego modułu</span>
-</span><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">show</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">viewname</span><span class="p">,</span> <span class="nx">model</span><span class="p">,</span> <span class="nx">layout</span><span class="p">){</span>
-</span><span class='line'>  <span class="nx">renderer</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">viewname</span><span class="p">,</span> <span class="nx">model</span><span class="p">,</span><span class="nx">layout</span><span class="p">);</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Trzeba dodać, że obiekt app.response służący do rozszerzenia domyślnych funkcjonalności obiektu response, jest dostępny w express.js od wersji 3.x.</p>
-
-<p>Przykładowy plik <strong>layout.html</strong> może wyglądać następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="o">&lt;!</span><span class="nx">DOCTYPE</span> <span class="nx">html</span><span class="o">&gt;</span>
-</span><span class='line'><span class="o">&lt;</span><span class="nx">html</span> <span class="nx">lang</span><span class="o">=</span><span class="s2">&quot;pl&quot;</span><span class="o">&gt;</span>
-</span><span class='line'>  <span class="o">&lt;</span><span class="nx">head</span><span class="o">&gt;</span>
-</span><span class='line'>      <span class="o">&lt;</span><span class="nx">title</span><span class="o">&gt;</span>
-</span><span class='line'>          <span class="p">{</span> <span class="p">{</span><span class="o">=</span><span class="nx">it</span><span class="p">.</span><span class="nx">title</span><span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>      <span class="o">&lt;</span><span class="err">/title&gt;</span>
-</span><span class='line'>      <span class="o">&lt;</span><span class="nx">meta</span> <span class="nx">charset</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">/&gt;</span>
-</span><span class='line'>  <span class="o">&lt;</span><span class="err">/head&gt;</span>
-</span><span class='line'>  <span class="o">&lt;</span><span class="nx">body</span><span class="o">&gt;</span>
-</span><span class='line'>      <span class="p">{</span> <span class="p">{</span><span class="err">#</span><span class="nx">def</span><span class="p">.</span><span class="nx">content</span><span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="o">&lt;</span><span class="err">/body&gt;</span>
-</span><span class='line'><span class="o">&lt;</span><span class="err">/html&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Zdefiniowaliśmy w nim 2 zmienne:</p>
-
-<ul>
-<li><em>def.content </em>&ndash; zmienna czasu kompilacji, w tym miejscu wstawiona zostanie zawartość pliku konkretnego widoku.</li>
-<li><em>it.title</em> &ndash; zmienna właściwa dla danego modelu, zostanie. Domyślnie w doT.js <strong>it</strong> oznacza model przekazany do widoku, natomiast <em>title</em> to nazwa właściwości dostępnej w ramach modelu.</li>
-</ul>
-
-
-<p>Licząc, że widok zawarty jest w pliku <strong>home.html</strong> teraz wystarczy wywołać nasz widok w następujący sposób:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">model</span> <span class="o">=</span> <span class="p">{</span><span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;Strona główna&#39;</span><span class="p">};</span>
-</span><span class='line'>  <span class="nx">res</span><span class="p">.</span><span class="nx">show</span><span class="p">(</span><span class="s1">&#39;home&#39;</span><span class="p">,</span> <span class="nx">model</span><span class="p">);</span>    <span class="c1">// nasza customowa metoda</span>
-</span><span class='line'><span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure>
-
 
 		
 		

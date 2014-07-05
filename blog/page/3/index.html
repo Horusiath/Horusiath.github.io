@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Sep 9th, 2012 javascript, wzorce projektowe Comments Javascript - Porady I Uwagi Ostatnimi czasy poświęciłem kilka chwil na refleksje związane z &hellip;">
+	<meta name="description" content="Dec 30th, 2012 javascript, programowanie Comments node.js - Renderowanie Layoutów Z Wykorzystaniem doT.js Stało się. Po wielu podejściach skłoniłem &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,280 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-30T10:09:00+01:00" data-updated="true" itemprop="datePublished">Dec 30<span>th</span>, 2012</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2012/12/30/nodejs-renderowanie-layoutow-z/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2012/12/30/nodejs-renderowanie-layoutow-z/" itemprop="url">node.js - Renderowanie Layoutów Z Wykorzystaniem doT.js</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Stało się. Po wielu podejściach skłoniłem się do <a href="http://nodejs.org/">node.js</a> i postanowiłem napisać w nim swoją pierwszą aplikację z prawdziwego zdarzenia. O moich motywach i wątpliwościach, jakie towarzyszyły wykorzystaniu javascriptu do tworzenia logiki po stronie serwera opowiem innym razem. W tym poście postaram się skupić na innym zagadnieniu.</p>
+
+<p>Po dość długim rekonesansie związanym z technologiami używanymi w node.js zdecydowałem się, że moja aplikacja zostanie oparta o bibliotekę <a href="http://expressjs.com/">express.js</a>. Jest to chyba najpopularniejszy framework w tym środowisku (ideowo czerpiący z Sinatry znanej wśród programistów Ruby&#8217;ego), którego głównymi zaletami są niewielki narzut obliczeniowy, łatwość konfiguracji, duża ilość zewnętrznych rozszerzeń oraz spora społeczność. W tym momencie należało również dokonać kilku dość istotnych wyborów. Ten, którego dotyczy mój wpis, dotyczył wyboru silnika renderującego. Z początku myślałem o najprostszym rozwiązaniu tzn. serwowaniu statycznych stron html. Jednakże takie rozwiązanie sprawia pewne problemy, z czego najbardziej upierdliwym jest chyba brak layoutów (ponieważ duża część widoków jest współdzielona, zmiana jednego z takich fragmentów wymagała by synchronizacji we wszystkich pozostałych stronach). Stąd postawiłem kilka warunków, jakie powinien spełniać silnik dla mojej aplikacji:</p>
+
+<ul>
+<li>Musi wspierać layouty/partiale</li>
+<li>Musi być szybki (ideałem byłaby prekompilacja, ale cache&#8217;owanie widoków też jest ok)</li>
+<li>Powinien zapewniać przynajmniej podstawową logikę w wykorzystywanych szablonach tzn. wyrażenia warunkowe i pętle.</li>
+</ul>
+
+
+<p>Nie uwzględniam tutaj problemu generowania dynamicznych widoków dla każdego użytkownika, ponieważ uważam, że tak specyficzna logika powinna być renderowana po stronie klienta (klient sam zajmuje się wyświetlaniem tego, to jest właściwe tylko dla niego &ndash; brzmi logicznie, prawda?). Po długich przygodach wybór padł ostatecznie na <a href="http://olado.github.com/doT/">doT.js</a>. Jest on obecnie uważany za jeden z najszybszych istniejących silników renderujących dla node.js (co potwierdzają benchmarki).</p>
+
+<p>Niestety dłuższe zabawy wykazały, że ciężko jest wykorzystać domyślne API doT.js do renderowania widoków w expressie. Z tego powodu postanowiłem stworzyć własne rozwiązanie. Zacząłem od wydzielenia logiki odpowiedzialnej za rendering do osobnego modułu <strong>renderer.js</strong><em> </em>umiejscowionego w głównym katalogu aplikacji. Początkowa definicja wyglądała następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">path</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">),</span> <span class="c1">// operowanie na ścieżkach systemowych</span>
+</span><span class='line'><span class="nx">fs</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">),</span>     <span class="c1">// I/O na plikach</span>
+</span><span class='line'><span class="nx">defaultLayout</span><span class="p">,</span>          <span class="c1">// domyślna nazwa layoutu</span>
+</span><span class='line'><span class="nx">extension</span><span class="p">,</span>              <span class="c1">// domyślne rozszerzenie plików-szablonów</span>
+</span><span class='line'><span class="nx">viewsPath</span><span class="p">,</span>              <span class="c1">// ścieżka, gdzie składowane są widoki</span>
+</span><span class='line'><span class="nx">cacheViews</span><span class="p">,</span>             <span class="c1">// flaga, czy cache&#39;ować kompilowane widoki</span>
+</span><span class='line'><span class="nx">compiledViewsCache</span><span class="p">;</span>     <span class="c1">// cache na skompilowane widoki</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Następnym krokiem jest funkcja inicjalizująca:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">setup</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">){</span>
+</span><span class='line'>  <span class="nx">extension</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">extension</span> <span class="o">||</span> <span class="s1">&#39;html&#39;</span><span class="p">;</span>
+</span><span class='line'>  <span class="nx">defaultLayout</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">layout</span> <span class="o">||</span> <span class="s1">&#39;layout&#39;</span><span class="p">;</span>
+</span><span class='line'>  <span class="nx">viewsPath</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span> <span class="nx">options</span><span class="p">.</span><span class="nx">path</span> <span class="o">||</span> <span class="s1">&#39;views&#39;</span><span class="p">);</span>
+</span><span class='line'>  <span class="nx">cacheViews</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">cacheViews</span> <span class="o">||</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>  <span class="nx">compiledViewsCache</span> <span class="o">=</span> <span class="nx">cacheViews</span> <span class="o">?</span> <span class="p">{}</span> <span class="o">:</span> <span class="kc">undefined</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Określiliśmy w niej kilka opcji, które wykorzystywane będą podczas renderowania:</p>
+
+<ul>
+<li>extension &ndash; nazwa rozszerzenia wykorzystywanego przez kompilowane szablony (domyślnie: html)</li>
+<li>defaultLayout &ndash; nazwa pliku layoutu (domyślnie: layout). Należy tutaj zaznaczyć, że w moim rozwiązaniu istnieje tylko 1 plik główny, nie istnieje domyślna obsługa zagnieżdżania widoków, mimo że wciąż jest taka możliwość.</li>
+<li>viewsPath &ndash; scieżka względna do katalogu z widokami (domyślnie: /views).</li>
+<li>cacheViews &ndash; czy skompilowany widok powinien zostać cache&#8217;owany? (domyślnie: tak)</li>
+</ul>
+
+
+<p>Teraz nadchodzi magia. Tworzymy funkcję, której zadaniem będzie wyrenderowanie podanego nam widoku:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">render</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">viewname</span><span class="p">,</span> <span class="nx">model</span><span class="p">,</span> <span class="nx">layout</span><span class="p">){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">layoutPath</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">viewsPath</span><span class="p">,</span> <span class="p">(</span><span class="nx">layout</span> <span class="o">||</span> <span class="nx">defaultLayout</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="nx">extension</span><span class="p">);</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">viewPath</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">viewsPath</span><span class="p">,</span> <span class="nx">viewname</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="nx">extension</span><span class="p">);</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">c</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">// czy dany widok został znaleziony w cache</span>
+</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="nx">cacheViews</span> <span class="o">&amp;</span><span class="nx">amp</span><span class="p">;</span><span class="o">&amp;</span><span class="nx">amp</span><span class="p">;</span> <span class="k">typeof</span> <span class="p">(</span><span class="nx">c</span><span class="o">=</span><span class="nx">compiledViewsCache</span><span class="p">[</span><span class="nx">viewPath</span><span class="p">])</span> <span class="o">===</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
+</span><span class='line'>      <span class="nx">res</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">c</span><span class="p">(</span><span class="nx">model</span><span class="p">));</span>
+</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>      <span class="c1">// asynchroniczne odczytanie widoku</span>
+</span><span class='line'>      <span class="nx">fs</span><span class="p">.</span><span class="nx">readFile</span><span class="p">(</span><span class="nx">viewPath</span><span class="p">,</span> <span class="s1">&#39;utf8&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">viewData</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="c1">// błąd przy pobraniu pliku z widokiem</span>
+</span><span class='line'>          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>              <span class="c1">// asynchroniczne odczytanie layoutu</span>
+</span><span class='line'>              <span class="nx">fs</span><span class="p">.</span><span class="nx">readFile</span><span class="p">(</span><span class="nx">layoutPath</span><span class="p">,</span> <span class="s1">&#39;utf8&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">layoutData</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                  <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">){</span>
+</span><span class='line'>                      <span class="c1">// błąd przy pobraniu layoutu</span>
+</span><span class='line'>                  <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+</span><span class='line'>                      <span class="c1">// skompiluj layout z widokiem</span>
+</span><span class='line'>                      <span class="kd">var</span> <span class="nx">compiled</span> <span class="o">=</span> <span class="nx">dot</span><span class="p">.</span><span class="nx">template</span><span class="p">(</span>
+</span><span class='line'>                          <span class="nx">layoutData</span><span class="p">.</span><span class="nx">toString</span><span class="p">(),</span>
+</span><span class='line'>                          <span class="kc">undefined</span><span class="p">,</span>
+</span><span class='line'>                          <span class="p">{</span> <span class="nx">content</span><span class="o">:</span> <span class="nx">viewData</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">}</span>
+</span><span class='line'>                      <span class="p">);</span>
+</span><span class='line'>                      <span class="k">if</span><span class="p">(</span><span class="nx">cacheViews</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                          <span class="c1">// dodaj widok do cache</span>
+</span><span class='line'>                          <span class="nx">compiledViewsCache</span><span class="p">[</span><span class="nx">viewPath</span><span class="p">]</span> <span class="o">=</span> <span class="nx">compiled</span><span class="p">;</span>
+</span><span class='line'>                      <span class="p">}</span>
+</span><span class='line'>                      <span class="c1">// wyświetl wyrenderowany widok</span>
+</span><span class='line'>                      <span class="nx">res</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">compiled</span><span class="p">(</span><span class="nx">model</span><span class="p">));</span>
+</span><span class='line'>                  <span class="p">}</span>
+</span><span class='line'>              <span class="p">});</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Funkcja ta przyjmuje 4 parametry: obiekt express.response, nazwę widoku, model, z którym widok powinien być skompilowany, oraz nazwę layoutu (jeżeli domyślny nam nie odpowiada). Dwa ostatnie parametry są opcjonalne. Wewnątrz funkcji wykonujemy następujące operacje:</p>
+
+<ol>
+<li>Jeżeli dany widok został zcache&#8217;owany, odczytujemy go z cache i kompilujemy z podanym modelem. Warto tutaj nadmienić, że cache nie służy nam do zachowywania gotowego htmla, a jedynie skompilowanej funkcji szablonu, która generuje ten html na podstawie otrzymanego modelu. W tym wypadku zyskujemy na czasie, jaki należałoby poświęcić na odczytanie i skompilowanie szablonów zawartych w plikach.</li>
+<li>Jeżeli widok nie był zcache&#8217;owany, odczytujemy kolejno plik szablonu z widokiem oraz layoutem (obie operacje odczytania pliku wykonywane są asynchronicznie), następie kompilujemy sam szablon, aby na koniec na jego podstawie wygenerować wynikowy html oraz wysłać odpowiedź.</li>
+</ol>
+
+
+<p>Aby moduł można uznać za gotowy, wystarczy udostępnić funkcje <em>setup</em> oraz <em>render</em> (dodając te funkcje do zmiennej <em>exports</em>).</p>
+
+<p>Konfiguracja tego modułu w aplikacji może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">express</span>  <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;express&#39;</span><span class="p">),</span>
+</span><span class='line'>  <span class="nx">renderer</span><span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./renderer&#39;</span><span class="p">),</span>
+</span><span class='line'>  <span class="nx">app</span>  <span class="o">=</span> <span class="nx">express</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nx">renderer</span><span class="p">.</span><span class="nx">setup</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">extension</span><span class="o">:</span> <span class="s1">&#39;html&#39;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">layout</span><span class="o">:</span> <span class="s1">&#39;layout&#39;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">viewsPath</span><span class="o">:</span> <span class="s1">&#39;/views&#39;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">cacheViews</span><span class="o">:</span> <span class="kc">true</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// dodanie do obiektu express.response funkcjonalności naszego modułu</span>
+</span><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">show</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">viewname</span><span class="p">,</span> <span class="nx">model</span><span class="p">,</span> <span class="nx">layout</span><span class="p">){</span>
+</span><span class='line'>  <span class="nx">renderer</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">viewname</span><span class="p">,</span> <span class="nx">model</span><span class="p">,</span><span class="nx">layout</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Trzeba dodać, że obiekt app.response służący do rozszerzenia domyślnych funkcjonalności obiektu response, jest dostępny w express.js od wersji 3.x.</p>
+
+<p>Przykładowy plik <strong>layout.html</strong> może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="o">&lt;!</span><span class="nx">DOCTYPE</span> <span class="nx">html</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">html</span> <span class="nx">lang</span><span class="o">=</span><span class="s2">&quot;pl&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>  <span class="o">&lt;</span><span class="nx">head</span><span class="o">&gt;</span>
+</span><span class='line'>      <span class="o">&lt;</span><span class="nx">title</span><span class="o">&gt;</span>
+</span><span class='line'>          <span class="p">{</span> <span class="p">{</span><span class="o">=</span><span class="nx">it</span><span class="p">.</span><span class="nx">title</span><span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>      <span class="o">&lt;</span><span class="err">/title&gt;</span>
+</span><span class='line'>      <span class="o">&lt;</span><span class="nx">meta</span> <span class="nx">charset</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">/&gt;</span>
+</span><span class='line'>  <span class="o">&lt;</span><span class="err">/head&gt;</span>
+</span><span class='line'>  <span class="o">&lt;</span><span class="nx">body</span><span class="o">&gt;</span>
+</span><span class='line'>      <span class="p">{</span> <span class="p">{</span><span class="err">#</span><span class="nx">def</span><span class="p">.</span><span class="nx">content</span><span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>  <span class="o">&lt;</span><span class="err">/body&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/html&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Zdefiniowaliśmy w nim 2 zmienne:</p>
+
+<ul>
+<li><em>def.content </em>&ndash; zmienna czasu kompilacji, w tym miejscu wstawiona zostanie zawartość pliku konkretnego widoku.</li>
+<li><em>it.title</em> &ndash; zmienna właściwa dla danego modelu, zostanie. Domyślnie w doT.js <strong>it</strong> oznacza model przekazany do widoku, natomiast <em>title</em> to nazwa właściwości dostępnej w ramach modelu.</li>
+</ul>
+
+
+<p>Licząc, że widok zawarty jest w pliku <strong>home.html</strong> teraz wystarczy wywołać nasz widok w następujący sposób:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">model</span> <span class="o">=</span> <span class="p">{</span><span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;Strona główna&#39;</span><span class="p">};</span>
+</span><span class='line'>  <span class="nx">res</span><span class="p">.</span><span class="nx">show</span><span class="p">(</span><span class="s1">&#39;home&#39;</span><span class="p">,</span> <span class="nx">model</span><span class="p">);</span>    <span class="c1">// nasza customowa metoda</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1843,96 +2117,6 @@ Co znaczą następujące atrybuty?:</p>
 <p>Wykorzystując stworzoną poprzednio pętlę umożliwiającą iterację po właściwościach obiektu JSON dokonujemy sklejenia par klucz-wartość do jednolitej postaci stringa, który zbudowany jest tak samo jak bazowy query string wyciągany z naszej przeglądarki.</p>
 
 <p>Notka dla osób korzystających z map routingu: jak można się domyślić powyższy przykład działa jedynie wtedy, gdy przekazywany przez nas query string zbudowany jest w standardowej konwencji. Z tego powodu wszelkie wartości przekazywane na potrzeby map routingu np. w konwencji <code>controller/action/parameter</code>nie zostaną przetworzone.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-11-02T17:22:00+01:00" data-updated="true" itemprop="datePublished">Nov 2<span>nd</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/asp/'>asp</a>, <a class='category' href='/blog/categories/javascript/'>javascript</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/11/02/ajax-post-tablicy-do-akcji/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/11/02/ajax-post-tablicy-do-akcji/" itemprop="url">[Ajax] Post Tablicy Do Akcji</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Podczas pracy nad łączeniem wywołań ajaxowych z frameworkiem ASP MVC 3 natknąłem się na dość interesujący problem &ndash; rozpatrzmy scenariusz, w którym mamy zamiar przekazać tablicę obiektów jakiegoś prostego typu (liczba, string) za pośrednictwem ajaxowego posta do jednej z akcji kontrolera. Taki przykład można zaprezentować w następujący sposób:</p>
-
-<p>Client side:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">array</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">,</span> <span class="s1">&#39;two&#39;</span><span class="p">,</span> <span class="s1">&#39;three&#39;</span><span class="p">];</span>
-</span><span class='line'><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="s1">&#39;@Url.Action(&quot;AjaxPost&quot;)&#39;</span><span class="p">,</span> <span class="p">{</span>
-</span><span class='line'>  <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span>
-</span><span class='line'>  <span class="nx">data</span><span class="o">:</span> <span class="nx">array</span>
-</span><span class='line'><span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Server side:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[HttpPost]</span>
-</span><span class='line'><span class="k">public</span> <span class="n">JsonResult</span> <span class="nf">AjaxPost</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">array</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="n">array</span> <span class="p">!=</span> <span class="k">null</span><span class="p">){</span>
-</span><span class='line'>      <span class="c1">// to do</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W praktyce takie coś nie przejdzie, domyślny binder nie jest w stanie zrozumieć argumentów przekazanych w powyższym kodzie javascriptu. Powodem jest linijka zwierająca opis parametru &ndash; data : array. Wydawać by się mogło, że zapis ten można naprawić parsując naszą tablicę do notacji JSON, jednakże standardowe mechanizmy również nie sprawdzają się w tej roli. Z tego powodu następujące zapisy będą błędne:</p>
-
-<ul>
-<li>wykorzystanie <code>JSON.stringify(array)</code> lub <code> JSON.stringify({ &lsquo;array&rsquo; : array})</code></li>
-<li>wykorzystanie zewnętrznych bibliotek np. <code>$.parseJSON(array)</code>, <code>$.parseJSON({&lsquo;array&rsquo; : array})</code></li>
-</ul>
-
-
-<p>Rozwiązaniem tego problemu jest wykorzystanie funkcji z biblioteki jQuery o nazwie <a href="http://api.jquery.com/jQuery.param/">param</a>. Z jej wykorzystaniem nasza linijka powinna wyglądać następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">data</span><span class="o">:</span> <span class="nx">$</span><span class="p">.</span><span class="nx">param</span><span class="p">({</span><span class="s1">&#39;array&#39;</span> <span class="o">:</span> <span class="nx">array</span><span class="p">},</span> <span class="kc">true</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Umieszczenie tablicy w obiekcie JSON jest wymagane, w dodatku nazwa pola musi odpowiadać nazwie parametru przekazywanego do naszej metody po stronie serwera (w przeciwnym razie binder nie rozpozna, którą zmienną zmapować na dany parametr).</p>
-
-<p>Można to oczywiście wykonać nie korzystając z gotowych bibliotek. W takim wypadku przekazywane przez nas parametry zapisane w postaci tekstu, w podanym przeze mnie przypadku, powinny mieć następującą postać: <code>array=one&amp;array=two&amp;array=three</code></p>
 
 		
 		
