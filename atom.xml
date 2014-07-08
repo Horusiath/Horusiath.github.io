@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-07-05T22:03:42+02:00</updated>
+  <updated>2014-07-09T00:06:18+02:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,160 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Map reduce with FSharp and Akka.net]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/07/09/fsharp-akka-map-reduce/"/>
+    <updated>2014-07-09T00:00:00+02:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/07/09/fsharp-akka-map-reduce</id>
+    <content type="html"><![CDATA[<p>In my previous post, I&rsquo;ve shown how to create a simple <em>hello world</em> application using Akka.net system leveraged with a F# API. Today, I&rsquo;ll show a slightly more complex example. We&rsquo;ll create a simple Map-Reduce system based on distributed word count algorithm.</p>
+
+<p>Idea of our algorithm is quite simple &ndash; we want to group and count all repetitions of the same words (case-insensitive) in input text. This is a perfect subject to illustrate a map-reduce algorithm as well as Akka.net task distribution mechanism. To realize our objective, we&rsquo;ll need to define three actor types:</p>
+
+<ul>
+<li>Master &ndash; it&rsquo;s main job is to spread an input data equally among other actors and forward request for result data.</li>
+<li>Mappers &ndash; they will tokenize their text fragments into specific words and send it to reducers.</li>
+<li>Reducers &ndash; they are responsible for word grouping and counting.</li>
+</ul>
+
+
+<p>At the beginning, lets define basic message types used by our system:</p>
+
+<ul>
+<li>One to propagate chunks of data to mapping nodes.</li>
+<li>Next one to forward processed data to reducers.</li>
+<li>Last one to invoke collection mechanism, which will concatenate all reduced data to one peace and send it back to the originator.</li>
+</ul>
+
+
+<p>All of them are illustrated by the code below:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">MRMsg</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Map</span> <span class="k">of</span> <span class="kt">string</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Reduce</span> <span class="k">of</span> <span class="o">(</span><span class="kt">string</span> <span class="o">*</span> <span class="kt">int</span><span class="o">)</span> <span class="kt">list</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Collect</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define, I&rsquo;ve created a simple function factory, which will wrap all varying logic for us.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">actorFor</span> <span class="n">func</span> <span class="o">=</span> <span class="k">fun</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">-&gt;</span>
+</span><span class='line'>    <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
+</span><span class='line'>        <span class="n">func</span> <span class="n">mailbox</span> <span class="n">msg</span>            <span class="c1">// this line is actor-specific</span>
+</span><span class='line'>        <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">}</span>
+</span><span class='line'>    <span class="n">loop</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Lets start to defining a map-reduce logic into our application. Firstly we need to create a <strong>map actor</strong>. In this example, all what it needs to do, is to chop provided string into single words, and create from them a simple bag of words with their repetition. However we won&rsquo;t sum them now &ndash; this is the job for reducer actors.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">mapWords</span> <span class="o">(</span><span class="n">line</span><span class="o">:</span><span class="kt">string</span><span class="o">)</span> <span class="o">=</span> <span class="n">seq</span> <span class="o">{</span> <span class="k">for</span> <span class="n">word</span> <span class="k">in</span> <span class="n">line</span><span class="o">.</span><span class="nc">Split</span><span class="bp">()</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">word</span><span class="o">,</span> <span class="mi">1</span><span class="o">)</span> <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">map</span> <span class="n">reducer</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">=</span> <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Map</span> <span class="n">line</span> <span class="o">-&gt;</span> <span class="n">reducer</span> <span class="o">&lt;!</span> <span class="nc">Reduce</span> <span class="o">(</span><span class="n">mapWords</span> <span class="n">line</span> <span class="o">|&gt;</span> <span class="nn">List</span><span class="p">.</span><span class="n">ofSeq</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">|</span> <span class="n">m</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Unhandled</span> <span class="n">m</span>      <span class="c1">// mapper won&#39;t handle any other messages</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you may see, after finishing it&rsquo;s work, mapper will send list of words directly to reducers. To make this possible, we need to provide reducer reference as one of the function parameters.</p>
+
+<p>Next type is the <strong>reduce actor</strong>. It&rsquo;s task is to group all incoming words, and count their occurrences. In our example we use shared <code>ConcurrentDictionary</code> for gathering data from all of the reducer instances. For more real life example, we should probably use some more sophisticated mechanism, such as <strong>aggregate actor</strong> concatenating all results provided by specific reducers. Here for sake of simplicity, we omit it.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">reduceWords</span> <span class="o">(</span><span class="n">dict</span><span class="o">:</span><span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span><span class="kt">int</span><span class="o">&gt;)</span> <span class="n">iter</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">iter</span>
+</span><span class='line'>    <span class="o">|&gt;</span> <span class="nn">List</span><span class="p">.</span><span class="n">iter</span> <span class="o">(</span><span class="k">fun</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">v</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">dict</span><span class="o">.</span><span class="nc">AddOrUpdate</span><span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">v</span><span class="o">,</span> <span class="nn">System</span><span class="p">.</span><span class="nc">Func</span><span class="o">&lt;_,_,_&gt;(</span><span class="k">fun</span> <span class="n">key</span> <span class="n">old</span> <span class="o">-&gt;</span> <span class="n">old</span> <span class="o">+</span> <span class="n">v</span><span class="o">))</span> <span class="o">|&gt;</span> <span class="n">ignore</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">reduce</span> <span class="o">(</span><span class="n">dict</span><span class="o">:</span><span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span><span class="kt">int</span><span class="o">&gt;)</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">=</span> <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Reduce</span> <span class="n">l</span> <span class="o">-&gt;</span> <span class="n">reduceWords</span> <span class="n">dict</span> <span class="n">l</span> <span class="o">|&gt;</span> <span class="n">ignore</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Collect</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span> <span class="o">&lt;!</span> <span class="n">seq</span> <span class="o">{</span> <span class="k">for</span> <span class="n">e</span> <span class="k">in</span> <span class="n">dict</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="nc">Key</span><span class="o">,</span> <span class="n">e</span><span class="o">.</span><span class="nc">Value</span><span class="o">)</span> <span class="o">}</span>
+</span><span class='line'>    <span class="o">|</span> <span class="n">m</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Unhandled</span> <span class="n">m</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since reducer actors have direct access to shared dictionary, they also are able to respond on Collect command, providing all reduced data back to message sender.</p>
+
+<p>The last behavior, is the <strong>master actor</strong>. It&rsquo;s role is to be a proxy between application&rsquo;s in/out data, and the rest of the actors. We use it for two tasks: 1) sending text line by line to be processed by our Map-Reduce application, 2) forwarding request for result of MR operation.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">master</span> <span class="n">mapper</span> <span class="o">(</span><span class="n">reducer</span><span class="o">:</span><span class="nc">InternalActorRef</span><span class="o">)</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">=</span> <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Map</span> <span class="n">str</span> <span class="o">-&gt;</span> <span class="k">for</span> <span class="n">line</span> <span class="k">in</span> <span class="n">str</span><span class="o">.</span><span class="nc">Split</span> <span class="sc">&#39;\n&#39;</span> <span class="k">do</span> <span class="n">mapper</span> <span class="o">&lt;!</span> <span class="nc">Map</span> <span class="n">line</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Collect</span> <span class="o">-&gt;</span> <span class="n">reducer</span><span class="o">.</span><span class="nc">Tell</span><span class="o">(</span><span class="nc">Collect</span><span class="o">,</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span><span class="o">)</span>    <span class="c1">// forward message with info about it&#39;s originator</span>
+</span><span class='line'>    <span class="o">|</span> <span class="n">m</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Unhandled</span> <span class="n">m</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now when we have all of our actors defined, we may initialize an Akka framework to create our MR system. Now we can use a helper functions, we&rsquo;ve defined before for fast and easy actor definition.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;MapReduceSystem&quot;</span> <span class="o">&lt;|</span> <span class="nn">ConfigurationFactory</span><span class="p">.</span><span class="nc">Default</span><span class="bp">()</span>
+</span><span class='line'><span class="k">let</span> <span class="n">dict</span> <span class="o">=</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span><span class="kt">int</span><span class="o">&gt;</span><span class="bp">()</span>
+</span><span class='line'><span class="k">let</span> <span class="n">reducer</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;reduce&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">reduce</span> <span class="n">dict</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">mapper</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;map&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">map</span> <span class="n">reducer</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">master</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">master</span> <span class="n">mapper</span> <span class="n">reducer</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To finalize, we can pass some data to our system to see, if it returns an expected results. Until now, we&rsquo;ve only used send operator <code>&lt;!</code> to delegate fire-and-forget messages for specific actors, but we&rsquo;ve actually never used any two way request-response mechanism. To do so, we&rsquo;ll use Ask method (shortcut operator <code>&lt;?</code>) to send a request message and receive a handler to be used when a response will be returned in asynchronous manner.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="n">master</span> <span class="o">&lt;!</span> <span class="nc">Map</span> <span class="s2">&quot;Orange orange apple&quot;</span>
+</span><span class='line'><span class="n">master</span> <span class="o">&lt;!</span> <span class="nc">Map</span> <span class="s2">&quot;cherry apple orange&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nn">Threading</span><span class="p">.</span><span class="nn">Thread</span><span class="p">.</span><span class="nc">Sleep</span> <span class="mi">500</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// read the result</span>
+</span><span class='line'><span class="n">async</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">let</span><span class="o">!</span> <span class="n">res</span> <span class="o">=</span> <span class="n">master</span><span class="o">.</span><span class="nc">Ask</span><span class="o">(</span><span class="nc">Collect</span><span class="o">)</span> <span class="o">|&gt;</span> <span class="nn">Async</span><span class="p">.</span><span class="nc">AwaitTask</span>
+</span><span class='line'>    <span class="k">for</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">v</span><span class="o">)</span> <span class="k">in</span> <span class="n">res</span> <span class="o">:?&gt;</span> <span class="o">(</span><span class="kt">string</span><span class="o">*</span><span class="kt">int</span><span class="o">)</span> <span class="n">seq</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">printfn</span> <span class="s2">&quot;%s</span><span class="se">\t</span><span class="s2">%d&quot;</span> <span class="n">k</span> <span class="n">v</span>
+</span><span class='line'>    <span class="n">system</span><span class="o">.</span><span class="nc">Shutdown</span><span class="bp">()</span>
+</span><span class='line'><span class="o">}</span> <span class="o">|&gt;</span> <span class="nn">Async</span><span class="p">.</span><span class="nc">RunSynchronously</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[FSharp and Akka.net - the functional way]]></title>
@@ -2156,98 +2310,6 @@
 <p>Wyjściem pośrednim są tutaj oczywiście pet-projekty &ndash; aplikacje semi-testowe i takie, które nigdy nie wychodzą zasięgiem poza wewnętrzne systemy firmy, jednocześnie na tyle proste, aby służyć za pole treningowe dla programistów.</p>
 
 <p>Myślę, że głównym rozwiązaniem jest tutaj umiejętność dostrzegania potencjalnych korzyści, szacowania ryzyka jak również wzajemnego zrozumienia każdej ze stron nawzajem. W gruncie rzeczy jest to temat otwarty i mimo, że ostateczna decyzja z reguły zostaje w rękach pojedynczych osób, powinien on być rozwiązywany poprzez otwartą wymianę poglądów (nawet w postaci 5-cio minutowej konferencji przez Skype) wszystkich osób zaangażowanych w proces wytwarzania oprogramowania.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[ASP.NET a wydajność]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc/"/>
-    <updated>2013-01-12T22:32:00+01:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2013/01/12/aspnet-wydajnosc</id>
-    <content type="html"><![CDATA[<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
-
-<h2>1. Object-Relational Mapping</h2>
-
-<p>Na pierwszy ogień niech pójdą frameworki ORM. Jak nie ciężko się domyślić pod względem popularności triumfuje tutaj Entity Framework jako rozwiązanie promowane przez MS, zaś odrobinę z tyłu wydaje się być NHibernate. Jak to jednak wygląda, jeżeli wzięlibyśmy pod uwagę wydajność? Zaczynając od bardzo popularnego zestawienia <a href="http://ormeter.net/">ORM Battle</a>:</p>
-
-<ul>
-<li><a href="http://dataobjects.net/">DataObjects.NET</a> mogą poszczycić się najbardziej wydajną budową zapytań LINQ.</li>
-<li><a href="http://bltoolkit.net/">Business Logic Toolkit</a> jest stawiany jako zwycięzca w kwestii ogólnej wydajności (operacje CRUD itp.).
--Pod względem zapytań LINQ wydajnosć <a href="http://nhforge.org/">NHibernate </a>jest skandaliczna &ndash; tutaj jednak należy się słowo wyjaśnienia, ponieważ framework ten posiada własny mechanizm generowania zapytań w locie (Criteria wraz z nakładką QueryOver), który oferuje znacznie lepszą wydajność oraz pozwala na więcej w stosunku do linq.</li>
-</ul>
-
-
-<p>Warto jednak zauważyć, że zestawienie to nie jest pełne, brakuje w nim powiem kilku ważnych bibliotek. Powołując się na kolejny benchmark wykonany przez <a href="http://servicestack.net/benchmarks/">ServiceStack</a> (ta nazwa powtórzy się tutaj jeszcze przy kilku okazjach), wysnuć można kilka innych wniosków:</p>
-
-<ul>
-<li>Narzut nakładany przez Entity Framework może wydłużyć czas wykonania zapytania nawet 13-krotnie! &ndash; (zakładam, że dla bardziej złożonych zapytań ta różnica zmniejsza się na korzyść EF) To ogromna przepaść nawet biorąc pod uwagę <a href="http://noamlewis.wordpress.com/2012/07/18/net-4-5-improves-orm-performance-across-the-chart/">usprawnienia</a> nałożone w .NET 4.5.</li>
-<li>Zwycięstwo wydajności należy do <a href="http://code.google.com/p/dapper-dot-net/">Dappera</a> &ndash; jest to microframework ORM stworzony przez Stackoverflow na potrzeby wysoko wydajnego dostępu do bazy danych, wykorzystywanego w tym serwisie. Tuż za nim znalazł się z kolei <a href="https://github.com/ServiceStack/ServiceStack.OrmLite">ServiceStack.OrmLite</a> (należy jednak pamiętać, że są oni autorami tego benchmarku).</li>
-</ul>
-
-
-<p>Na czym więc polega sukces i droga do szybkości? Myślę, że główną rolę odgrywa tutaj prostota &ndash; zarówno EF jak i NHibernate oferują rozbudowane interfejsy do budowy zapytań (LINQ i QueryOver), własne języki pośrednie (NHibernate &ndash; HQL, Entity Framework &ndash; ESQL), mechanizmy zarządzania obiektami itp. <strong>BLT</strong>, <strong>Dapper</strong> i <strong>OrmLite </strong>stosują tutaj proste operacje z wykorzystaniem standardowych zapytań SQL, odrzucając wyższe warstwy abstrakcji i trzymając się blisko podstawowych mechanizmów komunikacji z bazą danych. Dodatkowo microframeworki obarczają programistę koniecznością ręcznego zarządzania relacjami oraz synchronizacji stanu danych pomiędzy encjami i bazą. To z kolei przenosi dług wydajnościowy na kod napisany przez programistę.</p>
-
-<h2>2. Kontenery Inversion of Control</h2>
-
-<p><em>Dependency Injection</em> to już standard, mimo że wciąż nie jest to mechanizm domyślny w ASP.NET. Zapewnienie luźnych wiązań określane jest jako dobra praktyka zarówno w MVC jak i MVVM (stosowanym przez liczne frameworki stosowane również w aplikacjach desktopowych oraz na urządzenia mobline). Opierając się na kilku (<a href="http://www.palmmedia.de/blog/2011/8/30/ioc-container-benchmark-performance-comparison">1</a>, <a href="http://www.iocbattle.com/">2</a>, <a href="http://servicestack.net/benchmarks/#highcharts-8">3</a>, <a href="http://philipm.at/2011/0808/">4</a>) testach można podjąć się złożenia kilku wniosków:</p>
-
-<ol>
-<li><a href="http://www.ninject.org/">NInject</a> (który notabene jest całkiem popularnym rozwiązaniem) wydajnościowo jest jednym z najsłabszych i najwolniejszych kontenerów.</li>
-<li>Biblioteki promowane przez Microsoft &ndash; <a href="http://mef.codeplex.com/">MEF</a> oraz <a href="http://unity.codeplex.com/">Unity</a> &ndash; również nie prezentują porażającego poziomu. O ile Unity prezentuje się dość dobrze, to wciąż stanowi dość słabą konkurencję dla innych rozwiązań zawartych w zestawieniach.</li>
-<li>Mimo tego, że powyższe benchmarki nie zawsze się uzupełniają, po odrobinie przeszukiwania sieci można w zasadzie określić, że wśród zwycięzców wydajności znajdują się: <a href="http://docs.structuremap.net/">StructureMap</a> oraz <a href="http://funq.codeplex.com/">Funq</a> (który z tego co mi wiadomo nie jest obecnie wspierany, co idzie zdecydowanie na jego niekorzyść, jednak stanowi część frameworka <em>ServiceStack</em>, jest również dostępny w postaci open source).</li>
-</ol>
-
-
-<h2>3. Serializacja</h2>
-
-<p>Serializacja obiektów to dość szerokie zagadnienie, ponieważ możemy mieć na myśli różne formaty (xml, json czy dane binarne), zaś każdy z nich znajduje zastosowanie w innych sytuacjach i ma inną specyfikę. Opierając się na różnych źródłach (<a href="http://www.servicestack.net/benchmarks/NorthwindDatabaseRowsSerialization.100000-times.2010-08-17.html">1</a>, <a href="http://servicestack.net/benchmarks/#highcharts-6">2</a>), można pokusić się o kilka stwierdzeń:</p>
-
-<ul>
-<li>Jeżeli chodzi o rozmiar zajmowany przez serializowane obiekty, najwydajniejszym rozwiązaniem wydawać by się mogła serializacja binarna. Jest to prosty i dość logiczny wniosek, jednak okazuje się, że na tym polu również istnieje pewna konkurencja (m.in ze strony formatu json), zaś wbudowane w .NET formatery i serializatory wcale nie są najwydajniejszym, co platforma ta może zaoferować.</li>
-<li>Palma pierwszeństwa należy się <a href="https://developers.google.com/protocol-buffers/">Protocol Buffers</a> (protokół wymyślony przez Google oraz stosowany do komunikacji pomiędzy wewnętrznymi usługami giganta z Mountain View) oraz ich .NET-owym bindingom: totalne zwycięstwo zarówno pod względem rozmiaru serializowanego obiektu, jak i czasie serializacji/deserializacji. Biblioteka ta, ma jeszcze jedną przewagę &ndash; mimo, że wyjściowym formatem jest format binarny to w przeciwieństwie do domyślnych rozwiązań .NET protokół ten nie jest powiązany z jedną platformą i może służyć do komunikacji z usługami napisanymi w innych językach programowania.</li>
-<li>W kwestii serializacji JSON:
-
-<ul>
-<li>Serializery wbudowane we framework .NET należą do najwolniejszych rozwiązań dostępnych na rynku &ndash; jest to tym bardziej przykre, że stanowią one domyślną metodę serializacji zawartą w kontrolerach ASP MVC.</li>
-<li><a href="http://james.newtonking.com/projects/json-net.aspx">JSON.NET</a> (najpopularniejsza alternatywa dla wbudowanych serializatorów, używana m.in. w najnowszym WebAPI) mimo, że o jest wiele lepszy standardowych rozwiązań, również nie poraża swoimi osiągami</li>
-<li>Zwycięzcą pozostaje <a href="http://www.servicestack.net/docs/text-serializers/json-serializer">ServiceStack</a> (ponownie ;) ). 2-3x większa szybkość niż konkurencyjny Json.NET i jeszcze większa przewaga nad rozwiązaniami domyślnymi.</li>
-</ul>
-</li>
-</ul>
-
-
-<h2>4. Client-side MVC/MVVM</h2>
-
-<p>W <a href="http://horusiath.blogspot.com/2012/06/krotki-przeglad-po-frameworkach-mvc-w.html">jednym z poprzednich wpisów</a> opisałem kilka popularnych frameworków javascriptowych stosowanych do prezentacji i zarządzania logiką po stronie przeglądarki. Ocena możliwości i szybkości tych platform należy do szczególnie trudnych. W internecie da się znaleźć kilka stron pozwalających na przyjżenie się bliżej i ocenieni wydajności na własne oczy (polecam <a href="http://stackoverflow.com/questions/12955337/angular-js-backbone-js-and-other-mv-patterned-js-libraries">ten wpis</a>).</p>
-
-<ul>
-<li><a href="http://backbonejs.org/">Backbone</a> jest wydajny, jednak należy tu wziąć pod uwagę fakt, że nie zapewnia żadnego typu bindingu między widokiem a modelem, w dodatku wymaga od użytkownika ręcznego manipulowania drzewem DOM &ndash; to z kolei stawia go w innej klasie problemów i w zasadzie ciężko go porównywać z frameworkami umożliwiającymi wiązania danych.</li>
-<li>Generalnie rzecz biorąc <a href="http://angularjs.org/">AngularJS</a> ma lepszą wydajność do <a href="http://knockoutjs.com/">Knockouta</a>. Jednak ta tendencja zmienia się wraz ze wzrostem liczy wiązań tzn. im większa tym bardziej Knockout wysuwa się na prowadzenie. W tym wypadku jednak duży wpływ na wynik końcowy ma sama budowa kontrolerów w AngularJS (dla lepszej wydajności powinny być one małe i nie zawierać zbyt dużej ilości powiązań ani skomplikowanej logiki obliczeniowej, która powinna być wykonywana osobno przez mechanizm serwisów dostępny we frameworku).</li>
-</ul>
-
-
-<h2>5. Templating Engines</h2>
-
-<p>Dużą różnicę robi również wykorzystanie silników do generowania szablonów stron WWW (od kiedy większość ze stron generowana jest w sposób dynamiczny). Tutaj jednak rozbijemy problem na 2 części:</p>
-
-<ol>
-<li>Silniki po stronie serwera &ndash; Na stackoverflow można znaleźć <a href="http://stackoverflow.com/questions/1451319/asp-net-mvc-view-engine-comparison">wątek</a>, który przedstawia krótką charakterystykę około 12 różnych silników wykorzystywanych do generowania stron po stronie serwera. Niestety, nie udało mi się znaleźć podobnego zestawienia jeżeli chodzi o kwestie wydajnościowe. Zamiast tego postaram się przedstawić kilka dobrych rad dotyczących kwestii wydajnościowych dotyczących dwóch domyślnych silników .NET, Aspx i Razor:
-
-<ul>
-<li>W większości przypadków Aspx działa lepiej niż porównywalny kod w Razorze (zwłaszcza w porównianiu z pierwszą wersją) &ndash; różnica ta wynosi przeważnie od 50% do 12% na korzyść aspx. Tutaj jednak wiele zależy od zmiany ustawień domyślnych, cacheowania elementów strony itp.</li>
-<li>W przypadku kiedy nie wykorzystujesz obu tych silników, usuń ten którego nie używasz. W wielu przypadkach przyspiesza to działanie aplikacji, m.in. przez to, że w prosty sposób skraca ilość przeszukiwanych szablonów w katalogu <em>Views</em> aplikacji MVC o połowę.</li>
-<li>Porada dotycząca ViewState (WebForms) &ndash; nie potrzebujesz mechanizmu ViewState na stronie? Wyłącz go. Potrzebujesz go? Zastanów się czy na pewno, zrób obejście, a potem go wyłącz. Serio. Mechanizm ten jest powszechnie uznawany za jedno z największych nieporozumień w świecie aplikacji webowych.</li>
-</ul>
-</li>
-<li>Silniki po stronie klienta &ndash; Budowa pełnego stosu MVC po stronie klienta nie jest jedynym sposobem na budowę dobrze zorganizowanego mechanizmu zarządzania widokami. W wielu przypadkach możliwe jest wykorzystanie prostego silnika wykorzystującego szablony do generowania widoków w bezpośrednio przez przeglądarkę. Mechanizm tak stosowany jest m.in. przez LinkedIn, jak również Twittera, który udostępnił swój silnik <a href="http://twitter.github.com/hogan.js/">Hogan.js</a> jako projekt open source. Dobry test wydajności rozmaitych silników zaprezentowano na <a href="http://jsperf.com/dom-vs-innerhtml-based-templating/112">tej stronie</a>.</li>
-</ol>
-
-
-<p>W większości takich porównań korona wydajności należy do <a href="http://olado.github.com/doT/index.html">doT.js</a>. Jedną z przyjemnych rzeczy w tej bibliotece, jest możliwość określania, które elementy szablonu będą generowane w czasie kompilacji (po wykonaniu kompilacji generowana jest funkcja kompilatora generująca wynikowy html na podstawie modelu przekazanego jako parametr &ndash; funkcja ta może być cache&#8217;owana), a które z nich będą wykonywane w runtime.</p>
-
-<h2>Podsumowanie</h2>
-
-<p>Po analizie dostępnych rozwiązań to co najbardziej mnie uderzyło, to fakt jak wiele z najpopularniejszych bibliotek prezentuje się zaskakująco żenująco w testach dotyczących wydajności. Za swoje małe odkrycie mogę uznać z kolei stos zaoferowany przez ServiceStack, dla których wydajność wydaje się priorytetem w każdej kategorii, w której podjęli się konkurować. Niestety nie miałem do tej pory dużo do czynienia z tym frameworkiem, co jednak bardzo przypadło mi do gustu, to fakt że jest to rozwiązanie kompletne, oferujące możliwość kompletnego zastąpienia każdego modułu w tradycyjnym stosie ASP.NET MVC/WCF/EntityFramework swoim własnym, spójnym zbiorem bibliotek. Do tego w całości działającym pod Mono na Linuxie.</p>
 ]]></content>
   </entry>
   

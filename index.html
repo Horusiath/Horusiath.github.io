@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Jul 5th, 2014 Comments FSharp and Akka.net - the Functional Way Actor model is one of the most influential paradigms of dealing with highly &hellip;">
+	<meta name="description" content="Jul 9th, 2014 akka.net, fsharp Comments Map Reduce With FSharp and Akka.net In my previous post, I&rsquo;ve shown how to create a simple hello world &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -134,8 +134,194 @@
   
 
 
+<time datetime="2014-07-09T00:00:00+02:00" data-updated="true" itemprop="datePublished">Jul 9<span>th</span>, 2014</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/akka-dot-net/'>akka.net</a>, <a class='category' href='/blog/categories/fsharp/'>fsharp</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2014/07/09/fsharp-akka-map-reduce/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/07/09/fsharp-akka-map-reduce/" itemprop="url">Map Reduce With FSharp and Akka.net</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>In my previous post, I&rsquo;ve shown how to create a simple <em>hello world</em> application using Akka.net system leveraged with a F# API. Today, I&rsquo;ll show a slightly more complex example. We&rsquo;ll create a simple Map-Reduce system based on distributed word count algorithm.</p>
+
+<p>Idea of our algorithm is quite simple &ndash; we want to group and count all repetitions of the same words (case-insensitive) in input text. This is a perfect subject to illustrate a map-reduce algorithm as well as Akka.net task distribution mechanism. To realize our objective, we&rsquo;ll need to define three actor types:</p>
+
+<ul>
+<li>Master &ndash; it&rsquo;s main job is to spread an input data equally among other actors and forward request for result data.</li>
+<li>Mappers &ndash; they will tokenize their text fragments into specific words and send it to reducers.</li>
+<li>Reducers &ndash; they are responsible for word grouping and counting.</li>
+</ul>
+
+
+<p>At the beginning, lets define basic message types used by our system:</p>
+
+<ul>
+<li>One to propagate chunks of data to mapping nodes.</li>
+<li>Next one to forward processed data to reducers.</li>
+<li>Last one to invoke collection mechanism, which will concatenate all reduced data to one peace and send it back to the originator.</li>
+</ul>
+
+
+<p>All of them are illustrated by the code below:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">MRMsg</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Map</span> <span class="k">of</span> <span class="kt">string</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Reduce</span> <span class="k">of</span> <span class="o">(</span><span class="kt">string</span> <span class="o">*</span> <span class="kt">int</span><span class="o">)</span> <span class="kt">list</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Collect</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define, I&rsquo;ve created a simple function factory, which will wrap all varying logic for us.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">actorFor</span> <span class="n">func</span> <span class="o">=</span> <span class="k">fun</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">-&gt;</span>
+</span><span class='line'>    <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
+</span><span class='line'>        <span class="n">func</span> <span class="n">mailbox</span> <span class="n">msg</span>            <span class="c1">// this line is actor-specific</span>
+</span><span class='line'>        <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">}</span>
+</span><span class='line'>    <span class="n">loop</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Lets start to defining a map-reduce logic into our application. Firstly we need to create a <strong>map actor</strong>. In this example, all what it needs to do, is to chop provided string into single words, and create from them a simple bag of words with their repetition. However we won&rsquo;t sum them now &ndash; this is the job for reducer actors.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">mapWords</span> <span class="o">(</span><span class="n">line</span><span class="o">:</span><span class="kt">string</span><span class="o">)</span> <span class="o">=</span> <span class="n">seq</span> <span class="o">{</span> <span class="k">for</span> <span class="n">word</span> <span class="k">in</span> <span class="n">line</span><span class="o">.</span><span class="nc">Split</span><span class="bp">()</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">word</span><span class="o">,</span> <span class="mi">1</span><span class="o">)</span> <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">map</span> <span class="n">reducer</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">=</span> <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Map</span> <span class="n">line</span> <span class="o">-&gt;</span> <span class="n">reducer</span> <span class="o">&lt;!</span> <span class="nc">Reduce</span> <span class="o">(</span><span class="n">mapWords</span> <span class="n">line</span> <span class="o">|&gt;</span> <span class="nn">List</span><span class="p">.</span><span class="n">ofSeq</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">|</span> <span class="n">m</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Unhandled</span> <span class="n">m</span>      <span class="c1">// mapper won&#39;t handle any other messages</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you may see, after finishing it&rsquo;s work, mapper will send list of words directly to reducers. To make this possible, we need to provide reducer reference as one of the function parameters.</p>
+
+<p>Next type is the <strong>reduce actor</strong>. It&rsquo;s task is to group all incoming words, and count their occurrences. In our example we use shared <code>ConcurrentDictionary</code> for gathering data from all of the reducer instances. For more real life example, we should probably use some more sophisticated mechanism, such as <strong>aggregate actor</strong> concatenating all results provided by specific reducers. Here for sake of simplicity, we omit it.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">reduceWords</span> <span class="o">(</span><span class="n">dict</span><span class="o">:</span><span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span><span class="kt">int</span><span class="o">&gt;)</span> <span class="n">iter</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">iter</span>
+</span><span class='line'>    <span class="o">|&gt;</span> <span class="nn">List</span><span class="p">.</span><span class="n">iter</span> <span class="o">(</span><span class="k">fun</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">v</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">dict</span><span class="o">.</span><span class="nc">AddOrUpdate</span><span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">v</span><span class="o">,</span> <span class="nn">System</span><span class="p">.</span><span class="nc">Func</span><span class="o">&lt;_,_,_&gt;(</span><span class="k">fun</span> <span class="n">key</span> <span class="n">old</span> <span class="o">-&gt;</span> <span class="n">old</span> <span class="o">+</span> <span class="n">v</span><span class="o">))</span> <span class="o">|&gt;</span> <span class="n">ignore</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">reduce</span> <span class="o">(</span><span class="n">dict</span><span class="o">:</span><span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span><span class="kt">int</span><span class="o">&gt;)</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">=</span> <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Reduce</span> <span class="n">l</span> <span class="o">-&gt;</span> <span class="n">reduceWords</span> <span class="n">dict</span> <span class="n">l</span> <span class="o">|&gt;</span> <span class="n">ignore</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Collect</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span> <span class="o">&lt;!</span> <span class="n">seq</span> <span class="o">{</span> <span class="k">for</span> <span class="n">e</span> <span class="k">in</span> <span class="n">dict</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="nc">Key</span><span class="o">,</span> <span class="n">e</span><span class="o">.</span><span class="nc">Value</span><span class="o">)</span> <span class="o">}</span>
+</span><span class='line'>    <span class="o">|</span> <span class="n">m</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Unhandled</span> <span class="n">m</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since reducer actors have direct access to shared dictionary, they also are able to respond on Collect command, providing all reduced data back to message sender.</p>
+
+<p>The last behavior, is the <strong>master actor</strong>. It&rsquo;s role is to be a proxy between application&rsquo;s in/out data, and the rest of the actors. We use it for two tasks: 1) sending text line by line to be processed by our Map-Reduce application, 2) forwarding request for result of MR operation.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">master</span> <span class="n">mapper</span> <span class="o">(</span><span class="n">reducer</span><span class="o">:</span><span class="nc">InternalActorRef</span><span class="o">)</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">=</span> <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Map</span> <span class="n">str</span> <span class="o">-&gt;</span> <span class="k">for</span> <span class="n">line</span> <span class="k">in</span> <span class="n">str</span><span class="o">.</span><span class="nc">Split</span> <span class="sc">&#39;\n&#39;</span> <span class="k">do</span> <span class="n">mapper</span> <span class="o">&lt;!</span> <span class="nc">Map</span> <span class="n">line</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Collect</span> <span class="o">-&gt;</span> <span class="n">reducer</span><span class="o">.</span><span class="nc">Tell</span><span class="o">(</span><span class="nc">Collect</span><span class="o">,</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span><span class="o">)</span>    <span class="c1">// forward message with info about it&#39;s originator</span>
+</span><span class='line'>    <span class="o">|</span> <span class="n">m</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Unhandled</span> <span class="n">m</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now when we have all of our actors defined, we may initialize an Akka framework to create our MR system. Now we can use a helper functions, we&rsquo;ve defined before for fast and easy actor definition.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;MapReduceSystem&quot;</span> <span class="o">&lt;|</span> <span class="nn">ConfigurationFactory</span><span class="p">.</span><span class="nc">Default</span><span class="bp">()</span>
+</span><span class='line'><span class="k">let</span> <span class="n">dict</span> <span class="o">=</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span><span class="kt">int</span><span class="o">&gt;</span><span class="bp">()</span>
+</span><span class='line'><span class="k">let</span> <span class="n">reducer</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;reduce&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">reduce</span> <span class="n">dict</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">mapper</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;map&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">map</span> <span class="n">reducer</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">master</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">master</span> <span class="n">mapper</span> <span class="n">reducer</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To finalize, we can pass some data to our system to see, if it returns an expected results. Until now, we&rsquo;ve only used send operator <code>&lt;!</code> to delegate fire-and-forget messages for specific actors, but we&rsquo;ve actually never used any two way request-response mechanism. To do so, we&rsquo;ll use Ask method (shortcut operator <code>&lt;?</code>) to send a request message and receive a handler to be used when a response will be returned in asynchronous manner.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="n">master</span> <span class="o">&lt;!</span> <span class="nc">Map</span> <span class="s2">&quot;Orange orange apple&quot;</span>
+</span><span class='line'><span class="n">master</span> <span class="o">&lt;!</span> <span class="nc">Map</span> <span class="s2">&quot;cherry apple orange&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nn">Threading</span><span class="p">.</span><span class="nn">Thread</span><span class="p">.</span><span class="nc">Sleep</span> <span class="mi">500</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// read the result</span>
+</span><span class='line'><span class="n">async</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">let</span><span class="o">!</span> <span class="n">res</span> <span class="o">=</span> <span class="n">master</span><span class="o">.</span><span class="nc">Ask</span><span class="o">(</span><span class="nc">Collect</span><span class="o">)</span> <span class="o">|&gt;</span> <span class="nn">Async</span><span class="p">.</span><span class="nc">AwaitTask</span>
+</span><span class='line'>    <span class="k">for</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">v</span><span class="o">)</span> <span class="k">in</span> <span class="n">res</span> <span class="o">:?&gt;</span> <span class="o">(</span><span class="kt">string</span><span class="o">*</span><span class="kt">int</span><span class="o">)</span> <span class="n">seq</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">printfn</span> <span class="s2">&quot;%s</span><span class="se">\t</span><span class="s2">%d&quot;</span> <span class="n">k</span> <span class="n">v</span>
+</span><span class='line'>    <span class="n">system</span><span class="o">.</span><span class="nc">Shutdown</span><span class="bp">()</span>
+</span><span class='line'><span class="o">}</span> <span class="o">|&gt;</span> <span class="nn">Async</span><span class="p">.</span><span class="nc">RunSynchronously</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
 <time datetime="2014-07-05T21:42:00+02:00" data-updated="true" itemprop="datePublished">Jul 5<span>th</span>, 2014</time></div>
 		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/akka-dot-net/'>akka.net</a>, <a class='category' href='/blog/categories/fsharp/'>fsharp</a>
+
 
 </div>
 		
@@ -229,6 +415,10 @@
 
 <time datetime="2014-07-03T00:05:00+02:00" data-updated="true" itemprop="datePublished">Jul 3<span>rd</span>, 2014</time></div>
 		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/fsharp/'>fsharp</a>, <a class='category' href='/blog/categories/programming-languages/'>programming languages</a>
+
 
 </div>
 		
@@ -1053,61 +1243,6 @@
 <p>Po drugie pamiętaj o złotej zasadzie &ndash; czego user nie dotknie, tego sercu nie żal. Przykład-anegdota: swego czasu aplikacje na urządzenia Apple były podawane jako wzór szybko uruchamiających się programów. Aplikacja, która na innych systemach uruchamiała się w kilka sekund, na iPhone była gotowa w ułamku tego czasu. Na czym polegał sekret? Otóż w rzeczywistości to, co widział użytkownik, było w rzeczywistości zrzutem ekranu z działającej aplikacji, bez jakichkolwiek możliwości interakcji. Dzięki temu użytkownik miał wrażenie, że aplikacja uruchamia się niemal natychmiast. W rzeczywistości, zanim wykonał on jakąkolwiek akcję w UI, mijało parę sekund, w trakcie których program miał czas, aby się załadować i podstawić pod &ldquo;zaślepkę&rdquo; faktyczny interfejs użytkownika.</p>
 
 <p>Liczę na to, że lektura ta okazała się ciekawa i być może uda mi się w przyszłości opisać dalsze koncepty i przemyślenia.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-16T12:28:00+02:00" data-updated="true" itemprop="datePublished">Jun 16<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/06/16/czego-programisci-net-mogliby-nauczyc/" itemprop="url">Czego Programiści .NET Mogliby Nauczyć Się Od Rubystów?</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>.NET był wybraną przeze mnie technologią niemal od początku mojej przygody z programowaniem. Uważam jednak, że programista nie powinien się zamykać w jednej szyfladce i poznawać szerokie spectrum technologii. Porównywać je i znać wady oraz zalety każdej z nich. Ostatecznie zaś umieć dobrać właściwą technologię do rozwiązania napotykanych problemów &ndash; nie odwrotnie ;)</p>
-
-<p>Stąd też pytanie w temacie. Czy faktycznie programiści .NET mogą nauczyć się czegoś ze środowiska Ruby, języka, który ostatnimi czasy zbiera niemało batów (głównie związanych z wydajnością oraz bezpieczeństwem jego najpopularniejszej platformy, RoRa)? Otóż jak się okazuje całkiem sporo, nawet pomimo już istniejącego trendu absorbowania do platformy .NET sporej ilości rozwiązań napotykanych w konkurencyjnych gałęziach. Poniżej postaram się wymienić te, które moim zdaniem są warte odnotowania.</p>
-
-<h2>1. Przestań polegać na swoim IDE</h2>
-
-<p>Nie da się tego ukryć &ndash; Visual Studio jest jednym z najlepszych, o ile nie najlepszym IDE, z jakim programista może mieć obecnie przyjemność pracować. Ma to jednak pewną cenę. W pewnym momencie zaczynamy polegać na swoim IDE w stopniu większym, niż na własnych umiejętnościach. Co gorsza przenosi się to bezpośrednio na tworzone biblioteki (przykład&hellip; Entity Framework &ndash; czy ktoś próbował kiedyś stworzyć model edmx bez pomocy wizarda wbudowanego w Visual Studio?). Jeżeli nie możesz sprawnie korzystać z biblioteki bez wsparcia swojego IDE, oznacza to, że jest ona zbyt skomplikowana i najzwyczajniej w świecie zepsuta.</p>
-
-<p>W przypadku Ruby&#8217;ego, narzędzie pracy jest kwestią gustu. Jednakże kiedy pierwszy raz przyszło mi pracować z teamem RoR każde z nich w porównaniu do Visual Studio wygląda jak notatnik z kolorowaniem składni. Żadnego zaawansowanego refactoringu, intellisense, nawigacji między plikami w projekcie, generowania buildów. Co było w tym najzabawniejsze? Po 2 tygodniach wcale mi tego nie brakowało. Przysłowiowy notatnik + konsola całkowicie wystarczały do pracy, zaś narzędzia są skonstruowane tak, aby programista był sobie w stanie poradzić ze wszystkim zaraz po zainstalowaniu interpretera.</p>
-
-<h2>2. Debuger jest opcją, nie obowiązkiem</h2>
-
-<p>W świecie .NET jest to dziwna opinia. Wielu programistów wykorzystuje go jako normalne narzędzie pracy służące sprawdzeniu, czy aplikacja działa poprawnie. Dodatkowo sam Visual Studio ułatwia takie podejście. Jako programista Ruby nigdy nie musiałem skorzystać z debuggera &ndash; prawdę mówiąc, nigdy go nie zainstalowałem. Nie oznacza to oczywiście, że kod napisany w Rubym jest zawsze właściwy. Wynika to z innego podejścia. W tym środowisku standardem jest pisanie unit testów do weryfikacji każdej bardziej złożonej części systemu. Dzięki temu testy w Rubym są domyślnym <strong>must have</strong> przy każdym projekcie.</p>
-
-<h2>3. Nie bój się eksperymentować</h2>
-
-<p>To co najbardziej spodobało mi się we współpracy z programistami Ruby, to otwartość na nowinki, chęć wypróbowania innych podejść. Wiąże się z tym pewne ryzyko, ale również określony zysk. Tutaj powstaje pewien problem &ndash; ryzyko w skostniałym świecie aplikacji biznesowych z reguły jest czymś nie do przyjęcia. Dodatkowym hamulcem jest tutaj fakt, że wielu starszych programistów ze środowiska .NET nieprzychylnie patrzy na rozwiązania open source (w końcu kogo wtedy pociągnąć do odpowiedzialności?) oraz ogólnie technologiom spoza kółka Microsoftu.</p>
-
-<p>Nie należy bać się zmian. Nawet jeżeli ryzyko jest nieakceptowalne w aplikacjach dla klientów zewnętrznych, wciąż możemy wprowadzać drobne zmiany dla systemów używanych wewnątrz firmy oraz wypróbowywać tam nowe podejścia. Z jednej strony może to przełożyć się na zysk w przyszłości, z drugiej działa to jak magnes na programistów-pasjonatów, a takich nigdy nie ma za wielu, prawda? ;)</p>
 
 		
 		

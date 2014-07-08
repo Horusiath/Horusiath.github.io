@@ -4,7 +4,7 @@
   <title><![CDATA[Category: programming languages | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/programming-languages/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-07-05T22:03:42+02:00</updated>
+  <updated>2014-07-09T00:06:18+02:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,55 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Value absence - why Scala/F# approach is bad?]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values/"/>
+    <updated>2014-07-03T00:05:00+02:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values</id>
+    <content type="html"><![CDATA[<p>Handling an absent values is one of the most common problems in programming languages. Why we consider this so important? It&rsquo;s because data processing is essential task of every program ever made. And one of the main reasons of systems errors and undefined behaviors are values not present in the system. Most of the modern programming languages tries to aim programmers with solution to handle those cases. Lets look at the most common way of dealing with them:</p>
+
+<ol>
+<li><strong>Null pointer reference</strong> &ndash; also called a &ldquo;billion-dollar mistake&rdquo;, introduced by Tony Hoare. It allows to represent an absence of the heap allocated values (objects) in form of pointer referring to not a valid instance of represented type. In most of the mainstream programming languages all heap objects are nullable by default &ndash; no matter if you want it or not.</li>
+<li><strong>Option/Maybe type</strong> &ndash; this approach is characteristic for most of the functional languages. Instead of creating null pointer, it defines a special generic type (eg. Option), represented by either one of it&rsquo;s subtypes (Some as wrapper for existing underlying value, or None if value is not present).</li>
+</ol>
+
+
+<p>So why we consider a dedicated Option type a better solution? Because it&rsquo;s explicit, propagates type information about value nullability and &ndash; most of all &ndash; it&rsquo;s non-default. By the most of the time, we expect to have a meaningful references to our data. Their absence is not a desired and certainly should not be an expected behavior. Problem in nullable references is that literally any instance in our code could represent a non-existing value. Analogously to functional approach, all of our objects always represent an Option type.</p>
+
+<p>Currently, after decades on living in shadows, functional paradigm is gaining more and more ground of the field of mainstream programming languages. This also reflects in two of the most popular programming environments, JVM and .NET. Their functional representatives, Scala and F#, claims to combine best of both programming paradigms. This way they also introduced and popularized an Option types among object oriented approach.</p>
+
+<p>But something has been missed along the way, and (in my opinion) both Scala and F# had failed in face of the problem of value absence. Why? Because of their dualism. Since they are functional languages, both of them allows you to create an Option types with full support expected from a functional language. But while they also are object oriented and built on top of object oriented VMs, they allow you to use and create a nullable references. This leads to false sense of security, when using Option types. Lets look at the following example (F#):
+<code>fsharp
+let value: String option = Some doSmthAndReturnString()
+</code></p>
+
+<p>How can you be sure that function <code>doSmthAndReturnString</code> won&rsquo;t return a null? Actually you can&rsquo;t until you perform an explicit null check. From the runtime perspective <code>Some null</code> is a perfectly valid record. Does it sound rational? No. So why is this even possible?</p>
+
+<h2>How to combine functional and object oriented worlds?</h2>
+
+<p>From my perspective, the best solution of that problem came with <a href="http://ceylon-lang.org/">Ceylon</a> language. It&rsquo;s based on the concept of <a href="http://ceylon-lang.org/documentation/1.0/tour/types/#union_types">Union Types</a>, one of the key features of Ceylon. For <strong>tl;dr</strong> people &ndash; union type of <code>X|Y</code> is a supertype of both types <code>X</code> and <code>Y</code>. How does it correspond to null/options?</p>
+
+<p>In Ceylon <code>null</code> have it&rsquo;s own unique type <code>Null</code> (just like in Scala). By default all reference types are non-nullable (similarly to functional languages). However they may be nulled if referenced as union type of <code>T|Null</code> (or <code>T?</code> using some syntax suggar). This concept is basically &ndash; however not entirely &ndash; equivalent of Scala <code>Either[T,Null]</code> but without verbose requirement for object wrapping. Moreover, Ceylon compiler is able to optimize this away to standard JVM null references, without any overhead.
+```
+// Scala &ndash; Either
+var m: Either[String, Null] = Left(&ldquo;hello&rdquo;)
+var n: Either[String, Null] = Right(null)<br/>
+var m: Either[String, Null] = Left(null)    // still valid</p>
+
+<p>// Scala &ndash; Option type
+var m: Option[String] = Some(&ldquo;hello&rdquo;)
+var n: Option[String] = None <br/>
+var m: Option[String] = Some(null)          // still valid</p>
+
+<p>// Ceylon
+String|Null m = &ldquo;hello&rdquo;;    // no need for value wrapping
+String? n = null;           // Integer? &ndash;> Integer|Null
+String f = null;            // compile time error, references are not nullable by default
+```
+As you can see on the example above, this way we combined advantages of safe, explicitly nullable types with verbosity and performance of null referenced types. In my opinion this is a proper, yet still not widespread, solution of one of the most common problem in languages theory.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Top features every statically typed language should have]]></title>

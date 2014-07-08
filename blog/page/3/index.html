@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Dec 30th, 2012 javascript, programowanie Comments node.js - Renderowanie Layoutów Z Wykorzystaniem doT.js Stało się. Po wielu podejściach skłoniłem &hellip;">
+	<meta name="description" content="Jan 12th, 2013 .net, asp, free talk, wydajność Comments ASP.NET a Wydajność Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,126 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-12T22:32:00+01:00" data-updated="true" itemprop="datePublished">Jan 12<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/asp/'>asp</a>, <a class='category' href='/blog/categories/free-talk/'>free talk</a>, <a class='category' href='/blog/categories/wydajnosc/'>wydajność</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2013/01/12/aspnet-wydajnosc/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/01/12/aspnet-wydajnosc/" itemprop="url">ASP.NET a Wydajność</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu dodatkowych bibliotek/frameworków usprawniających naszą pracę. Czasem jednak zdarza się, że zatrzymujemy się zaczynamy zastanawiać, jaką cenę musimy zapłacić za wszystkie te dodatki? Poniżej postaram się przedstawić listę najczęstszych problemów oraz najlepsze biblioteki służące ich wydajnemu rozwiązaniu (uprzedzam, że wnioski mogą być dość zaskakujące ;) ).</p>
+
+<h2>1. Object-Relational Mapping</h2>
+
+<p>Na pierwszy ogień niech pójdą frameworki ORM. Jak nie ciężko się domyślić pod względem popularności triumfuje tutaj Entity Framework jako rozwiązanie promowane przez MS, zaś odrobinę z tyłu wydaje się być NHibernate. Jak to jednak wygląda, jeżeli wzięlibyśmy pod uwagę wydajność? Zaczynając od bardzo popularnego zestawienia <a href="http://ormeter.net/">ORM Battle</a>:</p>
+
+<ul>
+<li><a href="http://dataobjects.net/">DataObjects.NET</a> mogą poszczycić się najbardziej wydajną budową zapytań LINQ.</li>
+<li><a href="http://bltoolkit.net/">Business Logic Toolkit</a> jest stawiany jako zwycięzca w kwestii ogólnej wydajności (operacje CRUD itp.).
+-Pod względem zapytań LINQ wydajnosć <a href="http://nhforge.org/">NHibernate </a>jest skandaliczna &ndash; tutaj jednak należy się słowo wyjaśnienia, ponieważ framework ten posiada własny mechanizm generowania zapytań w locie (Criteria wraz z nakładką QueryOver), który oferuje znacznie lepszą wydajność oraz pozwala na więcej w stosunku do linq.</li>
+</ul>
+
+
+<p>Warto jednak zauważyć, że zestawienie to nie jest pełne, brakuje w nim powiem kilku ważnych bibliotek. Powołując się na kolejny benchmark wykonany przez <a href="http://servicestack.net/benchmarks/">ServiceStack</a> (ta nazwa powtórzy się tutaj jeszcze przy kilku okazjach), wysnuć można kilka innych wniosków:</p>
+
+<ul>
+<li>Narzut nakładany przez Entity Framework może wydłużyć czas wykonania zapytania nawet 13-krotnie! &ndash; (zakładam, że dla bardziej złożonych zapytań ta różnica zmniejsza się na korzyść EF) To ogromna przepaść nawet biorąc pod uwagę <a href="http://noamlewis.wordpress.com/2012/07/18/net-4-5-improves-orm-performance-across-the-chart/">usprawnienia</a> nałożone w .NET 4.5.</li>
+<li>Zwycięstwo wydajności należy do <a href="http://code.google.com/p/dapper-dot-net/">Dappera</a> &ndash; jest to microframework ORM stworzony przez Stackoverflow na potrzeby wysoko wydajnego dostępu do bazy danych, wykorzystywanego w tym serwisie. Tuż za nim znalazł się z kolei <a href="https://github.com/ServiceStack/ServiceStack.OrmLite">ServiceStack.OrmLite</a> (należy jednak pamiętać, że są oni autorami tego benchmarku).</li>
+</ul>
+
+
+<p>Na czym więc polega sukces i droga do szybkości? Myślę, że główną rolę odgrywa tutaj prostota &ndash; zarówno EF jak i NHibernate oferują rozbudowane interfejsy do budowy zapytań (LINQ i QueryOver), własne języki pośrednie (NHibernate &ndash; HQL, Entity Framework &ndash; ESQL), mechanizmy zarządzania obiektami itp. <strong>BLT</strong>, <strong>Dapper</strong> i <strong>OrmLite </strong>stosują tutaj proste operacje z wykorzystaniem standardowych zapytań SQL, odrzucając wyższe warstwy abstrakcji i trzymając się blisko podstawowych mechanizmów komunikacji z bazą danych. Dodatkowo microframeworki obarczają programistę koniecznością ręcznego zarządzania relacjami oraz synchronizacji stanu danych pomiędzy encjami i bazą. To z kolei przenosi dług wydajnościowy na kod napisany przez programistę.</p>
+
+<h2>2. Kontenery Inversion of Control</h2>
+
+<p><em>Dependency Injection</em> to już standard, mimo że wciąż nie jest to mechanizm domyślny w ASP.NET. Zapewnienie luźnych wiązań określane jest jako dobra praktyka zarówno w MVC jak i MVVM (stosowanym przez liczne frameworki stosowane również w aplikacjach desktopowych oraz na urządzenia mobline). Opierając się na kilku (<a href="http://www.palmmedia.de/blog/2011/8/30/ioc-container-benchmark-performance-comparison">1</a>, <a href="http://www.iocbattle.com/">2</a>, <a href="http://servicestack.net/benchmarks/#highcharts-8">3</a>, <a href="http://philipm.at/2011/0808/">4</a>) testach można podjąć się złożenia kilku wniosków:</p>
+
+<ol>
+<li><a href="http://www.ninject.org/">NInject</a> (który notabene jest całkiem popularnym rozwiązaniem) wydajnościowo jest jednym z najsłabszych i najwolniejszych kontenerów.</li>
+<li>Biblioteki promowane przez Microsoft &ndash; <a href="http://mef.codeplex.com/">MEF</a> oraz <a href="http://unity.codeplex.com/">Unity</a> &ndash; również nie prezentują porażającego poziomu. O ile Unity prezentuje się dość dobrze, to wciąż stanowi dość słabą konkurencję dla innych rozwiązań zawartych w zestawieniach.</li>
+<li>Mimo tego, że powyższe benchmarki nie zawsze się uzupełniają, po odrobinie przeszukiwania sieci można w zasadzie określić, że wśród zwycięzców wydajności znajdują się: <a href="http://docs.structuremap.net/">StructureMap</a> oraz <a href="http://funq.codeplex.com/">Funq</a> (który z tego co mi wiadomo nie jest obecnie wspierany, co idzie zdecydowanie na jego niekorzyść, jednak stanowi część frameworka <em>ServiceStack</em>, jest również dostępny w postaci open source).</li>
+</ol>
+
+
+<h2>3. Serializacja</h2>
+
+<p>Serializacja obiektów to dość szerokie zagadnienie, ponieważ możemy mieć na myśli różne formaty (xml, json czy dane binarne), zaś każdy z nich znajduje zastosowanie w innych sytuacjach i ma inną specyfikę. Opierając się na różnych źródłach (<a href="http://www.servicestack.net/benchmarks/NorthwindDatabaseRowsSerialization.100000-times.2010-08-17.html">1</a>, <a href="http://servicestack.net/benchmarks/#highcharts-6">2</a>), można pokusić się o kilka stwierdzeń:</p>
+
+<ul>
+<li>Jeżeli chodzi o rozmiar zajmowany przez serializowane obiekty, najwydajniejszym rozwiązaniem wydawać by się mogła serializacja binarna. Jest to prosty i dość logiczny wniosek, jednak okazuje się, że na tym polu również istnieje pewna konkurencja (m.in ze strony formatu json), zaś wbudowane w .NET formatery i serializatory wcale nie są najwydajniejszym, co platforma ta może zaoferować.</li>
+<li>Palma pierwszeństwa należy się <a href="https://developers.google.com/protocol-buffers/">Protocol Buffers</a> (protokół wymyślony przez Google oraz stosowany do komunikacji pomiędzy wewnętrznymi usługami giganta z Mountain View) oraz ich .NET-owym bindingom: totalne zwycięstwo zarówno pod względem rozmiaru serializowanego obiektu, jak i czasie serializacji/deserializacji. Biblioteka ta, ma jeszcze jedną przewagę &ndash; mimo, że wyjściowym formatem jest format binarny to w przeciwieństwie do domyślnych rozwiązań .NET protokół ten nie jest powiązany z jedną platformą i może służyć do komunikacji z usługami napisanymi w innych językach programowania.</li>
+<li>W kwestii serializacji JSON:
+
+<ul>
+<li>Serializery wbudowane we framework .NET należą do najwolniejszych rozwiązań dostępnych na rynku &ndash; jest to tym bardziej przykre, że stanowią one domyślną metodę serializacji zawartą w kontrolerach ASP MVC.</li>
+<li><a href="http://james.newtonking.com/projects/json-net.aspx">JSON.NET</a> (najpopularniejsza alternatywa dla wbudowanych serializatorów, używana m.in. w najnowszym WebAPI) mimo, że o jest wiele lepszy standardowych rozwiązań, również nie poraża swoimi osiągami</li>
+<li>Zwycięzcą pozostaje <a href="http://www.servicestack.net/docs/text-serializers/json-serializer">ServiceStack</a> (ponownie ;) ). 2-3x większa szybkość niż konkurencyjny Json.NET i jeszcze większa przewaga nad rozwiązaniami domyślnymi.</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>4. Client-side MVC/MVVM</h2>
+
+<p>W <a href="http://horusiath.blogspot.com/2012/06/krotki-przeglad-po-frameworkach-mvc-w.html">jednym z poprzednich wpisów</a> opisałem kilka popularnych frameworków javascriptowych stosowanych do prezentacji i zarządzania logiką po stronie przeglądarki. Ocena możliwości i szybkości tych platform należy do szczególnie trudnych. W internecie da się znaleźć kilka stron pozwalających na przyjżenie się bliżej i ocenieni wydajności na własne oczy (polecam <a href="http://stackoverflow.com/questions/12955337/angular-js-backbone-js-and-other-mv-patterned-js-libraries">ten wpis</a>).</p>
+
+<ul>
+<li><a href="http://backbonejs.org/">Backbone</a> jest wydajny, jednak należy tu wziąć pod uwagę fakt, że nie zapewnia żadnego typu bindingu między widokiem a modelem, w dodatku wymaga od użytkownika ręcznego manipulowania drzewem DOM &ndash; to z kolei stawia go w innej klasie problemów i w zasadzie ciężko go porównywać z frameworkami umożliwiającymi wiązania danych.</li>
+<li>Generalnie rzecz biorąc <a href="http://angularjs.org/">AngularJS</a> ma lepszą wydajność do <a href="http://knockoutjs.com/">Knockouta</a>. Jednak ta tendencja zmienia się wraz ze wzrostem liczy wiązań tzn. im większa tym bardziej Knockout wysuwa się na prowadzenie. W tym wypadku jednak duży wpływ na wynik końcowy ma sama budowa kontrolerów w AngularJS (dla lepszej wydajności powinny być one małe i nie zawierać zbyt dużej ilości powiązań ani skomplikowanej logiki obliczeniowej, która powinna być wykonywana osobno przez mechanizm serwisów dostępny we frameworku).</li>
+</ul>
+
+
+<h2>5. Templating Engines</h2>
+
+<p>Dużą różnicę robi również wykorzystanie silników do generowania szablonów stron WWW (od kiedy większość ze stron generowana jest w sposób dynamiczny). Tutaj jednak rozbijemy problem na 2 części:</p>
+
+<ol>
+<li>Silniki po stronie serwera &ndash; Na stackoverflow można znaleźć <a href="http://stackoverflow.com/questions/1451319/asp-net-mvc-view-engine-comparison">wątek</a>, który przedstawia krótką charakterystykę około 12 różnych silników wykorzystywanych do generowania stron po stronie serwera. Niestety, nie udało mi się znaleźć podobnego zestawienia jeżeli chodzi o kwestie wydajnościowe. Zamiast tego postaram się przedstawić kilka dobrych rad dotyczących kwestii wydajnościowych dotyczących dwóch domyślnych silników .NET, Aspx i Razor:
+
+<ul>
+<li>W większości przypadków Aspx działa lepiej niż porównywalny kod w Razorze (zwłaszcza w porównianiu z pierwszą wersją) &ndash; różnica ta wynosi przeważnie od 50% do 12% na korzyść aspx. Tutaj jednak wiele zależy od zmiany ustawień domyślnych, cacheowania elementów strony itp.</li>
+<li>W przypadku kiedy nie wykorzystujesz obu tych silników, usuń ten którego nie używasz. W wielu przypadkach przyspiesza to działanie aplikacji, m.in. przez to, że w prosty sposób skraca ilość przeszukiwanych szablonów w katalogu <em>Views</em> aplikacji MVC o połowę.</li>
+<li>Porada dotycząca ViewState (WebForms) &ndash; nie potrzebujesz mechanizmu ViewState na stronie? Wyłącz go. Potrzebujesz go? Zastanów się czy na pewno, zrób obejście, a potem go wyłącz. Serio. Mechanizm ten jest powszechnie uznawany za jedno z największych nieporozumień w świecie aplikacji webowych.</li>
+</ul>
+</li>
+<li>Silniki po stronie klienta &ndash; Budowa pełnego stosu MVC po stronie klienta nie jest jedynym sposobem na budowę dobrze zorganizowanego mechanizmu zarządzania widokami. W wielu przypadkach możliwe jest wykorzystanie prostego silnika wykorzystującego szablony do generowania widoków w bezpośrednio przez przeglądarkę. Mechanizm tak stosowany jest m.in. przez LinkedIn, jak również Twittera, który udostępnił swój silnik <a href="http://twitter.github.com/hogan.js/">Hogan.js</a> jako projekt open source. Dobry test wydajności rozmaitych silników zaprezentowano na <a href="http://jsperf.com/dom-vs-innerhtml-based-templating/112">tej stronie</a>.</li>
+</ol>
+
+
+<p>W większości takich porównań korona wydajności należy do <a href="http://olado.github.com/doT/index.html">doT.js</a>. Jedną z przyjemnych rzeczy w tej bibliotece, jest możliwość określania, które elementy szablonu będą generowane w czasie kompilacji (po wykonaniu kompilacji generowana jest funkcja kompilatora generująca wynikowy html na podstawie modelu przekazanego jako parametr &ndash; funkcja ta może być cache&#8217;owana), a które z nich będą wykonywane w runtime.</p>
+
+<h2>Podsumowanie</h2>
+
+<p>Po analizie dostępnych rozwiązań to co najbardziej mnie uderzyło, to fakt jak wiele z najpopularniejszych bibliotek prezentuje się zaskakująco żenująco w testach dotyczących wydajności. Za swoje małe odkrycie mogę uznać z kolei stos zaoferowany przez ServiceStack, dla których wydajność wydaje się priorytetem w każdej kategorii, w której podjęli się konkurować. Niestety nie miałem do tej pory dużo do czynienia z tym frameworkiem, co jednak bardzo przypadło mi do gustu, to fakt że jest to rozwiązanie kompletne, oferujące możliwość kompletnego zastąpienia każdego modułu w tradycyjnym stosie ASP.NET MVC/WCF/EntityFramework swoim własnym, spójnym zbiorem bibliotek. Do tego w całości działającym pod Mono na Linuxie.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1955,168 +2075,6 @@ Co znaczą następujące atrybuty?:</p>
 
 
 <p>To wszystko. Kod inicjalizujący można umieścić np. w konstruktorze głównego okna naszej aplikacji. Od teraz wiadomości (filtrowaneg wg. tego co określiliśmy w konfiguracji) będą wypisywane w jej polu tekstowym.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-11-17T20:57:00+01:00" data-updated="true" itemprop="datePublished">Nov 17<span>th</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/11/17/javascript-jak-przetworzyc-query-string/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/11/17/javascript-jak-przetworzyc-query-string/" itemprop="url">[Javascript] Jak Przetworzyć Query String?</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>W środowisku programowania po stronie klienta nieraz zdarza się nam konieczność wydobycia informacji przekazywanych poprzez query string. Niestety rzadko kiedy taki czysty, nieprzetworzony ciąg znaków do czegokolwiek nam się przydaje. Tutaj z pomocą przychodzą różne pluginy (przykładem niech będzie <a href="https://github.com/cowboy/jquery-urlinternal">jquery urlinternal</a>). Jednakże nie zawsze musimy wytaczać przysłowiowe działo na komara i może sie okazać, że rozwiązanie naszych problemów może stanowić krótki kawałek kodu.</p>
-
-<p>Przedstawmy więc jak taki kod mógłby wyglądać. W wersji podstawowej przedstawmy proste pobieranie par klucz-wartość i umieszczanie ich w postaci obiektu JSON:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">querystring</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>        <span class="kd">var</span> <span class="nx">raw</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">search</span><span class="p">;</span>
-</span><span class='line'>        <span class="kd">var</span> <span class="nx">parts</span> <span class="o">=</span> <span class="nx">raw</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">);</span>
-</span><span class='line'>        <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="s1">&#39;{&#39;</span><span class="p">;</span>
-</span><span class='line'>        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">parts</span><span class="p">){</span>
-</span><span class='line'>            <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nx">parts</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">);</span>
-</span><span class='line'>            <span class="kd">var</span> <span class="nx">num</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">||</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-</span><span class='line'>            <span class="nx">result</span> <span class="o">+=</span> <span class="s1">&#39;&quot;&#39;</span><span class="o">+</span> <span class="nx">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot; : &#39;</span><span class="p">;</span>
-</span><span class='line'>            <span class="nx">result</span> <span class="o">+=</span> <span class="p">(</span><span class="nx">num</span> <span class="o">||</span> <span class="nx">num</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">num</span> <span class="o">:</span> <span class="s1">&#39;&quot;&#39;</span><span class="o">+</span><span class="nx">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot;&#39;</span><span class="p">;</span>
-</span><span class='line'>            <span class="k">if</span><span class="p">(</span><span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">parts</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-</span><span class='line'>                <span class="nx">result</span><span class="o">+=</span><span class="s1">&#39;, &#39;</span><span class="p">;</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>        <span class="nx">result</span><span class="o">+=</span><span class="s1">&#39;}&#39;</span><span class="p">;</span>
-</span><span class='line'>        <span class="kd">var</span> <span class="nx">json</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
-</span><span class='line'>        <span class="k">return</span> <span class="nx">json</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Rozjaśnijmy nieco obraz sytuacji:</p>
-
-<ul>
-<li>linijka 3 &ndash; ponieważ window.location.search zaczyna querystring od znaku &lsquo;?&rsquo;, omijamy 1 znak, a resztę tniemy po znakach rodzielających kolejne pary klucz-wartość.</li>
-<li>linijka 6 &ndash; każdą parę dzielimy osobno na klucz (index 0) i wartość (index1)</li>
-<li>linijka 7 &ndash; sprawdzamy czy wartość jest liczbą. Robimy to najpierw próbując parsować ją do liczby całkowitej (<strong>Int</strong>), a w przypadku gdy to się nie powiedzie do liczby zmiennoprzecinkowej (<strong>Float</strong>). Jeżeli parsowana wartość nie jest liczbą funkcje parsujące zwracają stałą <strong>NaN</strong> (not a number), której logiczna wartość wynosi <strong>false</strong>.</li>
-<li>linijka 9 &ndash; sprawdzamy czy sparsowana przez nas wartość jest liczbą, jeżeli tak &ndash; dodajemy ją do ciągu bez zmian, w przeciwnym razie doklejamy ją, uprzednio otaczając cudzysłowem (&ldquo;&rdquo;). W ten sposób będzie ona domyślnie odczytywana jako string.</li>
-<li>linijka 10 &ndash; sprawdzamy, czy nasza para nie jest ostatnia &ndash; jeżeli jest, pomijamy ten krok, w przeciwnym razie dodajemy przycinek.</li>
-<li>Ponieważ całość wyrażenia jest ręcznie składana do stringa, na koniec wywołujemy metodę JSON.parse, aby konwertować nasz string do prawdziwego obiektu JSON. Uwaga: starsze przeglądarki mogą nie oferować dostępu do obiektu JSON.</li>
-</ul>
-
-
-<p>Warto zauważyć, że funkcja ta nie wymaga dołączania biblioteki jQuery. Teraz możemy swobodnie pobierać wartości zapisane w query stringu, wykorzystując prosty dostęp do właściwości obiektu javascriptowego:</p>
-
-<ol>
-<li>W przypadku standardowych nazw klucza, można stosować konwencję: json.key</li>
-<li>W momencie gdy klucz zbudowany był z niedozwolonych dla właściwości znaków (np. &ndash;, +, / itp.) możemy potraktować obiekt jak słownik: json[&ldquo;other-key-property&rdquo;]</li>
-</ol>
-
-
-<p>Co ważne, do utworzonego przez nas obiektu możemy dopisywać własne pary klucz-wartość wykorzystując standardową konwencję: <code>json.newkey = &ldquo;new value&rdquo;</code> oraz <code>json[&ldquo;new key&rdquo;] = number</code>.</p>
-
-<h2>Rozszerzanie możliwości</h2>
-
-<h3>Iterowanie po kluczach i wartościach</h3>
-
-<p>Czasami zdarza sie konieczność wydobycia wszystkich kluczy lub wartości należących do danego przetworzonego przez nas obiektu querystring. W tym celu możemy dodać do naszego obiektu JSON następującą funkcję (cały czas przyjmujemy że <strong>json</strong> to nazwa zmiennej przechowującej obiekt zwrócony nam przez przedstawioną powyżej funkcję <code>querystring()</code>):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">json</span><span class="p">.</span><span class="nx">values</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="p">[];</span>
-</span><span class='line'>    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">json</span><span class="p">){</span>
-</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="nx">json</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span>
-</span><span class='line'>           <span class="o">&amp;&amp;</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">!=</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
-</span><span class='line'>             <span class="c1">// tak przekazujemy wartość właściwości</span>
-</span><span class='line'>             <span class="nx">res</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
-</span><span class='line'>             <span class="c1">// a tak nazwę klucza</span>
-</span><span class='line'>             <span class="nx">res</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">res</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W tym wypadku wykorzystujemy pętlę for do iterowania po wszystkich elementach składowych obiektu, dodatkowo filtrując je poprzez wykorzystanie wbudowanej funkcji hasOwnProperty w celu rozpoznania, czy dana składowa jest rzeczywiście dodaną przez nas właściwością, a następnie sprawdzając jednocześnie czy nie jest funkcją (ponieważ docelowo query string służy tylko przenoszeniu wartości).</p>
-
-<h3>Powtórne przetworzenie do postaci querystring</h3>
-
-<p>W momencie, gdy nasze operacje na słowniku/obiekcie querystring dojdą końca możemy chcieć przetworzyć go spowrotem do wartości początkowej, np. w celu ponownego umieszczenia go w adresie okna. Funkcjonalność tą możemy zrealizować poprzez następującą metodę:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">json</span><span class="p">.</span><span class="nx">toQuery</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">json</span><span class="p">){</span>
-</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="nx">json</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span>
-</span><span class='line'>              <span class="o">&amp;&amp;</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">!=</span> <span class="s1">&#39;function&#39;</span><span class="p">)</span>
-</span><span class='line'>                <span class="nx">res</span><span class="o">+=</span> <span class="nx">i</span><span class="o">+</span><span class="s1">&#39;=&#39;</span><span class="o">+</span><span class="nx">json</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&amp;&#39;</span><span class="p">;</span>
-</span><span class='line'>          <span class="p">}</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">res</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Wykorzystując stworzoną poprzednio pętlę umożliwiającą iterację po właściwościach obiektu JSON dokonujemy sklejenia par klucz-wartość do jednolitej postaci stringa, który zbudowany jest tak samo jak bazowy query string wyciągany z naszej przeglądarki.</p>
-
-<p>Notka dla osób korzystających z map routingu: jak można się domyślić powyższy przykład działa jedynie wtedy, gdy przekazywany przez nas query string zbudowany jest w standardowej konwencji. Z tego powodu wszelkie wartości przekazywane na potrzeby map routingu np. w konwencji <code>controller/action/parameter</code>nie zostaną przetworzone.</p>
 
 		
 		

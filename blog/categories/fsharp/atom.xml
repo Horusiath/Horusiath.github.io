@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: fsharp | Simple Solutions]]></title>
+  <link href="http://bartoszsypytkowski.com/blog/categories/fsharp/atom.xml" rel="self"/>
+  <link href="http://bartoszsypytkowski.com/"/>
+  <updated>2014-07-09T00:06:18+02:00</updated>
+  <id>http://bartoszsypytkowski.com/</id>
+  <author>
+    <name><![CDATA[Bartosz Sypytkowski]]></name>
+    <email><![CDATA[b.sypytkowski@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Map reduce with FSharp and Akka.net]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/07/09/fsharp-akka-map-reduce/"/>
+    <updated>2014-07-09T00:00:00+02:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/07/09/fsharp-akka-map-reduce</id>
+    <content type="html"><![CDATA[<p>In my previous post, I&rsquo;ve shown how to create a simple <em>hello world</em> application using Akka.net system leveraged with a F# API. Today, I&rsquo;ll show a slightly more complex example. We&rsquo;ll create a simple Map-Reduce system based on distributed word count algorithm.</p>
+
+<p>Idea of our algorithm is quite simple &ndash; we want to group and count all repetitions of the same words (case-insensitive) in input text. This is a perfect subject to illustrate a map-reduce algorithm as well as Akka.net task distribution mechanism. To realize our objective, we&rsquo;ll need to define three actor types:</p>
+
+<ul>
+<li>Master &ndash; it&rsquo;s main job is to spread an input data equally among other actors and forward request for result data.</li>
+<li>Mappers &ndash; they will tokenize their text fragments into specific words and send it to reducers.</li>
+<li>Reducers &ndash; they are responsible for word grouping and counting.</li>
+</ul>
+
+
+<p>At the beginning, lets define basic message types used by our system:</p>
+
+<ul>
+<li>One to propagate chunks of data to mapping nodes.</li>
+<li>Next one to forward processed data to reducers.</li>
+<li>Last one to invoke collection mechanism, which will concatenate all reduced data to one peace and send it back to the originator.</li>
+</ul>
+
+
+<p>All of them are illustrated by the code below:
+``` fsharp
+type MRMsg =</p>
+
+<pre><code>| Map of string
+| Reduce of (string * int) list
+| Collect
+</code></pre>
+
+<p>```</p>
+
+<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define, I&rsquo;ve created a simple function factory, which will wrap all varying logic for us.
+``` fsharp
+let actorFor func = fun (mailbox:Actor<MRMsg>) &ndash;></p>
+
+<pre><code>let rec loop() = actor {
+    let! msg = mailbox.Receive()
+    func mailbox msg            // this line is actor-specific
+    return! loop() }
+loop()
+</code></pre>
+
+<p>```</p>
+
+<p>Lets start to defining a map-reduce logic into our application. Firstly we need to create a <strong>map actor</strong>. In this example, all what it needs to do, is to chop provided string into single words, and create from them a simple bag of words with their repetition. However we won&rsquo;t sum them now &ndash; this is the job for reducer actors.
+``` fsharp
+let mapWords (line:string) = seq { for word in line.Split() &ndash;> (word, 1) }</p>
+
+<p>let map reducer (mailbox:Actor<MRMsg>) = function</p>
+
+<pre><code>| Map line -&gt; reducer &lt;! Reduce (mapWords line |&gt; List.ofSeq)
+| m -&gt; mailbox.Unhandled m      // mapper won't handle any other messages
+</code></pre>
+
+<p>```
+As you may see, after finishing it&rsquo;s work, mapper will send list of words directly to reducers. To make this possible, we need to provide reducer reference as one of the function parameters.</p>
+
+<p>Next type is the <strong>reduce actor</strong>. It&rsquo;s task is to group all incoming words, and count their occurrences. In our example we use shared <code>ConcurrentDictionary</code> for gathering data from all of the reducer instances. For more real life example, we should probably use some more sophisticated mechanism, such as <strong>aggregate actor</strong> concatenating all results provided by specific reducers. Here for sake of simplicity, we omit it.
+``` fsharp
+let reduceWords (dict:ConcurrentDictionary&lt;string,int>) iter =</p>
+
+<pre><code>iter
+|&gt; List.iter (fun (k, v) -&gt; dict.AddOrUpdate(k, v, System.Func&lt;_,_,_&gt;(fun key old -&gt; old + v)) |&gt; ignore)
+</code></pre>
+
+<p>let reduce (dict:ConcurrentDictionary&lt;string,int>) (mailbox:Actor<MRMsg>) = function</p>
+
+<pre><code>| Reduce l -&gt; reduceWords dict l |&gt; ignore
+| Collect -&gt; mailbox.Sender() &lt;! seq { for e in dict -&gt; (e.Key, e.Value) }
+| m -&gt; mailbox.Unhandled m
+</code></pre>
+
+<p>```
+Since reducer actors have direct access to shared dictionary, they also are able to respond on Collect command, providing all reduced data back to message sender.</p>
+
+<p>The last behavior, is the <strong>master actor</strong>. It&rsquo;s role is to be a proxy between application&rsquo;s in/out data, and the rest of the actors. We use it for two tasks: 1) sending text line by line to be processed by our Map-Reduce application, 2) forwarding request for result of MR operation.
+``` fsharp
+let master mapper (reducer:InternalActorRef) (mailbox:Actor<MRMsg>) = function</p>
+
+<pre><code>| Map str -&gt; for line in str.Split '\n' do mapper &lt;! Map line
+| Collect -&gt; reducer.Tell(Collect, mailbox.Sender())    // forward message with info about it's originator
+| m -&gt; mailbox.Unhandled m
+</code></pre>
+
+<p>```</p>
+
+<p>Now when we have all of our actors defined, we may initialize an Akka framework to create our MR system. Now we can use a helper functions, we&rsquo;ve defined before for fast and easy actor definition.
+<code>fsharp
+let system = System.create "MapReduceSystem" &lt;| ConfigurationFactory.Default()
+let dict = ConcurrentDictionary&lt;string,int&gt;()
+let reducer = spawn system "reduce" &lt;| actorFor (reduce dict)
+let mapper = spawn system "map" &lt;| actorFor (map reducer)
+let master = spawn system "master" &lt;| actorFor (master mapper reducer)
+</code></p>
+
+<p>To finalize, we can pass some data to our system to see, if it returns an expected results. Until now, we&rsquo;ve only used send operator <code>&lt;!</code> to delegate fire-and-forget messages for specific actors, but we&rsquo;ve actually never used any two way request-response mechanism. To do so, we&rsquo;ll use Ask method (shortcut operator <code>&lt;?</code>) to send a request message and receive a handler to be used when a response will be returned in asynchronous manner.
+``` fsharp
+master &lt;! Map &ldquo;Orange orange apple&rdquo;
+master &lt;! Map &ldquo;cherry apple orange&rdquo;</p>
+
+<p>Threading.Thread.Sleep 500</p>
+
+<p>// read the result
+async {</p>
+
+<pre><code>let! res = master.Ask(Collect) |&gt; Async.AwaitTask   
+for (k, v) in res :?&gt; (string*int) seq do
+    printfn "%s\t%d" k v
+system.Shutdown()
+</code></pre>
+
+<p>} |> Async.RunSynchronously
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[FSharp and Akka.net - the functional way]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/07/05/fsharp-akka-net/"/>
+    <updated>2014-07-05T21:42:00+02:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/07/05/fsharp-akka-net</id>
+    <content type="html"><![CDATA[<p>Actor model is one of the most influential paradigms of dealing with highly concurrent environments in present world. Simplifying, it&rsquo;s based on concept of autonomous thread-safe computation units &ndash; surprisingly called actors &ndash; with no way to directly interfere with each others work. There are no locks or semaphores &ndash; instead of accessing shared resources, they are simply passing messages around &ndash; according to the saying <em>Don&rsquo;t communicate by sharing memory; share memory by communicating</em>.</p>
+
+<p>The first most widespread usage of the actor model was the Erlang Virtual Machine in 1986. While it was for many years closed in it&rsquo;s own niche, programming model itself has been lately forwarded and adopted on the Java Virtual Machine through <a href="http://akka.io/">Akka</a> framework. Until present moment there are actually none mature equivalents on .NET platform. While Microsoft is still developing it&rsquo;s own response in form of <a href="http://research.microsoft.com/en-us/projects/orleans/">Project Orleans</a>, a bunch of developers took the initiative of porting Akka on .NET ground.</p>
+
+<p>I&rsquo;ve decided to try out Akka.NET a little. I&rsquo;ve noticed that it&rsquo;s still a far from completion or production-ready phase, but hopefully since it&rsquo;s based on already existing and mature framework, with help of OSS community missing holes could be patched soon.</p>
+
+<h2>Hello Akka</h2>
+
+<p>You can find an original first step into Akka.NET with F# API <a href="https://github.com/akkadotnet/akka.net/wiki/FSharp-API">here</a>. While I found this sample useful, I&rsquo;ve decided to investigate more about Akka.NET source code and it&rsquo;s F# API. Below you may see my example based on more functional-specific concepts:</p>
+
+<p>``` fsharp
+type ActorMsg =</p>
+
+<pre><code>| Greet of string
+| Hi
+</code></pre>
+
+<p>let system = System.create &ldquo;MySystem&rdquo; &lt;| ConfigurationFactory.Default()
+let greeter =</p>
+
+<pre><code>spawn system "Greeter" 
+&lt;| fun mailbox -&gt;
+    let rec loop() = actor {
+        let! msg = mailbox.Receive()
+        match msg with
+        | Greet name -&gt; printfn "Hello %s" name
+        | Hi         -&gt; printfn "Hi"
+        return! loop() }
+    loop()
+</code></pre>
+
+<p>greeter &lt;! Greet &ldquo;Alex&rdquo;
+greeter &lt;! Hi
+```</p>
+
+<p>Here are some explanations:</p>
+
+<ul>
+<li>We defined a discriminated union of messages <code>ActorMsg</code>, we want to respond to.</li>
+<li>The next step is to create an <code>ActorSystem</code>, analogously to C# and original Scala versions.</li>
+<li>We need to define and instantiate an <code>Actor</code>. However unlike the object approach &ndash; which required a custom actor type inheriting from one of the Akka actor classes and defining it&rsquo;s own receiving method &ndash; here we define a tail recursive function, which uses an <code>actor { ... }</code> computation expression instead of actor type declaration.</li>
+<li>We pass that function through the lambda to <code>spawn</code> method, which attaches that behavior to our system and returns an <code>ActorRef</code> (not to be confused with Actor instance), assigned to our <code>greeter</code> variable. This way we may refer to actors, and pass messages to them, even if they&rsquo;re not present on our local machine (which is also one of the Akka use cases).</li>
+<li>Last two lines are about sending messages to actor references using send operator <code>&lt;!</code>.</li>
+</ul>
+
+
+<p>As you can see, this piece of code is not directly translatable to C# or even Scala API equivalent. It&rsquo;s much more Erlangish. We don&rsquo;t have to define any classes and method overrides. Instead, we have a tail-recursive function. For me this seems more natural approach for F#, since it&rsquo;s more functional-first language, while it&rsquo;s syntax for object oriented programming is very verbose and ugly.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Value absence - why Scala/F# approach is bad?]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values/"/>
+    <updated>2014-07-03T00:05:00+02:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values</id>
+    <content type="html"><![CDATA[<p>Handling an absent values is one of the most common problems in programming languages. Why we consider this so important? It&rsquo;s because data processing is essential task of every program ever made. And one of the main reasons of systems errors and undefined behaviors are values not present in the system. Most of the modern programming languages tries to aim programmers with solution to handle those cases. Lets look at the most common way of dealing with them:</p>
+
+<ol>
+<li><strong>Null pointer reference</strong> &ndash; also called a &ldquo;billion-dollar mistake&rdquo;, introduced by Tony Hoare. It allows to represent an absence of the heap allocated values (objects) in form of pointer referring to not a valid instance of represented type. In most of the mainstream programming languages all heap objects are nullable by default &ndash; no matter if you want it or not.</li>
+<li><strong>Option/Maybe type</strong> &ndash; this approach is characteristic for most of the functional languages. Instead of creating null pointer, it defines a special generic type (eg. Option), represented by either one of it&rsquo;s subtypes (Some as wrapper for existing underlying value, or None if value is not present).</li>
+</ol>
+
+
+<p>So why we consider a dedicated Option type a better solution? Because it&rsquo;s explicit, propagates type information about value nullability and &ndash; most of all &ndash; it&rsquo;s non-default. By the most of the time, we expect to have a meaningful references to our data. Their absence is not a desired and certainly should not be an expected behavior. Problem in nullable references is that literally any instance in our code could represent a non-existing value. Analogously to functional approach, all of our objects always represent an Option type.</p>
+
+<p>Currently, after decades on living in shadows, functional paradigm is gaining more and more ground of the field of mainstream programming languages. This also reflects in two of the most popular programming environments, JVM and .NET. Their functional representatives, Scala and F#, claims to combine best of both programming paradigms. This way they also introduced and popularized an Option types among object oriented approach.</p>
+
+<p>But something has been missed along the way, and (in my opinion) both Scala and F# had failed in face of the problem of value absence. Why? Because of their dualism. Since they are functional languages, both of them allows you to create an Option types with full support expected from a functional language. But while they also are object oriented and built on top of object oriented VMs, they allow you to use and create a nullable references. This leads to false sense of security, when using Option types. Lets look at the following example (F#):
+<code>fsharp
+let value: String option = Some doSmthAndReturnString()
+</code></p>
+
+<p>How can you be sure that function <code>doSmthAndReturnString</code> won&rsquo;t return a null? Actually you can&rsquo;t until you perform an explicit null check. From the runtime perspective <code>Some null</code> is a perfectly valid record. Does it sound rational? No. So why is this even possible?</p>
+
+<h2>How to combine functional and object oriented worlds?</h2>
+
+<p>From my perspective, the best solution of that problem came with <a href="http://ceylon-lang.org/">Ceylon</a> language. It&rsquo;s based on the concept of <a href="http://ceylon-lang.org/documentation/1.0/tour/types/#union_types">Union Types</a>, one of the key features of Ceylon. For <strong>tl;dr</strong> people &ndash; union type of <code>X|Y</code> is a supertype of both types <code>X</code> and <code>Y</code>. How does it correspond to null/options?</p>
+
+<p>In Ceylon <code>null</code> have it&rsquo;s own unique type <code>Null</code> (just like in Scala). By default all reference types are non-nullable (similarly to functional languages). However they may be nulled if referenced as union type of <code>T|Null</code> (or <code>T?</code> using some syntax suggar). This concept is basically &ndash; however not entirely &ndash; equivalent of Scala <code>Either[T,Null]</code> but without verbose requirement for object wrapping. Moreover, Ceylon compiler is able to optimize this away to standard JVM null references, without any overhead.
+```
+// Scala &ndash; Either
+var m: Either[String, Null] = Left(&ldquo;hello&rdquo;)
+var n: Either[String, Null] = Right(null)<br/>
+var m: Either[String, Null] = Left(null)    // still valid</p>
+
+<p>// Scala &ndash; Option type
+var m: Option[String] = Some(&ldquo;hello&rdquo;)
+var n: Option[String] = None <br/>
+var m: Option[String] = Some(null)          // still valid</p>
+
+<p>// Ceylon
+String|Null m = &ldquo;hello&rdquo;;    // no need for value wrapping
+String? n = null;           // Integer? &ndash;> Integer|Null
+String f = null;            // compile time error, references are not nullable by default
+```
+As you can see on the example above, this way we combined advantages of safe, explicitly nullable types with verbosity and performance of null referenced types. In my opinion this is a proper, yet still not widespread, solution of one of the most common problem in languages theory.</p>
+]]></content>
+  </entry>
+  
+</feed>
