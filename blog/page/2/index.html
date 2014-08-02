@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Jun 16th, 2013 .net, ruby Comments Czego Programiści .NET Mogliby Nauczyć Się Od Rubystów? .NET był wybraną przeze mnie technologią niemal od &hellip;">
+	<meta name="description" content="Jun 26th, 2013 free talk, programowanie, wzorce projektowe Comments Garść Pro Tipów Przydatnych Podczas Tworzenia Aplikacji Od jakiegoś czasu &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,93 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-26T22:49:00+02:00" data-updated="true" itemprop="datePublished">Jun 26<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/free-talk/'>free talk</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/06/26/garsc-pro-tipow-przydatnych-podczas/" itemprop="url">Garść Pro Tipów Przydatnych Podczas Tworzenia Aplikacji</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Od jakiegoś czasu myślałem o zebraniu w garść przemyśleń związanych z rozwojem projektów, bazując na doświadczeniach w aplikacjach, przede wszystkim biznesowych, w produkcji których przyszło mi uczestniczyć. Ponieważ pamięć jest zawodna i nie wszystko co chciałem wymienić udało mi się spamiętać i ubrać w słowa, być może w przyszłości będę kontynuował ten wątek.</p>
+
+<p>Z góry zaznaczam, że tematy takie jak testy jednostkowe czy automatyzacja, celowo zostały tutaj przeze mnie potraktowane marginalnie. Jest tak dlatego, ponieważ są one wałkowane bez przerwy w wielu artykułach i każdy programista powinien się z nimi do tej pory zapoznać. Punkty jakie tutaj poruszam mogłby dotyczyć także tych dziedzin, postanowiłem jednak skupić się na odrobinę innych aspektach.</p>
+
+<h2>1. &ldquo;Jesteśmy jedną rodziną, mamy wspólne korzenie&rdquo;</h2>
+
+<p>Naturalną cechą aplikacji webowych rozwijanych w ramach środowiska .NET jest ich podział na wiele różnych projektów. Nie jest to wymóg, jednakże z reguły zdecydowanie pomaga w organizacji oraz w trakcie późniejszego wdrażania rozwiązań. To co jednak uznałem za warte przypomnienia to wzajemne powiązania pomiędzy projektami. Mówiąc zaś dokładniej, przydatność stworzenia wspólnej biblioteki-korzenia, dowiązywanej przez wszystkie pozostałe projekty w aplikacji.</p>
+
+<p>Ma to kilka prostych przyczyn. Po pierwsze zdaża się, że musimy zaimplementować pewną funkcjonalność w kilku bibliotekach, będących na podobnym poziomie zależności, których jednak nie możemy powiązać ze sobą np. ze względu na rekurencyjne zapętlenie zależności &ndash; tutaj wspólny &ldquo;korzeń&rdquo; okazuje się nieoceniony. Po drugie, w trakcie pracy z aplikacją nieraz powstaje chęć stworzenia własnego DSLa bądź zestawu rozszerzeń upraszczających pracę z daną platformą bądź językiem. Ileż to razy rodziła się ochota na dodanie <em>extension method</em>, której brakuje nam w istniejących już klasach .NET? Tutaj również możliwość współdzielenia tego typu funkcjonalności jest bardzo przydatna.</p>
+
+<p>Idea wspólnego &ldquo;korzenia&rdquo; przydaje się również kiedy mowa o klasach wyjątków. Dobrą praktyką w trakcie definiowania aplikacji jest wywoływanie własnych wyjątków, które mogą informować nie tylko o błędach w operacjach logicznych systemu, lecz również logice biznesowej jako takiej. Moim zdaniem wszystkie takie <em>customowe</em> wyjątki powinny mieć wspólną klasę bazową. Dzięki temu w późniejszych fragmentach aplikacji będziemy mogli bez problemu wychwytywać te z nich, które stworzyliśmy sami na potrzeby naszego systemu i odpowiednio na nie reagować &ndash; przekształać do postaci czytelnej dla końcowego użytkownika, logować itp.</p>
+
+<h2>2. Atomic frontend design</h2>
+
+<p>Atomic design to koncepcja projektowania elementów HTML w sposób uporządkowany na bazie kompozytów. Nieraz w życiu codziennym zdarza się nam określać komponenty strony w dość ogólny sposób, pozostawiając szczegóły implementacji na &ldquo;doprecyzowanie później&rdquo; ;) W rezultacie kończymy w morzu (lub raczej szambie) znaczników o mgliście oznaczonych brzegach. Ponieważ HTML na stronach może mieć bardzo rozrośniętą postać, którą jako programiści też będziemy musieli utrzymywać, warto zadbać też o ten aspekt aplikacji.</p>
+
+<p>Idea atomic designu skupia się własnie na wiązaniu elementów HTML w kompozyty, które z kolei są łączone ze sobą dalej w kolejne, bardziej abstrakcyjne struktury. Więcej szczegółów na ten temat możecie dowiedzieć się <a href="http://bradfrostweb.com/blog/post/atomic-web-design/">tutaj</a>. W praktyce warto poznać to podejście już teraz &ndash; w obecnej chwili widać wyłaniający się coraz mocniej trend, który w przyszłości może poskutować nowym standardem umożliwiającym definiowanie własnych znaczników HTML, mających bezpośrednie wsparcie ze strony silnika renderującego.</p>
+
+<p>Chcąc wspomóc developerów i przygotować współczesne aplikacje webowe do nadchodzących standardów, inżynierowie Google&#8217;a stworzyli projekt <a href="http://www.polymer-project.org/">polymer</a> (czerpiący m.in. z koncepcji atomic designu), którego zadaniem jest zbudować odpowiednią platformę abstrakcji z istniejących już rozwiązań: HTML, Javascriptu oraz CSS. Zgodnie z ich przewidywaniami wraz z rozwojem przeglądarek funkcje oferowane przez tą bibliotekę mają w przyszłości zostać zastąpione specjalizowanymi, natywnymi odpowiednikami, zaś zadaniem polymeru jest umożliwić obecnym aplikacjom kompatybilność z dopiero powstającymi technologiami. Ciekawostka: mimo, że AngularJS stanowi oddzielny projekt, zapowiedziano już że w kolejnych wersjach będzie on coraz bardziej integrowany z polymerem.</p>
+
+<h2>3. Stwórz własną platformę abstrakcji&hellip;</h2>
+
+<p>Kolejna kwestia wynika z prostej tendencji uzależniania logiki aplikacji od wykorzystywanych bibliotek. W praktyce skutkuje to twardym związaniem naszego systemu z konkretnymi rozwiązaniami &ndash; które w przyszłości mogą stracić wsparcie, okazać się przestarzałe lub niewystarczające do naszych potrzeb. Taka monolityczna budowa nie jest przychylna zmianom, a jak powszechnie wiadomo klienci lubią wpadać na nowe pomysłu i zmieniać swoje zdanie.</p>
+
+<p>Stąd też idealnym rozwiązaniem jest stworzenie klasycznej płaszczyzny abstrakcji, całkowicie izolującej naszą logikę biznesową, która stanowi jądro każdej aplikacji biznesowej, od zewnętrznych platform, realizowanych pośrednio jako obiekty proxy/adaptery. Piszę idealnym, w praktyce jednak rzadko takie rozwiązanie okazuje się w 100% możliwe. Warto jednak poświęcić mu trochę uwagi &ndash; również z perspektywy modularyzacji i możliwości testowania.</p>
+
+<h2>4. &hellip; ale nie przeginaj z warstwami</h2>
+
+<p>Pamiętaj, że każda dodatkowa wartwa abstrakcji z jednej strony umożliwia ci podzielenie problemu na prostsze, bardziej ogólne definicje (a ludzie z natury lubią pojmować świat ogólnikowo), z drugiej strony jednak stanowi jednocześnie kolejną barierę w optymalizacji.</p>
+
+<p>To co warto przypomnieć, to fakt, że tworzenie aplikacji to proces, w którym wymagania zmieniają się w czasie. Produkcja oprogramowania nie jest jednym z konkursów algorytmicznych, gdzie wszelkie bariery i wartości graniczne są niezmienne i podane z góry. To co dziś świetnie się sprawdza, jutro może okazać się niewystarczające.</p>
+
+<p>Ważnym czynnikiem jest odpowiednie zdefiniowanie problemu i dobór właściwych wzorców i rozwiązań. Jako programiści nieraz generalizujemy pewne problemy tak, aby dało się je rozwiązać przy pomocy istniejących technologii, kosztem rzeczywistej złożoności całego systemu. Dla zainteresowanych proponuję obejżeć <a href="http://www.infoq.com/presentations/8-lines-code-refactoring">wykład</a> Grega Younga na ten temat.</p>
+
+<p>Wielowarstwowe aplikacje stanowią pewien problem, kiedy przychodzi do optymalizacji. Nie oznacza to jednak, że budowa z podziałem na warstwy jest zła. Jest wygodna z punktu widzenia programisty i projektowania koncepcji rozwiązań dla problemów postawionych przed systemem. Z drugiej strony jednak każda aplikacja posiada pewne punkty zapalne &ndash; wymagające dużej wydajności &ndash; które będą wymagać niestandardowego trakowania, w tym też odejścia od wcześniej przyjętych koncepcji i zwrotu w stronę rozwiązań bardziej nisko poziomowych. Dobrze, aby aplikacja umożliwiała pewien sposób na osiągnięcie tego celu bez zaburzania reszty konstrukcji.</p>
+
+<p>Jednym z możliwych kompromisów jest wielopoziomowy caching. Zamiast przebijać sie przez kolejne płaszczyzny abstrakcji w celu możliwości operowania na bardziej niskopoziomowych mechanizmach, cache&#8217;ujemy uzykiwane wartości na poszczególnych warstwach. Wielopoziomowy cache umożliwia też przyrostowe skalowanie wydajności w zależności od potrzeb.</p>
+
+<h2>5. Kradnij&hellip;</h2>
+
+<p>&hellip; moc obliczeniową maszyn klienta. Jest to bardzo dobre podejście, ponieważ wykonywanie części logiki po stronie przeglądarki nie dość, że odciąża serwery, za które musimy płacić, to dodatkowo stanowi rozwiązanie o wiele bardziej skalowalne, ponieważ ogólna ilość dostępnej mocy obliczeniowej rośnie wraz z liczbą maszyn wysyłających żądania na serwer. Stąd też część obliczeń, takich jak renderowanie dynamicznego HTMLa, czy preprocesowanie modelu danych od razu do postaci przystępnej do obliczeń po stronie serwera, można wykonywać bezpośrednio w przeglądarce.</p>
+
+<h2>6. Oszukuj</h2>
+
+<p>Co mam przez to na myśli? Po pierwsze powtarzam: cache&#8217;uj dane. W świecie aplikacji na platformie .NET często jest to opcja marginalizowana. W wielu przypadkach dopuszczalne jest, aby użytkownik zobaczył <em>przybliżone</em> dane. A co jeżeli nie są one aktualne? <em>Keep calm and oj tam oj tam</em> ;)</p>
+
+<p>Problem, z którym się też spotkałem, to stosowanie <em>prymitywych</em> cache&#8217;ów w miejscach, w których ciężko określić górną granicę przyrostu danych. Tak, zwykły .NETowy słownik może wystarczy w twoim środowisku developerskim, ale w momencie, gdy za rok dane pompowane do niego na produkcji będą liczone w setkach tysięcy (lub więcej) obiektów, wszyscy na własne oczy zobaczą, że wyprodukowałeś trabanta w cenie porsche. Technologie sprawdzone na polu walki, takie jak Memcache i Redis są tutaj, gotowe cię wesprzeć. Korzystaj z tej możliwości.</p>
+
+<p>Po drugie pamiętaj o złotej zasadzie &ndash; czego user nie dotknie, tego sercu nie żal. Przykład-anegdota: swego czasu aplikacje na urządzenia Apple były podawane jako wzór szybko uruchamiających się programów. Aplikacja, która na innych systemach uruchamiała się w kilka sekund, na iPhone była gotowa w ułamku tego czasu. Na czym polegał sekret? Otóż w rzeczywistości to, co widział użytkownik, było w rzeczywistości zrzutem ekranu z działającej aplikacji, bez jakichkolwiek możliwości interakcji. Dzięki temu użytkownik miał wrażenie, że aplikacja uruchamia się niemal natychmiast. W rzeczywistości, zanim wykonał on jakąkolwiek akcję w UI, mijało parę sekund, w trakcie których program miał czas, aby się załadować i podstawić pod &ldquo;zaślepkę&rdquo; faktyczny interfejs użytkownika.</p>
+
+<p>Liczę na to, że lektura ta okazała się ciekawa i być może uda mi się w przyszłości opisać dalsze koncepty i przemyślenia.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1762,81 +1849,6 @@
 <p>Jak widać, nie jest to technika przejrzysta, głównie ze względu na obejścia, jakie trzeba wykonać, aby uzyskać dostęp do wywołań metod nadpisywanych z klas bazowych.</p>
 
 <p>Kiedy jest to przydatne? Szczerze umieściłem to jako ciekawostkę, ponieważ o ile o korzyściach dziedziczenia i wirtualizacji wie chyba każdy, kto miał do czynienia z programowaniem obiektowym, to forma, w jakiej jest to podane w Javascriptcie może okazać się ciężka do przełknięcia. Z tego powodu polecam tutaj języki kompilowane do Javascriptu np. CoffeeScript lub TypeScript, które rozwiązują ten problem za nas.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-02-19T18:54:00+01:00" data-updated="true" itemprop="datePublished">Feb 19<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/free-talk/'>free talk</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2013/02/19/nowe-technologie-tak-czy-nie/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/02/19/nowe-technologie-tak-czy-nie/" itemprop="url">Nowe Technologie - Tak Czy Nie?</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Jedną z ciekawszych cech web developerki jest mnogość dostępnych na tym polu rozwiązań i technologii. Dlaczego uważam, że to dobrze? Poniekąd dlatego, że w ten sposób programista może przezwyciężyć spadek motywacji i nudę związaną z wykonywaniem kolejnego <em>wielkiego projektu w młodym, dynamicznym zespole</em>. Stwarza również pole do popisu i ciągłego rozwoju, pokazuje różne sposoby na zrobienie tego samego lepiej i szybciej.</p>
-
-<p>Niestety z punktu widzenia osób odpowiedzialnych za dostarczenie projektu klientowi nowa technologia w projekcie to nieprzewidywalna zmienna. Kierownik projektu otrzymując propozycję wykorzystania czegoś nowego musi wziąć pod uwagę wiele niewiadomych. Kilka z tych które wpadły mi do głowy to:</div><div><ul><li>Czy w ogóle tego potrzebujemy?</li><li>Czy jest to dobrze udokumentowane? O jak dojrzałym projekcie mówimy? Jak wygląda sprawa ze wsparciem ze strony społeczności, producenta etc.?</li><li>Czy twórca nie porzuci wsparcia dla bieżącej wersji zostawiając nas na lodzie?</li><li>Ile czasu zajmie teamowi przyswojenie tej technologii? A skoro już ją ma poznać, to czy będziemy mogli wykorzystać tą wiedzę w innych projektach?</li><li>Jak wykorzystanie tej technologii wpłynie na opóźnienie/przyspieszenie wykonania projektu na etapie startowym, głównym, czy końcowym?</li><li>Jak wpłynie to na wzrost/spadek końcowego kosztu projektu, koszt jego utrzymania i modernizacji?</li></ul><div>&nbsp; &nbsp; Każdy z tych czynników może pomóc w osiągnięciu końcowego efektu, stworzyć aplikację szybciej, poprawić jej wydajność, zwiększyć stopień modularności kodu, a przez to pomóc w jego późniejszym rozwoju. Z drugiej strony zastosowanie (lub nieumiejętne zastosowanie) danego frameworka może odbić się echem w każdej fazie życia projektu, tym głośniejszym im dłużej on będzie budowany, rozwijany i eksploatowany przez klienta.</p>
-
-<p>Nie znaczy to jednak, że powinniśmy się wystrzegać nowości. Wręcz przeciwnie. Jest to swego rodzaju inwestycja, która przy pewnym wkładzie (tzw. &ldquo;próg wejścia&rdquo;) nieraz procentuje w przyszłości. W jaki sposób dobierać jednak technologie, żeby w dalszej perspektywie czasu zwróciły się one w naszym projekcie? Postanowiłem spisać swoje spostrzeżenia na ten temat.</p>
-
-<h2>Nie za wiele na raz</h2>
-
-<p>Podchodząc do nowego projektu nie raz chciałoby się dać ponieść entuzjazmowi i zacząć go z całym stosem nowych bibliotek, czekających na poznanie. Problem pojawia się, jeżeli rzeczywiście przegniemy. Przypomina to wtedy ruszanie samochodem bezpośrednio z 5 biegu. Mija miesiąc, dwa, trzy, a mimo wysiłków całego teamu robota stoi w miejscu. W efekcie morale pada pysk. To właśnie efekt skumulowanego okresu wdrażania się w nowe technologie.</p>
-
-<p>Wdrażanie kolejnych nowości powinno wchodzić z rozwagą (najlepiej pojedynczo lub niewielkimi grupkami &ndash; wciąż możliwe jest dodawanie nowych rzeczy w trakcie rozwijania projektu), tak abyśmy nie stracili sprzed oczu ostatecznego celu naszej pracy. Prawda jest gorzka: u podstaw nie chodzi przecież o naszą naukę i samorozwój lecz o to, aby dostarczyć klientowi to czego potrzebuje.</p>
-
-<h2>Kiedy warto?</h2>
-
-<p>To dobre pytanie. Kiedy powinniśmy wprowadzać nowy framework do naszej domeny pracy? Opcji, które trzeba rozważyć jest wiele. Oprócz standardowych za i przeciw np. kwestie wydajnościowe, koszty eksploatacji czy przyspieszenie produkcji, uwzględniłbym również:</p>
-
-<ul>
-<li>&ldquo;Próg wejścia&rdquo; w nowy framework &ndash; jest to jedno z zasadniczych zagadnień do rozwiązania na samym starcie. Jeżeli próg jest mały, prawdopodobnie będziemy mogli szybko skończyć z nauką i przejść do właściwego wykorzystywania go w naszej aplikacji. Co jednak kiedy jest on duży? Tutaj warto wziąć pod uwagę kilka zmiennych:
-
-<ul>
-<li>Czas trwania projektu &ndash; jeżeli projekt będzie rozwijany latami, to nawet stosunkowo trudna w opanowaniu technologia nie wytworzy dużego długu czasowego.</li>
-<li>Częstotliwość zmian w zespole &ndash; jak wiadomo, zespół nie zawsze jest kwestią stałą i nieraz może się zdarzyć, że kolejni członkowie będą przychodzić i odchodzić, zanim na dobre wdrożą się w nowe technologie. Dotyczy to również późniejszego utrzymywania projektu. W takim wypadku długi okres nauki również działa na naszą niekorzyść.</li>
-<li>&ldquo;Reużywalność&rdquo; zdobytej wiedzy &ndash; czy poznana technologia będzie mogła być użyta później w innych projektach. Odpowiedź twierdząca pozwala to zredukować sprzeciw związany z argumentami zawartymi w poprzednim punkcie.</li>
-</ul>
-</li>
-<li>&ldquo;Próg wyjścia&rdquo; z aplikacji &ndash; fakt, że z sukcesem wprowadziliśmy nową bibliotekę do projektu to nie koniec naszych zmagań. Budowa aplikacji z reguły wiąże się z faktem, że wymagania klienta zmieniają się dynamicznie w czasie. Przypomina to grę w szachy, w której nie widzimy całej szachownicy. Z tego powodu rozważenie wszystkich działań na kilka ruchów do przodu może sprawiać problem. Może się okazać, że w zaawansowanym stadium prac nad projektem klient życzy sobie nowej funkcjonalności lub zmiany istniejącej w sposób, który jest poza możliwościami naszej wspaniałej, nowo dodanej biblioteki. Z tego powodu w lepszej pozycji stoją rozwiązania kompleksowe, pozwalające programiście na dodawanie własnych pluginów, modułów oraz udostępniające otwarty kod.</li>
-<li>Zaangażowanie zespołu- a więc czy ktoś w ogóle wykazuje chęci do poznania nowinek czy raczej woli trzymać się starych, znanych rozwiązań. Czy są chętni poznawać ją we własnym zakresie? Jest to głównie pytanie z kategorii: czy masz przyjemość pracować w <em>nerd teamie</em>? Trudno jest dodawać coś nowego, jeżeli będziesz jedyną osobą, która zamierza z tego korzystać.</li>
-<li>Popularność &ndash; jak wiadomo im lepiej opisany w Internecie jest dany framework, tym lepiej dla potencjalnego developera. Fakt, że dużo osób korzysta z danego rozwiązania zwiększa szanse, że w razie problemów będziemy mogli znaleźć na nie odpowiedź zanim sami będziemy musieli zadać pytanie.</li>
-<li>Wsparcie producenta &ndash; również support dla danej biblioteki ma tu znaczenie. W sytuacji kiedy nie znaleźliśmy rozwiązania sami, a na forach również nie ma nikogo kto do tej pory trafił na ten problem, pytanie do twórców jest ostatnią lub przed ostatnią (jeżeli mamy wgląd w kod źródłowy) rzeczą jaką możemy zrobić. Jak wiadomo w tej sytuacji najlepszy jest gwarantowany support (najczęściej płatny), niestety nawet on nie jest rzeczą pewną &ndash; przykład: swego czasu natrafiłem na błąd kontrolki DevExpressa, który mimo, że znany od 2009r. jest zgłoszony i opisany na oficjalnym forum wsparcia, do tej pory nie został rozwiązany.</li>
-</ul>
-
-
-<h2>Wnioski</h2>
-
-<p>Niestety kwestia inwestowania w nowe technologie to złożony problem. Mimo, że często jest to opłacalne ryzyko, to czasem jednak niefortunny wybór może okazać się prawdziwą miną, której zarówno project manager (jako bezpośrednio odpowiedzialny za koszta i terminy), jaki i programiści (jako ci, na których spłynie całe powstałe w ten sposób gówno) w razie wybuchu wolą uniknąć.</p>
-
-<p>Wyjściem pośrednim są tutaj oczywiście pet-projekty &ndash; aplikacje semi-testowe i takie, które nigdy nie wychodzą zasięgiem poza wewnętrzne systemy firmy, jednocześnie na tyle proste, aby służyć za pole treningowe dla programistów.</p>
-
-<p>Myślę, że głównym rozwiązaniem jest tutaj umiejętność dostrzegania potencjalnych korzyści, szacowania ryzyka jak również wzajemnego zrozumienia każdej ze stron nawzajem. W gruncie rzeczy jest to temat otwarty i mimo, że ostateczna decyzja z reguły zostaje w rękach pojedynczych osób, powinien on być rozwiązywany poprzez otwartą wymianę poglądów (nawet w postaci 5-cio minutowej konferencji przez Skype) wszystkich osób zaangażowanych w proces wytwarzania oprogramowania.</p>
 
 		
 		

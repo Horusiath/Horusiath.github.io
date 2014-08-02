@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: programming languages | Simple Solutions]]></title>
-  <link href="http://bartoszsypytkowski.com/blog/categories/programming-languages/atom.xml" rel="self"/>
+  <title><![CDATA[Category: compilers | Simple Solutions]]></title>
+  <link href="http://bartoszsypytkowski.com/blog/categories/compilers/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
   <updated>2014-08-02T13:32:26+02:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
@@ -370,120 +370,6 @@ VM* vm = newVM(program,   // program to execute</p>
 &ndash;   <strong>Performance</strong> &ndash; as you&rsquo;ve seen, execution of the bytecode is realized mostly by just moving (mostly incrementing) PC pointer. When interpreter works directly by evaluating and traversing an AST tree, there is a lot of pointer jumping and structure blocks, which is slightly more complex and slower. Bytecode allows you to faster code interpretation as well as it may facilitate some optimizations.
 &ndash;   <strong>Code size</strong> &ndash; full code operates on human readable strings, which may consume some memory and are harder to interpret. Intermediate program representation uses only a simple integer arrays.
 &ndash;   <strong>Well-fitting</strong> &ndash; since you may describe your own IR, you may fit it directly to your needs. It&rsquo;s easier to parse, and it could remove some repetitive work, when you&rsquo;ll want to implement your language on the various OSes.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Value absence - why Scala/F# approach is bad?]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values/"/>
-    <updated>2014-07-03T00:05:00+02:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values</id>
-    <content type="html"><![CDATA[<p>Handling an absent values is one of the most common problems in programming languages. Why we consider this so important? It&rsquo;s because data processing is essential task of every program ever made. And one of the main reasons of systems errors and undefined behaviors are values not present in the system. Most of the modern programming languages tries to aim programmers with solution to handle those cases. Lets look at the most common way of dealing with them:</p>
-
-<ol>
-<li><strong>Null pointer reference</strong> &ndash; also called a &ldquo;billion-dollar mistake&rdquo;, introduced by Tony Hoare. It allows to represent an absence of the heap allocated values (objects) in form of pointer referring to not a valid instance of represented type. In most of the mainstream programming languages all heap objects are nullable by default &ndash; no matter if you want it or not.</li>
-<li><strong>Option/Maybe type</strong> &ndash; this approach is characteristic for most of the functional languages. Instead of creating null pointer, it defines a special generic type (eg. Option), represented by either one of it&rsquo;s subtypes (Some as wrapper for existing underlying value, or None if value is not present).</li>
-</ol>
-
-
-<p>So why we consider a dedicated Option type a better solution? Because it&rsquo;s explicit, propagates type information about value nullability and &ndash; most of all &ndash; it&rsquo;s non-default. By the most of the time, we expect to have a meaningful references to our data. Their absence is not a desired and certainly should not be an expected behavior. Problem in nullable references is that literally any instance in our code could represent a non-existing value. Analogously to functional approach, all of our objects always represent an Option type.</p>
-
-<p>Currently, after decades on living in shadows, functional paradigm is gaining more and more ground of the field of mainstream programming languages. This also reflects in two of the most popular programming environments, JVM and .NET. Their functional representatives, Scala and F#, claims to combine best of both programming paradigms. This way they also introduced and popularized an Option types among object oriented approach.</p>
-
-<p>But something has been missed along the way, and (in my opinion) both Scala and F# had failed in face of the problem of value absence. Why? Because of their dualism. Since they are functional languages, both of them allows you to create an Option types with full support expected from a functional language. But while they also are object oriented and built on top of object oriented VMs, they allow you to use and create a nullable references. This leads to false sense of security, when using Option types. Lets look at the following example (F#):
-<code>fsharp
-let value: String option = Some doSmthAndReturnString()
-</code></p>
-
-<p>How can you be sure that function <code>doSmthAndReturnString</code> won&rsquo;t return a null? Actually you can&rsquo;t until you perform an explicit null check. From the runtime perspective <code>Some null</code> is a perfectly valid record. Does it sound rational? No. So why is this even possible?</p>
-
-<h2>How to combine functional and object oriented worlds?</h2>
-
-<p>From my perspective, the best solution of that problem came with <a href="http://ceylon-lang.org/">Ceylon</a> language. It&rsquo;s based on the concept of <a href="http://ceylon-lang.org/documentation/1.0/tour/types/#union_types">Union Types</a>, one of the key features of Ceylon. For <strong>tl;dr</strong> people &ndash; union type of <code>X|Y</code> is a supertype of both types <code>X</code> and <code>Y</code>. How does it correspond to null/options?</p>
-
-<p>In Ceylon <code>null</code> have it&rsquo;s own unique type <code>Null</code> (just like in Scala). By default all reference types are non-nullable (similarly to functional languages). However they may be nulled if referenced as union type of <code>T|Null</code> (or <code>T?</code> using some syntax suggar). This concept is basically &ndash; however not entirely &ndash; equivalent of Scala <code>Either[T,Null]</code> but without verbose requirement for object wrapping. Moreover, Ceylon compiler is able to optimize this away to standard JVM null references, without any overhead.
-```
-// Scala &ndash; Either
-var m: Either[String, Null] = Left(&ldquo;hello&rdquo;)
-var n: Either[String, Null] = Right(null)<br/>
-var m: Either[String, Null] = Left(null)    // still valid</p>
-
-<p>// Scala &ndash; Option type
-var m: Option[String] = Some(&ldquo;hello&rdquo;)
-var n: Option[String] = None <br/>
-var m: Option[String] = Some(null)          // still valid</p>
-
-<p>// Ceylon
-String|Null m = &ldquo;hello&rdquo;;    // no need for value wrapping
-String? n = null;           // Integer? &ndash;> Integer|Null
-String f = null;            // compile time error, references are not nullable by default
-```
-As you can see on the example above, this way we combined advantages of safe, explicitly nullable types with verbosity and performance of null referenced types. In my opinion this is a proper, yet still not widespread, solution of one of the most common problem in languages theory.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Top features every statically typed language should have]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2014/02/02/uncommon-static-type-feats/"/>
-    <updated>2014-02-02T15:29:00+01:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2014/02/02/uncommon-static-type-feats</id>
-    <content type="html"><![CDATA[<p>In this post I want to focus on features of statically typed languages which I consider interesting and usefull, but still uncommon and rare among most popular ones in dev environment. First of all, lets try to answer the question: why static typing? We need to realize, what advantages of static typing do we embrace, so we can look for further improvements.</p>
-
-<ol>
-<li>Performance &ndash; of course this is first notable difference. Since static typing gives a compiler much more informations about generated program, we have both much heavier optimizations that could be done at compile time and less need of type checking at runtime.</li>
-<li>Better tooling &ndash; if our compiler can reason more about our code, so do other tools we use in application development.</li>
-<li>Program correctness &ndash; we don&rsquo;t have to be constantly aware of all application functionalities. Because we have expert system in the form of a compiler, we can maintain larger code bases.</li>
-</ol>
-
-
-<p>In scope of this post I want to notice possible features, which may enhance both programmer productivity, application logic correctness and overal code design.</p>
-
-<h2>Type unions and intersections</h2>
-
-<p>Languages: <a href="http://ceylon-lang.org/">Ceylon</a></p>
-
-<p>This feature gives us a profit of union and intersection operations as we know them in set theory, and apply them to types in our language. Type and set theories are very closely related, and they both can benefit with many of common theorems (for example: roots of Hindley-Milner type inference lies in set theory).</p>
-
-<p>Type unions seems to be more natural way to represent some relations, than inheritance. Example: think about type, which could represent all numbers, lets call it <code>Number</code>. From type theory it looks like the best fit would be (literally) union of integer and floating point numbers, which give us a representiation of most of the domain. If this isn&rsquo;t sufficient, it&rsquo;s even easier to extend our Number type with union of more than two types. Now try to do it only by using inheritance or composition&hellip;</p>
-
-<p>Type unions allows us to do the most important thing, most of the non-functional languages do wrong &ndash; proper null handling. In Ceylon <code>Null</code> have it&rsquo;s own type (however it&rsquo;s optimized away during compilation) and is subject to all mentioned rules. All reference variables and field are non-nullable by default &ndash; thanks to unions this behavior could be changed by using notation <code>T|Null</code> or it&rsquo;s simplified form <code>T?</code> for variable type declaration. It&rsquo;s actually a good thing, since this is what we expect from variables in our code for 90% of the time. So why we have to code in continous risk of null exceptions (unless we perform explicit checking), if we may tell compiler to ensure that for us before our code even run? On the other hand, there are a nullable value types, which are also quite usefull at some times. Many languages allow us to use some kind of built-in nullable wrappers, sorrounded with specific compiler magic for programmer convinience (eg. C#). But in my opinion this is not the right way of doing things. If compiler is allowed to use some nice tricks, then we as the programmers also should be able to do so.</p>
-
-<h2>Type constraints / Value dependent types</h2>
-
-<p>Languages: Ada, Eiffel, (experimentally through extensions) all ML-familly languages including Haskell, F*, <a href="http://www.idris-lang.org/">Idris</a></p>
-
-<p>Since we already have a unions and intersections, it would be nice to allow other operations to be performed directly on types. What about conditions?</p>
-
-<p>Lets say I&rsquo;ve got an <code>int</code> type, so I could verify at compile time, that all of the necessary values are restricted to be integers. Ok. Lets go further. What if I want to narrow those integers to omit negative numbers? Actually this is still easy in most of the languages (Java, you have one job&hellip;), since they already have some kind of <code>unsigned int</code> type. But what when I want to go a step further: I want to ensure that my integers are only positive numbers, that means they&rsquo;re neither negatives nor 0. It should be easy, but it&rsquo;s not. Almost all of the languages fail at that moment, requiring programmer to manually check that condition through code at runtime. And this is where type constraints comes to play.</p>
-
-<p>They allow programmer to define specific constraints on values, they refer to. Let me precise this on some pseudocode examples:
-<code>
-type Positive = x:int where x &gt; 0
-type Even = x:int where x % 2 == 0
-type IPv4 = x:unsigned byte[] where x.Length == 4
-</code>
-So why I consider this nice and usefull? Some languages (eg. C/C++, Go) already offers fixed length arrays, while equivalent the example <code>Even</code> type could be created as specialized class? First of all it&rsquo;s easier, since you have one way to solve multiple problems. It also could be implemented fast (think about implementing and working with custom Even class in language such as Java), which makes it more likely to be used in real life. Next, it&rsquo;s all available at compiler level, when you can actually verify your code before running it and allow compiler for further optimizations. They also could be potentialy empovered when used with type set-like operations described in previous paragraph. And finally refinement types could also be used for implementing Design by Contract principles in your code, which by itself is a nice feature.</p>
-
-<h2>Implicit interfaces</h2>
-
-<p>Languages: <a href="http://golang.org/">Go</a>, <a href="http://www.typescriptlang.org/">TypeScript</a></p>
-
-<p>This one is quite controversial, especially when compared to previously mentioned features. There are many programmers considering implicit interfaces as potentially unsafe, for example by weakening type safety in static typing by creating risk of accidential interface implementation. There are many examples provided to support this thesis, but actually I found most of them is result of bad design decision and broken conventions, or simply explicit interfaces are not solution to presented problems either.</p>
-
-<p>So in what cases implicit interfaces could be usefull:</p>
-
-<ol>
-<li>Just like in case of monkey patching it&rsquo;s a way to provide additional features to existing types, that we have no access to. This may be especially usefull to patching holes in stdlib implementations (no matter how hard you try, you never foresee all of them). Example: lack of IParseable interface in .NET common lib.</li>
-<li>It makes easier to work with various external libs, minimazing need of constructing adapters to bypass incompatibilities.</li>
-<li>It also makes very simple to create mocks.</li>
-</ol>
-
-
-<p>They also encourage some good practices when working with interfaces. Since they&rsquo;re implicit, you will naturally try to keep them as simple and decoupled as possible. It&rsquo;s easy to maintain implementation of interface having dozens of methods, when they are explicit, it&rsquo;s harder to do so in implicit way. And since the purpose of interface is to abstract and describe contract between parts of your application, interfaces with numerous methods are often symphoms of a God Objects in your code. On the other hand it&rsquo;s easier to create a class implementing dozens of interfaces, when they&rsquo;re implicit rather than explicit. This also promotes decoupling.</p>
-
-<h2>Great absent</h2>
-
-<p>Actually I didn&rsquo;t mentioned some of most core features, which benefit all statically typed languages, such as types as first-class citizens, type inference or language macros/templates. The reason of this is, that those thing are well known and more or less present in many of the popular languages we have today. My goal was to describe some potential advantages of powerfull, yet less known features we may see with hope they would be more often met and used in the future.</p>
 ]]></content>
   </entry>
   

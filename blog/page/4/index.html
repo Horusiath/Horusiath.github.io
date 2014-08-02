@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Nov 17th, 2011 javascript, programowanie Comments [Javascript] Jak Przetworzyć Query String? W środowisku programowania po stronie klienta nieraz &hellip;">
+	<meta name="description" content="Nov 24th, 2011 WCF, programowanie Comments [WCF] Wydobywanie Wiadomości W Postaci SOAP Po Stronie Klienta Windows Communication Foundation jest &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,223 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-24T23:07:00+01:00" data-updated="true" itemprop="datePublished">Nov 24<span>th</span>, 2011</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/wcf/'>WCF</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/" itemprop="url">[WCF] Wydobywanie Wiadomości W Postaci SOAP Po Stronie Klienta</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Windows Communication Foundation jest obecnie jednym z bardziej powszechnych (i moim zdaniem także jednym z najlepiej zaprojektowanych) frameworków do obsługi usług sieciowych (<em>Web Services</em>). Nie wdając się zbytnio w szczegóły działania takiej usługi, wystarczy nam wiedzieć, że aby zostać przekazana, każda wiadomość (reprezentowana po stronie .NETu przez obiekt odpowiedniej klasy) musi być zserializowana do postaci tzw. dokumentu, który w większości przypadków występuje pod postacią XML lub jego podzbiorem, SOAP.</p>
+
+<p>Z reguły nie musimy dysponować wiedzą o tym, w jaki sposób nasza wiadomość zostaje reprezentowana za kulisami usługi. Niestety w życiu pojawiają się sytuacje, kiedy ta informacja może mieć dla nas istotne znaczenie. Przykładem takiej sytuacji mogą być narzędzia diagnostyczne, których zadaniem jest kontrola i monitorowanie działania usługi.</p>
+
+<p>Sposobów na wydobycie wiadomości w jej &ldquo;surowej&rdquo; postaci, tzn. reprezentacji XML (lub SOAP, ponieważ zależy nam na w miarę czytelnej formie) jest kilka. Jednym z nich może być np. podpięcie się do modułu zajmującego się deserializacją dokumentu. Innym jest wykorzystanie wbudowanych w WCF opcji tracingu. W poniższym przykładzie przedstawię drugą opcję.</p>
+
+<h2>Etap 1 &ndash; konfiguracja</h2>
+
+<p>Ponieważ WCF jest środowiskiem, które umożliwia zdefiniowanie niemal wszystkiego za pomocą konfiguracji, warto skorzystać z tego rozwiązania, kiedy tylko mamy taką możliwość. O pozostałych sytuacjach tzn. kiedy sama konfiguracja to za mało, a dostarczone przez twórców frameworka &ldquo;klocki&rdquo; nam nie wystarczą opowiem w dalszej części wpisu.</p>
+
+<p>Jak więc za pomocą konfiguracji ustawić naszego klienta, aby możliwy był nasłuch nadchodzących wiadomości? Po pierwsze należy zdefiniować taką opcję wewnątrz gałęzi system.service model. Ilustruje to następujący fragment:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;system.serviceModel&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;diagnostics&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;messageLogging</span>
+</span><span class='line'>        <span class="na">logMalformedMessages=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logMessagesAtServiceLevel=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logEntireMessage=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">logMessagesAtTransportLevel=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">maxMessagesToLog=</span><span class="s">&quot;-1&quot;</span>
+</span><span class='line'>        <span class="na">maxSizeOfMessageToLog=</span><span class="s">&quot;10000&quot;</span>
+</span><span class='line'>        <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/diagnostics&gt;</span>
+</span><span class='line'>    ...pozostała część konfiguracji
+</span><span class='line'>  <span class="nt">&lt;/system.serviceModel&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>
+Co znaczą następujące atrybuty?:</p>
+
+<ul>
+<li><strong><em>logMalformedMessages</em></strong> &ndash; oznacza, że poza normalnymi wiadomościami, logowane zostaną również te, których deserializacja była niemożliwa (np. z powodu uszkodzenia zawartości dokumentu). W takim wypadku dokument zostaje logowany &ldquo;na surowo&rdquo; tzn. do momentu, kiedy był on jeszcze czytelny dla aplikacji. Jeżeli zawartość była zaszyfrowana w momencie wystąpienia błędu, log również będzie zaszyfrowany.</li>
+<li><strong><em>logMessagesAtServiceLevel</em></strong>, <strong><em>logMessagesAtTransportLevel</em></strong> &ndash; oznacza, czy wiadomości mają zostać logowane w momencie przejścia przez warstwę transportową, czy w chwili kiedy stają się dostępne dla usługi / konsumenta.</li>
+<li><strong><em>logEntireMessage</em></strong> &ndash; domyślnie ustawione na false. Określa czy logowana jest cała treść wiadomości czy tylko jej nagłówek SOAP.</li>
+<li><strong><em>maxMessagesToLog</em></strong> &ndash; określa limit wiadomości, które mogą być zalogowane. Pozwala nam uchronić się przed zasypaniem nadmierną ilością danych.</li>
+<li><strong><em>maxSizeOfMessageToLog</em></strong> &ndash; określa maksymalny rozmiar logowanej wiadomości. W momencie kiedy zapisywana wiadomość jest za długa, zapisana zostaje ta część która zmieściła się w limicie, a reszta zostaje ucięta i nie podlega logowaniu.</li>
+</ul>
+
+
+<p>Oczywiście nie musimy określać wszystkich tych atrybutów, ponieważ nie zawsze zależy nam na tak wysokim poziomie szczegółowości logowanych informacji.</p>
+
+<p>Kiedy określiliśmy zasady logowania wiadomości po stronie WCF, powiedzieliśmy naszej aplikacji jak ma wyglądać wiadomość, którą framework udostępnia do logowania. Teraz należy skonfigurować tracing, tzn. powiedzieć jakie typy wiadomości mają być logowane oraz jak ma przebiegać proces logowania (m.in. gdzie zapisujemy wiadomości). Oto wycinek przykładowej konfiguracji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;system.diagnostics&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;sources&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;source</span> <span class="na">name=</span><span class="s">&quot;System.ServiceModel.MessageLogging&quot;</span>
+</span><span class='line'>              <span class="na">switchValue=</span><span class="s">&quot;All&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;listeners&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;add</span> <span class="na">name=</span><span class="s">&quot;myListenerName&quot;</span>
+</span><span class='line'>               <span class="na">type=</span><span class="s">&quot;assembly qualified name&quot;</span>
+</span><span class='line'>               <span class="na">initializeData=</span><span class="s">&quot;my file path&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/listeners&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/source&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/sources&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/system.diagnostics&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Odrobina wyjaśnienia:</p>
+
+<ul>
+<li><strong>source</strong> &ndash; określa konfigurację obiektu, stanowiącego źródło nadchodzących logów. W przypadku, kiedy chcielibyśmy mieć możliwość późniejszego odwołania sie do tej instancji w kodzie aplikacji, należy zapamiętać nazwę stanowiącą identyfikator. Wartość switchValue określa jakiego typu wiadomości mają być logowane. Wyróżniamy:
+
+<ul>
+<li><strong><em>Off</em></strong> &ndash; wyłączona możliwość logowania.</li>
+<li><strong><em>Critical</em></strong> &ndash; logowane są błędy krytyczne, które mogą powodować wyłączenie się aplikacji (np. wyczerpanie pamięci, przepełnienie stosu, zawieszenie systemu).</li>
+<li><strong><em>Error</em></strong> &ndash; logowane są błędy, w tym te które mogą powodować nieprawidłowe działanie programu, które jednak nie spowodują zakończenia programu. Należą do nich chyba wszystkie niewyłapane wyjątki.&ndash; <strong><em>Warning</em></strong> &ndash; uprzedzenia programu o możliwości wystąpienia nieprawidłowości, które jednak nie będą miały większego wpływu na dalsze działanie aplikacji. Przykłady: nieprawidłowe logowanie, przekroczenie limitu czasu na wykonanie zadania.</li>
+<li><strong><em>Information</em></strong> &ndash; logowanie ważniejszych elementów działającej aplikacji np. poprawne odczytanie konfiguracji lub stworzenie kanału pomiędzy usługą a konsumentem &ndash; dla przypomnienia, WCF wymaga stworzenia kanału komunikacyjnego, jakiekolwiek protokoły wykorzystujące komunikację bezpołączeniową (w tym UDP) nie są obsługiwane.</li>
+<li><strong><em>Verbose</em></strong> &ndash; podobnie jak powyższe, jednak logowane są zdarzenia bardziej &ldquo;niskopoziomowe&rdquo; np. udane odczytanie nagłówka SOAP wiadomości.</li>
+<li><strong><em>ActivityTracing</em></strong> &ndash; logowane są wszystkie formy komunikacji między klientem a usługą, zarówno na poziomie usługi jak i w warstwie transportowej.</li>
+<li><strong><em>All</em></strong> &ndash; wszystkie powyższe.</li>
+</ul>
+</li>
+<li><strong>listeners</strong> &ndash; jest to kolekcja obiektów zajmujących się logowaniem wiadomości nadchodzących ze źródła. Dodając kolejny obiekt należy podać jego identyfikator (używany potem do rozpoznania go w kolekcji), typ czyli nazwę kwalifikowaną (pełna nazwa klasy, łącznie z podaniem przestrzeni nazw, nazwy zestawu / assembly, opcjonalnie również numer wersji i token). Do tego możemy również podać atrybut initializeData, który może posłużyć przekazaniu informacji inicjalizujących obiekt, bądź wykorzystywanych przez stosowny konstruktor listenera. Dostępnych mamy kilka typów wbudowanych listenerów oferowanych przez platformę .NET:
+
+<ul>
+<li><strong><em>TextWriterTraceListener</em></strong> &ndash; wykorzystuje standardowy strumień tekstowy do logowania wiadomości. W konfiguracji możemy podać plik, do którego logowne będą informacje. W aplikacji możemy podać strumień, dla którego listener stworzy obiekt TextWritera, który będzie później wykorzystywany do logowania zdarzeń.</li>
+<li><strong><em>XmlWriterTraceListener</em></strong> &ndash; tak jak powyższy, z tą różnicą że wykorzystywany wraper TextWritera jest zastąpiony XmlWriterem.</li>
+<li><strong><em>ConsoleTraceListener</em></strong> &ndash; automatycznie ustawia strumień wyjściowy konsoli (Console.Out) na odbiorcę logowanych wiadomości. Wszystkie zdarzenia zostaną wyświetlone na konsoli.</li>
+<li><strong><em>DefaultTraceListener</em></strong> &ndash; domyślnie używany tylko w trybie debug. Wysyła logowane wiadomości na okno Output środowiska Visual Studio.</li>
+<li><strong><em>EventLogTraceListener</em></strong> &ndash; wykorzystuje mechanizm logów udostępniony bezpośrednio przez nasz system operacyjny.</li>
+<li><strong><em>WebPageTraceListener</em></strong> &ndash; wykorzystywany do logowania informacji w kanałach udostępnianych przez ASP.NET framework.</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Powyższa konfiguracja jest w stanie samodzielnie &ndash; bez jakiejkolwiek ingerencji w kodzie &ndash; poradzić sobie z postawionym przez nas zadaniem zapisywania wiadomości w postaci SOAP. Niestety w sytuacji, kiedy podane nam możliwości listenerów nie wystarczą, np. kiedy chcielibyśmy logować wiadomości bezpośrednio w polu teksowym naszej aplikacji desktopowej, jesteśmy zmuszeni do wzięcia spraw we własne ręce i napisania własnego trace listenera.</p>
+
+<h2>Etap 2 &ndash; Logowanie wiadomości w polu tekstowym aplikacji</h2>
+
+<p>Kod który musimy napisać jest dość krótki i treściwy. Całość składa się z dwóch kroków:</p>
+
+<ol>
+<li>Stworzenie własnej klasy dziedziczącej po trace listenerze, umożliwiającej logowanie wiadomości w kontrolce aplikacji.</li>
+<li>Aktualizacja pliku konfiguracyjnego i podpięcie kontrolki do listenera.</li>
+</ol>
+
+
+<p>Implementacja klasy jest bardzo prosta, przykładowo może wyglądać tak:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">MyTraceListener</span> <span class="p">:</span> <span class="n">TraceListener</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="n">TextBoxBase</span> <span class="n">TextBox</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Write</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="n">TextBox</span><span class="p">==</span><span class="k">null</span><span class="p">)</span><span class="k">return</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">TextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">message</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">WriteLine</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">TextBox</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">TextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">message</span> <span class="p">+</span> <span class="n">Environment</span><span class="p">.</span><span class="n">NewLine</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W podstawowej wersji klasy wystarczy zdefiniować dwie metody abstrakcyjne. Dodatkowo stworzyliśmy właściwość typu TextBoxBase (ten przykład operuje na kontrolce z biblioteki Windows Forms), którą wykorzystamy za chwilę do podpięcia naszej kontrolki.</p>
+
+<p>Jak więc należałoby podpiąć wybraną przez nas kontrolkę do listenera takiego, jak podany powyżej? W pierwszej kolejności powinniśmy stworzyć obiekt TraceSource, który jest odpowiednikiem węzła source podanego przez nas wcześniej w konfiguracji. Może być podany w postaci pola dostępnego wewnątrz naszej aplikacji:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="n">TraceSource</span> <span class="n">source</span> <span class="p">=</span>
+</span><span class='line'>    <span class="k">new</span> <span class="nf">TraceSource</span><span class="p">(</span><span class="s">&quot;System.ServiceModel.MessageLogging&quot;</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>W konstruktorze podajemy taką samą nazwę, jak wartość atrybutu <strong>name</strong> w konfiguracji danego źródła. Następnie wyciągamy listenera i podpinamy do niego naszego textboxa.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">listener</span> <span class="p">=</span> <span class="n">source</span><span class="p">.</span><span class="n">Listeners</span><span class="p">[</span><span class="s">&quot;listener_config_name&quot;</span><span class="p">]</span> <span class="k">as</span> <span class="n">MyTraceListener</span><span class="p">;</span>
+</span><span class='line'><span class="n">listener</span><span class="p">.</span><span class="n">TextBox</span> <span class="p">=</span> <span class="n">myTextBox</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To wszystko. Kod inicjalizujący można umieścić np. w konstruktorze głównego okna naszej aplikacji. Od teraz wiadomości (filtrowaneg wg. tego co określiliśmy w konfiguracji) będą wypisywane w jej polu tekstowym.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1462,242 +1679,6 @@ Zalety:</li>
 
 
 <p>Po takiej operacji nasze okno powinno być gotowe.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-04-29T19:32:00+02:00" data-updated="true" itemprop="datePublished">Apr 29<span>th</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/eksploracja-danych/'>eksploracja danych</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/04/29/przeszukiwanie-sieci-i-indeksowanie/" itemprop="url">Przeszukiwanie Sieci I Indeksowanie Stron Internetowych</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Ostatnimi czasy postanowiłem stworzyć prostą aplikację, której zadaniem byłoby przeszukiwanie wszerz stron internetowych. Temat zacznę od omówienia mojego spojżenia na problem:</p>
-
-<ol>
-<li>Jeżeli weźmiemy pod uwagę, że sieć można reprezentować pod postacią grafu skierowanego, mamy do dyspozycji bardzo proste rozwiązanie w postaci algorytmu BFS. Każdy nowo zaakceptowany link będzie dorzucany do wspólnej kolejki i każdorazowo z niej zdejmowany, kiedy przyjdzie pora na przetworzenie strony pod wybranym linkiem.</li>
-<li>Aby uniknąć zakleszczenia, dodatkowo poza kolejką umieszczamy link w liście &ndash; w ten sposób zaindeksujemy wszystkie odwiedzone strony i będziemy mogli sprawdzić, czy dana strona nie została już poprzednio odwiedzona.</li>
-<li>Na sam koniec, aby ograniczyć przestrzeń przeszukiwać ustalimy adres url domeny, do której przeszukiwań będziemy się ograniczać.</li>
-</ol>
-
-
-<p>Podstawowa konstrukcja naszej klasy będzie zatem wyglądać następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">class</span> <span class="nc">Crawler</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">http</span> <span class="p">=</span> <span class="s">&quot;http://&quot;</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">public</span> <span class="k">static</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">Sites</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>  <span class="k">public</span> <span class="kt">string</span> <span class="n">Url</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">private</span> <span class="n">Queue</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">queue</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Queue</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
-</span><span class='line'>  <span class="n">Regex</span> <span class="n">anchor</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Regex</span><span class="p">(</span><span class="s">&quot;&lt;a href=\&quot;.*\&quot;&quot;</span><span class="p">);</span>
-</span><span class='line'>  <span class="k">private</span> <span class="kt">int</span> <span class="n">id</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">public</span> <span class="nf">Crawler</span><span class="p">(</span><span class="kt">string</span> <span class="n">domain</span><span class="p">)</span>
-</span><span class='line'>  <span class="p">{</span>
-</span><span class='line'>      <span class="n">Url</span> <span class="p">=</span> <span class="n">domain</span><span class="p">;</span>
-</span><span class='line'>      <span class="n">Sites</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Chwila na wyjaśnienie:</p>
-
-<ul>
-<li>ustawiłem słowo <strong>http</strong> w postaci stałej, aby łatwiej się później nim posługiwać.</li>
-<li><strong>anchor</strong> stanowi wyrażenie regularne, po którym będziemy wykrywać wszystkie znaczniki <code>a</code> z atrybutem <code>href</code>, które zawierają linki do innych stron.</li>
-<li><strong>id</strong> to nic innego jak licznik stron</li>
-</ul>
-
-
-<p>Teraz należy wyposażyć naszą klasę w możliwość przeglądania stron. W tym celu wewnątrz niej implementujemy następującą metodę:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">Start</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>   <span class="n">queue</span><span class="p">.</span><span class="n">Enqueue</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
-</span><span class='line'>   <span class="n">WebClient</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">WebClient</span><span class="p">();</span>
-</span><span class='line'>   <span class="k">do</span>
-</span><span class='line'>   <span class="p">{</span>
-</span><span class='line'>      <span class="kt">var</span> <span class="n">link</span> <span class="p">=</span> <span class="n">queue</span><span class="p">.</span><span class="n">Dequeue</span><span class="p">();</span>
-</span><span class='line'>      <span class="k">try</span> <span class="p">{</span>
-</span><span class='line'>              <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">reader</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StreamReader</span><span class="p">(</span><span class="n">client</span><span class="p">.</span><span class="n">OpenRead</span><span class="p">(</span><span class="n">link</span><span class="p">)))</span> <span class="p">{</span>
-</span><span class='line'>                  <span class="n">SearchLinks</span><span class="p">(</span><span class="n">reader</span><span class="p">.</span><span class="n">ReadToEnd</span><span class="p">());</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>      <span class="k">catch</span> <span class="p">(</span><span class="n">WebException</span> <span class="n">exc</span><span class="p">)</span>
-</span><span class='line'>      <span class="p">{</span>
-</span><span class='line'>          <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;\tError on site {0} : {1}&quot;</span><span class="p">,</span> <span class="n">link</span><span class="p">,</span> <span class="n">exc</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>   <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">queue</span><span class="p">.</span><span class="n">Count</span> <span class="p">!=</span> <span class="m">0</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Parametrem metody jest korzeń &ndash; strona startowa, z której rozpoczynamy przeszukiwanie sieci. Do samego pobierania stron wykorzystujemy obiekt <em>WebClient</em>. Przeszukiwanie kolejnych stron będzie odbywać się tak długo, jak długo pozostaje coś do przeszukania (kolejka nie jest pusta). Sam mechanizm wyszukiwania linków ukryty jest pod metodą <em>SearchLinks</em> do której przejdę za chwilę. Przedtem jednak musimy się upewnić, że nasza pętla będzie odporna na występowanie błędów podczas odczytywania stron, jak choćby <em>Error 404</em>, któy może spowodować, że nasz WebClient wyrzuci wyjątek w trakcie próby otworzenia strumienia do strony.</p>
-
-<p>Przejdźmy teraz do implementacji kolejnej metody:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">void</span> <span class="nf">SearchLinks</span><span class="p">(</span><span class="kt">string</span> <span class="n">result</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>   <span class="kt">var</span> <span class="n">matches</span> <span class="p">=</span> <span class="n">anchor</span><span class="p">.</span><span class="n">Matches</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">match</span> <span class="k">in</span> <span class="n">matches</span><span class="p">)</span>
-</span><span class='line'>   <span class="p">{</span>
-</span><span class='line'>      <span class="kt">var</span> <span class="n">r</span> <span class="p">=</span> <span class="n">match</span><span class="p">.</span><span class="n">ToString</span><span class="p">();</span>
-</span><span class='line'>      <span class="kt">var</span> <span class="n">site</span> <span class="p">=</span> <span class="n">GetAddress</span><span class="p">(</span><span class="n">Url</span><span class="p">,</span> <span class="n">r</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">if</span> <span class="p">(!</span><span class="n">Sites</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">site</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="kt">string</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">site</span><span class="p">))</span>
-</span><span class='line'>      <span class="p">{</span>
-</span><span class='line'>          <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;{0}. Found: {1}&quot;</span><span class="p">,</span> <span class="p">++</span><span class="n">id</span><span class="p">,</span> <span class="n">site</span><span class="p">);</span>
-</span><span class='line'>          <span class="n">Sites</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">site</span><span class="p">);</span>
-</span><span class='line'>          <span class="n">queue</span><span class="p">.</span><span class="n">Enqueue</span><span class="p">(</span><span class="n">site</span><span class="p">);</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>   <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W tym kroku pobieramy w parametrze całą zawartość strony w postaci tekstu. Następnie sprawdzamy dopasowania naszego wyrażenia regularnego metodą Matches. Zwraca ona kolekcję obiektów określających wykryte dopasowania. Następnie dla każdego z dopasowań wyciągamy z niego link do kolejnej strony metodą <strong>GetAddress</strong> (implementacja poniżej).</p>
-
-<p>Końcowym krokiem właściwego algorytmu jest sprawdzenie, czy faktycznie uzyskano jakiś link oraz czy nie został on już wcześniej przeszukany &ndash; jeżeli te warunki zostały spełnione dokonujemy odpowiedniego wpisu, uaktualniamy listę odkrytych stron i dodajemy ją do kolejki stron wymagających przeszukania.</p>
-
-<p>Ostatnim problemem jest wydobycie adresu url z odkrytego wzorca. Oto moje rozwiązanie tego problemu:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="kt">string</span> <span class="nf">GetAddress</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">,</span> <span class="kt">string</span> <span class="n">r</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="kt">string</span> <span class="n">result</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
-</span><span class='line'>  <span class="kt">var</span> <span class="n">splits</span> <span class="p">=</span> <span class="n">r</span><span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot;\&quot;&quot;</span><span class="p">},</span> <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">);</span>
-</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">splits</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
-</span><span class='line'>  <span class="p">{</span>
-</span><span class='line'>      <span class="kt">var</span> <span class="n">ishttp</span> <span class="p">=</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Contains</span><span class="p">(</span><span class="n">http</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">if</span> <span class="p">(</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Contains</span><span class="p">(</span><span class="s">&quot;.html&quot;</span><span class="p">)</span> <span class="p">||</span> <span class="n">ishttp</span><span class="p">)</span>
-</span><span class='line'>      <span class="p">{</span>
-</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="n">ishttp</span> <span class="p">&amp;&amp;</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Contains</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
-</span><span class='line'>          <span class="p">{</span>
-</span><span class='line'>              <span class="n">result</span> <span class="p">+=</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
-</span><span class='line'>          <span class="p">}</span>
-</span><span class='line'>          <span class="k">else</span> <span class="nf">if</span><span class="p">(!</span><span class="n">ishttp</span><span class="p">)</span>
-</span><span class='line'>          <span class="p">{</span>
-</span><span class='line'>              <span class="n">result</span> <span class="p">+=</span> <span class="n">http</span> <span class="p">+</span> <span class="n">url</span> <span class="p">+</span> <span class="n">splits</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
-</span><span class='line'>          <span class="p">}</span>
-</span><span class='line'>          <span class="k">break</span><span class="p">;</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Wykryte wyrażenie rozdzielamy na stringi poprzez znak &ldquo; . Jest to wymagane ponieważ dopasowany wzorzec będzie zawierać nie tylko adres strony, ale również sam atrybut a href (w przypadku podanego przeze mnie wyrażenia będzie to zawsze pierwszy element tablicy powstałej w wyniku pocięcia wzorca) i inne atrybuty (style itd&hellip;). Następnie sprawdzamy czy dany łańcuch znaków zawiera podciąg <em>&#8220;<a href="http://">http://</a>&rdquo;</em> &ndash; będzie to przez nas wykorzystane więcej niż raz, zapisałem więc ten wynik w osobnej zmiennej <em>ishttp</em>.</p>
-
-<p>Dalsze rozdzielenie wynika z dwóch możliwych zachowań:
-&ndash; wykryty adres jest absolutny &ndash; zawiera więc zarówno ciąg http jak i nazwę domeny, w której się poruszamy. Warto tutaj zaznaczyć, że ten algorytm wykrywa również strony zapisane w postaci <em><a href="http://xxx.nazwa_domeny.xxx_,">http://xxx.nazwa_domeny.xxx_,</a> gdzie </em>xxx_ są dowolnymi ciągami znaków.
-&ndash; adres wskazuje na ścieżkę względną &ndash; w tym przypadku konstruujemy pełny adres strony, kończąc go znalezionym adresem.</p>
-
-<p>Tak stworzona klasa jest w stanie indeksować wszystkie strony .html (można je zmodyfikować, aby sprawdzało również linki o innych rozszerzeniach) w podanej domenie bez ryzyka wejścia w nieskończoną pętlę.</p>
-
-<p>Przykładowe wywołanie rozwiązania:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">Crawler</span> <span class="n">crawler</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Crawler</span><span class="p">(</span><span class="s">&quot;pb.edu.pl&quot;</span><span class="p">);</span>
-</span><span class='line'><span class="n">crawler</span><span class="p">.</span><span class="n">Start</span><span class="p">(</span><span class="s">&quot;http://wi.pb.edu.pl/&quot;</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
 
 		
 		

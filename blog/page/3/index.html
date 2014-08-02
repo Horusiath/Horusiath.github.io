@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Jan 12th, 2013 .net, asp, free talk, wydajność Comments ASP.NET a Wydajność Pisząc aplikacje oparte o ASP.NET (+MVC) często korzystamy z wielu &hellip;">
+	<meta name="description" content="Feb 19th, 2013 free talk Comments Nowe Technologie - Tak Czy Nie? Jedną z ciekawszych cech web developerki jest mnogość dostępnych na tym polu &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,81 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-02-19T18:54:00+01:00" data-updated="true" itemprop="datePublished">Feb 19<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/free-talk/'>free talk</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2013/02/19/nowe-technologie-tak-czy-nie/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/02/19/nowe-technologie-tak-czy-nie/" itemprop="url">Nowe Technologie - Tak Czy Nie?</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Jedną z ciekawszych cech web developerki jest mnogość dostępnych na tym polu rozwiązań i technologii. Dlaczego uważam, że to dobrze? Poniekąd dlatego, że w ten sposób programista może przezwyciężyć spadek motywacji i nudę związaną z wykonywaniem kolejnego <em>wielkiego projektu w młodym, dynamicznym zespole</em>. Stwarza również pole do popisu i ciągłego rozwoju, pokazuje różne sposoby na zrobienie tego samego lepiej i szybciej.</p>
+
+<p>Niestety z punktu widzenia osób odpowiedzialnych za dostarczenie projektu klientowi nowa technologia w projekcie to nieprzewidywalna zmienna. Kierownik projektu otrzymując propozycję wykorzystania czegoś nowego musi wziąć pod uwagę wiele niewiadomych. Kilka z tych które wpadły mi do głowy to:</div><div><ul><li>Czy w ogóle tego potrzebujemy?</li><li>Czy jest to dobrze udokumentowane? O jak dojrzałym projekcie mówimy? Jak wygląda sprawa ze wsparciem ze strony społeczności, producenta etc.?</li><li>Czy twórca nie porzuci wsparcia dla bieżącej wersji zostawiając nas na lodzie?</li><li>Ile czasu zajmie teamowi przyswojenie tej technologii? A skoro już ją ma poznać, to czy będziemy mogli wykorzystać tą wiedzę w innych projektach?</li><li>Jak wykorzystanie tej technologii wpłynie na opóźnienie/przyspieszenie wykonania projektu na etapie startowym, głównym, czy końcowym?</li><li>Jak wpłynie to na wzrost/spadek końcowego kosztu projektu, koszt jego utrzymania i modernizacji?</li></ul><div>&nbsp; &nbsp; Każdy z tych czynników może pomóc w osiągnięciu końcowego efektu, stworzyć aplikację szybciej, poprawić jej wydajność, zwiększyć stopień modularności kodu, a przez to pomóc w jego późniejszym rozwoju. Z drugiej strony zastosowanie (lub nieumiejętne zastosowanie) danego frameworka może odbić się echem w każdej fazie życia projektu, tym głośniejszym im dłużej on będzie budowany, rozwijany i eksploatowany przez klienta.</p>
+
+<p>Nie znaczy to jednak, że powinniśmy się wystrzegać nowości. Wręcz przeciwnie. Jest to swego rodzaju inwestycja, która przy pewnym wkładzie (tzw. &ldquo;próg wejścia&rdquo;) nieraz procentuje w przyszłości. W jaki sposób dobierać jednak technologie, żeby w dalszej perspektywie czasu zwróciły się one w naszym projekcie? Postanowiłem spisać swoje spostrzeżenia na ten temat.</p>
+
+<h2>Nie za wiele na raz</h2>
+
+<p>Podchodząc do nowego projektu nie raz chciałoby się dać ponieść entuzjazmowi i zacząć go z całym stosem nowych bibliotek, czekających na poznanie. Problem pojawia się, jeżeli rzeczywiście przegniemy. Przypomina to wtedy ruszanie samochodem bezpośrednio z 5 biegu. Mija miesiąc, dwa, trzy, a mimo wysiłków całego teamu robota stoi w miejscu. W efekcie morale pada pysk. To właśnie efekt skumulowanego okresu wdrażania się w nowe technologie.</p>
+
+<p>Wdrażanie kolejnych nowości powinno wchodzić z rozwagą (najlepiej pojedynczo lub niewielkimi grupkami &ndash; wciąż możliwe jest dodawanie nowych rzeczy w trakcie rozwijania projektu), tak abyśmy nie stracili sprzed oczu ostatecznego celu naszej pracy. Prawda jest gorzka: u podstaw nie chodzi przecież o naszą naukę i samorozwój lecz o to, aby dostarczyć klientowi to czego potrzebuje.</p>
+
+<h2>Kiedy warto?</h2>
+
+<p>To dobre pytanie. Kiedy powinniśmy wprowadzać nowy framework do naszej domeny pracy? Opcji, które trzeba rozważyć jest wiele. Oprócz standardowych za i przeciw np. kwestie wydajnościowe, koszty eksploatacji czy przyspieszenie produkcji, uwzględniłbym również:</p>
+
+<ul>
+<li>&ldquo;Próg wejścia&rdquo; w nowy framework &ndash; jest to jedno z zasadniczych zagadnień do rozwiązania na samym starcie. Jeżeli próg jest mały, prawdopodobnie będziemy mogli szybko skończyć z nauką i przejść do właściwego wykorzystywania go w naszej aplikacji. Co jednak kiedy jest on duży? Tutaj warto wziąć pod uwagę kilka zmiennych:
+
+<ul>
+<li>Czas trwania projektu &ndash; jeżeli projekt będzie rozwijany latami, to nawet stosunkowo trudna w opanowaniu technologia nie wytworzy dużego długu czasowego.</li>
+<li>Częstotliwość zmian w zespole &ndash; jak wiadomo, zespół nie zawsze jest kwestią stałą i nieraz może się zdarzyć, że kolejni członkowie będą przychodzić i odchodzić, zanim na dobre wdrożą się w nowe technologie. Dotyczy to również późniejszego utrzymywania projektu. W takim wypadku długi okres nauki również działa na naszą niekorzyść.</li>
+<li>&ldquo;Reużywalność&rdquo; zdobytej wiedzy &ndash; czy poznana technologia będzie mogła być użyta później w innych projektach. Odpowiedź twierdząca pozwala to zredukować sprzeciw związany z argumentami zawartymi w poprzednim punkcie.</li>
+</ul>
+</li>
+<li>&ldquo;Próg wyjścia&rdquo; z aplikacji &ndash; fakt, że z sukcesem wprowadziliśmy nową bibliotekę do projektu to nie koniec naszych zmagań. Budowa aplikacji z reguły wiąże się z faktem, że wymagania klienta zmieniają się dynamicznie w czasie. Przypomina to grę w szachy, w której nie widzimy całej szachownicy. Z tego powodu rozważenie wszystkich działań na kilka ruchów do przodu może sprawiać problem. Może się okazać, że w zaawansowanym stadium prac nad projektem klient życzy sobie nowej funkcjonalności lub zmiany istniejącej w sposób, który jest poza możliwościami naszej wspaniałej, nowo dodanej biblioteki. Z tego powodu w lepszej pozycji stoją rozwiązania kompleksowe, pozwalające programiście na dodawanie własnych pluginów, modułów oraz udostępniające otwarty kod.</li>
+<li>Zaangażowanie zespołu- a więc czy ktoś w ogóle wykazuje chęci do poznania nowinek czy raczej woli trzymać się starych, znanych rozwiązań. Czy są chętni poznawać ją we własnym zakresie? Jest to głównie pytanie z kategorii: czy masz przyjemość pracować w <em>nerd teamie</em>? Trudno jest dodawać coś nowego, jeżeli będziesz jedyną osobą, która zamierza z tego korzystać.</li>
+<li>Popularność &ndash; jak wiadomo im lepiej opisany w Internecie jest dany framework, tym lepiej dla potencjalnego developera. Fakt, że dużo osób korzysta z danego rozwiązania zwiększa szanse, że w razie problemów będziemy mogli znaleźć na nie odpowiedź zanim sami będziemy musieli zadać pytanie.</li>
+<li>Wsparcie producenta &ndash; również support dla danej biblioteki ma tu znaczenie. W sytuacji kiedy nie znaleźliśmy rozwiązania sami, a na forach również nie ma nikogo kto do tej pory trafił na ten problem, pytanie do twórców jest ostatnią lub przed ostatnią (jeżeli mamy wgląd w kod źródłowy) rzeczą jaką możemy zrobić. Jak wiadomo w tej sytuacji najlepszy jest gwarantowany support (najczęściej płatny), niestety nawet on nie jest rzeczą pewną &ndash; przykład: swego czasu natrafiłem na błąd kontrolki DevExpressa, który mimo, że znany od 2009r. jest zgłoszony i opisany na oficjalnym forum wsparcia, do tej pory nie został rozwiązany.</li>
+</ul>
+
+
+<h2>Wnioski</h2>
+
+<p>Niestety kwestia inwestowania w nowe technologie to złożony problem. Mimo, że często jest to opłacalne ryzyko, to czasem jednak niefortunny wybór może okazać się prawdziwą miną, której zarówno project manager (jako bezpośrednio odpowiedzialny za koszta i terminy), jaki i programiści (jako ci, na których spłynie całe powstałe w ten sposób gówno) w razie wybuchu wolą uniknąć.</p>
+
+<p>Wyjściem pośrednim są tutaj oczywiście pet-projekty &ndash; aplikacje semi-testowe i takie, które nigdy nie wychodzą zasięgiem poza wewnętrzne systemy firmy, jednocześnie na tyle proste, aby służyć za pole treningowe dla programistów.</p>
+
+<p>Myślę, że głównym rozwiązaniem jest tutaj umiejętność dostrzegania potencjalnych korzyści, szacowania ryzyka jak również wzajemnego zrozumienia każdej ze stron nawzajem. W gruncie rzeczy jest to temat otwarty i mimo, że ostateczna decyzja z reguły zostaje w rękach pojedynczych osób, powinien on być rozwiązywany poprzez otwartą wymianę poglądów (nawet w postaci 5-cio minutowej konferencji przez Skype) wszystkich osób zaangażowanych w proces wytwarzania oprogramowania.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1858,223 +1933,6 @@
 <p>Niejawnie zachodzi tu w rzeczywistości konwersja: <code>Number(string)</code>. Jak widzimy metoda ta wciąż nie jest wolna od błędów, mimo to zapis taki jest prostszy i wciąż bardziej wiarygodny niż funkcje parsujące.</p>
 
 <p>Ostatecznie, aby sprawdzić czy podana wartość jest faktycznie liczbą (wykluczając jednocześnie 2 ostatnie wyniki z powyższego przykładu), można skorzystać z wyrażenia regularnego: <code>/^\d+(.\d+)?$/.test(myNumber)</code>. Wyrażenie to zaakceptuje wszystkie liczby stało i zmiennoprzecinkowe. Odrzuci przy tym puste łańcuchy znaków, oraz wartości poprzedzone lub kończące sie białymi znakami. Jeżeli chcielibyśmy, aby i one przechodzimy przez test, wówczas modyfikujemy wyrażenie w następujący sposób: <code>/^\s<em>\d+(.\d+)?\s</em>$/.test(myNumber)</code></p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-11-24T23:07:00+01:00" data-updated="true" itemprop="datePublished">Nov 24<span>th</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/wcf/'>WCF</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/11/24/wcf-wydobywanie-wiadomosci-w-postaci/" itemprop="url">[WCF] Wydobywanie Wiadomości W Postaci SOAP Po Stronie Klienta</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Windows Communication Foundation jest obecnie jednym z bardziej powszechnych (i moim zdaniem także jednym z najlepiej zaprojektowanych) frameworków do obsługi usług sieciowych (<em>Web Services</em>). Nie wdając się zbytnio w szczegóły działania takiej usługi, wystarczy nam wiedzieć, że aby zostać przekazana, każda wiadomość (reprezentowana po stronie .NETu przez obiekt odpowiedniej klasy) musi być zserializowana do postaci tzw. dokumentu, który w większości przypadków występuje pod postacią XML lub jego podzbiorem, SOAP.</p>
-
-<p>Z reguły nie musimy dysponować wiedzą o tym, w jaki sposób nasza wiadomość zostaje reprezentowana za kulisami usługi. Niestety w życiu pojawiają się sytuacje, kiedy ta informacja może mieć dla nas istotne znaczenie. Przykładem takiej sytuacji mogą być narzędzia diagnostyczne, których zadaniem jest kontrola i monitorowanie działania usługi.</p>
-
-<p>Sposobów na wydobycie wiadomości w jej &ldquo;surowej&rdquo; postaci, tzn. reprezentacji XML (lub SOAP, ponieważ zależy nam na w miarę czytelnej formie) jest kilka. Jednym z nich może być np. podpięcie się do modułu zajmującego się deserializacją dokumentu. Innym jest wykorzystanie wbudowanych w WCF opcji tracingu. W poniższym przykładzie przedstawię drugą opcję.</p>
-
-<h2>Etap 1 &ndash; konfiguracja</h2>
-
-<p>Ponieważ WCF jest środowiskiem, które umożliwia zdefiniowanie niemal wszystkiego za pomocą konfiguracji, warto skorzystać z tego rozwiązania, kiedy tylko mamy taką możliwość. O pozostałych sytuacjach tzn. kiedy sama konfiguracja to za mało, a dostarczone przez twórców frameworka &ldquo;klocki&rdquo; nam nie wystarczą opowiem w dalszej części wpisu.</p>
-
-<p>Jak więc za pomocą konfiguracji ustawić naszego klienta, aby możliwy był nasłuch nadchodzących wiadomości? Po pierwsze należy zdefiniować taką opcję wewnątrz gałęzi system.service model. Ilustruje to następujący fragment:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;system.serviceModel&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;diagnostics&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;messageLogging</span>
-</span><span class='line'>        <span class="na">logMalformedMessages=</span><span class="s">&quot;true&quot;</span>
-</span><span class='line'>        <span class="na">logMessagesAtServiceLevel=</span><span class="s">&quot;true&quot;</span>
-</span><span class='line'>        <span class="na">logEntireMessage=</span><span class="s">&quot;true&quot;</span>
-</span><span class='line'>        <span class="na">logMessagesAtTransportLevel=</span><span class="s">&quot;true&quot;</span>
-</span><span class='line'>        <span class="na">maxMessagesToLog=</span><span class="s">&quot;-1&quot;</span>
-</span><span class='line'>        <span class="na">maxSizeOfMessageToLog=</span><span class="s">&quot;10000&quot;</span>
-</span><span class='line'>        <span class="nt">/&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;/diagnostics&gt;</span>
-</span><span class='line'>    ...pozostała część konfiguracji
-</span><span class='line'>  <span class="nt">&lt;/system.serviceModel&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>
-Co znaczą następujące atrybuty?:</p>
-
-<ul>
-<li><strong><em>logMalformedMessages</em></strong> &ndash; oznacza, że poza normalnymi wiadomościami, logowane zostaną również te, których deserializacja była niemożliwa (np. z powodu uszkodzenia zawartości dokumentu). W takim wypadku dokument zostaje logowany &ldquo;na surowo&rdquo; tzn. do momentu, kiedy był on jeszcze czytelny dla aplikacji. Jeżeli zawartość była zaszyfrowana w momencie wystąpienia błędu, log również będzie zaszyfrowany.</li>
-<li><strong><em>logMessagesAtServiceLevel</em></strong>, <strong><em>logMessagesAtTransportLevel</em></strong> &ndash; oznacza, czy wiadomości mają zostać logowane w momencie przejścia przez warstwę transportową, czy w chwili kiedy stają się dostępne dla usługi / konsumenta.</li>
-<li><strong><em>logEntireMessage</em></strong> &ndash; domyślnie ustawione na false. Określa czy logowana jest cała treść wiadomości czy tylko jej nagłówek SOAP.</li>
-<li><strong><em>maxMessagesToLog</em></strong> &ndash; określa limit wiadomości, które mogą być zalogowane. Pozwala nam uchronić się przed zasypaniem nadmierną ilością danych.</li>
-<li><strong><em>maxSizeOfMessageToLog</em></strong> &ndash; określa maksymalny rozmiar logowanej wiadomości. W momencie kiedy zapisywana wiadomość jest za długa, zapisana zostaje ta część która zmieściła się w limicie, a reszta zostaje ucięta i nie podlega logowaniu.</li>
-</ul>
-
-
-<p>Oczywiście nie musimy określać wszystkich tych atrybutów, ponieważ nie zawsze zależy nam na tak wysokim poziomie szczegółowości logowanych informacji.</p>
-
-<p>Kiedy określiliśmy zasady logowania wiadomości po stronie WCF, powiedzieliśmy naszej aplikacji jak ma wyglądać wiadomość, którą framework udostępnia do logowania. Teraz należy skonfigurować tracing, tzn. powiedzieć jakie typy wiadomości mają być logowane oraz jak ma przebiegać proces logowania (m.in. gdzie zapisujemy wiadomości). Oto wycinek przykładowej konfiguracji:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;system.diagnostics&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;sources&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;source</span> <span class="na">name=</span><span class="s">&quot;System.ServiceModel.MessageLogging&quot;</span>
-</span><span class='line'>              <span class="na">switchValue=</span><span class="s">&quot;All&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;listeners&gt;</span>
-</span><span class='line'>          <span class="nt">&lt;add</span> <span class="na">name=</span><span class="s">&quot;myListenerName&quot;</span>
-</span><span class='line'>               <span class="na">type=</span><span class="s">&quot;assembly qualified name&quot;</span>
-</span><span class='line'>               <span class="na">initializeData=</span><span class="s">&quot;my file path&quot;</span><span class="nt">/&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;/listeners&gt;</span>
-</span><span class='line'>      <span class="nt">&lt;/source&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;/sources&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;/system.diagnostics&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Odrobina wyjaśnienia:</p>
-
-<ul>
-<li><strong>source</strong> &ndash; określa konfigurację obiektu, stanowiącego źródło nadchodzących logów. W przypadku, kiedy chcielibyśmy mieć możliwość późniejszego odwołania sie do tej instancji w kodzie aplikacji, należy zapamiętać nazwę stanowiącą identyfikator. Wartość switchValue określa jakiego typu wiadomości mają być logowane. Wyróżniamy:
-
-<ul>
-<li><strong><em>Off</em></strong> &ndash; wyłączona możliwość logowania.</li>
-<li><strong><em>Critical</em></strong> &ndash; logowane są błędy krytyczne, które mogą powodować wyłączenie się aplikacji (np. wyczerpanie pamięci, przepełnienie stosu, zawieszenie systemu).</li>
-<li><strong><em>Error</em></strong> &ndash; logowane są błędy, w tym te które mogą powodować nieprawidłowe działanie programu, które jednak nie spowodują zakończenia programu. Należą do nich chyba wszystkie niewyłapane wyjątki.&ndash; <strong><em>Warning</em></strong> &ndash; uprzedzenia programu o możliwości wystąpienia nieprawidłowości, które jednak nie będą miały większego wpływu na dalsze działanie aplikacji. Przykłady: nieprawidłowe logowanie, przekroczenie limitu czasu na wykonanie zadania.</li>
-<li><strong><em>Information</em></strong> &ndash; logowanie ważniejszych elementów działającej aplikacji np. poprawne odczytanie konfiguracji lub stworzenie kanału pomiędzy usługą a konsumentem &ndash; dla przypomnienia, WCF wymaga stworzenia kanału komunikacyjnego, jakiekolwiek protokoły wykorzystujące komunikację bezpołączeniową (w tym UDP) nie są obsługiwane.</li>
-<li><strong><em>Verbose</em></strong> &ndash; podobnie jak powyższe, jednak logowane są zdarzenia bardziej &ldquo;niskopoziomowe&rdquo; np. udane odczytanie nagłówka SOAP wiadomości.</li>
-<li><strong><em>ActivityTracing</em></strong> &ndash; logowane są wszystkie formy komunikacji między klientem a usługą, zarówno na poziomie usługi jak i w warstwie transportowej.</li>
-<li><strong><em>All</em></strong> &ndash; wszystkie powyższe.</li>
-</ul>
-</li>
-<li><strong>listeners</strong> &ndash; jest to kolekcja obiektów zajmujących się logowaniem wiadomości nadchodzących ze źródła. Dodając kolejny obiekt należy podać jego identyfikator (używany potem do rozpoznania go w kolekcji), typ czyli nazwę kwalifikowaną (pełna nazwa klasy, łącznie z podaniem przestrzeni nazw, nazwy zestawu / assembly, opcjonalnie również numer wersji i token). Do tego możemy również podać atrybut initializeData, który może posłużyć przekazaniu informacji inicjalizujących obiekt, bądź wykorzystywanych przez stosowny konstruktor listenera. Dostępnych mamy kilka typów wbudowanych listenerów oferowanych przez platformę .NET:
-
-<ul>
-<li><strong><em>TextWriterTraceListener</em></strong> &ndash; wykorzystuje standardowy strumień tekstowy do logowania wiadomości. W konfiguracji możemy podać plik, do którego logowne będą informacje. W aplikacji możemy podać strumień, dla którego listener stworzy obiekt TextWritera, który będzie później wykorzystywany do logowania zdarzeń.</li>
-<li><strong><em>XmlWriterTraceListener</em></strong> &ndash; tak jak powyższy, z tą różnicą że wykorzystywany wraper TextWritera jest zastąpiony XmlWriterem.</li>
-<li><strong><em>ConsoleTraceListener</em></strong> &ndash; automatycznie ustawia strumień wyjściowy konsoli (Console.Out) na odbiorcę logowanych wiadomości. Wszystkie zdarzenia zostaną wyświetlone na konsoli.</li>
-<li><strong><em>DefaultTraceListener</em></strong> &ndash; domyślnie używany tylko w trybie debug. Wysyła logowane wiadomości na okno Output środowiska Visual Studio.</li>
-<li><strong><em>EventLogTraceListener</em></strong> &ndash; wykorzystuje mechanizm logów udostępniony bezpośrednio przez nasz system operacyjny.</li>
-<li><strong><em>WebPageTraceListener</em></strong> &ndash; wykorzystywany do logowania informacji w kanałach udostępnianych przez ASP.NET framework.</li>
-</ul>
-</li>
-</ul>
-
-
-<p>Powyższa konfiguracja jest w stanie samodzielnie &ndash; bez jakiejkolwiek ingerencji w kodzie &ndash; poradzić sobie z postawionym przez nas zadaniem zapisywania wiadomości w postaci SOAP. Niestety w sytuacji, kiedy podane nam możliwości listenerów nie wystarczą, np. kiedy chcielibyśmy logować wiadomości bezpośrednio w polu teksowym naszej aplikacji desktopowej, jesteśmy zmuszeni do wzięcia spraw we własne ręce i napisania własnego trace listenera.</p>
-
-<h2>Etap 2 &ndash; Logowanie wiadomości w polu tekstowym aplikacji</h2>
-
-<p>Kod który musimy napisać jest dość krótki i treściwy. Całość składa się z dwóch kroków:</p>
-
-<ol>
-<li>Stworzenie własnej klasy dziedziczącej po trace listenerze, umożliwiającej logowanie wiadomości w kontrolce aplikacji.</li>
-<li>Aktualizacja pliku konfiguracyjnego i podpięcie kontrolki do listenera.</li>
-</ol>
-
-
-<p>Implementacja klasy jest bardzo prosta, przykładowo może wyglądać tak:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">MyTraceListener</span> <span class="p">:</span> <span class="n">TraceListener</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">public</span> <span class="n">TextBoxBase</span> <span class="n">TextBox</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Write</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="n">TextBox</span><span class="p">==</span><span class="k">null</span><span class="p">)</span><span class="k">return</span><span class="p">;</span>
-</span><span class='line'>        <span class="n">TextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">message</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">WriteLine</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">TextBox</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
-</span><span class='line'>        <span class="n">TextBox</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">message</span> <span class="p">+</span> <span class="n">Environment</span><span class="p">.</span><span class="n">NewLine</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W podstawowej wersji klasy wystarczy zdefiniować dwie metody abstrakcyjne. Dodatkowo stworzyliśmy właściwość typu TextBoxBase (ten przykład operuje na kontrolce z biblioteki Windows Forms), którą wykorzystamy za chwilę do podpięcia naszej kontrolki.</p>
-
-<p>Jak więc należałoby podpiąć wybraną przez nas kontrolkę do listenera takiego, jak podany powyżej? W pierwszej kolejności powinniśmy stworzyć obiekt TraceSource, który jest odpowiednikiem węzła source podanego przez nas wcześniej w konfiguracji. Może być podany w postaci pola dostępnego wewnątrz naszej aplikacji:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="n">TraceSource</span> <span class="n">source</span> <span class="p">=</span>
-</span><span class='line'>    <span class="k">new</span> <span class="nf">TraceSource</span><span class="p">(</span><span class="s">&quot;System.ServiceModel.MessageLogging&quot;</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W konstruktorze podajemy taką samą nazwę, jak wartość atrybutu <strong>name</strong> w konfiguracji danego źródła. Następnie wyciągamy listenera i podpinamy do niego naszego textboxa.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">listener</span> <span class="p">=</span> <span class="n">source</span><span class="p">.</span><span class="n">Listeners</span><span class="p">[</span><span class="s">&quot;listener_config_name&quot;</span><span class="p">]</span> <span class="k">as</span> <span class="n">MyTraceListener</span><span class="p">;</span>
-</span><span class='line'><span class="n">listener</span><span class="p">.</span><span class="n">TextBox</span> <span class="p">=</span> <span class="n">myTextBox</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>To wszystko. Kod inicjalizujący można umieścić np. w konstruktorze głównego okna naszej aplikacji. Od teraz wiadomości (filtrowaneg wg. tego co określiliśmy w konfiguracji) będą wypisywane w jej polu tekstowym.</p>
 
 		
 		
