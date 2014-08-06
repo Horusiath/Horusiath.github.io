@@ -4,7 +4,7 @@
   <title><![CDATA[Category: compilers | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/compilers/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-08-02T13:32:26+02:00</updated>
+  <updated>2014-08-06T19:00:44+02:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -45,7 +45,7 @@
 
 <p>typedef struct {</p>
 
-<pre><code>int* data;      // data
+<pre><code>int* heap;      // heap
 int* code;      // array od byte codes to be executed
 int* stack;     // virtual stack
 int pc;         // program counter (aka. IP - instruction pointer)
@@ -366,10 +366,14 @@ VM* vm = newVM(program,   // program to execute</p>
 
 <h3>Why?</h3>
 
-<p>There are numerous reasons, why developers may want to use intermediate bytecode representations for their languages:
-&ndash;   <strong>Performance</strong> &ndash; as you&rsquo;ve seen, execution of the bytecode is realized mostly by just moving (mostly incrementing) PC pointer. When interpreter works directly by evaluating and traversing an AST tree, there is a lot of pointer jumping and structure blocks, which is slightly more complex and slower. Bytecode allows you to faster code interpretation as well as it may facilitate some optimizations.
-&ndash;   <strong>Code size</strong> &ndash; full code operates on human readable strings, which may consume some memory and are harder to interpret. Intermediate program representation uses only a simple integer arrays.
-&ndash;   <strong>Well-fitting</strong> &ndash; since you may describe your own IR, you may fit it directly to your needs. It&rsquo;s easier to parse, and it could remove some repetitive work, when you&rsquo;ll want to implement your language on the various OSes.</p>
+<p>There are numerous reasons, why developers may want to use intermediate bytecode representations for their languages:</p>
+
+<ul>
+<li><strong>Performance</strong> &ndash; as you&rsquo;ve seen, execution of the bytecode is realized mostly by just moving (mostly incrementing) PC pointer. When interpreter works directly by evaluating and traversing an AST tree, there is a lot of pointer jumping and structure blocks, which is slightly more complex and slower. Bytecode allows you to faster code interpretation as well as it may facilitate some optimizations.</li>
+<li><strong>Code size</strong> &ndash; full code operates on human readable strings, which may consume some memory and are harder to interpret. Intermediate program representation uses only a simple integer arrays.</li>
+<li><strong>Well-fitting</strong> &ndash; since you may describe your own IR, you may fit it directly to your needs. It&rsquo;s easier to parse, and it could remove some repetitive work, when you&rsquo;ll want to implement your language on the various OSes.</li>
+</ul>
+
 ]]></content>
   </entry>
   

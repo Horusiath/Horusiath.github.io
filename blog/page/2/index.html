@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Jun 26th, 2013 free talk, programowanie, wzorce projektowe Comments Garść Pro Tipów Przydatnych Podczas Tworzenia Aplikacji Od jakiegoś czasu &hellip;">
+	<meta name="description" content="Aug 10th, 2013 .net, ServiceStack, programowanie Comments ServiceStack - Alternatywa Dla ASP.NET ASP.NET jest wiodącą technologią, jeżeli idzie o &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,103 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-10T20:14:00+02:00" data-updated="true" itemprop="datePublished">Aug 10<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/servicestack/'>ServiceStack</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/" itemprop="url">ServiceStack - Alternatywa Dla ASP.NET</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
+
+<ul>
+<li><a href="http://www.servicestack.net/">ServiceStack</a> &ndash; najbardziej znana alternatywa, o której opowiem więcej w dalszej części posta.</li>
+<li><a href="http://nancyfx.org/">Nancy</a>&ndash; drugi obok ServiceStack, najbardziej znany framework, czerpiący inspirację ze znanego frameworka Sinatra, napisanego w Rubym.</li>
+<li><a href="https://github.com/openrasta/openrasta/wiki/Why-Choose-OpenRasta">OpenRasta</a>&ndash; biblioteka stworzona z myślą o tworzeniu API opartego o zasoby.</li>
+<li><a href="http://amirrajan.net/Oak/">Oak</a> &ndash; framework mocno zainspirowany dynamiką bibliotek Ruby.</li>
+<li><a href="http://blog.markrendle.net/2012/06/01/simple-web/">Simple.Web</a> &ndash; micro framework twórcy znanego micro ORMa Simple.Data, który umieszczam również w ramach ciekawostki.</li>
+</ul>
+
+
+<p>Sądzę, że dość niewiele osób słyszało te nazwy (zwłaszcza ostatnie dwie). Ja jednak postanowiłem opowiedzieć i zachęcić do najpopularniejszego z tych rozwiązań, czyli ServiceStack.</p>
+
+<p>Co takiego otrzymujemy, decydując się na jego wykorzystanie?:</p>
+
+<ul>
+<li>Cały zestaw <em>extension methods</em> do wbudowanych typów .NET, przyspieszających pracę programistów.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Auto-mapping">Mechanizm mapowania obiektów</a> &ndash; podobny do AutoMappera, choć prostszy i bardziej ubogi.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Built-in-profiling">Profiler</a> wbudowany w środowisko.</li>
+<li><a href="http://fluentvalidation.codeplex.com/wikipage?title=CreatingAValidator">Zaawansowany mechanizm walidacji</a>, umożliwiający m.in. warunkową walidację poszczególnych pól.</li>
+<li>Mechanizm <a href="https://github.com/ServiceStack/ServiceStack/wiki/Authentication-and-authorization">autentykacji</a> i zarządzania dostępem oparty o role i uprawnienia z możliwością logowania poprzez OpenID.</li>
+<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/The-IoC-container">Kontener IoC</a> &ndash; również z możliwością podpięcia własnego.</li>
+<li>Minimalistyczny framework ORM (<a href="https://github.com/ServiceStack/ServiceStack.OrmLite">OrmLite</a>) &ndash; umożliwia on podłączenie do najpopularniejszych relacyjnych, baz danych. Naturalnie on również może być zastąpiony bardziej kompleksowym rozwiązaniem.</li>
+<li>Wiązania do rózniej maści usług logowania (np. NLog, Elmah, Log4Net, EventLog, Enterprise Lib.) i cache&#8217;owania (np. domyślny InMemory, Memcached, Redis, Azure lub Amazon Web Services).</li>
+<li>Bundlera plików JavaScript, CSS, LESS, SASS i CoffeeScript &ndash; chociaż trzeba przyznać, że jest to dość wyboista droga.</li>
+<li>Mechanizm do kolejkowania wiadomości &ndash; obecnie tylko za pośrednictwem Redisa. Trwają prace nad wprowadzeniem bindingów do ZeroMQ, RabbitMQ, Azure Service Bus oraz Amazon SQS.</li>
+<li>Gotowe SDK do aplikacji klienckich pod C#, Silverlight, JavaScript oraz Dart.</li>
+</ul>
+
+
+<p>Ale mówiąc o jego najbardziej kompleksowych zaletach:</p>
+
+<h2>Web services &amp; Content Negotiation</h2>
+
+<p>Jest to &ndash; moim zdaniem &ndash; najciekawsza cecha Service Stack. Tworząc dotychczasowe usługi sieciowe z wykorzystaniem standardowych bibliotek .NET musieliśmy uzależniać technologię, jaką zamierzaliśmy wykorzystać od formatu danych, jakiego się spodziewaliśmy. A więc tworząc serwisy wykorzystujące SOAP lub XML tworzyliśmy dla nich specjalne usługi w WCFie. Jeżeli chcielibyśmy, aby zwracały one dane w postaci JSON, prawdopodobnie większość z nas wykorzystałaby najnowsze podejście w postaci ASP.NET Web API, dla pozostałych formatów ASP.NET.</p>
+
+<p>Problemem takiego podejścia jest fakt, że za każdym z tych rozwiązań stoi osobna technologia, która nie jest kompatybilna z pozostałymi. Niezależnie od tego, co wybierzemy, nigdy nie otrzymamy kompletnego rozwiązania.</p>
+
+<p>Jak wygląda to w przypadku ServiceStack? To proste. Każdy z modułów naszej aplikacji może być zamknięty w ramach klas dziedziczących po wspólnej klasie <code>Service</code>(jednak wbrew pozorom nie mamy tu do czynienia z wzorcem MVC) &ndash; lub w razie potrzeby, którejś z jej klas bazowych bądź interfejsu <code>IService</code>. Każda metoda obsługująca żądanie pobiera w parametrze obiekt POCO (Plain Old Class Object) i zwraca inny obiekt POCO. Dopiero na poziomie frameworka rozwiązywany jest problem serializacji danego obiektu do końcowego formatu, który może być wnioskowany na podstawie nagłówka HTTP, zawartości URL bądź dowolnego innego warunku, jaki zdefiniujemy podczas konfiguracji. Rozwiązanie to znane jest jako <em>Content Negotiation</em>. Dzięki temu jedna klasa może pełnić rolę kontrolera ASP.NET, WebAPI i serwisu WCF w tym samym czasie!</p>
+
+<p>Domyślnie dysponujemy wbudowanymi serializatorami dla formatów: SOAP (1.1 oraz 1.2), XML, JSON, CSV i JSV. Dodatkowo w sieci można pobrać pluginy rozszerzające tą listę o niemal wszystkie formatery dostępne w świecie .NET, w tym też binarne. Jedna linijka kodu w konfiguracji nieraz wystarcza, aby wprowadzić dany format do naszej aplikacji. Warto zauważyć, że ta sama zasada panuje w przypadku dynamicznie generowanych stron HTML &ndash; po doinstalowaniu pluginu możemy generować strony w oparciu o składnię Razora oraz Markdown.</p>
+
+<h2>Wydajność</h2>
+
+<p>Twórcy ServiceStack zwracają szczególną uwagę na szybkość swojej platformy, w myśl powiedzenia: <i>&ldquo;We care about two things: speed and quality. And the quality we care about is speed&rdquo;</i>. Nie powinno więc dziwić, że większości wypadków framework ten przewyższa ASP.NET i WCF w kwestiach wydajnościowych. Wynika to z prostego faktu. Mamy tu do czynienia z inicjatywą open source, a w przedsięwzięciach tego typu dużą rolę odgrywa prostota. Nie ma tutaj miejsca na platformy typu Enterprise, z setkami warstw abstrakcji, pełnymi potworków typu <a href="http://ws.apache.org/xmlrpc/apidocs/org/apache/xmlrpc/server/RequestProcessorFactoryFactory.RequestSpecificProcessorFactoryFactory.html">RequestSpecificProcessorFactoryFactory</a>(tak, jest to wyraz mojego &ldquo;hejtu&rdquo; względem podejścia projektowego w Javie, ale fakt faktem problem ten dotyka również .NETu ;) ).</p>
+
+<p>Konkretne porównania i benchmarki można znaleźć <a href="https://github.com/ServiceStack/ServiceStack/wiki/Real-world-performance">tutaj</a>. I jak widać, nie chodzi tu o jakiś pomijalny zysk rzędu kilkunastu procent.</p>
+
+<h2>Testowalność</h2>
+
+<p>ServiceStack jest frameworkiem z natury bardzo zmodularyzowanym, umożliwiającym wymianę poszczególnych komponentów. To z kolei czyni go naturalnym kandydatem do wprowadzenia testów jednostkowych.</p>
+
+<p>Innym atutem jest podejście wymiany danych opartych na komunikatach (message-based design), które w wypadku ServiceStack są zwykłymi klasami POCO. Dzięki temu testując poszczególne moduły/usługi nie musimy przetwarzać wbudowanych we framework obiektów żądań i odpowiedzi. Zamiast tego mamy do czynienia ze standardowym zbiorem klas, zdefiniowanych przez nas samych, które z zewnątrz nie zdradzają zależności od używanego przez nas frameworka. Ponad to architektura sprawia, że najwygodniejszym podejściem jest budowa dużej ilości serwisów z małą ilością metod, co dodatkowo ułatwia zachowanie ziarnistości systemu.</p>
+
+<h2>Wieloplatformowość</h2>
+
+<p>Ostatnią wartą odnotowania cechą pozostaje fakt, że wybierając SS otrzymujemy w pełni funkcjonalny framework działający zarówno pod Windowsem jak i platformami linuxowymi. Wiem, że pod ASP również można programować w sposób pozwalający na postawienie aplikacji na Linuxie, ale jest to rozwiązanie niekompletne. Przykładowo, ServiceStack jest obecnie jedyną opcją pozwalającą na uruchomienie usług SOAP pod Mono.</p>
+
+<p>Nie oznacza to jednak, że decydując się na SS, musimy rezygnować z naszej dotychczasowej aplikacji napisanej w ASP.NET. Równie dobrze możemy uruchomić hosta ServiceStack wewnątrz Global.asax i używać go np. tylko jako zamiennika warstwy nośnej dla usług WCF.</p>
+
+<p>Całość doskonale wpisuje się w naturę technologii webowych, ich otwartość i multiplatformowość. Dodatkowo umożliwia ona optymalizację kosztów (hosting linuxowy jest średnio 5-krotnie tańszy niż porównywalny windowsowy) i otwiera nowe możliwości na rynku, który w przypadku .NET w ogromnej części składa się z aplikacji biznesowych.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1385,470 +1482,6 @@
 <p>W tym celu należy przedtem zapewnić &ldquo;testowalność&rdquo; swojego kodu. Wskazówki opisane przeze mnie powyżej (zwłaszcza te dotyczące modularyzacji i luźnych powiązań) dotyczą również tego zagadnienia. Mimo że Knockout nie zapewnia wbudowanych klas ułatwiających testowanie (AngularJS jest pomocny również pod tym względem), nie jest to dużym problemem, ponieważ Javascript jest językiem bardzo elastycznym i rozszerzalnym, zatem pisanie mocków nie stanowi tutaj problemu.</p>
 
 <p>Co do wyboru frameworka testowego jest to kwestia własnych preferencji. Jedni wybiorą polecany przez M$ <a href="http://qunitjs.com/">QUnit</a> wspierający programowanie TDD. Dla programistów .Net jest to tradycyjna dobrze znana ścieżka. Inni (w tym ja ;) ) wolą metodykę BDD i czytelność, jaką oferują biblioteki takie jak <a href="http://pivotal.github.com/jasmine/">Jasmine</a>. Dlaczego preferuję właśnie to drugie podejście? Dlatego że łatwiej definiować testy w kategoriach konkretnych zachowań, jakich oczekujemy po działaniu naszego kodu, niż operacji, które nie zawsze muszą jasno definiować to, co faktycznie chcemy osiągnąć.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-02-23T19:01:00+01:00" data-updated="true" itemprop="datePublished">Feb 23<span>rd</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2013/02/23/javascript-wzorce-projektowe/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/02/23/javascript-wzorce-projektowe/" itemprop="url">Javascript a Wzorce Projektowe</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Założę się, że wiele osób czytając ten tytuł puknie się w głowę. I owszem w wielu sytuacjach wzorce nie są niezbędne do tworzenia przejrzystych i dobrze rozwijalnych skryptów. Do czasu. Dokładnie do momentu gdy nasz skrypt zaczyna mieć więcej niż kilkadziesiąt linijek.</p>
-
-<p>W zależności od języka programowania, pisany przez nas kod może mieć mniejszą lub większą przejrzystość. Niektóre języki takie jak Haskel, są z natury bardzo klarowne i skupiają się na istocie rzeczy. Inne, jak właśnie Javascript, dają programiście olbrzymie możliwość zrobienia czegoś na pierdyliard sposobów, co nie oznacza, że każdy sposób jest poprawny. Jakby tego było mało, javascriptowe JITy są wstanie przełknąć nawet bardzo niezdarny kod. Dlatego właśnie dyscyplina samego programisty oraz stosowanie wzorców jest tym bardziej istotne.</p>
-
-<p>O tradycyjnych wzorcach &ndash; strategiach, obserwatorach etc. &ndash; napisano całą masę artykułów. Dlatego też poniżej postaram się przedstawić kilka mniej znanych, skupiając się szczególnie na tych, które są istotne z punktu widzenia JS, przez wzgląd na możliwości jakie daje oraz brakujących konstrukcji dostępnych w innych językach, których tutaj brakuje &ndash; w gruncie rzeczy czym są wzorce projektowe, jeżeli nie powszechnymi sposobami na obejście braków odpowiednich konstruktów w danym języku programowania?</p>
-
-<h2>Funkcje natychmiastowe</h2>
-
-<p>Mechanizm funkcji natychmiastowych (<strong>immediate functions</strong>) jest jedną z podstawowych sztuczek językowych wykorzystywanych w Javascriptcie. Ponieważ wiedza ta stanowi fundament innych wzorców, przedstawię go poniżej.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">immediateValue</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="c1">// wykonujemy jakąś operację i zwracamy wartosć</span>
-</span><span class='line'>      <span class="k">return</span> <span class="nx">x</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">})();</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// określamy zewnętrzne obiekty, które wywołujemy wewnątrz funkcji</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">module</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nb">window</span><span class="p">,</span> <span class="nb">document</span><span class="p">){</span>
-</span><span class='line'>  <span class="c1">// wykonujemy jakąś operację</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">module</span><span class="p">;</span>
-</span><span class='line'><span class="p">})(</span><span class="nb">window</span><span class="p">,</span> <span class="nb">document</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widzimy całość polega na jednoczesnym zdefiniowaniu funkcji i jej wykonaniu. Jakie są zalety tego podejścia?:</p>
-
-<ul>
-<li>Możemy w ten sposób budować moduły &ndash; ponieważ zawartość funkcji powoduje stworzenie nowego zakresu (scope &ndash; chociaż z tym ze względów wydajnościowych nie należy przeginać), wszystkie zmienne lokalne użyte w funkcji-module nie są widoczne spoza niej, dopóki programista jawnie nie określi inaczej.</li>
-<li>Przekazując parametry do takiej funkcji możemy jawnie określić zależności pomiędzy operacjami/obiektami używanymi wewnątrz funkcji ze światem zewnętrznym.</li>
-</ul>
-
-
-<h2>Modularyzacja</h2>
-
-<p>Jest to dość często poruszany problem (sam nieraz o nim wspominałem), ponieważ JS jako tako sam nie umożliwia definiowania pakietów ani przestrzeni nazw. Stąd też pierwszym zaprezentowanym przeze mnie wzorcem będzie <strong>namespace</strong>. Ponieważ przykładowy kod umieściłem i opisałem w jednym z poprzednich <a href="http://horusiath.blogspot.com/2012/09/javascript-porady-i-uwagi.html">postów</a>, gwoli przypomnienia umieszczę tutaj przykładowy kod takiego rozwiązania.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nb">window</span><span class="p">.</span><span class="nx">namespace</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">root</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">parent</span> <span class="o">=</span> <span class="nx">root</span> <span class="o">||</span> <span class="nb">window</span><span class="p">;</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">modules</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">);</span>
-</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">modules</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">module</span> <span class="o">=</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-</span><span class='line'>      <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">||</span> <span class="p">{});</span>
-</span><span class='line'>      <span class="nx">parent</span> <span class="o">=</span> <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">parent</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Cache&#8217;owanie funkcji</h2>
-
-<p>Ze względu na silniki starszych przeglądarek i chęć ograniczenia skomplikowanych operacji wiele bibliotek oferuje mniej lub bardziej wyrafinowane mechanizmy służące cache&#8217;owaniu danych. Javascript przychodzi tutaj z pomocą, pozwalając na zastosowanie tej techniki niemal dla dowolnej funkcji. Mowa tutaj o wzorcu <strong>memoization</strong>. Wykorzystuje on dwa podstawowe fakty dotyczące tego języka:</p>
-
-<ol>
-<li>Każda funkcja jest jednocześnie pełnoprawnym obiektem.</li>
-<li>Każdy obiekt może pełnić funkcje słownika &ndash; a co za tym idzie można wykorzystać go do dynamicznego przydzielania nowych właściwości i hashy.</li>
-</ol>
-
-
-<p>Poniższy kod przedstawia najprostszą implementację tego zachowania:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">memoizedFunction</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="c1">// parametr {value} stanowi jednocześnie klucz w naszym cache&#39;u</span>
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">fn</span><span class="p">(</span><span class="nx">value</span><span class="p">){</span>
-</span><span class='line'>      <span class="c1">// sprawdzmy, czy parametr został wcześniej zapamiętany</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">fn</span><span class="p">.</span><span class="nx">_cache</span><span class="p">[</span><span class="nx">value</span><span class="p">]){</span>
-</span><span class='line'>          <span class="k">return</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">_cache</span><span class="p">[</span><span class="nx">value</span><span class="p">];</span>
-</span><span class='line'>      <span class="p">}</span><span class="k">else</span><span class="p">{</span>
-</span><span class='line'>          <span class="c1">// zapamiętywanie wywołania funkcji</span>
-</span><span class='line'>          <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="nx">doSomething</span><span class="p">(</span><span class="nx">value</span><span class="p">);</span>
-</span><span class='line'>          <span class="nx">fn</span><span class="p">.</span><span class="nx">_cache</span><span class="p">[</span><span class="nx">value</span><span class="p">]</span> <span class="o">=</span> <span class="nx">result</span><span class="p">;</span>
-</span><span class='line'>          <span class="k">return</span> <span class="nx">result</span><span class="p">;</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="nx">fn</span><span class="p">.</span><span class="nx">_cache</span> <span class="o">=</span> <span class="p">{};</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">fn</span><span class="p">;</span>
-</span><span class='line'><span class="p">})();</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Należy zwrócić uwagę na fakt, że parametr przekazywany do funkcji w tej implementacji stanowi jednocześnie wartość cache&#8217;owanego klucza, a sam wzorzec musi implementować funkcje deteministyczne (tzn. takie które dla tego samego parametru wejściowego zwracają zawsze tą samą wartość/wykonują tę samą operacje). Stąd też dobrze, jeżeli maksymalna możliwa liczba przekazywanych parametrów jest znana &ndash; w sytuacjach skrajnych mogłoby dojść do tego, że cache zacząłby zajmować ogromną ilość pamięci. W takim wypadku trzeba dodatkowo zaimplementować dodatkowo mechanizm odśmiecania lub okresowego czyszczenia cache&#8217;u.</p>
-
-<p>Prawidłowe działanie funkcji w dużej mierze zależy od typu przekazywanego parametru &ndash; ze względu na to, że Javascript bywa dość nieprzewidywalny, najlepiej jest trzymać się typów prostych: String, Number, Boolean. W praktyce jednak wszystko to jednak zależy od twojej znajomości tricków i pułapek tego języka.</p>
-
-<p>Gdzie przydaje się powyższy wzorzec? Kilka przykładów:</p>
-
-<ul>
-<li>W wywołaniach do serwera np. jeżeli dla podanego adresu URL zwracana wartość jest stała, możemy użyć go w postaci klucza i zapamiętać zwracaną wartość. W ten sposób zmniejszymy czas i ilość requestów na serwer potrzebnych do skończenia danej operacji.</li>
-<li>Inne funkcje o stałych kluczach, ale jednocześnie wykonujące złożone obliczenia np. w mechanizmach bindowania danych do modelu DOM przeglądarki.</li>
-</ul>
-
-
-<h2>Dependency Injection</h2>
-
-<p>Pojęcie to jest ostatnio dość często używane, również ze względu na rosnącą popularność frameworków MVC. W Javascriptcie zostało ono użyte po raz pierwszy w dużej skali wraz z nadejściem <a href="http://angularjs.org/">AngularJS</a>. Jednakże, jeżeli chcielibyśmy, możemy zaimplementować kontener <strong>Inversion of Control</strong> dla własnych potrzeb.</p>
-
-<p>W pierwszej kolejności zdefiniujmy kontener IoC.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// kontener IoC</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">DependencyResolver</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
-</span><span class='line'>  <span class="c1">// regex użyty do wyciągania nazw zależności z konstruktora</span>
-</span><span class='line'>  <span class="nx">ARG_REGEX</span> <span class="o">=</span> <span class="sr">/^function\s*[^\(]*\(\s*([^\)]*)\)/m</span><span class="p">,</span>
-</span><span class='line'>  <span class="nx">dependencies</span> <span class="o">=</span> <span class="p">{};</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// funkcja rejestrująca typ w kontenerze</span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">register</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">type</span><span class="p">){</span>
-</span><span class='line'>      <span class="nx">dependencies</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">type</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// zwraca instancję obiektu identyfikowanego po podanym kluczu </span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">resolve</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">){</span> <span class="p">...</span> <span class="p">};</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// rozwiązujemy podane zależności podane w postaci listy kluczy</span>
-</span><span class='line'>  <span class="c1">// dla dependency resolvera do postaci tablicy gotowych obiektów</span>
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">resolveDependencies</span><span class="p">(</span><span class="nx">args</span><span class="p">){</span> <span class="p">...</span> <span class="p">};</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>&ldquo;Klasa&rdquo; ta udostępnia dwie metody:</p>
-
-<ul>
-<li><code>register(key, type)</code> &ndash; rejestruje podaną wartość/funkcję konstruktora pod podanym kluczem.</li>
-<li><code>resolve(key)</code> &ndash; tworzy typ zgodnie z zarejestrowaną wcześniej nazwą.</li>
-</ul>
-
-
-<p>Niestety javascript nie przechowuje informacji na temat typów parametrów pobieranych przez funkcję. Stąd też twórcy AngularJS postanowili zbudować następującą konwencję &ndash; w momencie, gdy przy próbie utworzenia obiektu pojawiaja się problem z określeniem typu argumentów przekazywanych do konstruktora, przyjmuje się, że nazwy parametrów są kluczami dla wartosci zarejestrowanych w kontenerze IoC. Jak to wygląda w praktyce? Ilustruje to następujący kod:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// budujemy kontener</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">resolver</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DependencyResolver</span><span class="p">();</span>
-</span><span class='line'><span class="nx">resolver</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="s1">&#39;valueA&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// rejestrujemy 1 dla klucza &#39;valueA&#39;</span>
-</span><span class='line'><span class="nx">resolver</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="s1">&#39;valueB&#39;</span><span class="p">,</span> <span class="nx">MyClass1</span><span class="p">);</span> <span class="c1">// rejestrujemy &quot;klasę&quot; dla klucza &#39;valueB&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// tworzymy nową &quot;klasę&quot; i rejestrujemy ją jako &#39;valueC&#39;</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">MyClass2</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">valueA</span><span class="p">,</span> <span class="nx">valueB</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="c1">// kontener wygeneruje opowiednie wartosci sugerując się nazwami parametrów</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'><span class="nx">resolver</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="s1">&#39;valueC&#39;</span><span class="p">,</span> <span class="nx">MyClass2</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// tworzymy obiekt</span>
-</span><span class='line'><span class="nx">resolver</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">&#39;valueC&#39;</span><span class="p">);</span> <span class="c1">// profit ;)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Ciało metody resolve przedstawia się w takim wypadku następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="k">this</span><span class="p">.</span><span class="nx">resolve</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">){</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">type</span> <span class="o">=</span> <span class="nx">dependencies</span><span class="p">[</span><span class="nx">key</span><span class="p">];</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// jeżeli zarejestrowany typ jest funkcją/konstruktorem</span>
-</span><span class='line'>  <span class="c1">// musimy rozwiązać listę parametrów podanych do dokonstruktora</span>
-</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="k">typeof</span> <span class="nx">type</span> <span class="o">===</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
-</span><span class='line'>      
-</span><span class='line'>      <span class="c1">// wyciągamy listę wartości przyjmowanych przez konstruktor</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">ARG_REGEX</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">type</span><span class="p">.</span><span class="nx">toString</span><span class="p">())[</span><span class="mi">1</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">);</span>
-</span><span class='line'>      <span class="c1">// zamieniamy je na właściwe obiekty</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">resolvedArgs</span> <span class="o">=</span> <span class="nx">resolveDependencies</span><span class="p">(</span><span class="nx">args</span><span class="p">);</span>
-</span><span class='line'>      
-</span><span class='line'>      <span class="c1">// tworzymy nową instancję danego typu</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">instance</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">type</span><span class="p">();</span>
-</span><span class='line'>      <span class="nx">type</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">instance</span><span class="p">,</span> <span class="nx">resolvedArgs</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">return</span> <span class="nx">instance</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>      <span class="c1">// jeżeli typ jest typem prostym wystarczy go zwrócić</span>
-</span><span class='line'>      <span class="k">return</span> <span class="nx">type</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Natomiast brakujące ciało metody resolveDependencies:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">resolveDependencies</span><span class="p">(</span><span class="nx">args</span><span class="p">){</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">resolvedArgs</span> <span class="o">=</span> <span class="p">[];</span>
-</span><span class='line'>  <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">args</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">){</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">dependency</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">trim</span><span class="p">();</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">dependency</span> <span class="o">!==</span> <span class="s1">&#39;&#39;</span><span class="p">){</span>
-</span><span class='line'>          <span class="kd">var</span> <span class="nx">resolved</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">dependency</span><span class="p">);</span>
-</span><span class='line'>          <span class="nx">resolvedArgs</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">resolved</span><span class="p">);</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">resolvedArgs</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Oczywiście powyższy kod nie określa kwestii czasu życia obiektu, którą kontenery IoC przeważnie rozwiązują. Jednakże jaki problem tkwi w powyższym rozwiązaniu? Otóż w momencie minimalizacji danego skryptu cała nasza wiedza o nazewnictwie parametrów funkcji znika (zostają one zastąpione krótkimi &ndash; z reguły jednoliterowymi aliasami). Niestety ale nie da się tego rozwiązać w elegancki sposób. W przypadku AngularJS zdefiniowana została specjalna właściwość $inject, którą dodajemy własnoręcznie do danej klasy, a która definiuje tablicę kluczy-parametrów, dzięki którym możliwe jest rozwiązanie zależności przez kontener. W takim wypadku w powyższej implementacji wystarczy dodać drobne usprawnienie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="k">this</span><span class="p">.</span><span class="nx">resolve</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">){</span>
-</span><span class='line'>  <span class="p">...</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">type</span><span class="p">.</span><span class="nx">$inject</span> <span class="o">||</span> <span class="nx">ARG_REGEX</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">type</span><span class="p">.</span><span class="nx">toString</span><span class="p">())[</span><span class="mi">1</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">...</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>, natomiast, w samej zdefiniowanej klasie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">MyClass</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">valueA</span><span class="p">,</span> <span class="nx">valueB</span><span class="p">){</span> <span class="p">...</span> <span class="p">}</span>
-</span><span class='line'><span class="nx">MyClass</span><span class="p">.</span><span class="nx">$inject</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;valueA&#39;</span><span class="p">,</span> <span class="s1">&#39;valueB&#39;</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Dlaczego ten mechanizm się przydaje? Odpowiedź jest dokładnie taka sama jak w przypadku DI po stronie serwera: modularyzacja projektu, spójny sposób i kontrola nad konstrukcją obiektów. Całość jest wprost nieoceniona, kiedy po stronie klienta wykonywany jest bardziej zaawansowany wycinek logiki. A do tego te wsparcie dla testów jednostkowych.</p>
-
-<p>P.S.: Jestem zdania, że w każdym projekcie z większą ilością Javascriptu testy jednostkowe są nieocenione. Po pierwsze w tym języku wyjątkowo łatwo o błędy i niezdarny kod, a TDD oraz BDD rozwiązują oba te problemy. Po drugie jesteśmy po stronie klienta. Chcesz sprawdzić czy logika do kontrolek User Interface i wyświetlanie strony działa prawidłowo? Gratulacje &ndash; jesteś po właściwej stronie kabla.</p>
-
-<h2>Dziedziczenie</h2>
-
-<p>Pomimo, że Javascript jest językiem obiektowym, nie definiuje jednak mechanizmu dziedziczenia w sposób znany nam z innych języków. Na szczęście jego możliwości pozwalają nam na wykonanie takiego mechanizmu w postaci wzorca <strong>extend</strong> (<em>powered by CoffeScript ;)</em> ).</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">extend</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">childPrototype</span><span class="p">,</span> <span class="nx">superPrototype</span><span class="p">){</span>
-</span><span class='line'>  <span class="c1">// dziedziczenie składowych</span>
-</span><span class='line'>  <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">property</span> <span class="k">in</span> <span class="nx">superPrototype</span><span class="p">){</span>
-</span><span class='line'>      <span class="c1">// iterujemy po wszystkich składowych rodzica</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">superPrototype</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">property</span><span class="p">)){</span>
-</span><span class='line'>          <span class="nx">childPrototype</span><span class="p">[</span><span class="nx">property</span><span class="p">]</span> <span class="o">=</span> <span class="nx">superPrototype</span><span class="p">[</span><span class="nx">property</span><span class="p">]</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// dziedziczenie konstruktora</span>
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">ctor</span><span class="p">(){</span>
-</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">=</span> <span class="nx">childPrototype</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="nx">ctor</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="nx">superPrototype</span><span class="p">.</span><span class="nx">prototype</span><span class="p">;</span>
-</span><span class='line'>  <span class="nx">childPrototype</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ctor</span><span class="p">();</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// definiujemy dostęp do &quot;klasy bazowej&quot;</span>
-</span><span class='line'>  <span class="nx">childPrototype</span><span class="p">.</span><span class="nx">__super__</span> <span class="o">=</span> <span class="nx">superPrototype</span><span class="p">.</span><span class="nx">prototype</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">childPrototype</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Niestety, jeżeli chcemy mieć dostęp do &ldquo;wirtualizacji&rdquo; metod w klasach pochodnych, musimy to wykonywać w dość krzywy sposób. Przykład poniżej.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// klasa bazowa</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">Parent</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">Parent</span><span class="p">(</span><span class="nx">firstName</span><span class="p">){</span>
-</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">firstName</span> <span class="o">=</span> <span class="nx">firstName</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="c1">// definiujemy &quot;wirtualną&quot; metodę</span>
-</span><span class='line'>  <span class="nx">Parent</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">show</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>      <span class="k">return</span> <span class="s2">&quot;Base: &quot;</span><span class="o">+</span><span class="k">this</span><span class="p">.</span><span class="nx">firstName</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">Parent</span><span class="p">;</span>
-</span><span class='line'><span class="p">})();</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// klasa pochodna</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">Child</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">BaseType</span><span class="p">){</span>
-</span><span class='line'>  <span class="nx">extend</span><span class="p">(</span><span class="nx">Child</span><span class="p">,</span> <span class="nx">BaseType</span><span class="p">);</span> <span class="c1">// określamy warunki dziedziczenia</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">Child</span><span class="p">(</span><span class="nx">firstName</span><span class="p">,</span> <span class="nx">lastName</span><span class="p">){</span>
-</span><span class='line'>      <span class="c1">// wywołujemy konstruktor z klasy bazowej</span>
-</span><span class='line'>      <span class="nx">Child</span><span class="p">.</span><span class="nx">__super__</span><span class="p">.</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">firstName</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">lastName</span> <span class="o">=</span> <span class="nx">lastName</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="c1">// &quot;nadpisujemy&quot; metodę z klasy bazowej</span>
-</span><span class='line'>  <span class="nx">Child</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">show</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>      <span class="c1">// wewnątrz nadpisanej metody wywołujemy jej bazową postać</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">baseMessage</span> <span class="o">=</span> <span class="nx">Child</span><span class="p">.</span><span class="nx">__super__</span><span class="p">.</span><span class="nx">show</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">return</span> <span class="s2">&quot;Inherited: &quot;</span><span class="o">+</span><span class="k">this</span><span class="p">.</span><span class="nx">lastName</span> <span class="o">+</span> <span class="s2">&quot; with &quot;</span> <span class="o">+</span> <span class="nx">baseMessage</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">Child</span><span class="p">;</span>
-</span><span class='line'><span class="p">})(</span><span class="nx">Parent</span><span class="p">);</span> <span class="c1">// przekazujemy klasę bazową mechanizmem funkcji natychmiastowej</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widać, nie jest to technika przejrzysta, głównie ze względu na obejścia, jakie trzeba wykonać, aby uzyskać dostęp do wywołań metod nadpisywanych z klas bazowych.</p>
-
-<p>Kiedy jest to przydatne? Szczerze umieściłem to jako ciekawostkę, ponieważ o ile o korzyściach dziedziczenia i wirtualizacji wie chyba każdy, kto miał do czynienia z programowaniem obiektowym, to forma, w jakiej jest to podane w Javascriptcie może okazać się ciężka do przełknięcia. Z tego powodu polecam tutaj języki kompilowane do Javascriptu np. CoffeeScript lub TypeScript, które rozwiązują ten problem za nas.</p>
 
 		
 		

@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Aug 2nd, 2014 compilers, programming languages Comments Simple Virtual Machine In this post I want to present, how to create a simple virtual &hellip;">
+	<meta name="description" content="Aug 6th, 2014 akka.net, fsharp Comments Actor Supervisors in Akka.NET FSharp API This post will describe changes, that will affect a F# API for Akka &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -134,6 +134,102 @@
   
 
 
+<time datetime="2014-08-06T18:49:00+02:00" data-updated="true" itemprop="datePublished">Aug 6<span>th</span>, 2014</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/akka-dot-net/'>akka.net</a>, <a class='category' href='/blog/categories/fsharp/'>fsharp</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2014/08/06/fsharp-akkadotnet-supervisors/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/08/06/fsharp-akkadotnet-supervisors/" itemprop="url">Actor Supervisors in Akka.NET FSharp API</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>This post will describe changes, that will affect a F# API for Akka.NET in the incoming versions of the framework (>= 0.62) &ndash; mostly those, which concerns supervisioning and manipulating actor hierarchies.</p>
+
+<p>I don&rsquo;t want to overload this post with explaining what Akka supervision is all about, so I&rsquo;ll just recommend a very good article, which could be found <a href="https://github.com/akkadotnet/akka.net/wiki/Supervision">here</a>.</p>
+
+<p>While previous versions of the Akka F# API introduced some nice features such as function-based actor definitions and creations (<code>spawn</code> function), there still was no simple way to handle some core framework concepts. Remember that march towards Akka.NET 1.0 is still in progress, more and more features are implemented. Therefore it&rsquo;s F# API most likely will also be a subject to change.</p>
+
+<p>To give a better description of the new features, lets see an example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'> <span class="k">let</span> <span class="n">supervisor</span> <span class="o">=</span>
+</span><span class='line'>        <span class="n">spawns</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span>
+</span><span class='line'>        <span class="c1">// below we define OneForOneStrategy to handle specific exceptions incoming from child actors</span>
+</span><span class='line'>        <span class="o">&lt;|</span> <span class="o">(</span><span class="nn">Strategy</span><span class="p">.</span><span class="n">oneForOne</span> <span class="o">&lt;|</span> <span class="k">fun</span> <span class="n">e</span> <span class="o">-&gt;</span>
+</span><span class='line'>            <span class="k">match</span> <span class="n">e</span> <span class="k">with</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArithmeticException</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Resume</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArgumentException</span>   <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Stop</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">_</span>                      <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Escalate</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">&lt;|</span> <span class="k">fun</span> <span class="n">mailbox</span> <span class="o">-&gt;</span>
+</span><span class='line'>            <span class="c1">// by using mailbox.spawn we may create a child actors without exiting a F# functional API</span>
+</span><span class='line'>            <span class="k">let</span> <span class="n">worker</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="n">spawn</span> <span class="s2">&quot;worker&quot;</span> <span class="o">&lt;|</span> <span class="n">workerFun</span>
+</span><span class='line'>            <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
+</span><span class='line'>                <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
+</span><span class='line'>                <span class="k">match</span> <span class="n">msg</span> <span class="o">:&gt;</span> <span class="n">obj</span> <span class="k">with</span>
+</span><span class='line'>                <span class="o">|</span> <span class="o">:?</span> <span class="nc">Respond</span> <span class="o">-&gt;</span> <span class="n">worker</span><span class="o">.</span><span class="nc">Tell</span><span class="o">(</span><span class="n">msg</span><span class="o">,</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">|</span> <span class="o">_</span>          <span class="o">-&gt;</span> <span class="n">worker</span> <span class="o">&lt;!</span> <span class="n">msg</span>
+</span><span class='line'>                <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">}</span>
+</span><span class='line'>            <span class="n">loop</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A <a href="https://github.com/akkadotnet/akka.net/blob/dev/src/examples/FSharp.Api/Supervisioning.fs">whole example</a> is available inside Akka.NET project source code, along with other examples.</p>
+
+<p>Unlike standard <code>spawn</code>, <code>spawns</code> function could take a SupervisorStrategy object as an argument. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
+
+<ol>
+<li><code>Strategy.oneForOne</code> &ndash; strategy will affect only an exception thrower.</li>
+<li><code>Strategy.allForOne</code> &ndash; strategy result will propagate to all children of the actor implementing that strategy.</li>
+</ol>
+
+
+<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne'</code> and <code>Strategy.allForOne'</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
+
+<p>Second change, is the new <code>mailbox.spawn</code> method, which works just like it&rsquo;s standard <code>spawn</code> equivalent with only one difference &ndash; it sets a <code>mailbox</code> Actor instance as current parent/supervisor of created actor. Both of those features combined could be used to bring a full supervision support in classic functional manner.</p>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
 <time datetime="2014-08-02T13:21:00+02:00" data-updated="true" itemprop="datePublished">Aug 2<span>nd</span>, 2014</time></div>
 		<div class="tags">
 
@@ -203,7 +299,7 @@
 </span><span class='line'><span class="cp">#define STACK_SIZE 100</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">data</span><span class="p">;</span>      <span class="c1">// data</span>
+</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">heap</span><span class="p">;</span>      <span class="c1">// heap</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">code</span><span class="p">;</span>      <span class="c1">// array od byte codes to be executed</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">stack</span><span class="p">;</span>     <span class="c1">// virtual stack</span>
 </span><span class='line'>    <span class="kt">int</span> <span class="n">pc</span><span class="p">;</span>         <span class="c1">// program counter (aka. IP - instruction pointer)</span>
@@ -634,10 +730,14 @@
 
 <h3>Why?</h3>
 
-<p>There are numerous reasons, why developers may want to use intermediate bytecode representations for their languages:
-&ndash;   <strong>Performance</strong> &ndash; as you&rsquo;ve seen, execution of the bytecode is realized mostly by just moving (mostly incrementing) PC pointer. When interpreter works directly by evaluating and traversing an AST tree, there is a lot of pointer jumping and structure blocks, which is slightly more complex and slower. Bytecode allows you to faster code interpretation as well as it may facilitate some optimizations.
-&ndash;   <strong>Code size</strong> &ndash; full code operates on human readable strings, which may consume some memory and are harder to interpret. Intermediate program representation uses only a simple integer arrays.
-&ndash;   <strong>Well-fitting</strong> &ndash; since you may describe your own IR, you may fit it directly to your needs. It&rsquo;s easier to parse, and it could remove some repetitive work, when you&rsquo;ll want to implement your language on the various OSes.</p>
+<p>There are numerous reasons, why developers may want to use intermediate bytecode representations for their languages:</p>
+
+<ul>
+<li><strong>Performance</strong> &ndash; as you&rsquo;ve seen, execution of the bytecode is realized mostly by just moving (mostly incrementing) PC pointer. When interpreter works directly by evaluating and traversing an AST tree, there is a lot of pointer jumping and structure blocks, which is slightly more complex and slower. Bytecode allows you to faster code interpretation as well as it may facilitate some optimizations.</li>
+<li><strong>Code size</strong> &ndash; full code operates on human readable strings, which may consume some memory and are harder to interpret. Intermediate program representation uses only a simple integer arrays.</li>
+<li><strong>Well-fitting</strong> &ndash; since you may describe your own IR, you may fit it directly to your needs. It&rsquo;s easier to parse, and it could remove some repetitive work, when you&rsquo;ll want to implement your language on the various OSes.</li>
+</ul>
+
 
 		
 		
@@ -1585,103 +1685,6 @@
 <li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
 </ul>
 
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-10T20:14:00+02:00" data-updated="true" itemprop="datePublished">Aug 10<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/servicestack/'>ServiceStack</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/08/10/servicestack-alternatywa-dla-aspnet/" itemprop="url">ServiceStack - Alternatywa Dla ASP.NET</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>ASP.NET jest wiodącą technologią, jeżeli idzie o rozwiązania webowe w środowisku .NET. I mimo, że pojęcie to samo w sobie nie jest jednolite (w ramach ASP występuje wiele oddzielnych technologii), to jednak niewiele słyszy się o alternatywach. A jest ich całkiem sporo:</p>
-
-<ul>
-<li><a href="http://www.servicestack.net/">ServiceStack</a> &ndash; najbardziej znana alternatywa, o której opowiem więcej w dalszej części posta.</li>
-<li><a href="http://nancyfx.org/">Nancy</a>&ndash; drugi obok ServiceStack, najbardziej znany framework, czerpiący inspirację ze znanego frameworka Sinatra, napisanego w Rubym.</li>
-<li><a href="https://github.com/openrasta/openrasta/wiki/Why-Choose-OpenRasta">OpenRasta</a>&ndash; biblioteka stworzona z myślą o tworzeniu API opartego o zasoby.</li>
-<li><a href="http://amirrajan.net/Oak/">Oak</a> &ndash; framework mocno zainspirowany dynamiką bibliotek Ruby.</li>
-<li><a href="http://blog.markrendle.net/2012/06/01/simple-web/">Simple.Web</a> &ndash; micro framework twórcy znanego micro ORMa Simple.Data, który umieszczam również w ramach ciekawostki.</li>
-</ul>
-
-
-<p>Sądzę, że dość niewiele osób słyszało te nazwy (zwłaszcza ostatnie dwie). Ja jednak postanowiłem opowiedzieć i zachęcić do najpopularniejszego z tych rozwiązań, czyli ServiceStack.</p>
-
-<p>Co takiego otrzymujemy, decydując się na jego wykorzystanie?:</p>
-
-<ul>
-<li>Cały zestaw <em>extension methods</em> do wbudowanych typów .NET, przyspieszających pracę programistów.</li>
-<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Auto-mapping">Mechanizm mapowania obiektów</a> &ndash; podobny do AutoMappera, choć prostszy i bardziej ubogi.</li>
-<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/Built-in-profiling">Profiler</a> wbudowany w środowisko.</li>
-<li><a href="http://fluentvalidation.codeplex.com/wikipage?title=CreatingAValidator">Zaawansowany mechanizm walidacji</a>, umożliwiający m.in. warunkową walidację poszczególnych pól.</li>
-<li>Mechanizm <a href="https://github.com/ServiceStack/ServiceStack/wiki/Authentication-and-authorization">autentykacji</a> i zarządzania dostępem oparty o role i uprawnienia z możliwością logowania poprzez OpenID.</li>
-<li><a href="https://github.com/ServiceStack/ServiceStack/wiki/The-IoC-container">Kontener IoC</a> &ndash; również z możliwością podpięcia własnego.</li>
-<li>Minimalistyczny framework ORM (<a href="https://github.com/ServiceStack/ServiceStack.OrmLite">OrmLite</a>) &ndash; umożliwia on podłączenie do najpopularniejszych relacyjnych, baz danych. Naturalnie on również może być zastąpiony bardziej kompleksowym rozwiązaniem.</li>
-<li>Wiązania do rózniej maści usług logowania (np. NLog, Elmah, Log4Net, EventLog, Enterprise Lib.) i cache&#8217;owania (np. domyślny InMemory, Memcached, Redis, Azure lub Amazon Web Services).</li>
-<li>Bundlera plików JavaScript, CSS, LESS, SASS i CoffeeScript &ndash; chociaż trzeba przyznać, że jest to dość wyboista droga.</li>
-<li>Mechanizm do kolejkowania wiadomości &ndash; obecnie tylko za pośrednictwem Redisa. Trwają prace nad wprowadzeniem bindingów do ZeroMQ, RabbitMQ, Azure Service Bus oraz Amazon SQS.</li>
-<li>Gotowe SDK do aplikacji klienckich pod C#, Silverlight, JavaScript oraz Dart.</li>
-</ul>
-
-
-<p>Ale mówiąc o jego najbardziej kompleksowych zaletach:</p>
-
-<h2>Web services &amp; Content Negotiation</h2>
-
-<p>Jest to &ndash; moim zdaniem &ndash; najciekawsza cecha Service Stack. Tworząc dotychczasowe usługi sieciowe z wykorzystaniem standardowych bibliotek .NET musieliśmy uzależniać technologię, jaką zamierzaliśmy wykorzystać od formatu danych, jakiego się spodziewaliśmy. A więc tworząc serwisy wykorzystujące SOAP lub XML tworzyliśmy dla nich specjalne usługi w WCFie. Jeżeli chcielibyśmy, aby zwracały one dane w postaci JSON, prawdopodobnie większość z nas wykorzystałaby najnowsze podejście w postaci ASP.NET Web API, dla pozostałych formatów ASP.NET.</p>
-
-<p>Problemem takiego podejścia jest fakt, że za każdym z tych rozwiązań stoi osobna technologia, która nie jest kompatybilna z pozostałymi. Niezależnie od tego, co wybierzemy, nigdy nie otrzymamy kompletnego rozwiązania.</p>
-
-<p>Jak wygląda to w przypadku ServiceStack? To proste. Każdy z modułów naszej aplikacji może być zamknięty w ramach klas dziedziczących po wspólnej klasie <code>Service</code>(jednak wbrew pozorom nie mamy tu do czynienia z wzorcem MVC) &ndash; lub w razie potrzeby, którejś z jej klas bazowych bądź interfejsu <code>IService</code>. Każda metoda obsługująca żądanie pobiera w parametrze obiekt POCO (Plain Old Class Object) i zwraca inny obiekt POCO. Dopiero na poziomie frameworka rozwiązywany jest problem serializacji danego obiektu do końcowego formatu, który może być wnioskowany na podstawie nagłówka HTTP, zawartości URL bądź dowolnego innego warunku, jaki zdefiniujemy podczas konfiguracji. Rozwiązanie to znane jest jako <em>Content Negotiation</em>. Dzięki temu jedna klasa może pełnić rolę kontrolera ASP.NET, WebAPI i serwisu WCF w tym samym czasie!</p>
-
-<p>Domyślnie dysponujemy wbudowanymi serializatorami dla formatów: SOAP (1.1 oraz 1.2), XML, JSON, CSV i JSV. Dodatkowo w sieci można pobrać pluginy rozszerzające tą listę o niemal wszystkie formatery dostępne w świecie .NET, w tym też binarne. Jedna linijka kodu w konfiguracji nieraz wystarcza, aby wprowadzić dany format do naszej aplikacji. Warto zauważyć, że ta sama zasada panuje w przypadku dynamicznie generowanych stron HTML &ndash; po doinstalowaniu pluginu możemy generować strony w oparciu o składnię Razora oraz Markdown.</p>
-
-<h2>Wydajność</h2>
-
-<p>Twórcy ServiceStack zwracają szczególną uwagę na szybkość swojej platformy, w myśl powiedzenia: <i>&ldquo;We care about two things: speed and quality. And the quality we care about is speed&rdquo;</i>. Nie powinno więc dziwić, że większości wypadków framework ten przewyższa ASP.NET i WCF w kwestiach wydajnościowych. Wynika to z prostego faktu. Mamy tu do czynienia z inicjatywą open source, a w przedsięwzięciach tego typu dużą rolę odgrywa prostota. Nie ma tutaj miejsca na platformy typu Enterprise, z setkami warstw abstrakcji, pełnymi potworków typu <a href="http://ws.apache.org/xmlrpc/apidocs/org/apache/xmlrpc/server/RequestProcessorFactoryFactory.RequestSpecificProcessorFactoryFactory.html">RequestSpecificProcessorFactoryFactory</a>(tak, jest to wyraz mojego &ldquo;hejtu&rdquo; względem podejścia projektowego w Javie, ale fakt faktem problem ten dotyka również .NETu ;) ).</p>
-
-<p>Konkretne porównania i benchmarki można znaleźć <a href="https://github.com/ServiceStack/ServiceStack/wiki/Real-world-performance">tutaj</a>. I jak widać, nie chodzi tu o jakiś pomijalny zysk rzędu kilkunastu procent.</p>
-
-<h2>Testowalność</h2>
-
-<p>ServiceStack jest frameworkiem z natury bardzo zmodularyzowanym, umożliwiającym wymianę poszczególnych komponentów. To z kolei czyni go naturalnym kandydatem do wprowadzenia testów jednostkowych.</p>
-
-<p>Innym atutem jest podejście wymiany danych opartych na komunikatach (message-based design), które w wypadku ServiceStack są zwykłymi klasami POCO. Dzięki temu testując poszczególne moduły/usługi nie musimy przetwarzać wbudowanych we framework obiektów żądań i odpowiedzi. Zamiast tego mamy do czynienia ze standardowym zbiorem klas, zdefiniowanych przez nas samych, które z zewnątrz nie zdradzają zależności od używanego przez nas frameworka. Ponad to architektura sprawia, że najwygodniejszym podejściem jest budowa dużej ilości serwisów z małą ilością metod, co dodatkowo ułatwia zachowanie ziarnistości systemu.</p>
-
-<h2>Wieloplatformowość</h2>
-
-<p>Ostatnią wartą odnotowania cechą pozostaje fakt, że wybierając SS otrzymujemy w pełni funkcjonalny framework działający zarówno pod Windowsem jak i platformami linuxowymi. Wiem, że pod ASP również można programować w sposób pozwalający na postawienie aplikacji na Linuxie, ale jest to rozwiązanie niekompletne. Przykładowo, ServiceStack jest obecnie jedyną opcją pozwalającą na uruchomienie usług SOAP pod Mono.</p>
-
-<p>Nie oznacza to jednak, że decydując się na SS, musimy rezygnować z naszej dotychczasowej aplikacji napisanej w ASP.NET. Równie dobrze możemy uruchomić hosta ServiceStack wewnątrz Global.asax i używać go np. tylko jako zamiennika warstwy nośnej dla usług WCF.</p>
-
-<p>Całość doskonale wpisuje się w naturę technologii webowych, ich otwartość i multiplatformowość. Dodatkowo umożliwia ona optymalizację kosztów (hosting linuxowy jest średnio 5-krotnie tańszy niż porównywalny windowsowy) i otwiera nowe możliwości na rynku, który w przypadku .NET w ogromnej części składa się z aplikacji biznesowych.</p>
 
 		
 		

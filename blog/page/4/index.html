@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Nov 24th, 2011 WCF, programowanie Comments [WCF] Wydobywanie Wiadomości W Postaci SOAP Po Stronie Klienta Windows Communication Foundation jest &hellip;">
+	<meta name="description" content="Jan 7th, 2012 javascript, programowanie Comments [Javascript] Konwersja String - Liczba? Wydawać by się mogło, że to proste zagadnienie. Praktyka &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,85 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-01-07T08:39:00+01:00" data-updated="true" itemprop="datePublished">Jan 7<span>th</span>, 2012</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2012/01/07/javascript-konwersja-string-liczba/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2012/01/07/javascript-konwersja-string-liczba/" itemprop="url">[Javascript] Konwersja String - Liczba?</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Wydawać by się mogło, że to proste zagadnienie. Praktyka jednak pokazuje, że wielu początkujących programistów javascriptowych ma problemy z właściwym jego rozwiązaniem. Częstą praktyką jest wykorzystywanie dwóch wbudowanych funkcji: <code>parseInt</code> i <code>parseFloat</code>. Przyjżyjmy się im więc:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nb">parseInt</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>      <span class="c1">// wynik: 2</span>
+</span><span class='line'><span class="nb">parseInt</span><span class="p">(</span><span class="s2">&quot;2.2&quot;</span><span class="p">)</span>    <span class="c1">// ups, znowu mamy 2</span>
+</span><span class='line'><span class="nb">parseInt</span><span class="p">(</span><span class="s2">&quot;2 koty&quot;</span><span class="p">)</span> <span class="c1">// kolejne zaskoczenie, wynik: 2</span>
+</span><span class='line'><span class="nb">parseInt</span><span class="p">(</span><span class="s2">&quot;napis&quot;</span><span class="p">)</span>  <span class="c1">// nareszcie, wynik: NaN</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">parseFloat</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>    <span class="c1">// do przewidzenia, wynik: 2</span>
+</span><span class='line'><span class="nb">parseFloat</span><span class="p">(</span><span class="s2">&quot;2.2&quot;</span><span class="p">)</span>  <span class="c1">// wszystko jasne, wynik: 2.2</span>
+</span><span class='line'><span class="nb">parseFloat</span><span class="p">(</span><span class="s2">&quot;2.2 kota&quot;</span><span class="p">)</span> <span class="c1">// wynik: 2.2</span>
+</span><span class='line'><span class="nb">parseFloat</span><span class="p">(</span><span class="s2">&quot;napis&quot;</span><span class="p">)</span>  <span class="c1">// nareszcie, wynik: NaN</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jak widać nie zawsze znaczenie funkcji parsujących jest takie oczywiste jak mogłoby się wydawać. Owszem jesteśmy w stanie dokonać konwersji liczby przekazanej jako string do jej odpowiednika numerycznego. Kłopot polega na tym, że funkcje parsujące potrafią wydobyć liczbę z każdego łańcucha znaków zaczynającego się cyfrą.</p>
+
+<p>W jaki sposób możemy sprawić, aby konwersji poddawały się tylko i wyłącznie stringi zawierające poprawnie zapisane liczby? Odpowiedź jest stosunkowo prosta:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>    <span class="c1">// wynik: 2</span>
+</span><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;2.2&quot;</span><span class="p">)</span>  <span class="c1">// wynik: 2.2</span>
+</span><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;2aa&quot;</span><span class="p">)</span>  <span class="c1">// wynik: NaN</span>
+</span><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;.01&quot;</span><span class="p">)</span>  <span class="c1">// wynik: 0.01</span>
+</span><span class='line'><span class="o">+</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>     <span class="c1">// wynik: 0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Niejawnie zachodzi tu w rzeczywistości konwersja: <code>Number(string)</code>. Jak widzimy metoda ta wciąż nie jest wolna od błędów, mimo to zapis taki jest prostszy i wciąż bardziej wiarygodny niż funkcje parsujące.</p>
+
+<p>Ostatecznie, aby sprawdzić czy podana wartość jest faktycznie liczbą (wykluczając jednocześnie 2 ostatnie wyniki z powyższego przykładu), można skorzystać z wyrażenia regularnego: <code>/^\d+(.\d+)?$/.test(myNumber)</code>. Wyrażenie to zaakceptuje wszystkie liczby stało i zmiennoprzecinkowe. Odrzuci przy tym puste łańcuchy znaków, oraz wartości poprzedzone lub kończące sie białymi znakami. Jeżeli chcielibyśmy, aby i one przechodzimy przez test, wówczas modyfikujemy wyrażenie w następujący sposób: <code>/^\s<em>\d+(.\d+)?\s</em>$/.test(myNumber)</code></p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1603,82 +1682,6 @@ Zalety:</li>
 
 
 <p>Dodatkowo warto zwrócić uwagę na opcję określającą maksymalny poziom rekurencji w generowanej tabeli. Nie jest do element obowiązkowy, niemniej warto się w ten sposób zabezpieczyć.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-06-22T06:57:00+02:00" data-updated="true" itemprop="datePublished">Jun 22<span>nd</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/asp/'>asp</a>, <a class='category' href='/blog/categories/javascript/'>javascript</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/06/22/wyswietlanie-stron-aspx-przy-pomocy/" itemprop="url">Wyświetlanie Stron Aspx Przy Pomocy Iframe I Jquery Ui Dialog</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Witam, w dzisiejszym poście chciałbym podzielić się rozwiązaniem problemu, który pomimo, że przydarza się dość rzadko, to jednak zdążył napsuć mi trochę nerwów. Zacznijmy od opisania tematu:</p>
-
-<p>Dysponujemy standardową stroną aspx (zawierającą w sobie zarówno kontrolki aspx jak i skrypty jQuery), która docelowo ma zostać wyświetlona wewnątrz okna dialogowego dostępnego poprzez biblioteki jquery i jquery ui.</p>
-
-<p>Zadanie wydaje się banalne, przecież wystarczyłoby w stronie wyświetlającej okno wpisać kilka linijek:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;dialog&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;iframe</span> <span class="na">src=</span><span class="s">&quot;ścieżka do wyświetlonej strony&quot;</span><span class="nt">&gt;&lt;/iframe&gt;</span>
-</span><span class='line'><span class="nt">&lt;/div&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Teraz już tylko wypisanie <code>$(&ldquo;#dialog&rdquo;).dialog()</code> i po sprawie. Ale czy na pewno? Otóż w moim przypadku takie podejście do sprawy skończyło się wyrzuceniem script errorów na stronie wyświetlanej w ramce (mowa tu o błędach typu <em>Object is undefined</em>). Co gorsza błąd ten był nagminny: występował niezależnie od tego, czy strona źródłowa posiadała dodaną informację o odnośnikach do plików jquery czy też nie.</p>
-
-<p>Ostatecznie rozwiązanie tego problemu okazało się stosunkowo proste. Chodzi w nim o to, aby nie dodawać atrybutu src do iframe bezpośrednio z poziomu html, a dopiero po wywołaniu metody dialog() na porządanym elemencie, który ma stać się oknem dialogowym. Przykładowy prawidłowo napisany kod:</p>
-
-<p>Html:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;dialog&quot;</span><span class="nt">&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;iframe</span> <span class="na">id=</span><span class="s">&quot;frame&quot;</span><span class="nt">&gt;&lt;/iframe&gt;</span>
-</span><span class='line'><span class="nt">&lt;/div&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>JavaScript:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#dialog&quot;</span><span class="p">).</span><span class="nx">dialog</span><span class="p">();</span>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#frame&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;src&#39;</span><span class="p">,</span> <span class="s1">&#39;ścieżka do wyświetlanej strony&#39;</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Po takiej operacji nasze okno powinno być gotowe.</p>
 
 		
 		

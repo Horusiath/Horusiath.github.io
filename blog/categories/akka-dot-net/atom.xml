@@ -4,7 +4,7 @@
   <title><![CDATA[Category: akka.net | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/akka-dot-net/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-08-02T13:32:26+02:00</updated>
+  <updated>2014-08-06T19:00:44+02:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,58 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Actor supervisors in Akka.NET FSharp API]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/08/06/fsharp-akkadotnet-supervisors/"/>
+    <updated>2014-08-06T18:49:00+02:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/08/06/fsharp-akkadotnet-supervisors</id>
+    <content type="html"><![CDATA[<p>This post will describe changes, that will affect a F# API for Akka.NET in the incoming versions of the framework (>= 0.62) &ndash; mostly those, which concerns supervisioning and manipulating actor hierarchies.</p>
+
+<p>I don&rsquo;t want to overload this post with explaining what Akka supervision is all about, so I&rsquo;ll just recommend a very good article, which could be found <a href="https://github.com/akkadotnet/akka.net/wiki/Supervision">here</a>.</p>
+
+<p>While previous versions of the Akka F# API introduced some nice features such as function-based actor definitions and creations (<code>spawn</code> function), there still was no simple way to handle some core framework concepts. Remember that march towards Akka.NET 1.0 is still in progress, more and more features are implemented. Therefore it&rsquo;s F# API most likely will also be a subject to change.</p>
+
+<p>To give a better description of the new features, lets see an example:</p>
+
+<p>```fsharp
+ let supervisor =</p>
+
+<pre><code>    spawns system "master"
+    // below we define OneForOneStrategy to handle specific exceptions incoming from child actors
+    &lt;| (Strategy.oneForOne &lt;| fun e -&gt; 
+        match e with
+        | :? ArithmeticException -&gt; Directive.Resume
+        | :? ArgumentException   -&gt; Directive.Stop
+        | _                      -&gt; Directive.Escalate)
+    &lt;| fun mailbox -&gt;
+        // by using mailbox.spawn we may create a child actors without exiting a F# functional API
+        let worker = mailbox.spawn "worker" &lt;| workerFun
+        let rec loop() = actor {
+            let! msg = mailbox.Receive()
+            match msg :&gt; obj with
+            | :? Respond -&gt; worker.Tell(msg, mailbox.Sender())
+            | _          -&gt; worker &lt;! msg
+            return! loop() }
+        loop()
+</code></pre>
+
+<p>```
+A <a href="https://github.com/akkadotnet/akka.net/blob/dev/src/examples/FSharp.Api/Supervisioning.fs">whole example</a> is available inside Akka.NET project source code, along with other examples.</p>
+
+<p>Unlike standard <code>spawn</code>, <code>spawns</code> function could take a SupervisorStrategy object as an argument. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
+
+<ol>
+<li><code>Strategy.oneForOne</code> &ndash; strategy will affect only an exception thrower.</li>
+<li><code>Strategy.allForOne</code> &ndash; strategy result will propagate to all children of the actor implementing that strategy.</li>
+</ol>
+
+
+<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne'</code> and <code>Strategy.allForOne'</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
+
+<p>Second change, is the new <code>mailbox.spawn</code> method, which works just like it&rsquo;s standard <code>spawn</code> equivalent with only one difference &ndash; it sets a <code>mailbox</code> Actor instance as current parent/supervisor of created actor. Both of those features combined could be used to bring a full supervision support in classic functional manner.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Map reduce with FSharp and Akka.net]]></title>

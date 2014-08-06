@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-08-02T13:32:26+02:00</updated>
+  <updated>2014-08-06T19:00:44+02:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,74 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Actor supervisors in Akka.NET FSharp API]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/08/06/fsharp-akkadotnet-supervisors/"/>
+    <updated>2014-08-06T18:49:00+02:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/08/06/fsharp-akkadotnet-supervisors</id>
+    <content type="html"><![CDATA[<p>This post will describe changes, that will affect a F# API for Akka.NET in the incoming versions of the framework (>= 0.62) &ndash; mostly those, which concerns supervisioning and manipulating actor hierarchies.</p>
+
+<p>I don&rsquo;t want to overload this post with explaining what Akka supervision is all about, so I&rsquo;ll just recommend a very good article, which could be found <a href="https://github.com/akkadotnet/akka.net/wiki/Supervision">here</a>.</p>
+
+<p>While previous versions of the Akka F# API introduced some nice features such as function-based actor definitions and creations (<code>spawn</code> function), there still was no simple way to handle some core framework concepts. Remember that march towards Akka.NET 1.0 is still in progress, more and more features are implemented. Therefore it&rsquo;s F# API most likely will also be a subject to change.</p>
+
+<p>To give a better description of the new features, lets see an example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'> <span class="k">let</span> <span class="n">supervisor</span> <span class="o">=</span>
+</span><span class='line'>        <span class="n">spawns</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span>
+</span><span class='line'>        <span class="c1">// below we define OneForOneStrategy to handle specific exceptions incoming from child actors</span>
+</span><span class='line'>        <span class="o">&lt;|</span> <span class="o">(</span><span class="nn">Strategy</span><span class="p">.</span><span class="n">oneForOne</span> <span class="o">&lt;|</span> <span class="k">fun</span> <span class="n">e</span> <span class="o">-&gt;</span>
+</span><span class='line'>            <span class="k">match</span> <span class="n">e</span> <span class="k">with</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArithmeticException</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Resume</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArgumentException</span>   <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Stop</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">_</span>                      <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Escalate</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">&lt;|</span> <span class="k">fun</span> <span class="n">mailbox</span> <span class="o">-&gt;</span>
+</span><span class='line'>            <span class="c1">// by using mailbox.spawn we may create a child actors without exiting a F# functional API</span>
+</span><span class='line'>            <span class="k">let</span> <span class="n">worker</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="n">spawn</span> <span class="s2">&quot;worker&quot;</span> <span class="o">&lt;|</span> <span class="n">workerFun</span>
+</span><span class='line'>            <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
+</span><span class='line'>                <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
+</span><span class='line'>                <span class="k">match</span> <span class="n">msg</span> <span class="o">:&gt;</span> <span class="n">obj</span> <span class="k">with</span>
+</span><span class='line'>                <span class="o">|</span> <span class="o">:?</span> <span class="nc">Respond</span> <span class="o">-&gt;</span> <span class="n">worker</span><span class="o">.</span><span class="nc">Tell</span><span class="o">(</span><span class="n">msg</span><span class="o">,</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">|</span> <span class="o">_</span>          <span class="o">-&gt;</span> <span class="n">worker</span> <span class="o">&lt;!</span> <span class="n">msg</span>
+</span><span class='line'>                <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">}</span>
+</span><span class='line'>            <span class="n">loop</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A <a href="https://github.com/akkadotnet/akka.net/blob/dev/src/examples/FSharp.Api/Supervisioning.fs">whole example</a> is available inside Akka.NET project source code, along with other examples.</p>
+
+<p>Unlike standard <code>spawn</code>, <code>spawns</code> function could take a SupervisorStrategy object as an argument. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
+
+<ol>
+<li><code>Strategy.oneForOne</code> &ndash; strategy will affect only an exception thrower.</li>
+<li><code>Strategy.allForOne</code> &ndash; strategy result will propagate to all children of the actor implementing that strategy.</li>
+</ol>
+
+
+<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne'</code> and <code>Strategy.allForOne'</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
+
+<p>Second change, is the new <code>mailbox.spawn</code> method, which works just like it&rsquo;s standard <code>spawn</code> equivalent with only one difference &ndash; it sets a <code>mailbox</code> Actor instance as current parent/supervisor of created actor. Both of those features combined could be used to bring a full supervision support in classic functional manner.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Simple Virtual Machine]]></title>
@@ -73,7 +141,7 @@
 </span><span class='line'><span class="cp">#define STACK_SIZE 100</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">data</span><span class="p">;</span>      <span class="c1">// data</span>
+</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">heap</span><span class="p">;</span>      <span class="c1">// heap</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">code</span><span class="p">;</span>      <span class="c1">// array od byte codes to be executed</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">stack</span><span class="p">;</span>     <span class="c1">// virtual stack</span>
 </span><span class='line'>    <span class="kt">int</span> <span class="n">pc</span><span class="p">;</span>         <span class="c1">// program counter (aka. IP - instruction pointer)</span>
@@ -504,10 +572,14 @@
 
 <h3>Why?</h3>
 
-<p>There are numerous reasons, why developers may want to use intermediate bytecode representations for their languages:
-&ndash;   <strong>Performance</strong> &ndash; as you&rsquo;ve seen, execution of the bytecode is realized mostly by just moving (mostly incrementing) PC pointer. When interpreter works directly by evaluating and traversing an AST tree, there is a lot of pointer jumping and structure blocks, which is slightly more complex and slower. Bytecode allows you to faster code interpretation as well as it may facilitate some optimizations.
-&ndash;   <strong>Code size</strong> &ndash; full code operates on human readable strings, which may consume some memory and are harder to interpret. Intermediate program representation uses only a simple integer arrays.
-&ndash;   <strong>Well-fitting</strong> &ndash; since you may describe your own IR, you may fit it directly to your needs. It&rsquo;s easier to parse, and it could remove some repetitive work, when you&rsquo;ll want to implement your language on the various OSes.</p>
+<p>There are numerous reasons, why developers may want to use intermediate bytecode representations for their languages:</p>
+
+<ul>
+<li><strong>Performance</strong> &ndash; as you&rsquo;ve seen, execution of the bytecode is realized mostly by just moving (mostly incrementing) PC pointer. When interpreter works directly by evaluating and traversing an AST tree, there is a lot of pointer jumping and structure blocks, which is slightly more complex and slower. Bytecode allows you to faster code interpretation as well as it may facilitate some optimizations.</li>
+<li><strong>Code size</strong> &ndash; full code operates on human readable strings, which may consume some memory and are harder to interpret. Intermediate program representation uses only a simple integer arrays.</li>
+<li><strong>Well-fitting</strong> &ndash; since you may describe your own IR, you may fit it directly to your needs. It&rsquo;s easier to parse, and it could remove some repetitive work, when you&rsquo;ll want to implement your language on the various OSes.</li>
+</ul>
+
 ]]></content>
   </entry>
   
@@ -2325,442 +2397,6 @@
 <p>W tym celu należy przedtem zapewnić &ldquo;testowalność&rdquo; swojego kodu. Wskazówki opisane przeze mnie powyżej (zwłaszcza te dotyczące modularyzacji i luźnych powiązań) dotyczą również tego zagadnienia. Mimo że Knockout nie zapewnia wbudowanych klas ułatwiających testowanie (AngularJS jest pomocny również pod tym względem), nie jest to dużym problemem, ponieważ Javascript jest językiem bardzo elastycznym i rozszerzalnym, zatem pisanie mocków nie stanowi tutaj problemu.</p>
 
 <p>Co do wyboru frameworka testowego jest to kwestia własnych preferencji. Jedni wybiorą polecany przez M$ <a href="http://qunitjs.com/">QUnit</a> wspierający programowanie TDD. Dla programistów .Net jest to tradycyjna dobrze znana ścieżka. Inni (w tym ja ;) ) wolą metodykę BDD i czytelność, jaką oferują biblioteki takie jak <a href="http://pivotal.github.com/jasmine/">Jasmine</a>. Dlaczego preferuję właśnie to drugie podejście? Dlatego że łatwiej definiować testy w kategoriach konkretnych zachowań, jakich oczekujemy po działaniu naszego kodu, niż operacji, które nie zawsze muszą jasno definiować to, co faktycznie chcemy osiągnąć.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Javascript a wzorce projektowe]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2013/02/23/javascript-wzorce-projektowe/"/>
-    <updated>2013-02-23T19:01:00+01:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2013/02/23/javascript-wzorce-projektowe</id>
-    <content type="html"><![CDATA[<p>Założę się, że wiele osób czytając ten tytuł puknie się w głowę. I owszem w wielu sytuacjach wzorce nie są niezbędne do tworzenia przejrzystych i dobrze rozwijalnych skryptów. Do czasu. Dokładnie do momentu gdy nasz skrypt zaczyna mieć więcej niż kilkadziesiąt linijek.</p>
-
-<p>W zależności od języka programowania, pisany przez nas kod może mieć mniejszą lub większą przejrzystość. Niektóre języki takie jak Haskel, są z natury bardzo klarowne i skupiają się na istocie rzeczy. Inne, jak właśnie Javascript, dają programiście olbrzymie możliwość zrobienia czegoś na pierdyliard sposobów, co nie oznacza, że każdy sposób jest poprawny. Jakby tego było mało, javascriptowe JITy są wstanie przełknąć nawet bardzo niezdarny kod. Dlatego właśnie dyscyplina samego programisty oraz stosowanie wzorców jest tym bardziej istotne.</p>
-
-<p>O tradycyjnych wzorcach &ndash; strategiach, obserwatorach etc. &ndash; napisano całą masę artykułów. Dlatego też poniżej postaram się przedstawić kilka mniej znanych, skupiając się szczególnie na tych, które są istotne z punktu widzenia JS, przez wzgląd na możliwości jakie daje oraz brakujących konstrukcji dostępnych w innych językach, których tutaj brakuje &ndash; w gruncie rzeczy czym są wzorce projektowe, jeżeli nie powszechnymi sposobami na obejście braków odpowiednich konstruktów w danym języku programowania?</p>
-
-<h2>Funkcje natychmiastowe</h2>
-
-<p>Mechanizm funkcji natychmiastowych (<strong>immediate functions</strong>) jest jedną z podstawowych sztuczek językowych wykorzystywanych w Javascriptcie. Ponieważ wiedza ta stanowi fundament innych wzorców, przedstawię go poniżej.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">immediateValue</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="c1">// wykonujemy jakąś operację i zwracamy wartosć</span>
-</span><span class='line'>      <span class="k">return</span> <span class="nx">x</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">})();</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// określamy zewnętrzne obiekty, które wywołujemy wewnątrz funkcji</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">module</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nb">window</span><span class="p">,</span> <span class="nb">document</span><span class="p">){</span>
-</span><span class='line'>  <span class="c1">// wykonujemy jakąś operację</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">module</span><span class="p">;</span>
-</span><span class='line'><span class="p">})(</span><span class="nb">window</span><span class="p">,</span> <span class="nb">document</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widzimy całość polega na jednoczesnym zdefiniowaniu funkcji i jej wykonaniu. Jakie są zalety tego podejścia?:</p>
-
-<ul>
-<li>Możemy w ten sposób budować moduły &ndash; ponieważ zawartość funkcji powoduje stworzenie nowego zakresu (scope &ndash; chociaż z tym ze względów wydajnościowych nie należy przeginać), wszystkie zmienne lokalne użyte w funkcji-module nie są widoczne spoza niej, dopóki programista jawnie nie określi inaczej.</li>
-<li>Przekazując parametry do takiej funkcji możemy jawnie określić zależności pomiędzy operacjami/obiektami używanymi wewnątrz funkcji ze światem zewnętrznym.</li>
-</ul>
-
-
-<h2>Modularyzacja</h2>
-
-<p>Jest to dość często poruszany problem (sam nieraz o nim wspominałem), ponieważ JS jako tako sam nie umożliwia definiowania pakietów ani przestrzeni nazw. Stąd też pierwszym zaprezentowanym przeze mnie wzorcem będzie <strong>namespace</strong>. Ponieważ przykładowy kod umieściłem i opisałem w jednym z poprzednich <a href="http://horusiath.blogspot.com/2012/09/javascript-porady-i-uwagi.html">postów</a>, gwoli przypomnienia umieszczę tutaj przykładowy kod takiego rozwiązania.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nb">window</span><span class="p">.</span><span class="nx">namespace</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">root</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">parent</span> <span class="o">=</span> <span class="nx">root</span> <span class="o">||</span> <span class="nb">window</span><span class="p">;</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">modules</span> <span class="o">=</span> <span class="nx">path</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">);</span>
-</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">modules</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">module</span> <span class="o">=</span> <span class="nx">modules</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
-</span><span class='line'>      <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">||</span> <span class="p">{});</span>
-</span><span class='line'>      <span class="nx">parent</span> <span class="o">=</span> <span class="nx">parent</span><span class="p">[</span><span class="nx">module</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">parent</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Cache&#8217;owanie funkcji</h2>
-
-<p>Ze względu na silniki starszych przeglądarek i chęć ograniczenia skomplikowanych operacji wiele bibliotek oferuje mniej lub bardziej wyrafinowane mechanizmy służące cache&#8217;owaniu danych. Javascript przychodzi tutaj z pomocą, pozwalając na zastosowanie tej techniki niemal dla dowolnej funkcji. Mowa tutaj o wzorcu <strong>memoization</strong>. Wykorzystuje on dwa podstawowe fakty dotyczące tego języka:</p>
-
-<ol>
-<li>Każda funkcja jest jednocześnie pełnoprawnym obiektem.</li>
-<li>Każdy obiekt może pełnić funkcje słownika &ndash; a co za tym idzie można wykorzystać go do dynamicznego przydzielania nowych właściwości i hashy.</li>
-</ol>
-
-
-<p>Poniższy kod przedstawia najprostszą implementację tego zachowania:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">memoizedFunction</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="c1">// parametr {value} stanowi jednocześnie klucz w naszym cache&#39;u</span>
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">fn</span><span class="p">(</span><span class="nx">value</span><span class="p">){</span>
-</span><span class='line'>      <span class="c1">// sprawdzmy, czy parametr został wcześniej zapamiętany</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">fn</span><span class="p">.</span><span class="nx">_cache</span><span class="p">[</span><span class="nx">value</span><span class="p">]){</span>
-</span><span class='line'>          <span class="k">return</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">_cache</span><span class="p">[</span><span class="nx">value</span><span class="p">];</span>
-</span><span class='line'>      <span class="p">}</span><span class="k">else</span><span class="p">{</span>
-</span><span class='line'>          <span class="c1">// zapamiętywanie wywołania funkcji</span>
-</span><span class='line'>          <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="nx">doSomething</span><span class="p">(</span><span class="nx">value</span><span class="p">);</span>
-</span><span class='line'>          <span class="nx">fn</span><span class="p">.</span><span class="nx">_cache</span><span class="p">[</span><span class="nx">value</span><span class="p">]</span> <span class="o">=</span> <span class="nx">result</span><span class="p">;</span>
-</span><span class='line'>          <span class="k">return</span> <span class="nx">result</span><span class="p">;</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="nx">fn</span><span class="p">.</span><span class="nx">_cache</span> <span class="o">=</span> <span class="p">{};</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">fn</span><span class="p">;</span>
-</span><span class='line'><span class="p">})();</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Należy zwrócić uwagę na fakt, że parametr przekazywany do funkcji w tej implementacji stanowi jednocześnie wartość cache&#8217;owanego klucza, a sam wzorzec musi implementować funkcje deteministyczne (tzn. takie które dla tego samego parametru wejściowego zwracają zawsze tą samą wartość/wykonują tę samą operacje). Stąd też dobrze, jeżeli maksymalna możliwa liczba przekazywanych parametrów jest znana &ndash; w sytuacjach skrajnych mogłoby dojść do tego, że cache zacząłby zajmować ogromną ilość pamięci. W takim wypadku trzeba dodatkowo zaimplementować dodatkowo mechanizm odśmiecania lub okresowego czyszczenia cache&#8217;u.</p>
-
-<p>Prawidłowe działanie funkcji w dużej mierze zależy od typu przekazywanego parametru &ndash; ze względu na to, że Javascript bywa dość nieprzewidywalny, najlepiej jest trzymać się typów prostych: String, Number, Boolean. W praktyce jednak wszystko to jednak zależy od twojej znajomości tricków i pułapek tego języka.</p>
-
-<p>Gdzie przydaje się powyższy wzorzec? Kilka przykładów:</p>
-
-<ul>
-<li>W wywołaniach do serwera np. jeżeli dla podanego adresu URL zwracana wartość jest stała, możemy użyć go w postaci klucza i zapamiętać zwracaną wartość. W ten sposób zmniejszymy czas i ilość requestów na serwer potrzebnych do skończenia danej operacji.</li>
-<li>Inne funkcje o stałych kluczach, ale jednocześnie wykonujące złożone obliczenia np. w mechanizmach bindowania danych do modelu DOM przeglądarki.</li>
-</ul>
-
-
-<h2>Dependency Injection</h2>
-
-<p>Pojęcie to jest ostatnio dość często używane, również ze względu na rosnącą popularność frameworków MVC. W Javascriptcie zostało ono użyte po raz pierwszy w dużej skali wraz z nadejściem <a href="http://angularjs.org/">AngularJS</a>. Jednakże, jeżeli chcielibyśmy, możemy zaimplementować kontener <strong>Inversion of Control</strong> dla własnych potrzeb.</p>
-
-<p>W pierwszej kolejności zdefiniujmy kontener IoC.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// kontener IoC</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">DependencyResolver</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
-</span><span class='line'>  <span class="c1">// regex użyty do wyciągania nazw zależności z konstruktora</span>
-</span><span class='line'>  <span class="nx">ARG_REGEX</span> <span class="o">=</span> <span class="sr">/^function\s*[^\(]*\(\s*([^\)]*)\)/m</span><span class="p">,</span>
-</span><span class='line'>  <span class="nx">dependencies</span> <span class="o">=</span> <span class="p">{};</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// funkcja rejestrująca typ w kontenerze</span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">register</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">type</span><span class="p">){</span>
-</span><span class='line'>      <span class="nx">dependencies</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">type</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// zwraca instancję obiektu identyfikowanego po podanym kluczu </span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">resolve</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">){</span> <span class="p">...</span> <span class="p">};</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// rozwiązujemy podane zależności podane w postaci listy kluczy</span>
-</span><span class='line'>  <span class="c1">// dla dependency resolvera do postaci tablicy gotowych obiektów</span>
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">resolveDependencies</span><span class="p">(</span><span class="nx">args</span><span class="p">){</span> <span class="p">...</span> <span class="p">};</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>&ldquo;Klasa&rdquo; ta udostępnia dwie metody:</p>
-
-<ul>
-<li><code>register(key, type)</code> &ndash; rejestruje podaną wartość/funkcję konstruktora pod podanym kluczem.</li>
-<li><code>resolve(key)</code> &ndash; tworzy typ zgodnie z zarejestrowaną wcześniej nazwą.</li>
-</ul>
-
-
-<p>Niestety javascript nie przechowuje informacji na temat typów parametrów pobieranych przez funkcję. Stąd też twórcy AngularJS postanowili zbudować następującą konwencję &ndash; w momencie, gdy przy próbie utworzenia obiektu pojawiaja się problem z określeniem typu argumentów przekazywanych do konstruktora, przyjmuje się, że nazwy parametrów są kluczami dla wartosci zarejestrowanych w kontenerze IoC. Jak to wygląda w praktyce? Ilustruje to następujący kod:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// budujemy kontener</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">resolver</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DependencyResolver</span><span class="p">();</span>
-</span><span class='line'><span class="nx">resolver</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="s1">&#39;valueA&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// rejestrujemy 1 dla klucza &#39;valueA&#39;</span>
-</span><span class='line'><span class="nx">resolver</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="s1">&#39;valueB&#39;</span><span class="p">,</span> <span class="nx">MyClass1</span><span class="p">);</span> <span class="c1">// rejestrujemy &quot;klasę&quot; dla klucza &#39;valueB&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// tworzymy nową &quot;klasę&quot; i rejestrujemy ją jako &#39;valueC&#39;</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">MyClass2</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">valueA</span><span class="p">,</span> <span class="nx">valueB</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="c1">// kontener wygeneruje opowiednie wartosci sugerując się nazwami parametrów</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'><span class="nx">resolver</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="s1">&#39;valueC&#39;</span><span class="p">,</span> <span class="nx">MyClass2</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// tworzymy obiekt</span>
-</span><span class='line'><span class="nx">resolver</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">&#39;valueC&#39;</span><span class="p">);</span> <span class="c1">// profit ;)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Ciało metody resolve przedstawia się w takim wypadku następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="k">this</span><span class="p">.</span><span class="nx">resolve</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">){</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">type</span> <span class="o">=</span> <span class="nx">dependencies</span><span class="p">[</span><span class="nx">key</span><span class="p">];</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// jeżeli zarejestrowany typ jest funkcją/konstruktorem</span>
-</span><span class='line'>  <span class="c1">// musimy rozwiązać listę parametrów podanych do dokonstruktora</span>
-</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="k">typeof</span> <span class="nx">type</span> <span class="o">===</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
-</span><span class='line'>      
-</span><span class='line'>      <span class="c1">// wyciągamy listę wartości przyjmowanych przez konstruktor</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">ARG_REGEX</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">type</span><span class="p">.</span><span class="nx">toString</span><span class="p">())[</span><span class="mi">1</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">);</span>
-</span><span class='line'>      <span class="c1">// zamieniamy je na właściwe obiekty</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">resolvedArgs</span> <span class="o">=</span> <span class="nx">resolveDependencies</span><span class="p">(</span><span class="nx">args</span><span class="p">);</span>
-</span><span class='line'>      
-</span><span class='line'>      <span class="c1">// tworzymy nową instancję danego typu</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">instance</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">type</span><span class="p">();</span>
-</span><span class='line'>      <span class="nx">type</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">instance</span><span class="p">,</span> <span class="nx">resolvedArgs</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">return</span> <span class="nx">instance</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>      <span class="c1">// jeżeli typ jest typem prostym wystarczy go zwrócić</span>
-</span><span class='line'>      <span class="k">return</span> <span class="nx">type</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Natomiast brakujące ciało metody resolveDependencies:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">resolveDependencies</span><span class="p">(</span><span class="nx">args</span><span class="p">){</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">resolvedArgs</span> <span class="o">=</span> <span class="p">[];</span>
-</span><span class='line'>  <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">args</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">){</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">dependency</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">trim</span><span class="p">();</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">dependency</span> <span class="o">!==</span> <span class="s1">&#39;&#39;</span><span class="p">){</span>
-</span><span class='line'>          <span class="kd">var</span> <span class="nx">resolved</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">dependency</span><span class="p">);</span>
-</span><span class='line'>          <span class="nx">resolvedArgs</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">resolved</span><span class="p">);</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">resolvedArgs</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Oczywiście powyższy kod nie określa kwestii czasu życia obiektu, którą kontenery IoC przeważnie rozwiązują. Jednakże jaki problem tkwi w powyższym rozwiązaniu? Otóż w momencie minimalizacji danego skryptu cała nasza wiedza o nazewnictwie parametrów funkcji znika (zostają one zastąpione krótkimi &ndash; z reguły jednoliterowymi aliasami). Niestety ale nie da się tego rozwiązać w elegancki sposób. W przypadku AngularJS zdefiniowana została specjalna właściwość $inject, którą dodajemy własnoręcznie do danej klasy, a która definiuje tablicę kluczy-parametrów, dzięki którym możliwe jest rozwiązanie zależności przez kontener. W takim wypadku w powyższej implementacji wystarczy dodać drobne usprawnienie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="k">this</span><span class="p">.</span><span class="nx">resolve</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">){</span>
-</span><span class='line'>  <span class="p">...</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">type</span><span class="p">.</span><span class="nx">$inject</span> <span class="o">||</span> <span class="nx">ARG_REGEX</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">type</span><span class="p">.</span><span class="nx">toString</span><span class="p">())[</span><span class="mi">1</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">...</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>, natomiast, w samej zdefiniowanej klasie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">MyClass</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">valueA</span><span class="p">,</span> <span class="nx">valueB</span><span class="p">){</span> <span class="p">...</span> <span class="p">}</span>
-</span><span class='line'><span class="nx">MyClass</span><span class="p">.</span><span class="nx">$inject</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;valueA&#39;</span><span class="p">,</span> <span class="s1">&#39;valueB&#39;</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Dlaczego ten mechanizm się przydaje? Odpowiedź jest dokładnie taka sama jak w przypadku DI po stronie serwera: modularyzacja projektu, spójny sposób i kontrola nad konstrukcją obiektów. Całość jest wprost nieoceniona, kiedy po stronie klienta wykonywany jest bardziej zaawansowany wycinek logiki. A do tego te wsparcie dla testów jednostkowych.</p>
-
-<p>P.S.: Jestem zdania, że w każdym projekcie z większą ilością Javascriptu testy jednostkowe są nieocenione. Po pierwsze w tym języku wyjątkowo łatwo o błędy i niezdarny kod, a TDD oraz BDD rozwiązują oba te problemy. Po drugie jesteśmy po stronie klienta. Chcesz sprawdzić czy logika do kontrolek User Interface i wyświetlanie strony działa prawidłowo? Gratulacje &ndash; jesteś po właściwej stronie kabla.</p>
-
-<h2>Dziedziczenie</h2>
-
-<p>Pomimo, że Javascript jest językiem obiektowym, nie definiuje jednak mechanizmu dziedziczenia w sposób znany nam z innych języków. Na szczęście jego możliwości pozwalają nam na wykonanie takiego mechanizmu w postaci wzorca <strong>extend</strong> (<em>powered by CoffeScript ;)</em> ).</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">extend</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">childPrototype</span><span class="p">,</span> <span class="nx">superPrototype</span><span class="p">){</span>
-</span><span class='line'>  <span class="c1">// dziedziczenie składowych</span>
-</span><span class='line'>  <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">property</span> <span class="k">in</span> <span class="nx">superPrototype</span><span class="p">){</span>
-</span><span class='line'>      <span class="c1">// iterujemy po wszystkich składowych rodzica</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">superPrototype</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">property</span><span class="p">)){</span>
-</span><span class='line'>          <span class="nx">childPrototype</span><span class="p">[</span><span class="nx">property</span><span class="p">]</span> <span class="o">=</span> <span class="nx">superPrototype</span><span class="p">[</span><span class="nx">property</span><span class="p">]</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// dziedziczenie konstruktora</span>
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">ctor</span><span class="p">(){</span>
-</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">=</span> <span class="nx">childPrototype</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="nx">ctor</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="nx">superPrototype</span><span class="p">.</span><span class="nx">prototype</span><span class="p">;</span>
-</span><span class='line'>  <span class="nx">childPrototype</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ctor</span><span class="p">();</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="c1">// definiujemy dostęp do &quot;klasy bazowej&quot;</span>
-</span><span class='line'>  <span class="nx">childPrototype</span><span class="p">.</span><span class="nx">__super__</span> <span class="o">=</span> <span class="nx">superPrototype</span><span class="p">.</span><span class="nx">prototype</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">childPrototype</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Niestety, jeżeli chcemy mieć dostęp do &ldquo;wirtualizacji&rdquo; metod w klasach pochodnych, musimy to wykonywać w dość krzywy sposób. Przykład poniżej.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// klasa bazowa</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">Parent</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">Parent</span><span class="p">(</span><span class="nx">firstName</span><span class="p">){</span>
-</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">firstName</span> <span class="o">=</span> <span class="nx">firstName</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="c1">// definiujemy &quot;wirtualną&quot; metodę</span>
-</span><span class='line'>  <span class="nx">Parent</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">show</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>      <span class="k">return</span> <span class="s2">&quot;Base: &quot;</span><span class="o">+</span><span class="k">this</span><span class="p">.</span><span class="nx">firstName</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">Parent</span><span class="p">;</span>
-</span><span class='line'><span class="p">})();</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// klasa pochodna</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">Child</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">BaseType</span><span class="p">){</span>
-</span><span class='line'>  <span class="nx">extend</span><span class="p">(</span><span class="nx">Child</span><span class="p">,</span> <span class="nx">BaseType</span><span class="p">);</span> <span class="c1">// określamy warunki dziedziczenia</span>
-</span><span class='line'>  
-</span><span class='line'>  <span class="kd">function</span> <span class="nx">Child</span><span class="p">(</span><span class="nx">firstName</span><span class="p">,</span> <span class="nx">lastName</span><span class="p">){</span>
-</span><span class='line'>      <span class="c1">// wywołujemy konstruktor z klasy bazowej</span>
-</span><span class='line'>      <span class="nx">Child</span><span class="p">.</span><span class="nx">__super__</span><span class="p">.</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">firstName</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">lastName</span> <span class="o">=</span> <span class="nx">lastName</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>  <span class="c1">// &quot;nadpisujemy&quot; metodę z klasy bazowej</span>
-</span><span class='line'>  <span class="nx">Child</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">show</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>      <span class="c1">// wewnątrz nadpisanej metody wywołujemy jej bazową postać</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">baseMessage</span> <span class="o">=</span> <span class="nx">Child</span><span class="p">.</span><span class="nx">__super__</span><span class="p">.</span><span class="nx">show</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">return</span> <span class="s2">&quot;Inherited: &quot;</span><span class="o">+</span><span class="k">this</span><span class="p">.</span><span class="nx">lastName</span> <span class="o">+</span> <span class="s2">&quot; with &quot;</span> <span class="o">+</span> <span class="nx">baseMessage</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'>  <span class="k">return</span> <span class="nx">Child</span><span class="p">;</span>
-</span><span class='line'><span class="p">})(</span><span class="nx">Parent</span><span class="p">);</span> <span class="c1">// przekazujemy klasę bazową mechanizmem funkcji natychmiastowej</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widać, nie jest to technika przejrzysta, głównie ze względu na obejścia, jakie trzeba wykonać, aby uzyskać dostęp do wywołań metod nadpisywanych z klas bazowych.</p>
-
-<p>Kiedy jest to przydatne? Szczerze umieściłem to jako ciekawostkę, ponieważ o ile o korzyściach dziedziczenia i wirtualizacji wie chyba każdy, kto miał do czynienia z programowaniem obiektowym, to forma, w jakiej jest to podane w Javascriptcie może okazać się ciężka do przełknięcia. Z tego powodu polecam tutaj języki kompilowane do Javascriptu np. CoffeeScript lub TypeScript, które rozwiązują ten problem za nas.</p>
 ]]></content>
   </entry>
   

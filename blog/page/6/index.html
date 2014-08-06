@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Nov 16th, 2010 .net, algorytmy, programowanie Comments [CSharp] Skompresowane Drzewo TRIE Ostatnimi czasy powróciłem do programów wykonywanych na &hellip;">
+	<meta name="description" content="Dec 11th, 2010 .net, programowanie Comments Podstawy Programowania W CIL Cz. 1 Witam, w dzisiejszym poście postaram się pokrótce przedstawić &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,123 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-12-11T10:27:00+01:00" data-updated="true" itemprop="datePublished">Dec 11<span>th</span>, 2010</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2010/12/11/podstawy-programowania-w-cil-cz-1/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2010/12/11/podstawy-programowania-w-cil-cz-1/" itemprop="url">Podstawy Programowania W CIL Cz. 1</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Witam, w dzisiejszym poście postaram się pokrótce przedstawić najważniejsze Common Intermediate Language, czyli języka pośredniego platformy .Net. Jak pewnie wszystkim zainteresowanym wiadomo, wszystkie programy napisane w językach platformy .Net są kompilowane wpierw do kodu pośredniego czyli CIL. Jednakże my sami również możemy pisać programy bezpośrednio w nim, a nawet wykorzystywać potem biblioteki z tak napisanym kodem w naszych aplikacjach.</p>
+
+<p>Dlaczego warto poznać CIL? Chociażby dlatego, żeby wiedzieć jak wygląda wewnętrzna realizacja języków wysokiego poziomu. Ale to nie wszystko. Możemy również definiować konstrukcje które nie istnieją lub nie są dostępne w naszych językach wysokiego poziomu (jak np. zmienne globalne, których nie ma w C#).</p>
+
+<p>Zacznijmy od budowy języka. Rolę słów kluczowych w Common Intermediate Language pełnią tzw. tokeny. Możemy je podzielić na 3 grupy:</p>
+
+<ol>
+<li><strong>Dyrektywy</strong> &ndash; służą opisowi struktury pakietu. Można je rozpoznać po prefixie &ldquo;.&rdquo; (np. .namespace, .assembly itp.).</li>
+<li><strong>Atrybuty</strong> &ndash; służą określaniu, w jaki sposób dana dyrektywa ma zostać przetworzona. Przykładowe atrybuty to: extends, implements, private.</li>
+<li><strong>Kody operacyjne</strong> &ndash; odpowiadają za podawanie logiki (można o nich myśleć trochę jak o instrukcjach assemblera). Przykłady: box, unbox, throw. W praktyce nazwy te służą czytelniejszemu rozpoznawaniu binarnych kodów operacyjnych (np. 0X58 (kod add) to kod operacyjny dodawania 2 liczb, zaś 0X73 (kod newobj) służy alokacji obiektu na zarządzanej stercie).</li>
+<li><strong>Etykiety</strong> &ndash; służą rozpoznawaniu danej linii kodu. Mogą przyjmować dodowlne nazwy (pod warunkiem, że nie powtarzają się w zasięgu tej samej składowej) i nie są wymagane do prawidłowego działania kodu. Jedyne sytuacje, kiedy są obowiązkowe, to określenie przepływu logiki w konstrukcjach rozgałęzienia lub w pętlach.</li>
+</ol>
+
+
+<p>W CIL zmienne są przechowywane na tzw. wirtualnym stosie wykonywania (virtual execution stack). Aby mieć dostęp do danego elementu, musimy go wpierw jawnie załadować na stos, a potem zrzucić go, kiedy będziemy chccieli go użyć.</p>
+
+<p>Stwórzmy teraz przykładowy projekt &ldquo;Hello World&rdquo; i przeanalizujmy jego kod w języku CIL. W tym celu posłużę się możliwością utworzenia gotowego projektu z rozszerzeniem .il w programie MonoDevelop (niestety VS nie umożliwia jeszcze dodawania projektów pisanych w kodzie pośrednim). Jednakże aby móc podlągać i pisać w VS polecam zapoznać się z programami <strong>ilasm</strong> (kompilator), <strong>ildasm</strong> (dezassembler) oraz <strong>peverify</strong> (program sprawdzający poprawność zbudowanego kodu). Kod wynikowy może się nieco różnić, ale główna idea zostanie bez zmian.</p>
+
+<p>Tak więc po stworzeniu nowego projektu naszym oczom ukazał się następujący kod:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>.assembly HelloWorld
+</span><span class='line'>{
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>.assembly extern mscorlib { }
+</span><span class='line'>
+</span><span class='line'>.namespace DefaultNamespace
+</span><span class='line'>{
+</span><span class='line'>    .class private auto ansi beforefieldinit MainClass extends [mscorlib]System.Object
+</span><span class='line'>    {
+</span><span class='line'>        .method public hidebysig static void Main(string[] args) cil managed
+</span><span class='line'>        {
+</span><span class='line'>            .entrypoint
+</span><span class='line'>            .maxstack  1
+</span><span class='line'>            ldstr "Hello World!"
+</span><span class='line'>            call void [mscorlib]System.Console::WriteLine(string)
+</span><span class='line'>            ret
+</span><span class='line'>        }
+</span><span class='line'>    }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Przejdźmy więc do jego interpretacji</p>
+
+<ul>
+<li><code>.assembly HelloWorld</code> &ndash; oznacza to nasz pakiet. Wewnątrz można zaszyć informacje istotne dla pakietu (np. .ver, .module).</li>
+<li><code>.assembly extern mscorlib</code> &ndash; deklarujemy pakiety zewnętrzne, z których korzysta nasz pakiet.</li>
+<li><code>.class private auto ansi beforefieldinit MainClass </code> &ndash; definicja głównej klasy programu. Atrybut extends oznacza, że nasza klasa dziedziczy po System.Object.</li>
+<li><code>.entrypoint </code>&ndash; oznakowuje daną metodę jako punkt wejścia dla pliku wykonywalnego.</li>
+<li><code>.maxstack</code> &ndash; określa maksymalną głębokość wirtualnego stosu wykonywania.</li>
+<li><code>ldstr</code> &ndash; operacja ładowania stringa na stos.</li>
+<li><code>call void [mscorlib]System.Console::WriteLine(string)</code> &ndash; wywołanie metody WriteLine z klasy System.Console. CIL wymaga, aby podawać pełną nazwę kwalifikowaną typu za każdym razem, kiedy chcemy się do niego odwołać. Poza tym musimy podać dokładną definicję metody.</li>
+</ul>
+
+
+<p>Ten przykładowy kod pozwala nam zrozumieć podstawy języka. Ponieważ obiektami, interfejsami i strukturami chcę zająć się w następnym artykule tutaj podam tylko krótką tabelę opisującą bazowe typy danych i odpowiadające im słowa kluczowe CIL. Będą nam potrzebne później.</p>
+
+<table class="table"><tbody><tr><th>Typ klasy bazowej .NET</th><th>Reprezentacja w języku CIL</th><th>Notacja stałych CIL</th>  </tr><tr> <td>System.SByte</td><td>int8</td><td>I1</td> </tr><tr> <td>System.Byte</td><td>unsigned int8</td><td>U1</td> </tr><tr> <td>System.Int16</td><td>int16</td><td>I2</td> </tr><tr> <td>System.Int32</td><td>int32</td><td>I4</td> </tr><tr> <td>System.Int64</td><td>int64</td><td>I8</td> </tr><tr> <td>System.Char</td><td>char</td><td>CHAR</td> </tr><tr> <td>System.Single</td><td>float32</td><td>R4</td> </tr><tr> <td>System.Double</td><td>float64</td><td>R8</td> </tr><tr> <td>System.Boolean</td><td>bool</td><td>BOOLEAN</td> </tr><tr> <td>System.String</td><td>string</td><td>brak</td> </tr><tr> <td>System.Object</td><td>object</td><td>brak</td> </tr><tr> <td>System.Void</td><td>void</td><td>VOID</td> </tr></tbody></table>
+
+
+<p>To wszystko. W następnym artykule nauczymy się, jak tworzyć własne klasy oraz jak je wykorzystywać w naszym programie.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
