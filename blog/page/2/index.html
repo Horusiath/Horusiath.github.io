@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Aug 10th, 2013 .net, ServiceStack, programowanie Comments ServiceStack - Alternatywa Dla ASP.NET ASP.NET jest wiodącą technologią, jeżeli idzie o &hellip;">
+	<meta name="description" content="Oct 20th, 2013 .net, asp, programowanie, wzorce projektowe Comments O Pomyłkach I Wnioskach Z Pracy W ASP.NET MVC O wzorcach projektowych w ASP.NET &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,147 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-20T09:49:00+02:00" data-updated="true" itemprop="datePublished">Oct 20<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/asp/'>asp</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/" itemprop="url">O Pomyłkach I Wnioskach Z Pracy W ASP.NET MVC</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
+
+<p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
+
+<h2>Twoja encja ≠ Twój model</h2>
+
+<p>Zasadniczym błędem (lub raczej skrótem myślowym) jest założenie, że każda klasa mapowana przez ORM na tabele może służyć jako model przekazywany bezpośrednio do widoku. Nie znaczy to, że jest to nie możliwe, jednak opcja ta jest z reguły nadużywana. Wynika to poniekąd ze stylu programowania wyuczonego z tutoriali z cyklu &ldquo;wyklep CRUDa w 5 min.&rdquo;. Piękne i proste, jednak nie mające wiele wspólnego z problemami dnia codziennego. Z drugiej strony jest to wina samego lenistwa programistów oraz przeświadczenia, że faza projektowania z rozpiską architektury chociażby na kartce papieru jest tylko dla kobiet i leszczy ;)</p>
+
+<p>Pytanie brzmi: kiedy należałoby porzucić modelowanie z encji na rzecz dedykowanych klas POCO? Prawda jest taka, że zależy to od przypadku i wymaga odrobiny doświadczenia.</p>
+
+<ul>
+<li>Jedną z podpowiedzi może być poziom zagłębienia zależności. Im jest on głębszy, tym bardziej wykorzystywana przez nas klasa odbiega strukturą od modelu wymaganego przez widok. Przykładowo już 2 poziom zagłębienia np. <code>Model.Products.SelectMany(p => p.Orders)</code> może świadczyć o tym, że dana encja nie jest właściwym kandydatem i powinna zostać zmapowana na dedykowaną do tego celu klasę.</li>
+<li>Innym przykładem może być sytuacja, w której nasz model wykazuje pewien związek z regułami biznesowymi. Przykładowo częstym sposobem reprezentacji okresu czasu powiązanego z danym obiektem jest dodanie do modelu dwóch pól określających granice czasowe. W tym momencie pojawia się jednak pewien dysonans między definicją biznesową (okres czasu jest pojedynczym obiektem) a rzeczywistą implementacją (okres czasu to dwa generyczne pola dat). Jeżeli logika biznesowa silnie bazuje na danej definicji np. przedział czasowy często pojawia się w kontekście wykonywanych operacji, wtedy możliwe, że lepiej byłoby wyodrębnić ją do osobnej klasy.</li>
+<li>Jak powszechnie wiadomo, we współczesnym świecie aplikacji WWW wymagania klientów są jednymi z najbardziej zmiennych elementów systemu. Możliwość oddzielenia modeli od encji wspiera ten trend, ponieważ o ile encje są powiązane ze schematem bazy danych (przez co są znacznie mniej podatne na zmiany ze względu na konieczność utrzymania spójności z istniejącymi danymi), o tyle modele wykorzystywane przez nas w aplikacji mogą być swobodnie modelowane do naszych potrzeb.</li>
+</ul>
+
+
+<h2>Twój ViewData = Twój Model</h2>
+
+<p>W przypadku niektórych frameworków model jest zdefiniowany w sposób jasny i jednoznaczny. W przypadku ASP.NET MVC nie jest jednak tak łatwo, ponieważ otrzymujemy tutaj więcej niż jeden sposób dostarczenia danych do widoku. Mowa tu oczywiście o ViewData. Wg. mnie obiekt ten, jakkolwiek przydatny, jest podstawowym złamaniem wzorca MVC w ASP.NET MVC. Dlaczego? Ponieważ &nbsp;prawda wygląda tak, że niezależnie od zdefiniowanych przez ciebie klas, prawdziwy model ma zawsze tylko jeden typ: <a href="http://msdn.microsoft.com/en-us/library/system.web.mvc.viewdatadictionary(v=vs.108">ViewDataDictionary</a>.aspx).</p>
+
+<p>Czy to źle? Niekoniecznie, zależy od przyjętego podejścia. Co z tego wynika? W przypadku modeli zwracanych przez formularze zazwyczaj przyjmuje się, że generyczny model powinien zawierać tylko te dane, które zostały wprowadzone przez użytkownika. Tzn. że informacje takie jak opcja wybrana przez użytkownika z listy powinna być częścią modelu podczas gdy sama lista dostępnych opcji powinna być przekazywana za pośrednictwem ViewBag/ViewData. Naturalnie w przypadku, gdy parsujemy model do postaci JSON przekazywanej do klienta, ta zasada nie dotyczy.</p>
+
+<h2>Nic nie znaczące Error Messages</h2>
+
+<p>Jednymi ze gorszych chwil w życiu programisty, są sytuacje, kiedy trzeba obsłużyć zgłoszenie o błędzie w aplikacji. Zdarza się, że zaglądamy wtedy do logów (o ile taką informację zalogowaliśmy ;) ), aby odnaleźć jakieś przydatne informacje, które pozwolą nam zidentyfikować naturę problemu. Jakże wielkie jest rozczarowanie, gdy jedynym hintem jaki wtedy otrzymujemy jest: <code>Object reference not set to an instance of an object.</code> Bardzo rzeczowa i jednoznaczna informacja wśród kilkuset linii kodu wymagających zbadania.</p>
+
+<p>Innym ciężkim przypadkiem jest logowanie niewystarczającej ilości informacji. Przykład (blok try-catch jest czysto poglądowy):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">try</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="p">...</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">product</span> <span class="p">=</span> <span class="n">productRepository</span><span class="p">.</span><span class="n">GetById</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="n">product</span><span class="p">.</span><span class="n">Status</span> <span class="p">!=</span> <span class="n">ProductStatus</span><span class="p">.</span><span class="n">Finished</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidStatusException</span><span class="p">(</span><span class="s">&quot;Provided product has invalid status&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">...</span>
+</span><span class='line'><span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">logger</span><span class="p">.</span><span class="n">Log</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Co jest złego w tym przypadku? Wyobraźmy sobie, że dostajemy zgłoszenienie, o błędzie a w logach jedyną informacją jest: <code>Provided product has invalid status</code>. Czy wiemy o jakim statusie mowa? Czy wiemy o jaki produkt chodzi? Nie mamy żadnych informacji pozwalających zidentyfikować dany przypadek, mimo że wszystko co potrzebne mamy 2 linijki wyżej w kodzie źródłowym naszej aplikacji.</p>
+
+<p>Stąd mój apel: nie bądź leniwcem, minuta pracy teraz pozwoli ci zaoszczędzić godziny problemów później.</p>
+
+<h2>Too thin controllers, too fat services</h2>
+
+<p><em>Fat models, thin controllers</em> jest zwrotem często używanym w świecie MVC. Często jednak wynikiem utrzymania tej reguły jest zjawisko, które sam określam jako papierowe kontrolery. Weźmy na przykład następującą akcję MVC:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[HttpPost]</span>
+</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">ToggleUserBan</span><span class="p">(</span><span class="kt">bool</span> <span class="n">activate</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="n">userService</span><span class="p">.</span><span class="n">ToggleUserBan</span><span class="p">(</span><span class="n">activate</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Na czym polega błąd? Prawdopodobnie metoda ToggleUserBan w serwisie jest przypadkiem zbyt szczegółowym. Daje to podstawy do przypuszczenia, że architektura aplikacji w którymś momencie się posypała. Zajrzyjmy więc do naszego hipotetycznego IUserService:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">interface</span> <span class="n">IUserService</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">void</span> <span class="nf">ToggleUserBan</span><span class="p">(</span><span class="kt">bool</span> <span class="n">flag</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetAllUsers</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetActiveUsers</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetBannedUsers</span><span class="p">();</span>
+</span><span class='line'>  <span class="c1">// ...kolejne 70 metod</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do czynienia to nic innego, jak zwykłe zamiatanie brudu pod dywan. Pseudorozwiązanie polegające na przeniesieniu proceduralnego makaronu w miejsce, w które rzadziej się zagląda. Jest to częsty rezultat braku rewizji kodu i testów jednostkowych, oraz samowoli programistów.</p>
+
+<h2>Garść innych porad</h2>
+
+<ul>
+<li>unikaj static classes &ndash; utrudniają one modularyzację systemu i wprowadzają twarde powiązania, z których bardzo ciężko jest potem zrezygnować. Extension methods są w zasadzie jedynym zastosowaniem dla statycznych klas, dla jakich sam znajduję użytek.</li>
+<li>unikaj partial classes &ndash; dopuszczalne tylko w wypadku, gdy rozszerzasz klasę generowaną przez zewnętrzne narzędzia (co swoją drogą samo w sobie jest złym pomysłem ale o tym może kiedy indziej ;) )</li>
+<li>w przypadku zmiennych używaj nazw, które pozwalają określić ich typ i przeznaczenie &ndash; różnego rodzaju skróty oszczędzają dosłownie kilka sekund podczas pisania tylko po to, aby w przyszłości przedłużyć rozszyfrowywanie kodu przez kogoś innego o kilka minut. Pamiętaj, że w życiu programisty kod czyta się częściej niż pisze.</li>
+<li>podczas zwracania kolekcji zwracaj najmniejszy interface, który umożliwia wykonanie zadania &ndash; nie ma sensu wymagać aby argument był listą, jeżeli jedynym wykonywanym na nim działaniem jest foreach</li>
+<li>jeżeli zwracasz string lub kolekcje nigdy nie zwracaj nulli &ndash; zawsze używaj string.Empty lub Enumerable.Empty&lt;></li>
+<li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
+</ul>
+
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1345,143 +1486,6 @@
 <h2>Bonus dla ciekawskich</h2>
 
 <p>Dla części z czytelników może być to nowość, ale git umożliwia nam definiowanie własnych komend. Aby to wykonać, należy utworzyć własny plik .exe, który będzie definiował naszą komendę. Nazwa pliku jednocześnie określa jego sposób wywołania, przkładowo plik <em>git-&lt;moja_komenda>.exe</em> będzie można wywołać za pomocą polecenia <code>git &lt;moja_komenda></code>. Zgodnie z przyjętą zasadą konstrukcji skryptów bashowych pierwsza linijka pliku powinna zawierać polecenie <code>#!/bin/sh</code>. Kolejne linie definiują polecenia, które chcemy zawrzeć. Na koniec, aby plik był widziany z poziomu konsoli gita, należy go umieścić w ścieżce <em>&lt;katalog_git>/libexec/git-core</em> &ndash; tam też możemy zobaczyć definicje wszystkich dotychczas dostępnych komend.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-09T12:25:00+01:00" data-updated="true" itemprop="datePublished">Mar 9<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2013/03/09/knockoutjs-spostrzezenia/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/03/09/knockoutjs-spostrzezenia/" itemprop="url">Knockout.js - Spostrzeżenia</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Ponieważ z <a href="http://knockoutjs.com/">knockout.js</a> mam do czynienia od dłuższego czasu (dokładnie od wersji 1.0 ;) ), postanowiłem podzielić się moimi spostrzeżeniami ze tymi, którzy chcą wykorzystać ten framework w swojej pracy, jak również osobami które już go stosują oraz generalnie wszystkim zainteresowanym w pisaniu ustrukturyzowanych skryptów JS. Ale zacznijmy od początku.</p>
-
-<h2>Czym jest Knockout.js?</h2>
-
-<p>Jest to rozbudowany, javascriptowy framework MVVM umożliwiający tworzenie bogatych aplikacji internetowych. W przeciwieństwie do tradycyjnego podejścia tzn. bindowania ASP&#8217;owych modeli &ndash; po stronie serwera &ndash; za pośrednictwem tagów <code><input></code> osadzonych w formularzach HTML, umożliwia on nam odwzorowanie na identyczny obiekt JSON po stronie klienta. Pozwala też na dual-binding tego modelu z fragmentami strony wyświetlanej użytkownikowi. Oznacza to, że każda zmiana wykonana na zbindowanym tagu htmlowym spowoduje natychmiastowe zaktualizowanie modelu zachowanego w przeglądarce i vice versa &ndash; każda zmiana pola należącego do obiektu spowoduje update na powiązanych fragmentach strony. Wszystko to w czasie rzeczywistym, w deklaratywny sposób.</p>
-
-<p>Tyle w kwestii definicji dla ludzi nie zaznajomionych z tym podejściem. Osoby lepiej zorientowane w zagadnieniach frontendowych aplikacji WWW zapewne znają już tą bibliotekę podobnie jak alternatywy wykorzystywane w tym środowisku. Poniżej postaram się przedstawić parę własnych przemyśleń na temat tej biblioteki, zaczynając od tych związanych z sytuacjami, w których warto jej użyć, a kiedy lepiej sobie darować.</p>
-
-<p>Przypadki, kiedy powinniśmy się wstrzymać z użyciem Knockout.js:</p>
-
-<ul>
-<li>Single Page Applications &ndash; wiem, że Microsoft promuje tą bibliotekę jako własnego kandydata do roli frameworka SPA. Prawda jest jednak bolesna &ndash; Knockout nie posiada wbudowanych mechanizmów niezbędnych do tego typu zadań. Mowa tu przede wszystkim o mechanizmie routingu/nawigacji pomiędzy widokami oraz komunikacji z serwerem/metodach do zapisywania i synchronizacji danych. Nie znaczy to oczywiście, że budowa takich rozwiązań jest niemożliwa. Uważam po prostu, że w takich przypadkach lepiej skorzystać z innych bibliotek, lepiej przystosowanych do takich zadań np. <a href="http://angularjs.org/">AngularJS</a>.</li>
-<li>Standardowe widoki CRUD &ndash; jeżeli planujesz budowę standardowych ekranów, które nie muszą zachowywać skomplikowanych zależności pomiędzy obiektami-modelami, lub twoje widoki mapują się z tabelami w bazie w relacjach 1 do 1, wtedy powiedzmy sobie jasno &ndash; Knockout jest tobie nie potrzebny. Nie wytaczaj działa na komara.</li>
-<li>Szablony po stronie klienta &ndash; o ile mechanizm deklaratywnych zależności umożliwia wykorzystanie Knockouta do takich zastosowań, to w praktyce dodatkowy narzut związany z jego użyciem jest niewspółmierny do korzyści. Jeżeli nie potrzebujesz niczego ponad mechanizm szablonowania, proponuję zajrzeć na <a href="http://garann.github.com/template-chooser/">http://garann.github.com/template-chooser/</a>&ndash; ta strona pomoże ci ustalić bibliotekę właściwą do twoich potrzeb.</li>
-</ul>
-
-
-<p>Kiedy Knockout może ci się przydać:</p>
-
-<ul>
-<li>Prezentacja danych w modelu <a href="http://martinfowler.com/bliki/CQRS.html">CQRS</a> &ndash; a więc kiedy wymagania sprawiają, że prosty CRUD z jQuery do ustawiania widoczności elementów to za mało. Jeżeli musisz na jednej stronie przedstawić skomplikowane relacje pomiędzy obiektami-modelami, o wiele łatwiej będzie, jeżeli zachowasz te zależności po stronie klienta.</li>
-<li>Semi-SPA &ndash; czasami zdarza się, że aplikacja składa się z wielu prostych ekranów konfiguracyjnych, umożliwiających definiowanie różnych ustawień, oraz pojedynczych bogatych stron, które zawierają skomplikowane mechanizmy wyświetlania i manipulowania danymi. W takich przypadkach Knockout sprawdza się doskonale, ponieważ upraszcza sterowanie logiką takich widoków, zaś one same nie wymagają stosowania mechanizmów, których ta biblioteka nie zapewnia (a których część opisałem wyżej).</li>
-</ul>
-
-
-<p>Mam przyjemność wykorzystywać ten framework również na codzień w pracy od dłuższego czasu. Dzięki temu udało mi się wykonać kilka mniej lub bardziej oczywistych spostrzeżeń na temat błędów popełnianych przez programistów (w tym mnie ;) ) pracujących z Knockoutem oraz wzrocem MV* w przeglądarce, jak również rad których mógłbym udzielić osobom które zaczynają z nim swoją zabawę. Oto niektóre z nich.</p>
-
-<h2>Myśl kategoriami aplikacji</h2>
-
-<p>Jest to chyba najtrudniejsza lekcja. Nieraz logika wykonywana po stronie klienta sięga setek &ndash; czasami tysięcy &ndash; linii kodu, który dodatkowo może zachowywać się różnie w zależności od tego, na jakiej przeglądarce go odpalimy. Utrzymanie całości jest trudne (nieodzowne jest tu credo: <em>it&rsquo;s fucking javascript</em>;) ), stąd też musisz nauczyć się nadawać takim skryptom odpowiednią strukturę. Bardzo przydaje się tutaj wiedza z zakresu budowy aplikacji desktopowych opartych o MVVM &ndash; Knockout ma z tym podejściem wiele wspólnego.</p>
-
-<p>Podobnie jak w przypadku Single Page Applications oraz innych aplikacji opartych o MVVM powinieneś z góry zastanowić się nad rozwiązaniem kilku kwestii. Na &ldquo;lżejszych&rdquo; stronach mogą one pozostać dość rozmyte, lecz wraz ze wzrostem bazy twojego kodu powinny one ulegać coraz wyraźniejszej separacji i wyspecjalizowaniu.</p>
-
-<h2>Sposób komunikacji z serwerem</h2>
-
-<p>Musisz określić, w jaki sposób twoja aplikacja będzie się komunikować z serwerem. Czy będzie to standardowy jQuery ajax, może coś bardziej zaawansowanego (np. <a href="http://amplifyjs.com/">Amplify.js</a>), a może warunki pozwalają na organizację połączenia po WebSockets. Niezależnie od tego co wybierzesz, warto zastosować kilka dobrych praktyk.</p>
-
-<p>Po pierwsze nie zaszywaj kodu wywołań do serwera w sposób nierozerwalny. Przekaż obiekt służący do komunikacji z serwerem jako parametr do konstruktora ViewModelu, który takiej komunikacji wymaga. Nawet prosta konstrukcja typu</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">ViewModel</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ajax</span><span class="p">){</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">ajaxHandler</span> <span class="o">=</span> <span class="nx">ajax</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">var</span> <span class="nx">vm</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ViewModel</span><span class="p">(</span><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>sprawia, że w razie potrzeby będziesz mógł mniej boleśnie wymienić ten obiekt na inny.</p>
-
-<p>Kolejnym krokiem jest opakowanie używanej biblioteki w obiekt-adapter &ndash; w ten sposób unikniesz trwałego wiązania aplikacji z jednym frameworkiem. Będziesz miał dowolność wyboru oraz prostego rozszerzenia używanego rozwiązania o metody/wzorce, których faktycznie potrzebujesz. Bardzo ważnym elementem tego podejścia jest również możliwość trwałego opakowania wywołań do konkretnych adresów w bardziej przejrzyste i czytelne (oraz łatwiejsze w przyszłym rozwoju) metody. Sądzę, że takie wywołanie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">resource</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">Person</span><span class="p">);</span>  <span class="c1">// 0 twardych zależności</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>jest prostsze z punktu widzenia przyszłego rozwoju i prostoty debugowania kodu niż:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">$</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s2">&quot;/some/url&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">model</span><span class="o">:</span><span class="nx">ko</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">Person</span><span class="p">)});</span> <span class="c1">// 2 twarde zależności: jQuery, knockout</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Wraz ze wzrostem wymagań dobrą opcją jest dodanie do takiej komunikacji bardziej rozwiniętych wzorców typu Publish/Subscribe, które ułatwią pracę z kodem w przyszłości.</p>
-
-<h2>Cykl życia strony i obiektów</h2>
-
-<p>Jest to dobra praktyka, ponieważ mechanizm ten jest w Knockoutcie dość ubogi. Warto jest przemyśleć, jakie typy zdarzeń mogą okazać się przydatne w trakcie pracy ze stroną. Czasem możesz potrzebować podpiąć się z własnymi funkcjami w konkretnych momentach życia strony, np. tuż przed/po wywołaniu polecenia bindowania danych (<code>ko.applyBindings</code>), czy też w momencie dołączenia nowej właściwości itp. Dobrą praktyką jest też zdefiniowanie funkcji-inicjalizatora dla całego mechanizmu Knockouta oraz funkcji, w której możesz opisać całą potrzebną konfigurację w jednym miejscu.</p>
-
-<h2>View modele &ndash; portlety i kontener aplikacji</h2>
-
-<p>Dobrą radą na początek jest przygotowanie pojedyńczego ViewModelu, który nie służy zasadniczo samemu przechowywaniu obserwowanych właściwości, lecz pełni rolę kontenera lub głównego obiektu aplikacji. Dlaczego? Po pierwsze Knockout zasadniczo nie umożliwia generowania wielu VMów-korzeni dla pojedyńczej strony HTML. Po drugie, działa tutaj analogia do MVVM w aplikacjach desktopowych. Pojedyńczy widok &ndash; stronę prezentowaną użytkownikowi &ndash; z reguły da się podzielić na szereg niezależnych fragmentów (portletów), z których każdy jest zarządzany przez inny ViewModel. Zapewnia to właściwą separację bardziej złożonego problemu, co znacznie ułatwia ogarnięcie całej logiki znajdującej się na stronie.</p>
-
-<p>Moja rada &ndash; nawet kiedy nie planujesz nadzwyczaj bogatej logiki na stronie, stwórz co najmniej jeden view model pełniący rolę rdzenia. W nim zdefiniuj pozostałe view modele, które będą służyły do bindowania właściwych danych. Żadna obserwowalna wartość wysyłana na serwer nie powinna być bezpośrednio powiązana z korzeniem. Nie kosztuje to wiele pracy, a w stuacji, kiedy twoja strona w przyszłości będzie ewoluować i rozrastać się o kolejne podwidoki/portlety, dodanie kolejnych VMów nie będzie stanowić problemu.</p>
-
-<h2>Utrzymaj separację Widoków od ViewModelu</h2>
-
-<p>Częstym błędem popełnianym na początku przez programistów zaczynających swoją przygodę z Knockoutem, jest wykonywanie operacji na drzewie DOM wewnątrz logiki ViewModeli. Jest to poważny błąd. Zastanów się: czy tworząc akcję kontrolera używasz jej do generowania HTMLa, który potem osadzasz na stronie?</p>
-
-<p>Modele MVVM i MVC nie bez powodu zapewniają separację pomiędzy widokami, a pozostałymi elementami aplikacji. W przypadku Knockout.js rolę widoku stanowi bezpośrednio strona HTML wzbogacona o atrybuty <strong>data-bind</strong>, wewnątrz których definiujemy pożądane wiązania. Jeżeli z kolei czujesz, że dostępne bindingi nie spełniają twoich potrzeb, pamiętaj że zawsze możesz zdefiniować własne.</p>
-
-<h2>Luźne zależności pomiędzy modułami w aplikacji</h2>
-
-<p>Pamiętaj, że zmodularyzowane aplikacje są łatwiejsze zarówno w utrzymywaniu jak i późniejszym rozwoju. Łatwiej jest także je debugować i testować. Z punktu widzenia programisty Javascript wzorzec Dependency Injection ma jeszcze jedną zaletę. Ponieważ unikasz w ten sposób odwoływania się do funkcji globalnych umieszczonych w wyższych partiach scope chain (więcej dowiesz się <a href="http://www.slideshare.net/nzakas/speed-up-your-javascript">tutaj</a>), twoja aplikacja staje się odrobinę szybsza.</p>
-
-<p>Unikaj wywoływania w kodzie swoich funkcji/metod różnego typu obiektów globalnych takich jak window, document, czy też obiektów-modułów do innych bibliotek np. jQuery. Zamiast tego przekazuj je jako paramtery do obiektów, które je wykorzystują.</p>
-
-<p>Innym &ndash; na pewno wartościowym &ndash; wsparciem, które może przydać się osobom nie przywykłym do pułapek języków dynamicznie typowanych, są języki kompilowane do Javascriptu, takie jak <a href="http://www.typescriptlang.org/" title="">TypeScript</a> czy <a href="http://www.dartlang.org/">Dart</a>.</p>
-
-<h2>Testy</h2>
-
-<p>Testy jednostkowe są przydatne w każdej większej aplikacji i logika po stronie klienta nie stanowi tutaj wyjątku. Im dalej rozwijasz swoją aplikację i im więcej operacji wykonywanych jest w przeglądarce użytkownika, tym bardziej prawdopodobne, że trafisz na moment w którym testy jednostkowe staną się nieocenione.</p>
-
-<p>W tym celu należy przedtem zapewnić &ldquo;testowalność&rdquo; swojego kodu. Wskazówki opisane przeze mnie powyżej (zwłaszcza te dotyczące modularyzacji i luźnych powiązań) dotyczą również tego zagadnienia. Mimo że Knockout nie zapewnia wbudowanych klas ułatwiających testowanie (AngularJS jest pomocny również pod tym względem), nie jest to dużym problemem, ponieważ Javascript jest językiem bardzo elastycznym i rozszerzalnym, zatem pisanie mocków nie stanowi tutaj problemu.</p>
-
-<p>Co do wyboru frameworka testowego jest to kwestia własnych preferencji. Jedni wybiorą polecany przez M$ <a href="http://qunitjs.com/">QUnit</a> wspierający programowanie TDD. Dla programistów .Net jest to tradycyjna dobrze znana ścieżka. Inni (w tym ja ;) ) wolą metodykę BDD i czytelność, jaką oferują biblioteki takie jak <a href="http://pivotal.github.com/jasmine/">Jasmine</a>. Dlaczego preferuję właśnie to drugie podejście? Dlatego że łatwiej definiować testy w kategoriach konkretnych zachowań, jakich oczekujemy po działaniu naszego kodu, niż operacji, które nie zawsze muszą jasno definiować to, co faktycznie chcemy osiągnąć.</p>
 
 		
 		

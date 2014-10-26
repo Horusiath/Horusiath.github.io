@@ -4,7 +4,7 @@
   <title><![CDATA[Category: programming languages | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/programming-languages/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-08-06T19:00:44+02:00</updated>
+  <updated>2014-10-26T23:02:19+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -31,7 +31,7 @@
 <ul>
 <li><strong>Executable code pointer</strong> &ndash; in order to execute the program, a VM has to now what program it is ;) Our bytecode contains opcodes (which are integers used to define instructions to be executed by an interpreter) and numbers used for things such as constant values, memory addresses or stack offsets.</li>
 <li><strong>Stack</strong> &ndash; virtual stack will work as fragment of memory used for storing intermediate results and additional data of each instruction. When a procedure call will be invoked, it will also save a state of the program at moment, when procedure has been called, to retrieve it back after program will return from that call.</li>
-<li><strong>Heap</strong> &ndash; unlike the stack, which uses LIFO (Last-In First-Out) operations, heap may be used as random access memory. It also may change it&rsquo;s size according to program needs. In this example we may use it to store both global and local variables.</li>
+<li><strong>Local data</strong> &ndash; unlike the stack, which uses LIFO (Last-In First-Out) operations, local data may be used as random access memory. It also may change it&rsquo;s size according to program needs. In this example we may use it to store both global and local variables.</li>
 <li><strong>Program counter</strong> &ndash; it contains an address of currently executed instruction. Program will be executed by moving PC through instruction set, reading opcodes and executing them.</li>
 <li><strong>Stack pointer</strong> &ndash; it contains information about number of elements stored on the stack. It always points on the top of it.</li>
 <li><strong>Frame pointer</strong> &ndash; since we need to differentiate a locally and globally scoped values (this includes function arguments), we need to know where our scope is located on the stack. All local variables are assigned relatively to FP position.</li>
@@ -45,7 +45,7 @@
 
 <p>typedef struct {</p>
 
-<pre><code>int* heap;      // heap
+<pre><code>int* locals;    // local scoped data
 int* code;      // array od byte codes to be executed
 int* stack;     // virtual stack
 int pc;         // program counter (aka. IP - instruction pointer)
@@ -58,13 +58,13 @@ int fp;         // frame pointer (for local scope)
 <p>VM<em> newVM(int</em> code,    // pointer to table containing a bytecode to be executed</p>
 
 <pre><code>int pc,             // address of instruction to be invoked as first one - entrypoint/main func
-int datasize){      // total heap size required to perform a program operations
+int datasize){      // total locals size required to perform a program operations
 VM* vm = (VM*)malloc(sizeof(VM));
 vm-&gt;code = code;
 vm-&gt;pc = pc;
 vm-&gt;fp = 0;
 vm-&gt;sp = -1;
-vm-&gt;heap = (int*)malloc(sizeof(int) * datasize);
+vm-&gt;locals = (int*)malloc(sizeof(int) * datasize);
 vm-&gt;stack = (int*)malloc(sizeof(int) * STACK_SIZE);
 
 return vm;
@@ -74,7 +74,7 @@ return vm;
 
 <p>void delVM(VM* vm){</p>
 
-<pre><code>free(vm-&gt;heap);
+<pre><code>free(vm-&gt;locals);
 free(vm-&gt;stack);
 free(vm);
 </code></pre>
@@ -221,17 +221,17 @@ break;
 <p><code>``
 Again,</code>JUMPF<code>(conditional jump if false) implementation should be analogous to</code>JMPT`.</p>
 
-<h3>Move memory on the heap globally</h3>
+<h3>Move memory globally</h3>
 
 <p>Now, when all basic constructs are defined, we shall provide a way to define a variables in our program. This paragraph will cover problem of globally-scoped ones, while the next one will show how to implement locally-scoped variables.</p>
 
-<p>Unlike stack, a heap is a random access memory of elastic size, so all in/out operations performed on it using memory addresses (aka. pointers). Therefore in our example all load/store opcodes should be followed by number being an address pointer to the heap.</p>
+<p>Unlike stack, a local data is a random access memory of elastic size, so all in/out operations performed on it using memory addresses (aka. pointers). Therefore in our example all load/store opcodes should be followed by number being an address pointer to the local data.</p>
 
 <p>```c
 case GLOAD:</p>
 
 <pre><code>addr = POP(vm);             // get pointer address from code ...
-v = vm-&gt;heap[addr];         // ... load value from memory of the provided addres ...
+v = vm-&gt;locals[addr];         // ... load value from memory of the provided addres ...
 PUSH(vm, v);                // ... and put that value on top of the stack
 break;
 </code></pre>
@@ -240,7 +240,7 @@ break;
 
 <pre><code>v = POP(vm);                // get value from top of the stack ...
 addr = NCODE(vm);           // ... get pointer address from code ...
-vm-&gt;heap[addr] = v;         // ... and store value at address received
+vm-&gt;locals[addr] = v;         // ... and store value at address received
 break;
 </code></pre>
 
@@ -248,7 +248,7 @@ break;
 
 <h3>Manipulate local scope memory</h3>
 
-<p>This is similar to previously defined <code>GLOAD</code> and <code>GSTORE</code> instruction. However there is a one significant difference &ndash; instead of taking an heap address directly from provided value, we compute it relatively to current frame pointer.
+<p>This is similar to previously defined <code>GLOAD</code> and <code>GSTORE</code> instruction. However there is a one significant difference &ndash; instead of taking an locals address directly from provided value, we compute it relatively to current frame pointer.
 ```c
 case LOAD:                  // load local value or function arg</p>
 
@@ -261,7 +261,7 @@ break;
 
 <pre><code>v = POP(vm);            // get value from top of the stack ...
 offset = NCODE(vm);     // ... get the relative pointer address from code ...
-vm-&gt;heap[vm-&gt;fp+offset] = v;  // ... and store value at address received relatively to frame pointer
+vm-&gt;locals[vm-&gt;fp+offset] = v;  // ... and store value at address received relatively to frame pointer
 break;
 </code></pre>
 
@@ -356,7 +356,7 @@ HALT            // 44 - stop program
 VM* vm = newVM(program,   // program to execute</p>
 
 <pre><code>               38,    // start address of main function
-               0);    // heap to be reserved, fib doesn't require heap
+               0);    // locals to be reserved, fib doesn't require them
 </code></pre>
 
 <p>run(vm);

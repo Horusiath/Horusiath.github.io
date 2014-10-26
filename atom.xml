@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-08-06T19:00:44+02:00</updated>
+  <updated>2014-10-26T23:02:19+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,393 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Hipsterize your backend for The Greather Good with Akka.NET, F# and some DDD flavor]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/10/26/akka-fsharp-ddd/"/>
+    <updated>2014-10-26T22:54:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/10/26/akka-fsharp-ddd</id>
+    <content type="html"><![CDATA[<p>Initially this post was supposed to cover concepts of implementing an example DDD (Domain Driven Design) architecture using F# and Akka.NET. But the more I&rsquo;ve written, the more I&rsquo;ve realized that whole idea won&rsquo;t fit into a single blog post. Therefore I&rsquo;ve decided for now to focus on some basic example covering command/event handlers. To make this more interesting I want to show how Akka.NET and F# features can be used to leverage design established this way.</p>
+
+<h3>Before we begin&hellip;</h3>
+
+<p>I want to notice, that all examples in this post are made mostly to learning purposes. There are some things missing, but I&rsquo;ve decided to leave them since they don&rsquo;t have direct impact on the overall design or current state of the application. If I will continue this thread, I will probably try to extend them and provide some more meaningful context. So please don&rsquo;t treat this code as a real-life reference of DDD implementation.</p>
+
+<p>What is clearly missing in example below? I didn&rsquo;t describe aggregate roots, because boundary context is very simplistic &ndash; to make this post clearer I&rsquo;ve focused more on command-handler-event pattern. Sample doesn&rsquo;t enforce any specific database, using simple dictionary as abstraction. Also it doesn&rsquo;t provide any form of data validation or bindings to existing HTTP server frameworks. They are outside of scope of this post but are very simple to integrate.</p>
+
+<h4>Step 1: Define our domain data structures</h4>
+
+<p>Lets start with domain model. As a boundary context I&rsquo;ve chosen one of the most generic ones &ndash; user account&rsquo;s space. Our simplified business logic in this example will cover two actions &ndash; user registration and sign in. Users will be identified by their email and will use the most basic security features.</p>
+
+<p>But before we move there, lets use some of the features, F# could give us, to shape a type system for our advantage.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">Email</span> <span class="o">=</span> <span class="kt">string</span>
+</span><span class='line'><span class="k">type</span> <span class="nc">PasswordHash</span> <span class="o">=</span> <span class="kt">byte</span> <span class="kt">array</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These are examples of type aliases. You may consider using them, if you&rsquo;ve found that usage of some primitive type in given context may be defined as subtype/supertype relation. In this example Email can be considered as a specialization of string &ndash; that means, each email is string, but not each string is a valid email. This kind of granularity can be stretched quite far. Just think about any primary/foreign key field in any entity as it&rsquo;s own unique type. This will automatically disallow mistakes such as assigning keys from entities of incompatible type eg. assigning <code>UserId</code> value to <code>ProductId</code> field! F# expressiveness promotes this behavior.</p>
+
+<p>Now use these types to define our User entity. It&rsquo;s very straightforward:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">User</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">{</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span>
+</span><span class='line'>      <span class="n">phash</span> <span class="o">:</span> <span class="nc">PasswordHash</span>
+</span><span class='line'>      <span class="n">salt</span>  <span class="o">:</span> <span class="kt">byte</span> <span class="kt">array</span> <span class="o">}</span>
+</span><span class='line'>    <span class="k">static</span> <span class="k">member</span> <span class="n">empty</span> <span class="o">=</span>  <span class="o">{</span> <span class="n">email</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">;</span> <span class="n">phash</span> <span class="o">=</span> <span class="o">[||];</span> <span class="n">salt</span> <span class="o">=</span> <span class="o">[||]</span> <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next I&rsquo;m going to describe data models for our domain commands and events. It&rsquo;s important to understand purpose of both. Commands are produced to describe tasks to be executed by the system and contains all data necessary to perform it. Events are describing diffs in general application state as a results of performed tasks. What is wort mentioning, events should be described in way, that will allow us to recreate current application state by replaying all events timeline stream. And because events describe changes, that already occurred, they should be immutable by nature &ndash; don&rsquo;t try to change your past if you not wish to mess with your future.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">UserCommand</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">RegisterUser</span> <span class="k">of</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">password</span> <span class="o">:</span> <span class="kt">string</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">LoginUser</span> <span class="k">of</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">password</span> <span class="o">:</span> <span class="kt">string</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>NOTE: If you want to use F# records to describe your commands/events, that&rsquo;s perfectly fine. I&rsquo;ve chosen discriminated unions for their expressiveness.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">UserEvent</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">UserRegistered</span> <span class="k">of</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">salt</span><span class="o">:</span> <span class="kt">byte</span> <span class="kt">array</span> <span class="o">*</span> <span class="n">phash</span> <span class="o">:</span> <span class="kt">byte</span> <span class="kt">array</span> <span class="o">*</span> <span class="n">timestamp</span> <span class="o">:</span> <span class="nc">DateTime</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">UserLogged</span> <span class="k">of</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">timestamp</span> <span class="o">:</span> <span class="nc">DateTime</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see there are few things worth of emphasizing:</p>
+
+<ul>
+<li>We didn&rsquo;t store user password provided directly from command, using salt + password hash instead. Reason behind is that in DDD events usually could be serialized and stored in some kind of event database. Therefore it&rsquo;s not secure to provide them any sensitive data. However events should contain enough information to give us ability to recreate current database state based on provided stream of events, assuming that it&rsquo;s complete.</li>
+<li>Each of our event&rsquo;s contain a timestamp field. Events give us a historical change set of the application. And because they contain only diffs between database states rather than snapshot of entities, they have to be ordered by their creation date. Without it we couldn&rsquo;t recreate them.</li>
+</ul>
+
+
+<p>What other fields may be useful when working with events? Consider attaching current API version number &ndash; this will allow you to endure breaking changes in your code responsible for handling events. Other handy field is unique event id, when you may need functionality associated with generating cascading event chains in response to some other events. In that case having some kind of pointer to originating event may be useful.</p>
+
+<h3>Step 2: describe application behavior in functional manner</h3>
+
+<p>This may be a little controversial statement, but I must say it &ndash; exceptions are bad. They leaves the leaks in your type system and fucks with your application logic flow in the way, that many programmers and almost all compilers cannot understand.</p>
+
+<p>The alternative conception of error handling is old and well-known. It&rsquo;s based on returning error codes. To start with &ndash; if you already know <a href="http://www.rust-lang.org/">Rust</a>, this may look familiar to you:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">Result</span><span class="o">&lt;</span><span class="k">&#39;</span><span class="n">ok</span><span class="o">,</span> <span class="k">&#39;</span><span class="n">err</span><span class="o">&gt;</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Ok</span> <span class="k">of</span> <span class="k">&#39;</span><span class="n">ok</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Error</span> <span class="k">of</span> <span class="k">&#39;</span><span class="n">err</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You may ask: why the hell do we return error values instead of just throwing exceptions? Are these some archaeological excavations and we&rsquo;re gone back to the C era? Actually no. There is very good reason behind this.</p>
+
+<p>Think about exceptions as a side effects of the application state behavior. You cannot be 100% sure about flow of your application process. Since information about exceptions is not part of any function/method signature, they actually act as a dynamically typed cascading return values anyway &ndash; both compiler and programmers will ignore them until they will occur at runtime.</p>
+
+<p>This time instead of cryptic error codes returned by C, we use F# power to provide type-safe and expressive way for this solution. If you&rsquo;re interested more about interesting ways to utilize return-based error handling using higher-level concepts, I recommend you <a href="http://fsharpforfunandprofit.com/posts/recipe-part2/">Railway Oriented Programming</a> blogpost and video presented on NDC Oslo 2014. Here, I&rsquo;ll use a greatly simplified version, exposing operator which chain two input functions together and call second one only if result from the first was <code>Ok</code>, and forwarding an <code>Error</code> result otherwise:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="o">(&gt;=&gt;)</span> <span class="n">f1</span> <span class="n">f2</span> <span class="n">arg</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">match</span> <span class="n">f1</span> <span class="n">arg</span> <span class="k">with</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Ok</span> <span class="n">data</span> <span class="o">-&gt;</span> <span class="n">f2</span> <span class="n">data</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Error</span> <span class="n">e</span> <span class="o">-&gt;</span> <span class="nc">Error</span> <span class="n">e</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&rsquo;ve also decided to use more discriminated unions to describe each specific business logic error in actual bounded context scope. I&rsquo;ve found that returning a string-based messages back to programmers in error logs are not better in any way than creating a specialized error type for each case. The only disadvantage is amount of code you need to write, to declare new type, but again &ndash; it&rsquo;s not a problem with F#.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">UserError</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">UserAlreadyExists</span> <span class="k">of</span> <span class="n">userEmail</span> <span class="o">:</span> <span class="nc">Email</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">UserNotFound</span> <span class="k">of</span> <span class="n">userEmail</span> <span class="o">:</span> <span class="nc">Email</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">WrongPassword</span> <span class="k">of</span> <span class="n">userEmail</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">hashedInput</span> <span class="o">:</span> <span class="nc">PasswordHash</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Step 3: handle user registration</h3>
+
+<p>How does F# command handling differs from it&rsquo;s more objective oriented counterpart? Since we deal with functional oriented language, most of our logic is composed into functions instead of objects. You&rsquo;ve used to execute your logic with services, here you&rsquo;ve got a function. Wanna some Dependency Injection? Here, you have some currying.</p>
+
+<p>I&rsquo;ll describe our service as <code>handle</code> function which takes some <code>UserCommand</code> as an input and produces <code>Result&lt;UserEvent, UserError&gt;</code> as output:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">handle</span> <span class="n">clock</span> <span class="n">findUser</span> <span class="n">saveUser</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="n">password</span><span class="o">)</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="k">match</span> <span class="n">findUser</span> <span class="n">email</span> <span class="k">with</span>
+</span><span class='line'>        <span class="o">|</span> <span class="nc">Some</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="nc">UserAlreadyExists</span> <span class="n">email</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">|</span> <span class="nc">None</span> <span class="o">-&gt;</span>
+</span><span class='line'>            <span class="k">let</span> <span class="n">salt</span><span class="o">,</span> <span class="n">phash</span> <span class="o">=</span> <span class="n">defaultGeneratePassword</span> <span class="n">password</span>
+</span><span class='line'>            <span class="k">let</span> <span class="n">user</span> <span class="o">=</span>
+</span><span class='line'>                <span class="o">{</span> <span class="n">email</span> <span class="o">=</span> <span class="n">email</span>
+</span><span class='line'>                  <span class="n">salt</span> <span class="o">=</span> <span class="n">salt</span>
+</span><span class='line'>                  <span class="n">phash</span> <span class="o">=</span> <span class="n">phash</span> <span class="o">}</span>
+</span><span class='line'>            <span class="n">saveUser</span> <span class="n">user</span>
+</span><span class='line'>            <span class="nc">Ok</span> <span class="o">(</span><span class="nc">UserRegistered</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="n">salt</span><span class="o">,</span> <span class="n">phash</span><span class="o">,</span> <span class="n">clock</span><span class="bp">()</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you&rsquo;ve seen, this function actually takes 4 parameters (clock, findUser, saveUser and command as implicit argument of calling <strong>function</strong> keyword). But as I&rsquo;ve said, our handle function should take only one input argument. That&rsquo;s because we&rsquo;ll provide three first arguments through partial function application later &ndash; now you can think about them as constructor arguments injected by your IoC container when resolving new service.</p>
+
+<p>While most of the parameters are quite understandable, one of them may be confusing &ndash; the <code>clock</code> parameter. It&rsquo;s only functionality is to provide current DateTime value. If so, why didn&rsquo;t I just used <code>DateTime.Now</code> directly inside the code? In this example it&rsquo;s actually not so important, but I&rsquo;ve used it to expose simple problem &ndash; things such as date/configuration/environment providers or random number generators could make our handler behavior non-deterministic. That means, if we call this function two times with the same input, we couldn&rsquo;t count on the same output. It&rsquo;s actually problem for logic predictability and in some cases is especially cumbersome when writing tests to verify application behavior. Therefore I think that it&rsquo;s better to separate them as injectable arguments.</p>
+
+<h4>Password hashing and generation</h4>
+
+<p>While you may find some good libraries providing real life hashing features out of hand, I&rsquo;ve decided to leave my example free on unnecessary dependencies and use a standard library instead.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="k">private</span> <span class="n">saltWith</span> <span class="n">salt</span> <span class="o">(</span><span class="n">p</span> <span class="o">:</span> <span class="kt">string</span><span class="o">)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">passBytes</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="nn">Text</span><span class="p">.</span><span class="nn">Encoding</span><span class="p">.</span><span class="nn">UTF8</span><span class="p">.</span><span class="nc">GetBytes</span> <span class="n">p</span>
+</span><span class='line'>    <span class="nn">Array</span><span class="p">.</span><span class="n">append</span> <span class="n">passBytes</span> <span class="n">salt</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">sha512</span> <span class="o">(</span><span class="n">bytes</span> <span class="o">:</span> <span class="kt">byte</span> <span class="kt">array</span><span class="o">)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">use</span> <span class="n">sha</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="nn">Security</span><span class="p">.</span><span class="nn">Cryptography</span><span class="p">.</span><span class="nn">SHA512</span><span class="p">.</span><span class="nc">Create</span><span class="bp">()</span>
+</span><span class='line'>    <span class="n">sha</span><span class="o">.</span><span class="nc">ComputeHash</span> <span class="n">bytes</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">hashPassword</span> <span class="n">hashFn</span> <span class="n">salt</span> <span class="n">password</span> <span class="o">=</span> <span class="n">hashFn</span> <span class="o">(</span><span class="n">saltWith</span> <span class="n">salt</span> <span class="n">password</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">generatePassword</span> <span class="n">hashFn</span> <span class="n">saltSize</span> <span class="n">password</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">use</span> <span class="n">saltGen</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="nn">Security</span><span class="p">.</span><span class="nn">Cryptography</span><span class="p">.</span><span class="nn">RandomNumberGenerator</span><span class="p">.</span><span class="nc">Create</span><span class="bp">()</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">salt</span> <span class="o">=</span> <span class="nn">Array</span><span class="p">.</span><span class="n">zeroCreate</span> <span class="n">saltSize</span>
+</span><span class='line'>    <span class="n">saltGen</span><span class="o">.</span><span class="nc">GetBytes</span> <span class="n">salt</span>
+</span><span class='line'>    <span class="o">(</span><span class="n">salt</span><span class="o">,</span> <span class="n">hashPassword</span> <span class="n">hashFn</span> <span class="n">salt</span> <span class="n">password</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">defaultGeneratePassword</span> <span class="n">pass</span> <span class="o">=</span> <span class="n">generatePassword</span> <span class="n">sha512</span> <span class="mi">64</span> <span class="n">pass</span>
+</span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">defaultHashPassword</span> <span class="n">salt</span> <span class="n">pass</span> <span class="o">=</span> <span class="n">hashPassword</span> <span class="n">sha512</span> <span class="n">salt</span> <span class="n">pass</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I hope this code doesn&rsquo;t need any explanations.</p>
+
+<h3>Step 4: handle user logging</h3>
+
+<p>Once we already described nuances of the function-based services, this one shouldn&rsquo;t be a problem. This case was created to give our example more diversity.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">handle</span> <span class="n">clock</span> <span class="n">findUser</span> <span class="n">saveUser</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="n">password</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">...</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">LoginUser</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="n">password</span><span class="o">,</span> <span class="n">remember</span><span class="o">)</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="k">match</span> <span class="n">findUser</span> <span class="n">email</span> <span class="k">with</span>
+</span><span class='line'>        <span class="o">|</span> <span class="nc">None</span> <span class="o">-&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="nc">UserNotFound</span> <span class="n">email</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">|</span> <span class="nc">Some</span> <span class="n">user</span> <span class="o">-&gt;</span>
+</span><span class='line'>            <span class="k">let</span> <span class="n">computedPasswordHash</span> <span class="o">=</span> <span class="n">defaultHashPassword</span> <span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">salt</span><span class="o">)</span> <span class="n">password</span>
+</span><span class='line'>            <span class="k">if</span> <span class="n">computedPasswordHash</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">phash</span> <span class="k">then</span>
+</span><span class='line'>                <span class="nc">Ok</span> <span class="o">(</span><span class="nc">UserLogged</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="o">,</span> <span class="n">clock</span><span class="bp">()</span><span class="o">))</span>
+</span><span class='line'>            <span class="k">else</span> <span class="nc">Error</span><span class="o">(</span><span class="nc">WrongPassword</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="o">,</span> <span class="n">computedPasswordHash</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Step 5: bind your business logic to Akka.NET</h3>
+
+<p>If you&rsquo;re interested in integrating Akka.NET with your F# logic, I can recommend you more posts in this blog written earlier this year. Therefore I assume, that you&rsquo;re aware how F# actors based on recursive loops work. Because loop creation is often a generic behavior, again I&rsquo;ll expose it in form of function wrapper.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">actAs</span> <span class="n">fn</span> <span class="o">(</span><span class="n">mailbox</span> <span class="o">:</span> <span class="nc">Actor</span><span class="o">&lt;</span><span class="k">&#39;</span><span class="n">a</span><span class="o">&gt;)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="k">rec</span> <span class="n">loop&#39;</span><span class="bp">()</span> <span class="o">=</span>
+</span><span class='line'>        <span class="n">actor</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
+</span><span class='line'>            <span class="n">fn</span> <span class="n">msg</span>
+</span><span class='line'>            <span class="k">return</span><span class="o">!</span> <span class="n">loop&#39;</span><span class="bp">()</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="n">loop&#39;</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>NOTE: At the present moment Akka.NET API for F# language is still lacks some features. This post applies mostly to API in version 0.7 of the framework, so you may expect some changes in the future.</p>
+
+<h4>Mock database access</h4>
+
+<p>As I&rsquo;ve said in the introduction, I won&rsquo;t use any real-life database provider, mocking it with concurrent dictionary instead. However if you want to use a normal database, nothing stands in your way.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">userStore</span> <span class="o">=</span> <span class="nc">ConcurrentDictionary</span><span class="bp">()</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">flip</span> <span class="n">f</span> <span class="n">x</span> <span class="n">y</span> <span class="o">=</span> <span class="n">f</span> <span class="n">y</span> <span class="n">x</span>
+</span><span class='line'><span class="k">let</span> <span class="n">findInUserStore</span> <span class="n">email</span> <span class="o">(</span><span class="n">store</span> <span class="o">:</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span> <span class="nc">User</span><span class="o">&gt;)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="k">mutable</span> <span class="n">user</span> <span class="o">:</span> <span class="nc">User</span> <span class="o">=</span> <span class="nn">User</span><span class="p">.</span><span class="n">empty</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">store</span><span class="o">.</span><span class="nc">TryGetValue</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">user</span><span class="o">)</span> <span class="k">then</span> <span class="nc">Some</span> <span class="n">user</span>
+</span><span class='line'>    <span class="k">else</span> <span class="nc">None</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">saveInUserStore</span> <span class="n">user</span> <span class="o">(</span><span class="n">store</span> <span class="o">:</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span> <span class="nc">User</span><span class="o">&gt;)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">store</span><span class="o">.</span><span class="nc">AddOrUpdate</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="o">,</span> <span class="n">user</span><span class="o">,</span> <span class="nn">System</span><span class="p">.</span><span class="nc">Func</span><span class="o">&lt;_,</span> <span class="o">_,</span> <span class="o">_&gt;(</span><span class="k">fun</span> <span class="n">key</span> <span class="n">old</span> <span class="o">-&gt;</span> <span class="n">user</span><span class="o">))</span> <span class="o">|&gt;</span> <span class="n">ignore</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>F# is heavily function-oriented and this also corresponds to arguments precedence. While in OOP subject (<strong>this</strong>) usually precedes method invocation, in functional languages it&rsquo;s better to use it as last argument of the function. Argumentation for this is currying and partial function application, which allows us to define functions with only part of all necessary arguments provided. The more specific argument, the later it could be applied. Therefore common convention is to provide more detailed parameters at the end of the function parameters list. It&rsquo;s a very useful feature, especially when combined with pipeline operators.</p>
+
+<p>On the other side <code>flip</code> function may be used to reverse parameters precedence in case when, for example, we want to partially apply second argument to the function without providing first one (because it may be yet unknown in this moment). This option will be presented later.</p>
+
+<h4>Handle event subscribers</h4>
+
+<p>One of the nice things in Akka is that it provides a Publish/Subscribe pattern offhand. As an actor-based framework, the only necessary task to do is to subscribe an <code>ActorRef</code> of desired observer directly to Akka system&rsquo;s event stream.</p>
+
+<p>As a lazy person I don&rsquo;t want to be forced to explicitly create new actor each time I want to subscribe some behavior to react for events I&rsquo;ve produced somewhere else. Therefore I&rsquo;ve created simple subscribe helper, which will handle subscriber actor creation for me.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="c1">// automatic unique concurrent name generator</span>
+</span><span class='line'><span class="k">let</span> <span class="k">mutable</span> <span class="n">subscriptionNr</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">getSubNr</span><span class="bp">()</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="nn">Threading</span><span class="p">.</span><span class="nn">Interlocked</span><span class="p">.</span><span class="nc">Increment</span><span class="o">(&amp;</span><span class="n">subscriptionNr</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">subscribe</span> <span class="n">system</span> <span class="o">(</span><span class="n">fn</span> <span class="o">:</span> <span class="k">&#39;</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">unit</span><span class="o">)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">subId</span> <span class="o">=</span> <span class="n">getSubNr</span><span class="bp">()</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">subscriber</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="o">(</span><span class="s2">&quot;subscriber-&quot;</span> <span class="o">+</span> <span class="o">(</span><span class="kt">string</span> <span class="n">subId</span><span class="o">))</span> <span class="o">&lt;|</span> <span class="n">actAs</span> <span class="n">fn</span>
+</span><span class='line'>    <span class="n">system</span><span class="o">.</span><span class="nn">EventStream</span><span class="p">.</span><span class="nc">Subscribe</span><span class="o">(</span><span class="n">subscriber</span><span class="o">,</span> <span class="n">typeof</span><span class="o">&lt;</span><span class="k">&#39;</span><span class="n">a</span><span class="o">&gt;)</span> <span class="o">|&gt;</span> <span class="n">ignore</span>
+</span><span class='line'>    <span class="n">subscriber</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">publish</span> <span class="o">(</span><span class="n">bus</span> <span class="o">:</span> <span class="nn">Akka</span><span class="p">.</span><span class="nn">Event</span><span class="p">.</span><span class="nc">EventStream</span><span class="o">)</span> <span class="n">evt</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">bus</span><span class="o">.</span><span class="nc">Publish</span> <span class="n">evt</span>
+</span><span class='line'>    <span class="nc">Ok</span> <span class="n">evt</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Bind everything together</h3>
+
+<p>Now when all logic has been defined, it&rsquo;s time to show it in some example code. It will initialize a new Akka system, setup console logging and show features of successful and unsuccessful registering and signing in of the user.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">defaultClock</span><span class="bp">()</span> <span class="o">=</span> <span class="nn">DateTime</span><span class="p">.</span><span class="nc">Now</span>
+</span><span class='line'><span class="c1">// display any errors returned by command handler</span>
+</span><span class='line'><span class="k">let</span> <span class="n">handleErrors</span> <span class="o">=</span> <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Ok</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="bp">()</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Error</span> <span class="n">data</span> <span class="o">-&gt;</span> <span class="n">printf</span> <span class="s2">&quot;User error: %A</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="n">data</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;system&quot;</span> <span class="o">&lt;|</span> <span class="nn">Akka</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">ConfigurationFactory</span><span class="p">.</span><span class="nc">Default</span><span class="bp">()</span>
+</span><span class='line'><span class="k">let</span> <span class="n">userHandler</span> <span class="o">=</span>
+</span><span class='line'>  <span class="c1">// inject &quot;dependencies&quot; into handle function</span>
+</span><span class='line'>    <span class="n">handle</span>
+</span><span class='line'>    <span class="o">&lt;|</span> <span class="n">defaultClock</span>
+</span><span class='line'>    <span class="o">&lt;|</span> <span class="n">flip</span> <span class="n">findInUserStore</span> <span class="n">userStore</span>
+</span><span class='line'>    <span class="o">&lt;|</span> <span class="n">flip</span> <span class="n">saveInUserStore</span> <span class="n">userStore</span>
+</span><span class='line'><span class="k">let</span> <span class="n">subscriber</span> <span class="o">=</span> <span class="n">subscribe</span> <span class="n">system</span> <span class="o">&lt;|</span> <span class="n">printf</span> <span class="s2">&quot;User event: %A</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">let</span> <span class="n">userActor</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;users&quot;</span> <span class="o">&lt;|</span> <span class="n">actAs</span> <span class="o">(</span><span class="n">userHandler</span> <span class="o">&gt;=&gt;</span> <span class="o">(</span><span class="n">publish</span> <span class="n">system</span><span class="o">.</span><span class="nc">EventStream</span><span class="o">)</span> <span class="o">&gt;&gt;</span> <span class="n">handleErrors</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>  <span class="c1">// UserAlreadyExists error</span>
+</span><span class='line'><span class="nn">System</span><span class="p">.</span><span class="nn">Threading</span><span class="p">.</span><span class="nn">Thread</span><span class="p">.</span><span class="nc">Sleep</span> <span class="mi">100</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">LoginUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">LoginUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;fails&quot;</span><span class="o">)</span>     <span class="c1">// WrongPassword error</span>
+</span><span class='line'>
+</span><span class='line'><span class="nn">System</span><span class="p">.</span><span class="nn">Threading</span><span class="p">.</span><span class="nn">Thread</span><span class="p">.</span><span class="nc">Sleep</span> <span class="mi">100</span>
+</span><span class='line'><span class="n">system</span><span class="o">.</span><span class="nc">Shutdown</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&rsquo;s all. Whole example took about 130 lines of F# code to create. I hope this would give you some insights about embedding your business logic into F# function composition model.</p>
+
+<p>PS: If you&rsquo;re interested in more details about DDD and F# programming, at the present moment I can recommend you following other exploring lecture of the other developers, such as Lev Gorodinski (<a href="https://twitter.com/eulerfx">@eulerfx</a>) and his blog for more advanced concepts.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Actor supervisors in Akka.NET FSharp API]]></title>
@@ -99,7 +486,7 @@
 <ul>
 <li><strong>Executable code pointer</strong> &ndash; in order to execute the program, a VM has to now what program it is ;) Our bytecode contains opcodes (which are integers used to define instructions to be executed by an interpreter) and numbers used for things such as constant values, memory addresses or stack offsets.</li>
 <li><strong>Stack</strong> &ndash; virtual stack will work as fragment of memory used for storing intermediate results and additional data of each instruction. When a procedure call will be invoked, it will also save a state of the program at moment, when procedure has been called, to retrieve it back after program will return from that call.</li>
-<li><strong>Heap</strong> &ndash; unlike the stack, which uses LIFO (Last-In First-Out) operations, heap may be used as random access memory. It also may change it&rsquo;s size according to program needs. In this example we may use it to store both global and local variables.</li>
+<li><strong>Local data</strong> &ndash; unlike the stack, which uses LIFO (Last-In First-Out) operations, local data may be used as random access memory. It also may change it&rsquo;s size according to program needs. In this example we may use it to store both global and local variables.</li>
 <li><strong>Program counter</strong> &ndash; it contains an address of currently executed instruction. Program will be executed by moving PC through instruction set, reading opcodes and executing them.</li>
 <li><strong>Stack pointer</strong> &ndash; it contains information about number of elements stored on the stack. It always points on the top of it.</li>
 <li><strong>Frame pointer</strong> &ndash; since we need to differentiate a locally and globally scoped values (this includes function arguments), we need to know where our scope is located on the stack. All local variables are assigned relatively to FP position.</li>
@@ -141,7 +528,7 @@
 </span><span class='line'><span class="cp">#define STACK_SIZE 100</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">heap</span><span class="p">;</span>      <span class="c1">// heap</span>
+</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">locals</span><span class="p">;</span>    <span class="c1">// local scoped data</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">code</span><span class="p">;</span>      <span class="c1">// array od byte codes to be executed</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">stack</span><span class="p">;</span>     <span class="c1">// virtual stack</span>
 </span><span class='line'>    <span class="kt">int</span> <span class="n">pc</span><span class="p">;</span>         <span class="c1">// program counter (aka. IP - instruction pointer)</span>
@@ -151,20 +538,20 @@
 </span><span class='line'>
 </span><span class='line'><span class="n">VM</span><span class="o">*</span> <span class="nf">newVM</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span> <span class="n">code</span><span class="p">,</span>    <span class="c1">// pointer to table containing a bytecode to be executed</span>
 </span><span class='line'>    <span class="kt">int</span> <span class="n">pc</span><span class="p">,</span>             <span class="c1">// address of instruction to be invoked as first one - entrypoint/main func</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">datasize</span><span class="p">){</span>      <span class="c1">// total heap size required to perform a program operations</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">datasize</span><span class="p">){</span>      <span class="c1">// total locals size required to perform a program operations</span>
 </span><span class='line'>    <span class="n">VM</span><span class="o">*</span> <span class="n">vm</span> <span class="o">=</span> <span class="p">(</span><span class="n">VM</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">VM</span><span class="p">));</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">pc</span> <span class="o">=</span> <span class="n">pc</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">sp</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">datasize</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">datasize</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">stack</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">STACK_SIZE</span><span class="p">);</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="k">return</span> <span class="n">vm</span><span class="p">;</span>
 </span><span class='line'><span class="p">}</span>
 </span><span class='line'>
 </span><span class='line'><span class="kt">void</span> <span class="nf">delVM</span><span class="p">(</span><span class="n">VM</span><span class="o">*</span> <span class="n">vm</span><span class="p">){</span>
-</span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">stack</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
 </span><span class='line'><span class="p">}</span>
@@ -371,11 +758,11 @@
 
 <p>Again, <code>JUMPF</code> (conditional jump if false) implementation should be analogous to <code>JMPT</code>.</p>
 
-<h3>Move memory on the heap globally</h3>
+<h3>Move memory globally</h3>
 
 <p>Now, when all basic constructs are defined, we shall provide a way to define a variables in our program. This paragraph will cover problem of globally-scoped ones, while the next one will show how to implement locally-scoped variables.</p>
 
-<p>Unlike stack, a heap is a random access memory of elastic size, so all in/out operations performed on it using memory addresses (aka. pointers). Therefore in our example all load/store opcodes should be followed by number being an address pointer to the heap.</p>
+<p>Unlike stack, a local data is a random access memory of elastic size, so all in/out operations performed on it using memory addresses (aka. pointers). Therefore in our example all load/store opcodes should be followed by number being an address pointer to the local data.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -389,20 +776,20 @@
 <span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">case</span> <span class="n">GLOAD</span>:
 </span><span class='line'>    <span class="n">addr</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>             <span class="c1">// get pointer address from code ...</span>
-</span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">addr</span><span class="p">];</span>         <span class="c1">// ... load value from memory of the provided addres ...</span>
+</span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">addr</span><span class="p">];</span>         <span class="c1">// ... load value from memory of the provided addres ...</span>
 </span><span class='line'>    <span class="n">PUSH</span><span class="p">(</span><span class="n">vm</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>                <span class="c1">// ... and put that value on top of the stack</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span><span class='line'><span class="k">case</span> <span class="n">GSTORE</span>:
 </span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>                <span class="c1">// get value from top of the stack ...</span>
 </span><span class='line'>    <span class="n">addr</span> <span class="o">=</span> <span class="n">NCODE</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>           <span class="c1">// ... get pointer address from code ...</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>         <span class="c1">// ... and store value at address received</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>         <span class="c1">// ... and store value at address received</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
 <h3>Manipulate local scope memory</h3>
 
-<p>This is similar to previously defined <code>GLOAD</code> and <code>GSTORE</code> instruction. However there is a one significant difference &ndash; instead of taking an heap address directly from provided value, we compute it relatively to current frame pointer.</p>
+<p>This is similar to previously defined <code>GLOAD</code> and <code>GSTORE</code> instruction. However there is a one significant difference &ndash; instead of taking an locals address directly from provided value, we compute it relatively to current frame pointer.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -420,7 +807,7 @@
 </span><span class='line'><span class="k">case</span> <span class="n">STORE</span>:                 <span class="c1">// store local value or function arg</span>
 </span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>            <span class="c1">// get value from top of the stack ...</span>
 </span><span class='line'>    <span class="n">offset</span> <span class="o">=</span> <span class="n">NCODE</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>     <span class="c1">// ... get the relative pointer address from code ...</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span><span class="o">+</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>  <span class="c1">// ... and store value at address received relatively to frame pointer</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span><span class="o">+</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>  <span class="c1">// ... and store value at address received relatively to frame pointer</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure>
 
@@ -563,7 +950,7 @@
 </span><span class='line'><span class="c1">// initialize virtual machine</span>
 </span><span class='line'><span class="n">VM</span><span class="o">*</span> <span class="n">vm</span> <span class="o">=</span> <span class="n">newVM</span><span class="p">(</span><span class="n">program</span><span class="p">,</span>   <span class="c1">// program to execute</span>
 </span><span class='line'>                   <span class="mi">38</span><span class="p">,</span>    <span class="c1">// start address of main function</span>
-</span><span class='line'>                   <span class="mi">0</span><span class="p">);</span>    <span class="c1">// heap to be reserved, fib doesn&#39;t require heap</span>
+</span><span class='line'>                   <span class="mi">0</span><span class="p">);</span>    <span class="c1">// locals to be reserved, fib doesn&#39;t require them</span>
 </span><span class='line'><span class="n">run</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
 </span></code></pre></td></tr></table></div></figure>
 
@@ -2288,115 +2675,6 @@
 <h2>Bonus dla ciekawskich</h2>
 
 <p>Dla części z czytelników może być to nowość, ale git umożliwia nam definiowanie własnych komend. Aby to wykonać, należy utworzyć własny plik .exe, który będzie definiował naszą komendę. Nazwa pliku jednocześnie określa jego sposób wywołania, przkładowo plik <em>git-&lt;moja_komenda>.exe</em> będzie można wywołać za pomocą polecenia <code>git &lt;moja_komenda></code>. Zgodnie z przyjętą zasadą konstrukcji skryptów bashowych pierwsza linijka pliku powinna zawierać polecenie <code>#!/bin/sh</code>. Kolejne linie definiują polecenia, które chcemy zawrzeć. Na koniec, aby plik był widziany z poziomu konsoli gita, należy go umieścić w ścieżce <em>&lt;katalog_git>/libexec/git-core</em> &ndash; tam też możemy zobaczyć definicje wszystkich dotychczas dostępnych komend.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Knockout.js - spostrzeżenia]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia/"/>
-    <updated>2013-03-09T12:25:00+01:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2013/03/09/knockoutjs-spostrzezenia</id>
-    <content type="html"><![CDATA[<p>Ponieważ z <a href="http://knockoutjs.com/">knockout.js</a> mam do czynienia od dłuższego czasu (dokładnie od wersji 1.0 ;) ), postanowiłem podzielić się moimi spostrzeżeniami ze tymi, którzy chcą wykorzystać ten framework w swojej pracy, jak również osobami które już go stosują oraz generalnie wszystkim zainteresowanym w pisaniu ustrukturyzowanych skryptów JS. Ale zacznijmy od początku.</p>
-
-<h2>Czym jest Knockout.js?</h2>
-
-<p>Jest to rozbudowany, javascriptowy framework MVVM umożliwiający tworzenie bogatych aplikacji internetowych. W przeciwieństwie do tradycyjnego podejścia tzn. bindowania ASP&#8217;owych modeli &ndash; po stronie serwera &ndash; za pośrednictwem tagów <code><input></code> osadzonych w formularzach HTML, umożliwia on nam odwzorowanie na identyczny obiekt JSON po stronie klienta. Pozwala też na dual-binding tego modelu z fragmentami strony wyświetlanej użytkownikowi. Oznacza to, że każda zmiana wykonana na zbindowanym tagu htmlowym spowoduje natychmiastowe zaktualizowanie modelu zachowanego w przeglądarce i vice versa &ndash; każda zmiana pola należącego do obiektu spowoduje update na powiązanych fragmentach strony. Wszystko to w czasie rzeczywistym, w deklaratywny sposób.</p>
-
-<p>Tyle w kwestii definicji dla ludzi nie zaznajomionych z tym podejściem. Osoby lepiej zorientowane w zagadnieniach frontendowych aplikacji WWW zapewne znają już tą bibliotekę podobnie jak alternatywy wykorzystywane w tym środowisku. Poniżej postaram się przedstawić parę własnych przemyśleń na temat tej biblioteki, zaczynając od tych związanych z sytuacjami, w których warto jej użyć, a kiedy lepiej sobie darować.</p>
-
-<p>Przypadki, kiedy powinniśmy się wstrzymać z użyciem Knockout.js:</p>
-
-<ul>
-<li>Single Page Applications &ndash; wiem, że Microsoft promuje tą bibliotekę jako własnego kandydata do roli frameworka SPA. Prawda jest jednak bolesna &ndash; Knockout nie posiada wbudowanych mechanizmów niezbędnych do tego typu zadań. Mowa tu przede wszystkim o mechanizmie routingu/nawigacji pomiędzy widokami oraz komunikacji z serwerem/metodach do zapisywania i synchronizacji danych. Nie znaczy to oczywiście, że budowa takich rozwiązań jest niemożliwa. Uważam po prostu, że w takich przypadkach lepiej skorzystać z innych bibliotek, lepiej przystosowanych do takich zadań np. <a href="http://angularjs.org/">AngularJS</a>.</li>
-<li>Standardowe widoki CRUD &ndash; jeżeli planujesz budowę standardowych ekranów, które nie muszą zachowywać skomplikowanych zależności pomiędzy obiektami-modelami, lub twoje widoki mapują się z tabelami w bazie w relacjach 1 do 1, wtedy powiedzmy sobie jasno &ndash; Knockout jest tobie nie potrzebny. Nie wytaczaj działa na komara.</li>
-<li>Szablony po stronie klienta &ndash; o ile mechanizm deklaratywnych zależności umożliwia wykorzystanie Knockouta do takich zastosowań, to w praktyce dodatkowy narzut związany z jego użyciem jest niewspółmierny do korzyści. Jeżeli nie potrzebujesz niczego ponad mechanizm szablonowania, proponuję zajrzeć na <a href="http://garann.github.com/template-chooser/">http://garann.github.com/template-chooser/</a>&ndash; ta strona pomoże ci ustalić bibliotekę właściwą do twoich potrzeb.</li>
-</ul>
-
-
-<p>Kiedy Knockout może ci się przydać:</p>
-
-<ul>
-<li>Prezentacja danych w modelu <a href="http://martinfowler.com/bliki/CQRS.html">CQRS</a> &ndash; a więc kiedy wymagania sprawiają, że prosty CRUD z jQuery do ustawiania widoczności elementów to za mało. Jeżeli musisz na jednej stronie przedstawić skomplikowane relacje pomiędzy obiektami-modelami, o wiele łatwiej będzie, jeżeli zachowasz te zależności po stronie klienta.</li>
-<li>Semi-SPA &ndash; czasami zdarza się, że aplikacja składa się z wielu prostych ekranów konfiguracyjnych, umożliwiających definiowanie różnych ustawień, oraz pojedynczych bogatych stron, które zawierają skomplikowane mechanizmy wyświetlania i manipulowania danymi. W takich przypadkach Knockout sprawdza się doskonale, ponieważ upraszcza sterowanie logiką takich widoków, zaś one same nie wymagają stosowania mechanizmów, których ta biblioteka nie zapewnia (a których część opisałem wyżej).</li>
-</ul>
-
-
-<p>Mam przyjemność wykorzystywać ten framework również na codzień w pracy od dłuższego czasu. Dzięki temu udało mi się wykonać kilka mniej lub bardziej oczywistych spostrzeżeń na temat błędów popełnianych przez programistów (w tym mnie ;) ) pracujących z Knockoutem oraz wzrocem MV* w przeglądarce, jak również rad których mógłbym udzielić osobom które zaczynają z nim swoją zabawę. Oto niektóre z nich.</p>
-
-<h2>Myśl kategoriami aplikacji</h2>
-
-<p>Jest to chyba najtrudniejsza lekcja. Nieraz logika wykonywana po stronie klienta sięga setek &ndash; czasami tysięcy &ndash; linii kodu, który dodatkowo może zachowywać się różnie w zależności od tego, na jakiej przeglądarce go odpalimy. Utrzymanie całości jest trudne (nieodzowne jest tu credo: <em>it&rsquo;s fucking javascript</em>;) ), stąd też musisz nauczyć się nadawać takim skryptom odpowiednią strukturę. Bardzo przydaje się tutaj wiedza z zakresu budowy aplikacji desktopowych opartych o MVVM &ndash; Knockout ma z tym podejściem wiele wspólnego.</p>
-
-<p>Podobnie jak w przypadku Single Page Applications oraz innych aplikacji opartych o MVVM powinieneś z góry zastanowić się nad rozwiązaniem kilku kwestii. Na &ldquo;lżejszych&rdquo; stronach mogą one pozostać dość rozmyte, lecz wraz ze wzrostem bazy twojego kodu powinny one ulegać coraz wyraźniejszej separacji i wyspecjalizowaniu.</p>
-
-<h2>Sposób komunikacji z serwerem</h2>
-
-<p>Musisz określić, w jaki sposób twoja aplikacja będzie się komunikować z serwerem. Czy będzie to standardowy jQuery ajax, może coś bardziej zaawansowanego (np. <a href="http://amplifyjs.com/">Amplify.js</a>), a może warunki pozwalają na organizację połączenia po WebSockets. Niezależnie od tego co wybierzesz, warto zastosować kilka dobrych praktyk.</p>
-
-<p>Po pierwsze nie zaszywaj kodu wywołań do serwera w sposób nierozerwalny. Przekaż obiekt służący do komunikacji z serwerem jako parametr do konstruktora ViewModelu, który takiej komunikacji wymaga. Nawet prosta konstrukcja typu</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">ViewModel</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ajax</span><span class="p">){</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">ajaxHandler</span> <span class="o">=</span> <span class="nx">ajax</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">var</span> <span class="nx">vm</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ViewModel</span><span class="p">(</span><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>sprawia, że w razie potrzeby będziesz mógł mniej boleśnie wymienić ten obiekt na inny.</p>
-
-<p>Kolejnym krokiem jest opakowanie używanej biblioteki w obiekt-adapter &ndash; w ten sposób unikniesz trwałego wiązania aplikacji z jednym frameworkiem. Będziesz miał dowolność wyboru oraz prostego rozszerzenia używanego rozwiązania o metody/wzorce, których faktycznie potrzebujesz. Bardzo ważnym elementem tego podejścia jest również możliwość trwałego opakowania wywołań do konkretnych adresów w bardziej przejrzyste i czytelne (oraz łatwiejsze w przyszłym rozwoju) metody. Sądzę, że takie wywołanie:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">resource</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">Person</span><span class="p">);</span>  <span class="c1">// 0 twardych zależności</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>jest prostsze z punktu widzenia przyszłego rozwoju i prostoty debugowania kodu niż:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">$</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s2">&quot;/some/url&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">model</span><span class="o">:</span><span class="nx">ko</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">Person</span><span class="p">)});</span> <span class="c1">// 2 twarde zależności: jQuery, knockout</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Wraz ze wzrostem wymagań dobrą opcją jest dodanie do takiej komunikacji bardziej rozwiniętych wzorców typu Publish/Subscribe, które ułatwią pracę z kodem w przyszłości.</p>
-
-<h2>Cykl życia strony i obiektów</h2>
-
-<p>Jest to dobra praktyka, ponieważ mechanizm ten jest w Knockoutcie dość ubogi. Warto jest przemyśleć, jakie typy zdarzeń mogą okazać się przydatne w trakcie pracy ze stroną. Czasem możesz potrzebować podpiąć się z własnymi funkcjami w konkretnych momentach życia strony, np. tuż przed/po wywołaniu polecenia bindowania danych (<code>ko.applyBindings</code>), czy też w momencie dołączenia nowej właściwości itp. Dobrą praktyką jest też zdefiniowanie funkcji-inicjalizatora dla całego mechanizmu Knockouta oraz funkcji, w której możesz opisać całą potrzebną konfigurację w jednym miejscu.</p>
-
-<h2>View modele &ndash; portlety i kontener aplikacji</h2>
-
-<p>Dobrą radą na początek jest przygotowanie pojedyńczego ViewModelu, który nie służy zasadniczo samemu przechowywaniu obserwowanych właściwości, lecz pełni rolę kontenera lub głównego obiektu aplikacji. Dlaczego? Po pierwsze Knockout zasadniczo nie umożliwia generowania wielu VMów-korzeni dla pojedyńczej strony HTML. Po drugie, działa tutaj analogia do MVVM w aplikacjach desktopowych. Pojedyńczy widok &ndash; stronę prezentowaną użytkownikowi &ndash; z reguły da się podzielić na szereg niezależnych fragmentów (portletów), z których każdy jest zarządzany przez inny ViewModel. Zapewnia to właściwą separację bardziej złożonego problemu, co znacznie ułatwia ogarnięcie całej logiki znajdującej się na stronie.</p>
-
-<p>Moja rada &ndash; nawet kiedy nie planujesz nadzwyczaj bogatej logiki na stronie, stwórz co najmniej jeden view model pełniący rolę rdzenia. W nim zdefiniuj pozostałe view modele, które będą służyły do bindowania właściwych danych. Żadna obserwowalna wartość wysyłana na serwer nie powinna być bezpośrednio powiązana z korzeniem. Nie kosztuje to wiele pracy, a w stuacji, kiedy twoja strona w przyszłości będzie ewoluować i rozrastać się o kolejne podwidoki/portlety, dodanie kolejnych VMów nie będzie stanowić problemu.</p>
-
-<h2>Utrzymaj separację Widoków od ViewModelu</h2>
-
-<p>Częstym błędem popełnianym na początku przez programistów zaczynających swoją przygodę z Knockoutem, jest wykonywanie operacji na drzewie DOM wewnątrz logiki ViewModeli. Jest to poważny błąd. Zastanów się: czy tworząc akcję kontrolera używasz jej do generowania HTMLa, który potem osadzasz na stronie?</p>
-
-<p>Modele MVVM i MVC nie bez powodu zapewniają separację pomiędzy widokami, a pozostałymi elementami aplikacji. W przypadku Knockout.js rolę widoku stanowi bezpośrednio strona HTML wzbogacona o atrybuty <strong>data-bind</strong>, wewnątrz których definiujemy pożądane wiązania. Jeżeli z kolei czujesz, że dostępne bindingi nie spełniają twoich potrzeb, pamiętaj że zawsze możesz zdefiniować własne.</p>
-
-<h2>Luźne zależności pomiędzy modułami w aplikacji</h2>
-
-<p>Pamiętaj, że zmodularyzowane aplikacje są łatwiejsze zarówno w utrzymywaniu jak i późniejszym rozwoju. Łatwiej jest także je debugować i testować. Z punktu widzenia programisty Javascript wzorzec Dependency Injection ma jeszcze jedną zaletę. Ponieważ unikasz w ten sposób odwoływania się do funkcji globalnych umieszczonych w wyższych partiach scope chain (więcej dowiesz się <a href="http://www.slideshare.net/nzakas/speed-up-your-javascript">tutaj</a>), twoja aplikacja staje się odrobinę szybsza.</p>
-
-<p>Unikaj wywoływania w kodzie swoich funkcji/metod różnego typu obiektów globalnych takich jak window, document, czy też obiektów-modułów do innych bibliotek np. jQuery. Zamiast tego przekazuj je jako paramtery do obiektów, które je wykorzystują.</p>
-
-<p>Innym &ndash; na pewno wartościowym &ndash; wsparciem, które może przydać się osobom nie przywykłym do pułapek języków dynamicznie typowanych, są języki kompilowane do Javascriptu, takie jak <a href="http://www.typescriptlang.org/" title="">TypeScript</a> czy <a href="http://www.dartlang.org/">Dart</a>.</p>
-
-<h2>Testy</h2>
-
-<p>Testy jednostkowe są przydatne w każdej większej aplikacji i logika po stronie klienta nie stanowi tutaj wyjątku. Im dalej rozwijasz swoją aplikację i im więcej operacji wykonywanych jest w przeglądarce użytkownika, tym bardziej prawdopodobne, że trafisz na moment w którym testy jednostkowe staną się nieocenione.</p>
-
-<p>W tym celu należy przedtem zapewnić &ldquo;testowalność&rdquo; swojego kodu. Wskazówki opisane przeze mnie powyżej (zwłaszcza te dotyczące modularyzacji i luźnych powiązań) dotyczą również tego zagadnienia. Mimo że Knockout nie zapewnia wbudowanych klas ułatwiających testowanie (AngularJS jest pomocny również pod tym względem), nie jest to dużym problemem, ponieważ Javascript jest językiem bardzo elastycznym i rozszerzalnym, zatem pisanie mocków nie stanowi tutaj problemu.</p>
-
-<p>Co do wyboru frameworka testowego jest to kwestia własnych preferencji. Jedni wybiorą polecany przez M$ <a href="http://qunitjs.com/">QUnit</a> wspierający programowanie TDD. Dla programistów .Net jest to tradycyjna dobrze znana ścieżka. Inni (w tym ja ;) ) wolą metodykę BDD i czytelność, jaką oferują biblioteki takie jak <a href="http://pivotal.github.com/jasmine/">Jasmine</a>. Dlaczego preferuję właśnie to drugie podejście? Dlatego że łatwiej definiować testy w kategoriach konkretnych zachowań, jakich oczekujemy po działaniu naszego kodu, niż operacji, które nie zawsze muszą jasno definiować to, co faktycznie chcemy osiągnąć.</p>
 ]]></content>
   </entry>
   

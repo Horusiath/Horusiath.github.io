@@ -134,7 +134,7 @@
 <ul>
 <li><strong>Executable code pointer</strong> &ndash; in order to execute the program, a VM has to now what program it is ;) Our bytecode contains opcodes (which are integers used to define instructions to be executed by an interpreter) and numbers used for things such as constant values, memory addresses or stack offsets.</li>
 <li><strong>Stack</strong> &ndash; virtual stack will work as fragment of memory used for storing intermediate results and additional data of each instruction. When a procedure call will be invoked, it will also save a state of the program at moment, when procedure has been called, to retrieve it back after program will return from that call.</li>
-<li><strong>Heap</strong> &ndash; unlike the stack, which uses LIFO (Last-In First-Out) operations, heap may be used as random access memory. It also may change it&rsquo;s size according to program needs. In this example we may use it to store both global and local variables.</li>
+<li><strong>Local data</strong> &ndash; unlike the stack, which uses LIFO (Last-In First-Out) operations, local data may be used as random access memory. It also may change it&rsquo;s size according to program needs. In this example we may use it to store both global and local variables.</li>
 <li><strong>Program counter</strong> &ndash; it contains an address of currently executed instruction. Program will be executed by moving PC through instruction set, reading opcodes and executing them.</li>
 <li><strong>Stack pointer</strong> &ndash; it contains information about number of elements stored on the stack. It always points on the top of it.</li>
 <li><strong>Frame pointer</strong> &ndash; since we need to differentiate a locally and globally scoped values (this includes function arguments), we need to know where our scope is located on the stack. All local variables are assigned relatively to FP position.</li>
@@ -176,7 +176,7 @@
 </span><span class='line'><span class="cp">#define STACK_SIZE 100</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">heap</span><span class="p">;</span>      <span class="c1">// heap</span>
+</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">locals</span><span class="p">;</span>    <span class="c1">// local scoped data</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">code</span><span class="p">;</span>      <span class="c1">// array od byte codes to be executed</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">stack</span><span class="p">;</span>     <span class="c1">// virtual stack</span>
 </span><span class='line'>    <span class="kt">int</span> <span class="n">pc</span><span class="p">;</span>         <span class="c1">// program counter (aka. IP - instruction pointer)</span>
@@ -186,20 +186,20 @@
 </span><span class='line'>
 </span><span class='line'><span class="n">VM</span><span class="o">*</span> <span class="nf">newVM</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span> <span class="n">code</span><span class="p">,</span>    <span class="c1">// pointer to table containing a bytecode to be executed</span>
 </span><span class='line'>    <span class="kt">int</span> <span class="n">pc</span><span class="p">,</span>             <span class="c1">// address of instruction to be invoked as first one - entrypoint/main func</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">datasize</span><span class="p">){</span>      <span class="c1">// total heap size required to perform a program operations</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">datasize</span><span class="p">){</span>      <span class="c1">// total locals size required to perform a program operations</span>
 </span><span class='line'>    <span class="n">VM</span><span class="o">*</span> <span class="n">vm</span> <span class="o">=</span> <span class="p">(</span><span class="n">VM</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">VM</span><span class="p">));</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">pc</span> <span class="o">=</span> <span class="n">pc</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">sp</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">datasize</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">datasize</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">stack</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">STACK_SIZE</span><span class="p">);</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="k">return</span> <span class="n">vm</span><span class="p">;</span>
 </span><span class='line'><span class="p">}</span>
 </span><span class='line'>
 </span><span class='line'><span class="kt">void</span> <span class="nf">delVM</span><span class="p">(</span><span class="n">VM</span><span class="o">*</span> <span class="n">vm</span><span class="p">){</span>
-</span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">stack</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
 </span><span class='line'><span class="p">}</span>
@@ -406,11 +406,11 @@
 
 <p>Again, <code>JUMPF</code> (conditional jump if false) implementation should be analogous to <code>JMPT</code>.</p>
 
-<h3>Move memory on the heap globally</h3>
+<h3>Move memory globally</h3>
 
 <p>Now, when all basic constructs are defined, we shall provide a way to define a variables in our program. This paragraph will cover problem of globally-scoped ones, while the next one will show how to implement locally-scoped variables.</p>
 
-<p>Unlike stack, a heap is a random access memory of elastic size, so all in/out operations performed on it using memory addresses (aka. pointers). Therefore in our example all load/store opcodes should be followed by number being an address pointer to the heap.</p>
+<p>Unlike stack, a local data is a random access memory of elastic size, so all in/out operations performed on it using memory addresses (aka. pointers). Therefore in our example all load/store opcodes should be followed by number being an address pointer to the local data.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -424,20 +424,20 @@
 <span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">case</span> <span class="n">GLOAD</span>:
 </span><span class='line'>    <span class="n">addr</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>             <span class="c1">// get pointer address from code ...</span>
-</span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">addr</span><span class="p">];</span>         <span class="c1">// ... load value from memory of the provided addres ...</span>
+</span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">addr</span><span class="p">];</span>         <span class="c1">// ... load value from memory of the provided addres ...</span>
 </span><span class='line'>    <span class="n">PUSH</span><span class="p">(</span><span class="n">vm</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>                <span class="c1">// ... and put that value on top of the stack</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span><span class='line'><span class="k">case</span> <span class="n">GSTORE</span>:
 </span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>                <span class="c1">// get value from top of the stack ...</span>
 </span><span class='line'>    <span class="n">addr</span> <span class="o">=</span> <span class="n">NCODE</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>           <span class="c1">// ... get pointer address from code ...</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>         <span class="c1">// ... and store value at address received</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>         <span class="c1">// ... and store value at address received</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
 <h3>Manipulate local scope memory</h3>
 
-<p>This is similar to previously defined <code>GLOAD</code> and <code>GSTORE</code> instruction. However there is a one significant difference &ndash; instead of taking an heap address directly from provided value, we compute it relatively to current frame pointer.</p>
+<p>This is similar to previously defined <code>GLOAD</code> and <code>GSTORE</code> instruction. However there is a one significant difference &ndash; instead of taking an locals address directly from provided value, we compute it relatively to current frame pointer.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -455,7 +455,7 @@
 </span><span class='line'><span class="k">case</span> <span class="n">STORE</span>:                 <span class="c1">// store local value or function arg</span>
 </span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>            <span class="c1">// get value from top of the stack ...</span>
 </span><span class='line'>    <span class="n">offset</span> <span class="o">=</span> <span class="n">NCODE</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>     <span class="c1">// ... get the relative pointer address from code ...</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span><span class="o">+</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>  <span class="c1">// ... and store value at address received relatively to frame pointer</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span><span class="o">+</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>  <span class="c1">// ... and store value at address received relatively to frame pointer</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure>
 
@@ -598,7 +598,7 @@
 </span><span class='line'><span class="c1">// initialize virtual machine</span>
 </span><span class='line'><span class="n">VM</span><span class="o">*</span> <span class="n">vm</span> <span class="o">=</span> <span class="n">newVM</span><span class="p">(</span><span class="n">program</span><span class="p">,</span>   <span class="c1">// program to execute</span>
 </span><span class='line'>                   <span class="mi">38</span><span class="p">,</span>    <span class="c1">// start address of main function</span>
-</span><span class='line'>                   <span class="mi">0</span><span class="p">);</span>    <span class="c1">// heap to be reserved, fib doesn&#39;t require heap</span>
+</span><span class='line'>                   <span class="mi">0</span><span class="p">);</span>    <span class="c1">// locals to be reserved, fib doesn&#39;t require them</span>
 </span><span class='line'><span class="n">run</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
 </span></code></pre></td></tr></table></div></figure>
 

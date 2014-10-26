@@ -4,7 +4,7 @@
   <title><![CDATA[Category: fsharp | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/fsharp/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-08-06T19:00:44+02:00</updated>
+  <updated>2014-10-26T23:02:19+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,298 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Hipsterize your backend for The Greather Good with Akka.NET, F# and some DDD flavor]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/10/26/akka-fsharp-ddd/"/>
+    <updated>2014-10-26T22:54:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/10/26/akka-fsharp-ddd</id>
+    <content type="html"><![CDATA[<p>Initially this post was supposed to cover concepts of implementing an example DDD (Domain Driven Design) architecture using F# and Akka.NET. But the more I&rsquo;ve written, the more I&rsquo;ve realized that whole idea won&rsquo;t fit into a single blog post. Therefore I&rsquo;ve decided for now to focus on some basic example covering command/event handlers. To make this more interesting I want to show how Akka.NET and F# features can be used to leverage design established this way.</p>
+
+<h3>Before we begin&hellip;</h3>
+
+<p>I want to notice, that all examples in this post are made mostly to learning purposes. There are some things missing, but I&rsquo;ve decided to leave them since they don&rsquo;t have direct impact on the overall design or current state of the application. If I will continue this thread, I will probably try to extend them and provide some more meaningful context. So please don&rsquo;t treat this code as a real-life reference of DDD implementation.</p>
+
+<p>What is clearly missing in example below? I didn&rsquo;t describe aggregate roots, because boundary context is very simplistic &ndash; to make this post clearer I&rsquo;ve focused more on command-handler-event pattern. Sample doesn&rsquo;t enforce any specific database, using simple dictionary as abstraction. Also it doesn&rsquo;t provide any form of data validation or bindings to existing HTTP server frameworks. They are outside of scope of this post but are very simple to integrate.</p>
+
+<h4>Step 1: Define our domain data structures</h4>
+
+<p>Lets start with domain model. As a boundary context I&rsquo;ve chosen one of the most generic ones &ndash; user account&rsquo;s space. Our simplified business logic in this example will cover two actions &ndash; user registration and sign in. Users will be identified by their email and will use the most basic security features.</p>
+
+<p>But before we move there, lets use some of the features, F# could give us, to shape a type system for our advantage.
+<code>fsharp
+type Email = string
+type PasswordHash = byte array
+</code>
+These are examples of type aliases. You may consider using them, if you&rsquo;ve found that usage of some primitive type in given context may be defined as subtype/supertype relation. In this example Email can be considered as a specialization of string &ndash; that means, each email is string, but not each string is a valid email. This kind of granularity can be stretched quite far. Just think about any primary/foreign key field in any entity as it&rsquo;s own unique type. This will automatically disallow mistakes such as assigning keys from entities of incompatible type eg. assigning <code>UserId</code> value to <code>ProductId</code> field! F# expressiveness promotes this behavior.</p>
+
+<p>Now use these types to define our User entity. It&rsquo;s very straightforward:
+```fsharp
+type User =</p>
+
+<pre><code>{ email : Email
+  phash : PasswordHash
+  salt  : byte array }
+static member empty =  { email = ""; phash = [||]; salt = [||] }
+</code></pre>
+
+<p><code>
+Next I'm going to describe data models for our domain commands and events. It's important to understand purpose of both. Commands are produced to describe tasks to be executed by the system and contains all data necessary to perform it. Events are describing diffs in general application state as a results of performed tasks. What is wort mentioning, events should be described in way, that will allow us to recreate current application state by replaying all events timeline stream. And because events describe changes, that already occurred, they should be immutable by nature - don't try to change your past if you not wish to mess with your future.
+</code>fsharp
+type UserCommand =</p>
+
+<pre><code>| RegisterUser of email : Email * password : string
+| LoginUser of email : Email * password : string
+</code></pre>
+
+<p><code>
+NOTE: If you want to use F# records to describe your commands/events, that's perfectly fine. I've chosen discriminated unions for their expressiveness.
+</code>fsharp
+type UserEvent =</p>
+
+<pre><code>| UserRegistered of email : Email * salt: byte array * phash : byte array * timestamp : DateTime
+| UserLogged of email : Email * timestamp : DateTime
+</code></pre>
+
+<p>```
+As you can see there are few things worth of emphasizing:</p>
+
+<ul>
+<li>We didn&rsquo;t store user password provided directly from command, using salt + password hash instead. Reason behind is that in DDD events usually could be serialized and stored in some kind of event database. Therefore it&rsquo;s not secure to provide them any sensitive data. However events should contain enough information to give us ability to recreate current database state based on provided stream of events, assuming that it&rsquo;s complete.</li>
+<li>Each of our event&rsquo;s contain a timestamp field. Events give us a historical change set of the application. And because they contain only diffs between database states rather than snapshot of entities, they have to be ordered by their creation date. Without it we couldn&rsquo;t recreate them.</li>
+</ul>
+
+
+<p>What other fields may be useful when working with events? Consider attaching current API version number &ndash; this will allow you to endure breaking changes in your code responsible for handling events. Other handy field is unique event id, when you may need functionality associated with generating cascading event chains in response to some other events. In that case having some kind of pointer to originating event may be useful.</p>
+
+<h3>Step 2: describe application behavior in functional manner</h3>
+
+<p>This may be a little controversial statement, but I must say it &ndash; exceptions are bad. They leaves the leaks in your type system and fucks with your application logic flow in the way, that many programmers and almost all compilers cannot understand.</p>
+
+<p>The alternative conception of error handling is old and well-known. It&rsquo;s based on returning error codes. To start with &ndash; if you already know <a href="http://www.rust-lang.org/">Rust</a>, this may look familiar to you:
+```fsharp
+type Result&lt;&lsquo;ok, 'err> =</p>
+
+<pre><code>| Ok of 'ok
+| Error of 'err
+</code></pre>
+
+<p>```
+You may ask: why the hell do we return error values instead of just throwing exceptions? Are these some archaeological excavations and we&rsquo;re gone back to the C era? Actually no. There is very good reason behind this.</p>
+
+<p>Think about exceptions as a side effects of the application state behavior. You cannot be 100% sure about flow of your application process. Since information about exceptions is not part of any function/method signature, they actually act as a dynamically typed cascading return values anyway &ndash; both compiler and programmers will ignore them until they will occur at runtime.</p>
+
+<p>This time instead of cryptic error codes returned by C, we use F# power to provide type-safe and expressive way for this solution. If you&rsquo;re interested more about interesting ways to utilize return-based error handling using higher-level concepts, I recommend you <a href="http://fsharpforfunandprofit.com/posts/recipe-part2/">Railway Oriented Programming</a> blogpost and video presented on NDC Oslo 2014. Here, I&rsquo;ll use a greatly simplified version, exposing operator which chain two input functions together and call second one only if result from the first was <code>Ok</code>, and forwarding an <code>Error</code> result otherwise:</p>
+
+<p>```fsharp
+let (>=>) f1 f2 arg =</p>
+
+<pre><code>match f1 arg with
+| Ok data -&gt; f2 data
+| Error e -&gt; Error e
+</code></pre>
+
+<p>```</p>
+
+<p>I&rsquo;ve also decided to use more discriminated unions to describe each specific business logic error in actual bounded context scope. I&rsquo;ve found that returning a string-based messages back to programmers in error logs are not better in any way than creating a specialized error type for each case. The only disadvantage is amount of code you need to write, to declare new type, but again &ndash; it&rsquo;s not a problem with F#.
+```fsharp
+type UserError =</p>
+
+<pre><code>| UserAlreadyExists of userEmail : Email
+| UserNotFound of userEmail : Email
+| WrongPassword of userEmail : Email * hashedInput : PasswordHash
+</code></pre>
+
+<p>```</p>
+
+<h3>Step 3: handle user registration</h3>
+
+<p>How does F# command handling differs from it&rsquo;s more objective oriented counterpart? Since we deal with functional oriented language, most of our logic is composed into functions instead of objects. You&rsquo;ve used to execute your logic with services, here you&rsquo;ve got a function. Wanna some Dependency Injection? Here, you have some currying.</p>
+
+<p>I&rsquo;ll describe our service as <code>handle</code> function which takes some <code>UserCommand</code> as an input and produces <code>Result&lt;UserEvent, UserError&gt;</code> as output:
+```fsharp
+let handle clock findUser saveUser =</p>
+
+<pre><code>function 
+| RegisterUser(email, password) -&gt; 
+    match findUser email with
+    | Some _ -&gt; Error(UserAlreadyExists email)
+    | None -&gt; 
+        let salt, phash = defaultGeneratePassword password            
+        let user = 
+            { email = email
+              salt = salt
+              phash = phash }
+        saveUser user
+        Ok (UserRegistered(email, salt, phash, clock()))
+</code></pre>
+
+<p>```
+As you&rsquo;ve seen, this function actually takes 4 parameters (clock, findUser, saveUser and command as implicit argument of calling <strong>function</strong> keyword). But as I&rsquo;ve said, our handle function should take only one input argument. That&rsquo;s because we&rsquo;ll provide three first arguments through partial function application later &ndash; now you can think about them as constructor arguments injected by your IoC container when resolving new service.</p>
+
+<p>While most of the parameters are quite understandable, one of them may be confusing &ndash; the <code>clock</code> parameter. It&rsquo;s only functionality is to provide current DateTime value. If so, why didn&rsquo;t I just used <code>DateTime.Now</code> directly inside the code? In this example it&rsquo;s actually not so important, but I&rsquo;ve used it to expose simple problem &ndash; things such as date/configuration/environment providers or random number generators could make our handler behavior non-deterministic. That means, if we call this function two times with the same input, we couldn&rsquo;t count on the same output. It&rsquo;s actually problem for logic predictability and in some cases is especially cumbersome when writing tests to verify application behavior. Therefore I think that it&rsquo;s better to separate them as injectable arguments.</p>
+
+<h4>Password hashing and generation</h4>
+
+<p>While you may find some good libraries providing real life hashing features out of hand, I&rsquo;ve decided to leave my example free on unnecessary dependencies and use a standard library instead.</p>
+
+<p>```fsharp
+let private saltWith salt (p : string) =</p>
+
+<pre><code>let passBytes = System.Text.Encoding.UTF8.GetBytes p
+Array.append passBytes salt
+</code></pre>
+
+<p>let sha512 (bytes : byte array) =</p>
+
+<pre><code>use sha = System.Security.Cryptography.SHA512.Create()
+sha.ComputeHash bytes
+</code></pre>
+
+<p>let hashPassword hashFn salt password = hashFn (saltWith salt password)</p>
+
+<p>let generatePassword hashFn saltSize password =</p>
+
+<pre><code>use saltGen = System.Security.Cryptography.RandomNumberGenerator.Create()
+let salt = Array.zeroCreate saltSize
+saltGen.GetBytes salt
+(salt, hashPassword hashFn salt password)
+</code></pre>
+
+<p>let inline defaultGeneratePassword pass = generatePassword sha512 64 pass
+let inline defaultHashPassword salt pass = hashPassword sha512 salt pass
+```
+I hope this code doesn&rsquo;t need any explanations.</p>
+
+<h3>Step 4: handle user logging</h3>
+
+<p>Once we already described nuances of the function-based services, this one shouldn&rsquo;t be a problem. This case was created to give our example more diversity.
+```fsharp
+let handle clock findUser saveUser =</p>
+
+<pre><code>function 
+| RegisterUser(email, password) -&gt; ...
+| LoginUser(email, password, remember) -&gt; 
+    match findUser email with
+    | None -&gt; Error(UserNotFound email)
+    | Some user -&gt; 
+        let computedPasswordHash = defaultHashPassword (user.salt) password
+        if computedPasswordHash = user.phash then 
+            Ok (UserLogged(user.email, clock()))
+        else Error(WrongPassword(user.email, computedPasswordHash))
+</code></pre>
+
+<p>```</p>
+
+<h3>Step 5: bind your business logic to Akka.NET</h3>
+
+<p>If you&rsquo;re interested in integrating Akka.NET with your F# logic, I can recommend you more posts in this blog written earlier this year. Therefore I assume, that you&rsquo;re aware how F# actors based on recursive loops work. Because loop creation is often a generic behavior, again I&rsquo;ll expose it in form of function wrapper.
+```fsharp
+let actAs fn (mailbox : Actor&lt;&lsquo;a>) =</p>
+
+<pre><code>let rec loop'() = 
+    actor { 
+        let! msg = mailbox.Receive()
+        fn msg
+        return! loop'()
+    }
+loop'()
+</code></pre>
+
+<p>```
+NOTE: At the present moment Akka.NET API for F# language is still lacks some features. This post applies mostly to API in version 0.7 of the framework, so you may expect some changes in the future.</p>
+
+<h4>Mock database access</h4>
+
+<p>As I&rsquo;ve said in the introduction, I won&rsquo;t use any real-life database provider, mocking it with concurrent dictionary instead. However if you want to use a normal database, nothing stands in your way.
+```fsharp
+let userStore = ConcurrentDictionary()</p>
+
+<p>let inline flip f x y = f y x
+let findInUserStore email (store : ConcurrentDictionary&lt;string, User>) =</p>
+
+<pre><code>let mutable user : User = User.empty
+if store.TryGetValue(email, &amp;user) then Some user
+else None
+</code></pre>
+
+<p>let saveInUserStore user (store : ConcurrentDictionary&lt;string, User>) =</p>
+
+<pre><code>store.AddOrUpdate(user.email, user, System.Func&lt;_, _, _&gt;(fun key old -&gt; user)) |&gt; ignore
+</code></pre>
+
+<p>```
+F# is heavily function-oriented and this also corresponds to arguments precedence. While in OOP subject (<strong>this</strong>) usually precedes method invocation, in functional languages it&rsquo;s better to use it as last argument of the function. Argumentation for this is currying and partial function application, which allows us to define functions with only part of all necessary arguments provided. The more specific argument, the later it could be applied. Therefore common convention is to provide more detailed parameters at the end of the function parameters list. It&rsquo;s a very useful feature, especially when combined with pipeline operators.</p>
+
+<p>On the other side <code>flip</code> function may be used to reverse parameters precedence in case when, for example, we want to partially apply second argument to the function without providing first one (because it may be yet unknown in this moment). This option will be presented later.</p>
+
+<h4>Handle event subscribers</h4>
+
+<p>One of the nice things in Akka is that it provides a Publish/Subscribe pattern offhand. As an actor-based framework, the only necessary task to do is to subscribe an <code>ActorRef</code> of desired observer directly to Akka system&rsquo;s event stream.</p>
+
+<p>As a lazy person I don&rsquo;t want to be forced to explicitly create new actor each time I want to subscribe some behavior to react for events I&rsquo;ve produced somewhere else. Therefore I&rsquo;ve created simple subscribe helper, which will handle subscriber actor creation for me.
+```fsharp
+// automatic unique concurrent name generator
+let mutable subscriptionNr = 0
+let inline getSubNr() = System.Threading.Interlocked.Increment(&amp;subscriptionNr)</p>
+
+<p>let subscribe system (fn : &lsquo;a &ndash;> unit) =</p>
+
+<pre><code>let subId = getSubNr()
+let subscriber = spawn system ("subscriber-" + (string subId)) &lt;| actAs fn
+system.EventStream.Subscribe(subscriber, typeof&lt;'a&gt;) |&gt; ignore
+subscriber
+</code></pre>
+
+<p>let publish (bus : Akka.Event.EventStream) evt =</p>
+
+<pre><code>bus.Publish evt
+Ok evt
+</code></pre>
+
+<p>```</p>
+
+<h3>Bind everything together</h3>
+
+<p>Now when all logic has been defined, it&rsquo;s time to show it in some example code. It will initialize a new Akka system, setup console logging and show features of successful and unsuccessful registering and signing in of the user.
+```fsharp
+let inline defaultClock() = DateTime.Now
+// display any errors returned by command handler
+let handleErrors = function</p>
+
+<pre><code>| Ok _ -&gt; ()
+| Error data -&gt; printf "User error: %A\n" data
+</code></pre>
+
+<p>let system = System.create &ldquo;system&rdquo; &lt;| Akka.Configuration.ConfigurationFactory.Default()
+let userHandler =</p>
+
+<pre><code>// inject "dependencies" into handle function
+handle 
+&lt;| defaultClock 
+&lt;| flip findInUserStore userStore 
+&lt;| flip saveInUserStore userStore
+</code></pre>
+
+<p>let subscriber = subscribe system &lt;| printf &ldquo;User event: %A\n&rdquo;
+let userActor = spawn system &ldquo;users&rdquo; &lt;| actAs (userHandler >=> (publish system.EventStream) >> handleErrors)</p>
+
+<p>userActor &lt;! RegisterUser(&ldquo;<a href="&#x6d;&#x61;&#105;&#108;&#116;&#111;&#58;&#106;&#46;&#x64;&#111;&#101;&#64;&#x74;&#x65;&#x73;&#116;&#x6d;&#97;&#105;&#x6c;&#x2e;&#99;&#x6f;">&#106;&#x2e;&#x64;&#111;&#101;&#x40;&#116;&#101;&#115;&#116;&#109;&#97;&#105;&#108;&#46;&#x63;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)
+userActor &lt;! RegisterUser(&ldquo;<a href="&#109;&#x61;&#105;&#x6c;&#116;&#x6f;&#58;&#x6a;&#x2e;&#100;&#111;&#101;&#x40;&#x74;&#101;&#115;&#116;&#x6d;&#x61;&#x69;&#x6c;&#x2e;&#99;&#111;">&#x6a;&#46;&#100;&#x6f;&#x65;&#x40;&#x74;&#x65;&#115;&#x74;&#x6d;&#97;&#x69;&#x6c;&#x2e;&#99;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)  // UserAlreadyExists error
+System.Threading.Thread.Sleep 100</p>
+
+<p>userActor &lt;! LoginUser(&ldquo;<a href="&#x6d;&#x61;&#105;&#108;&#x74;&#x6f;&#x3a;&#106;&#46;&#100;&#111;&#x65;&#64;&#116;&#101;&#x73;&#116;&#x6d;&#97;&#105;&#x6c;&#x2e;&#99;&#111;">&#106;&#x2e;&#x64;&#x6f;&#101;&#64;&#x74;&#101;&#x73;&#x74;&#109;&#97;&#105;&#x6c;&#x2e;&#99;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)
+userActor &lt;! LoginUser(&ldquo;<a href="&#x6d;&#x61;&#105;&#x6c;&#x74;&#x6f;&#x3a;&#x6a;&#x2e;&#x64;&#111;&#x65;&#64;&#116;&#x65;&#x73;&#116;&#x6d;&#x61;&#105;&#108;&#x2e;&#x63;&#x6f;">&#106;&#x2e;&#100;&#x6f;&#101;&#64;&#x74;&#x65;&#115;&#116;&#109;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;</a>&rdquo;, &ldquo;fails&rdquo;)     // WrongPassword error</p>
+
+<p>System.Threading.Thread.Sleep 100
+system.Shutdown()
+```</p>
+
+<p>That&rsquo;s all. Whole example took about 130 lines of F# code to create. I hope this would give you some insights about embedding your business logic into F# function composition model.</p>
+
+<p>PS: If you&rsquo;re interested in more details about DDD and F# programming, at the present moment I can recommend you following other exploring lecture of the other developers, such as Lev Gorodinski (<a href="https://twitter.com/eulerfx">@eulerfx</a>) and his blog for more advanced concepts.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Actor supervisors in Akka.NET FSharp API]]></title>

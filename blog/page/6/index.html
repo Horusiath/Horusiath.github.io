@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Dec 11th, 2010 .net, programowanie Comments Podstawy Programowania W CIL Cz. 1 Witam, w dzisiejszym poście postaram się pokrótce przedstawić &hellip;">
+	<meta name="description" content="Feb 5th, 2011 .net, programowanie Comments Immutable String - Czy Na Pewno? Na wstępie zacznę od przedstawienia łańcuchów znakowych w językach &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,88 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-05T10:43:00+01:00" data-updated="true" itemprop="datePublished">Feb 5<span>th</span>, 2011</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2011/02/05/syntaxhighlighter/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2011/02/05/syntaxhighlighter/" itemprop="url">Immutable String - Czy Na Pewno?</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Na wstępie zacznę od przedstawienia łańcuchów znakowych w językach takich jak C# i Java. Jak zapewno większości z czytelników wiadomo, łańcuch znaków jest w tych językach niezmienny tzn. przypisanie lub dodanie nowej wartości do zmiennej typu string (lub String) spowoduje tak naprawdę zaalokowanie nowego fragmentu pamięci i przypisanie jego adresu do zmiennej. Może to być dość uciążliwe w sytuacji, kiedy często chcemy modyfikować dany łańcuch (ciągłe przepisywanie zmiennych jest dość pamięciożerne). Oczywiście są na to sposoby (jak choćby znana klasa StringBuilder).</p>
+
+<p>Co jednak zrobić w sytuacji, kiedy mamy już zainicjowany string, a potrzebujemy często zmieniać jego zawartość. Oczywiście najbardziej oczywistym rozwiązaniem wydaje się konwersja na tablicę znaków (metoda ToCharArray()), ale miło byłoby dokonywać takich zmian bez tworzenia nowych struktur.</p>
+
+<p>Tutaj własnie dochodzimy do alternatywnych możliwości oferowanych przez język C#, a mianowicie możliwości operowania na wskaźnikach. Takie rozwiązanie pozwoli nam dokonywać zmiany w łańcuchu znaków, bez potrzeby kopiowania i alokowania nowych fragmentów pamięci.
+Ideę takiego rozwiązania prezentuje poniższy kod:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">String</span> <span class="n">mystring</span> <span class="p">=</span> <span class="err">“</span><span class="n">ala</span> <span class="n">ma</span> <span class="n">kota</span><span class="err">”</span><span class="p">;</span>
+</span><span class='line'><span class="k">unsafe</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">fixed</span> <span class="p">(</span><span class="kt">char</span><span class="p">*</span> <span class="n">mystrptr</span> <span class="p">=</span> <span class="n">mystring</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">mystrptr</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">=</span> <span class="p">(</span><span class="kt">char</span><span class="p">)(*</span><span class="n">mystrptr</span> <span class="p">-</span> <span class="m">32</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">mystring</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Odwołanie za pomocą indexu wykonałem, aby pokazać, że można swobodnie zmieniać pojedyńcze znaki, wypisując po prostu ich pozycję w stringu.
+Trudnością takiego rozwiązania jest fakt, że należy w projekcie zezwolić na wykorzystywanie kodu unsafe. Poniżej zamieszczam minitutorial dla osób, które nie wiedzą jak to zrobić:</p>
+
+<ul>
+<li>W menu wybieramy zakładkę <strong>Project</strong>&rArr;<strong>Nazwa_projetku</strong>&rArr;<strong>Properties&hellip;</strong></li>
+<li>Wyświetla się nam okno z właściwościami projektu, przechodzimy do zakładki <strong>Build</strong> i zaznaczamy pole <strong>Allow unsafe code</strong>.</li>
+</ul>
+
+
+<p>Niestety niektórych rzeczy nie da się przeskoczyć, przykładowo nie możemy wydłużyć istniejącego stringa (jeżeli spróbujemy zmienić znak o indeksie będącym poza zakresem stringa, nie dostaniemy żadnej błędnej wiadomości, ale ostatecznie nadpisany znak i tak nie zostanie wyświetlony). Niemniej sposób który opisałem, jest przyjemną ciekawostką i pozwala nieco nagiąć prawa rządzące łańcuchami znaków w C#.</p>
+
+<h2>Comments</h2>
+
+
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Rafał Garbowski</div>
+<div class='content'>
+Interesujący artykuł, oby było takich więcej ;-)</div>
+</div>
+</div>
+
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">

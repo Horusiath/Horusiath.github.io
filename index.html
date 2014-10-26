@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Aug 6th, 2014 akka.net, fsharp Comments Actor Supervisors in Akka.NET FSharp API This post will describe changes, that will affect a F# API for Akka &hellip;">
+	<meta name="description" content="Oct 26th, 2014 akka.net, ddd, fsharp Comments Hipsterize Your Backend for the Greather Good With Akka.NET, F# and Some DDD Flavor Initially this &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,421 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-10-26T22:54:00+01:00" data-updated="true" itemprop="datePublished">Oct 26<span>th</span>, 2014</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/akka-dot-net/'>akka.net</a>, <a class='category' href='/blog/categories/ddd/'>ddd</a>, <a class='category' href='/blog/categories/fsharp/'>fsharp</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2014/10/26/akka-fsharp-ddd/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/10/26/akka-fsharp-ddd/" itemprop="url">Hipsterize Your Backend for the Greather Good With Akka.NET, F# and Some DDD Flavor</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Initially this post was supposed to cover concepts of implementing an example DDD (Domain Driven Design) architecture using F# and Akka.NET. But the more I&rsquo;ve written, the more I&rsquo;ve realized that whole idea won&rsquo;t fit into a single blog post. Therefore I&rsquo;ve decided for now to focus on some basic example covering command/event handlers. To make this more interesting I want to show how Akka.NET and F# features can be used to leverage design established this way.</p>
+
+<h3>Before we begin&hellip;</h3>
+
+<p>I want to notice, that all examples in this post are made mostly to learning purposes. There are some things missing, but I&rsquo;ve decided to leave them since they don&rsquo;t have direct impact on the overall design or current state of the application. If I will continue this thread, I will probably try to extend them and provide some more meaningful context. So please don&rsquo;t treat this code as a real-life reference of DDD implementation.</p>
+
+<p>What is clearly missing in example below? I didn&rsquo;t describe aggregate roots, because boundary context is very simplistic &ndash; to make this post clearer I&rsquo;ve focused more on command-handler-event pattern. Sample doesn&rsquo;t enforce any specific database, using simple dictionary as abstraction. Also it doesn&rsquo;t provide any form of data validation or bindings to existing HTTP server frameworks. They are outside of scope of this post but are very simple to integrate.</p>
+
+<h4>Step 1: Define our domain data structures</h4>
+
+<p>Lets start with domain model. As a boundary context I&rsquo;ve chosen one of the most generic ones &ndash; user account&rsquo;s space. Our simplified business logic in this example will cover two actions &ndash; user registration and sign in. Users will be identified by their email and will use the most basic security features.</p>
+
+<p>But before we move there, lets use some of the features, F# could give us, to shape a type system for our advantage.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">Email</span> <span class="o">=</span> <span class="kt">string</span>
+</span><span class='line'><span class="k">type</span> <span class="nc">PasswordHash</span> <span class="o">=</span> <span class="kt">byte</span> <span class="kt">array</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These are examples of type aliases. You may consider using them, if you&rsquo;ve found that usage of some primitive type in given context may be defined as subtype/supertype relation. In this example Email can be considered as a specialization of string &ndash; that means, each email is string, but not each string is a valid email. This kind of granularity can be stretched quite far. Just think about any primary/foreign key field in any entity as it&rsquo;s own unique type. This will automatically disallow mistakes such as assigning keys from entities of incompatible type eg. assigning <code>UserId</code> value to <code>ProductId</code> field! F# expressiveness promotes this behavior.</p>
+
+<p>Now use these types to define our User entity. It&rsquo;s very straightforward:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">User</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">{</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span>
+</span><span class='line'>      <span class="n">phash</span> <span class="o">:</span> <span class="nc">PasswordHash</span>
+</span><span class='line'>      <span class="n">salt</span>  <span class="o">:</span> <span class="kt">byte</span> <span class="kt">array</span> <span class="o">}</span>
+</span><span class='line'>    <span class="k">static</span> <span class="k">member</span> <span class="n">empty</span> <span class="o">=</span>  <span class="o">{</span> <span class="n">email</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">;</span> <span class="n">phash</span> <span class="o">=</span> <span class="o">[||];</span> <span class="n">salt</span> <span class="o">=</span> <span class="o">[||]</span> <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next I&rsquo;m going to describe data models for our domain commands and events. It&rsquo;s important to understand purpose of both. Commands are produced to describe tasks to be executed by the system and contains all data necessary to perform it. Events are describing diffs in general application state as a results of performed tasks. What is wort mentioning, events should be described in way, that will allow us to recreate current application state by replaying all events timeline stream. And because events describe changes, that already occurred, they should be immutable by nature &ndash; don&rsquo;t try to change your past if you not wish to mess with your future.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">UserCommand</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">RegisterUser</span> <span class="k">of</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">password</span> <span class="o">:</span> <span class="kt">string</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">LoginUser</span> <span class="k">of</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">password</span> <span class="o">:</span> <span class="kt">string</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>NOTE: If you want to use F# records to describe your commands/events, that&rsquo;s perfectly fine. I&rsquo;ve chosen discriminated unions for their expressiveness.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">UserEvent</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">UserRegistered</span> <span class="k">of</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">salt</span><span class="o">:</span> <span class="kt">byte</span> <span class="kt">array</span> <span class="o">*</span> <span class="n">phash</span> <span class="o">:</span> <span class="kt">byte</span> <span class="kt">array</span> <span class="o">*</span> <span class="n">timestamp</span> <span class="o">:</span> <span class="nc">DateTime</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">UserLogged</span> <span class="k">of</span> <span class="n">email</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">timestamp</span> <span class="o">:</span> <span class="nc">DateTime</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see there are few things worth of emphasizing:</p>
+
+<ul>
+<li>We didn&rsquo;t store user password provided directly from command, using salt + password hash instead. Reason behind is that in DDD events usually could be serialized and stored in some kind of event database. Therefore it&rsquo;s not secure to provide them any sensitive data. However events should contain enough information to give us ability to recreate current database state based on provided stream of events, assuming that it&rsquo;s complete.</li>
+<li>Each of our event&rsquo;s contain a timestamp field. Events give us a historical change set of the application. And because they contain only diffs between database states rather than snapshot of entities, they have to be ordered by their creation date. Without it we couldn&rsquo;t recreate them.</li>
+</ul>
+
+
+<p>What other fields may be useful when working with events? Consider attaching current API version number &ndash; this will allow you to endure breaking changes in your code responsible for handling events. Other handy field is unique event id, when you may need functionality associated with generating cascading event chains in response to some other events. In that case having some kind of pointer to originating event may be useful.</p>
+
+<h3>Step 2: describe application behavior in functional manner</h3>
+
+<p>This may be a little controversial statement, but I must say it &ndash; exceptions are bad. They leaves the leaks in your type system and fucks with your application logic flow in the way, that many programmers and almost all compilers cannot understand.</p>
+
+<p>The alternative conception of error handling is old and well-known. It&rsquo;s based on returning error codes. To start with &ndash; if you already know <a href="http://www.rust-lang.org/">Rust</a>, this may look familiar to you:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">Result</span><span class="o">&lt;</span><span class="k">&#39;</span><span class="n">ok</span><span class="o">,</span> <span class="k">&#39;</span><span class="n">err</span><span class="o">&gt;</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Ok</span> <span class="k">of</span> <span class="k">&#39;</span><span class="n">ok</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Error</span> <span class="k">of</span> <span class="k">&#39;</span><span class="n">err</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You may ask: why the hell do we return error values instead of just throwing exceptions? Are these some archaeological excavations and we&rsquo;re gone back to the C era? Actually no. There is very good reason behind this.</p>
+
+<p>Think about exceptions as a side effects of the application state behavior. You cannot be 100% sure about flow of your application process. Since information about exceptions is not part of any function/method signature, they actually act as a dynamically typed cascading return values anyway &ndash; both compiler and programmers will ignore them until they will occur at runtime.</p>
+
+<p>This time instead of cryptic error codes returned by C, we use F# power to provide type-safe and expressive way for this solution. If you&rsquo;re interested more about interesting ways to utilize return-based error handling using higher-level concepts, I recommend you <a href="http://fsharpforfunandprofit.com/posts/recipe-part2/">Railway Oriented Programming</a> blogpost and video presented on NDC Oslo 2014. Here, I&rsquo;ll use a greatly simplified version, exposing operator which chain two input functions together and call second one only if result from the first was <code>Ok</code>, and forwarding an <code>Error</code> result otherwise:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="o">(&gt;=&gt;)</span> <span class="n">f1</span> <span class="n">f2</span> <span class="n">arg</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">match</span> <span class="n">f1</span> <span class="n">arg</span> <span class="k">with</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Ok</span> <span class="n">data</span> <span class="o">-&gt;</span> <span class="n">f2</span> <span class="n">data</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Error</span> <span class="n">e</span> <span class="o">-&gt;</span> <span class="nc">Error</span> <span class="n">e</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&rsquo;ve also decided to use more discriminated unions to describe each specific business logic error in actual bounded context scope. I&rsquo;ve found that returning a string-based messages back to programmers in error logs are not better in any way than creating a specialized error type for each case. The only disadvantage is amount of code you need to write, to declare new type, but again &ndash; it&rsquo;s not a problem with F#.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">type</span> <span class="nc">UserError</span> <span class="o">=</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">UserAlreadyExists</span> <span class="k">of</span> <span class="n">userEmail</span> <span class="o">:</span> <span class="nc">Email</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">UserNotFound</span> <span class="k">of</span> <span class="n">userEmail</span> <span class="o">:</span> <span class="nc">Email</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">WrongPassword</span> <span class="k">of</span> <span class="n">userEmail</span> <span class="o">:</span> <span class="nc">Email</span> <span class="o">*</span> <span class="n">hashedInput</span> <span class="o">:</span> <span class="nc">PasswordHash</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Step 3: handle user registration</h3>
+
+<p>How does F# command handling differs from it&rsquo;s more objective oriented counterpart? Since we deal with functional oriented language, most of our logic is composed into functions instead of objects. You&rsquo;ve used to execute your logic with services, here you&rsquo;ve got a function. Wanna some Dependency Injection? Here, you have some currying.</p>
+
+<p>I&rsquo;ll describe our service as <code>handle</code> function which takes some <code>UserCommand</code> as an input and produces <code>Result&lt;UserEvent, UserError&gt;</code> as output:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">handle</span> <span class="n">clock</span> <span class="n">findUser</span> <span class="n">saveUser</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="n">password</span><span class="o">)</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="k">match</span> <span class="n">findUser</span> <span class="n">email</span> <span class="k">with</span>
+</span><span class='line'>        <span class="o">|</span> <span class="nc">Some</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="nc">UserAlreadyExists</span> <span class="n">email</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">|</span> <span class="nc">None</span> <span class="o">-&gt;</span>
+</span><span class='line'>            <span class="k">let</span> <span class="n">salt</span><span class="o">,</span> <span class="n">phash</span> <span class="o">=</span> <span class="n">defaultGeneratePassword</span> <span class="n">password</span>
+</span><span class='line'>            <span class="k">let</span> <span class="n">user</span> <span class="o">=</span>
+</span><span class='line'>                <span class="o">{</span> <span class="n">email</span> <span class="o">=</span> <span class="n">email</span>
+</span><span class='line'>                  <span class="n">salt</span> <span class="o">=</span> <span class="n">salt</span>
+</span><span class='line'>                  <span class="n">phash</span> <span class="o">=</span> <span class="n">phash</span> <span class="o">}</span>
+</span><span class='line'>            <span class="n">saveUser</span> <span class="n">user</span>
+</span><span class='line'>            <span class="nc">Ok</span> <span class="o">(</span><span class="nc">UserRegistered</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="n">salt</span><span class="o">,</span> <span class="n">phash</span><span class="o">,</span> <span class="n">clock</span><span class="bp">()</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you&rsquo;ve seen, this function actually takes 4 parameters (clock, findUser, saveUser and command as implicit argument of calling <strong>function</strong> keyword). But as I&rsquo;ve said, our handle function should take only one input argument. That&rsquo;s because we&rsquo;ll provide three first arguments through partial function application later &ndash; now you can think about them as constructor arguments injected by your IoC container when resolving new service.</p>
+
+<p>While most of the parameters are quite understandable, one of them may be confusing &ndash; the <code>clock</code> parameter. It&rsquo;s only functionality is to provide current DateTime value. If so, why didn&rsquo;t I just used <code>DateTime.Now</code> directly inside the code? In this example it&rsquo;s actually not so important, but I&rsquo;ve used it to expose simple problem &ndash; things such as date/configuration/environment providers or random number generators could make our handler behavior non-deterministic. That means, if we call this function two times with the same input, we couldn&rsquo;t count on the same output. It&rsquo;s actually problem for logic predictability and in some cases is especially cumbersome when writing tests to verify application behavior. Therefore I think that it&rsquo;s better to separate them as injectable arguments.</p>
+
+<h4>Password hashing and generation</h4>
+
+<p>While you may find some good libraries providing real life hashing features out of hand, I&rsquo;ve decided to leave my example free on unnecessary dependencies and use a standard library instead.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="k">private</span> <span class="n">saltWith</span> <span class="n">salt</span> <span class="o">(</span><span class="n">p</span> <span class="o">:</span> <span class="kt">string</span><span class="o">)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">passBytes</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="nn">Text</span><span class="p">.</span><span class="nn">Encoding</span><span class="p">.</span><span class="nn">UTF8</span><span class="p">.</span><span class="nc">GetBytes</span> <span class="n">p</span>
+</span><span class='line'>    <span class="nn">Array</span><span class="p">.</span><span class="n">append</span> <span class="n">passBytes</span> <span class="n">salt</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">sha512</span> <span class="o">(</span><span class="n">bytes</span> <span class="o">:</span> <span class="kt">byte</span> <span class="kt">array</span><span class="o">)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">use</span> <span class="n">sha</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="nn">Security</span><span class="p">.</span><span class="nn">Cryptography</span><span class="p">.</span><span class="nn">SHA512</span><span class="p">.</span><span class="nc">Create</span><span class="bp">()</span>
+</span><span class='line'>    <span class="n">sha</span><span class="o">.</span><span class="nc">ComputeHash</span> <span class="n">bytes</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">hashPassword</span> <span class="n">hashFn</span> <span class="n">salt</span> <span class="n">password</span> <span class="o">=</span> <span class="n">hashFn</span> <span class="o">(</span><span class="n">saltWith</span> <span class="n">salt</span> <span class="n">password</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">generatePassword</span> <span class="n">hashFn</span> <span class="n">saltSize</span> <span class="n">password</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">use</span> <span class="n">saltGen</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="nn">Security</span><span class="p">.</span><span class="nn">Cryptography</span><span class="p">.</span><span class="nn">RandomNumberGenerator</span><span class="p">.</span><span class="nc">Create</span><span class="bp">()</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">salt</span> <span class="o">=</span> <span class="nn">Array</span><span class="p">.</span><span class="n">zeroCreate</span> <span class="n">saltSize</span>
+</span><span class='line'>    <span class="n">saltGen</span><span class="o">.</span><span class="nc">GetBytes</span> <span class="n">salt</span>
+</span><span class='line'>    <span class="o">(</span><span class="n">salt</span><span class="o">,</span> <span class="n">hashPassword</span> <span class="n">hashFn</span> <span class="n">salt</span> <span class="n">password</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">defaultGeneratePassword</span> <span class="n">pass</span> <span class="o">=</span> <span class="n">generatePassword</span> <span class="n">sha512</span> <span class="mi">64</span> <span class="n">pass</span>
+</span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">defaultHashPassword</span> <span class="n">salt</span> <span class="n">pass</span> <span class="o">=</span> <span class="n">hashPassword</span> <span class="n">sha512</span> <span class="n">salt</span> <span class="n">pass</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I hope this code doesn&rsquo;t need any explanations.</p>
+
+<h3>Step 4: handle user logging</h3>
+
+<p>Once we already described nuances of the function-based services, this one shouldn&rsquo;t be a problem. This case was created to give our example more diversity.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">handle</span> <span class="n">clock</span> <span class="n">findUser</span> <span class="n">saveUser</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="n">password</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">...</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">LoginUser</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="n">password</span><span class="o">,</span> <span class="n">remember</span><span class="o">)</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="k">match</span> <span class="n">findUser</span> <span class="n">email</span> <span class="k">with</span>
+</span><span class='line'>        <span class="o">|</span> <span class="nc">None</span> <span class="o">-&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="nc">UserNotFound</span> <span class="n">email</span><span class="o">)</span>
+</span><span class='line'>        <span class="o">|</span> <span class="nc">Some</span> <span class="n">user</span> <span class="o">-&gt;</span>
+</span><span class='line'>            <span class="k">let</span> <span class="n">computedPasswordHash</span> <span class="o">=</span> <span class="n">defaultHashPassword</span> <span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">salt</span><span class="o">)</span> <span class="n">password</span>
+</span><span class='line'>            <span class="k">if</span> <span class="n">computedPasswordHash</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">phash</span> <span class="k">then</span>
+</span><span class='line'>                <span class="nc">Ok</span> <span class="o">(</span><span class="nc">UserLogged</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="o">,</span> <span class="n">clock</span><span class="bp">()</span><span class="o">))</span>
+</span><span class='line'>            <span class="k">else</span> <span class="nc">Error</span><span class="o">(</span><span class="nc">WrongPassword</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="o">,</span> <span class="n">computedPasswordHash</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Step 5: bind your business logic to Akka.NET</h3>
+
+<p>If you&rsquo;re interested in integrating Akka.NET with your F# logic, I can recommend you more posts in this blog written earlier this year. Therefore I assume, that you&rsquo;re aware how F# actors based on recursive loops work. Because loop creation is often a generic behavior, again I&rsquo;ll expose it in form of function wrapper.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">actAs</span> <span class="n">fn</span> <span class="o">(</span><span class="n">mailbox</span> <span class="o">:</span> <span class="nc">Actor</span><span class="o">&lt;</span><span class="k">&#39;</span><span class="n">a</span><span class="o">&gt;)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="k">rec</span> <span class="n">loop&#39;</span><span class="bp">()</span> <span class="o">=</span>
+</span><span class='line'>        <span class="n">actor</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
+</span><span class='line'>            <span class="n">fn</span> <span class="n">msg</span>
+</span><span class='line'>            <span class="k">return</span><span class="o">!</span> <span class="n">loop&#39;</span><span class="bp">()</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="n">loop&#39;</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>NOTE: At the present moment Akka.NET API for F# language is still lacks some features. This post applies mostly to API in version 0.7 of the framework, so you may expect some changes in the future.</p>
+
+<h4>Mock database access</h4>
+
+<p>As I&rsquo;ve said in the introduction, I won&rsquo;t use any real-life database provider, mocking it with concurrent dictionary instead. However if you want to use a normal database, nothing stands in your way.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">userStore</span> <span class="o">=</span> <span class="nc">ConcurrentDictionary</span><span class="bp">()</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">flip</span> <span class="n">f</span> <span class="n">x</span> <span class="n">y</span> <span class="o">=</span> <span class="n">f</span> <span class="n">y</span> <span class="n">x</span>
+</span><span class='line'><span class="k">let</span> <span class="n">findInUserStore</span> <span class="n">email</span> <span class="o">(</span><span class="n">store</span> <span class="o">:</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span> <span class="nc">User</span><span class="o">&gt;)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="k">mutable</span> <span class="n">user</span> <span class="o">:</span> <span class="nc">User</span> <span class="o">=</span> <span class="nn">User</span><span class="p">.</span><span class="n">empty</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">store</span><span class="o">.</span><span class="nc">TryGetValue</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">user</span><span class="o">)</span> <span class="k">then</span> <span class="nc">Some</span> <span class="n">user</span>
+</span><span class='line'>    <span class="k">else</span> <span class="nc">None</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">saveInUserStore</span> <span class="n">user</span> <span class="o">(</span><span class="n">store</span> <span class="o">:</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span> <span class="nc">User</span><span class="o">&gt;)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">store</span><span class="o">.</span><span class="nc">AddOrUpdate</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="o">,</span> <span class="n">user</span><span class="o">,</span> <span class="nn">System</span><span class="p">.</span><span class="nc">Func</span><span class="o">&lt;_,</span> <span class="o">_,</span> <span class="o">_&gt;(</span><span class="k">fun</span> <span class="n">key</span> <span class="n">old</span> <span class="o">-&gt;</span> <span class="n">user</span><span class="o">))</span> <span class="o">|&gt;</span> <span class="n">ignore</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>F# is heavily function-oriented and this also corresponds to arguments precedence. While in OOP subject (<strong>this</strong>) usually precedes method invocation, in functional languages it&rsquo;s better to use it as last argument of the function. Argumentation for this is currying and partial function application, which allows us to define functions with only part of all necessary arguments provided. The more specific argument, the later it could be applied. Therefore common convention is to provide more detailed parameters at the end of the function parameters list. It&rsquo;s a very useful feature, especially when combined with pipeline operators.</p>
+
+<p>On the other side <code>flip</code> function may be used to reverse parameters precedence in case when, for example, we want to partially apply second argument to the function without providing first one (because it may be yet unknown in this moment). This option will be presented later.</p>
+
+<h4>Handle event subscribers</h4>
+
+<p>One of the nice things in Akka is that it provides a Publish/Subscribe pattern offhand. As an actor-based framework, the only necessary task to do is to subscribe an <code>ActorRef</code> of desired observer directly to Akka system&rsquo;s event stream.</p>
+
+<p>As a lazy person I don&rsquo;t want to be forced to explicitly create new actor each time I want to subscribe some behavior to react for events I&rsquo;ve produced somewhere else. Therefore I&rsquo;ve created simple subscribe helper, which will handle subscriber actor creation for me.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="c1">// automatic unique concurrent name generator</span>
+</span><span class='line'><span class="k">let</span> <span class="k">mutable</span> <span class="n">subscriptionNr</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">getSubNr</span><span class="bp">()</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="nn">Threading</span><span class="p">.</span><span class="nn">Interlocked</span><span class="p">.</span><span class="nc">Increment</span><span class="o">(&amp;</span><span class="n">subscriptionNr</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">subscribe</span> <span class="n">system</span> <span class="o">(</span><span class="n">fn</span> <span class="o">:</span> <span class="k">&#39;</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">unit</span><span class="o">)</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">subId</span> <span class="o">=</span> <span class="n">getSubNr</span><span class="bp">()</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">subscriber</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="o">(</span><span class="s2">&quot;subscriber-&quot;</span> <span class="o">+</span> <span class="o">(</span><span class="kt">string</span> <span class="n">subId</span><span class="o">))</span> <span class="o">&lt;|</span> <span class="n">actAs</span> <span class="n">fn</span>
+</span><span class='line'>    <span class="n">system</span><span class="o">.</span><span class="nn">EventStream</span><span class="p">.</span><span class="nc">Subscribe</span><span class="o">(</span><span class="n">subscriber</span><span class="o">,</span> <span class="n">typeof</span><span class="o">&lt;</span><span class="k">&#39;</span><span class="n">a</span><span class="o">&gt;)</span> <span class="o">|&gt;</span> <span class="n">ignore</span>
+</span><span class='line'>    <span class="n">subscriber</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">publish</span> <span class="o">(</span><span class="n">bus</span> <span class="o">:</span> <span class="nn">Akka</span><span class="p">.</span><span class="nn">Event</span><span class="p">.</span><span class="nc">EventStream</span><span class="o">)</span> <span class="n">evt</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">bus</span><span class="o">.</span><span class="nc">Publish</span> <span class="n">evt</span>
+</span><span class='line'>    <span class="nc">Ok</span> <span class="n">evt</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Bind everything together</h3>
+
+<p>Now when all logic has been defined, it&rsquo;s time to show it in some example code. It will initialize a new Akka system, setup console logging and show features of successful and unsuccessful registering and signing in of the user.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">defaultClock</span><span class="bp">()</span> <span class="o">=</span> <span class="nn">DateTime</span><span class="p">.</span><span class="nc">Now</span>
+</span><span class='line'><span class="c1">// display any errors returned by command handler</span>
+</span><span class='line'><span class="k">let</span> <span class="n">handleErrors</span> <span class="o">=</span> <span class="k">function</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Ok</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="bp">()</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nc">Error</span> <span class="n">data</span> <span class="o">-&gt;</span> <span class="n">printf</span> <span class="s2">&quot;User error: %A</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="n">data</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;system&quot;</span> <span class="o">&lt;|</span> <span class="nn">Akka</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">ConfigurationFactory</span><span class="p">.</span><span class="nc">Default</span><span class="bp">()</span>
+</span><span class='line'><span class="k">let</span> <span class="n">userHandler</span> <span class="o">=</span>
+</span><span class='line'>  <span class="c1">// inject &quot;dependencies&quot; into handle function</span>
+</span><span class='line'>    <span class="n">handle</span>
+</span><span class='line'>    <span class="o">&lt;|</span> <span class="n">defaultClock</span>
+</span><span class='line'>    <span class="o">&lt;|</span> <span class="n">flip</span> <span class="n">findInUserStore</span> <span class="n">userStore</span>
+</span><span class='line'>    <span class="o">&lt;|</span> <span class="n">flip</span> <span class="n">saveInUserStore</span> <span class="n">userStore</span>
+</span><span class='line'><span class="k">let</span> <span class="n">subscriber</span> <span class="o">=</span> <span class="n">subscribe</span> <span class="n">system</span> <span class="o">&lt;|</span> <span class="n">printf</span> <span class="s2">&quot;User event: %A</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">let</span> <span class="n">userActor</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;users&quot;</span> <span class="o">&lt;|</span> <span class="n">actAs</span> <span class="o">(</span><span class="n">userHandler</span> <span class="o">&gt;=&gt;</span> <span class="o">(</span><span class="n">publish</span> <span class="n">system</span><span class="o">.</span><span class="nc">EventStream</span><span class="o">)</span> <span class="o">&gt;&gt;</span> <span class="n">handleErrors</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>  <span class="c1">// UserAlreadyExists error</span>
+</span><span class='line'><span class="nn">System</span><span class="p">.</span><span class="nn">Threading</span><span class="p">.</span><span class="nn">Thread</span><span class="p">.</span><span class="nc">Sleep</span> <span class="mi">100</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">LoginUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">LoginUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;fails&quot;</span><span class="o">)</span>     <span class="c1">// WrongPassword error</span>
+</span><span class='line'>
+</span><span class='line'><span class="nn">System</span><span class="p">.</span><span class="nn">Threading</span><span class="p">.</span><span class="nn">Thread</span><span class="p">.</span><span class="nc">Sleep</span> <span class="mi">100</span>
+</span><span class='line'><span class="n">system</span><span class="o">.</span><span class="nc">Shutdown</span><span class="bp">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&rsquo;s all. Whole example took about 130 lines of F# code to create. I hope this would give you some insights about embedding your business logic into F# function composition model.</p>
+
+<p>PS: If you&rsquo;re interested in more details about DDD and F# programming, at the present moment I can recommend you following other exploring lecture of the other developers, such as Lev Gorodinski (<a href="https://twitter.com/eulerfx">@eulerfx</a>) and his blog for more advanced concepts.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -257,7 +672,7 @@
 <ul>
 <li><strong>Executable code pointer</strong> &ndash; in order to execute the program, a VM has to now what program it is ;) Our bytecode contains opcodes (which are integers used to define instructions to be executed by an interpreter) and numbers used for things such as constant values, memory addresses or stack offsets.</li>
 <li><strong>Stack</strong> &ndash; virtual stack will work as fragment of memory used for storing intermediate results and additional data of each instruction. When a procedure call will be invoked, it will also save a state of the program at moment, when procedure has been called, to retrieve it back after program will return from that call.</li>
-<li><strong>Heap</strong> &ndash; unlike the stack, which uses LIFO (Last-In First-Out) operations, heap may be used as random access memory. It also may change it&rsquo;s size according to program needs. In this example we may use it to store both global and local variables.</li>
+<li><strong>Local data</strong> &ndash; unlike the stack, which uses LIFO (Last-In First-Out) operations, local data may be used as random access memory. It also may change it&rsquo;s size according to program needs. In this example we may use it to store both global and local variables.</li>
 <li><strong>Program counter</strong> &ndash; it contains an address of currently executed instruction. Program will be executed by moving PC through instruction set, reading opcodes and executing them.</li>
 <li><strong>Stack pointer</strong> &ndash; it contains information about number of elements stored on the stack. It always points on the top of it.</li>
 <li><strong>Frame pointer</strong> &ndash; since we need to differentiate a locally and globally scoped values (this includes function arguments), we need to know where our scope is located on the stack. All local variables are assigned relatively to FP position.</li>
@@ -299,7 +714,7 @@
 </span><span class='line'><span class="cp">#define STACK_SIZE 100</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">heap</span><span class="p">;</span>      <span class="c1">// heap</span>
+</span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">locals</span><span class="p">;</span>    <span class="c1">// local scoped data</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">code</span><span class="p">;</span>      <span class="c1">// array od byte codes to be executed</span>
 </span><span class='line'>    <span class="kt">int</span><span class="o">*</span> <span class="n">stack</span><span class="p">;</span>     <span class="c1">// virtual stack</span>
 </span><span class='line'>    <span class="kt">int</span> <span class="n">pc</span><span class="p">;</span>         <span class="c1">// program counter (aka. IP - instruction pointer)</span>
@@ -309,20 +724,20 @@
 </span><span class='line'>
 </span><span class='line'><span class="n">VM</span><span class="o">*</span> <span class="nf">newVM</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span> <span class="n">code</span><span class="p">,</span>    <span class="c1">// pointer to table containing a bytecode to be executed</span>
 </span><span class='line'>    <span class="kt">int</span> <span class="n">pc</span><span class="p">,</span>             <span class="c1">// address of instruction to be invoked as first one - entrypoint/main func</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">datasize</span><span class="p">){</span>      <span class="c1">// total heap size required to perform a program operations</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">datasize</span><span class="p">){</span>      <span class="c1">// total locals size required to perform a program operations</span>
 </span><span class='line'>    <span class="n">VM</span><span class="o">*</span> <span class="n">vm</span> <span class="o">=</span> <span class="p">(</span><span class="n">VM</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">VM</span><span class="p">));</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">pc</span> <span class="o">=</span> <span class="n">pc</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">sp</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">datasize</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">datasize</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">stack</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="n">STACK_SIZE</span><span class="p">);</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="k">return</span> <span class="n">vm</span><span class="p">;</span>
 </span><span class='line'><span class="p">}</span>
 </span><span class='line'>
 </span><span class='line'><span class="kt">void</span> <span class="nf">delVM</span><span class="p">(</span><span class="n">VM</span><span class="o">*</span> <span class="n">vm</span><span class="p">){</span>
-</span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">stack</span><span class="p">);</span>
 </span><span class='line'>    <span class="n">free</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
 </span><span class='line'><span class="p">}</span>
@@ -529,11 +944,11 @@
 
 <p>Again, <code>JUMPF</code> (conditional jump if false) implementation should be analogous to <code>JMPT</code>.</p>
 
-<h3>Move memory on the heap globally</h3>
+<h3>Move memory globally</h3>
 
 <p>Now, when all basic constructs are defined, we shall provide a way to define a variables in our program. This paragraph will cover problem of globally-scoped ones, while the next one will show how to implement locally-scoped variables.</p>
 
-<p>Unlike stack, a heap is a random access memory of elastic size, so all in/out operations performed on it using memory addresses (aka. pointers). Therefore in our example all load/store opcodes should be followed by number being an address pointer to the heap.</p>
+<p>Unlike stack, a local data is a random access memory of elastic size, so all in/out operations performed on it using memory addresses (aka. pointers). Therefore in our example all load/store opcodes should be followed by number being an address pointer to the local data.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -547,20 +962,20 @@
 <span class='line-number'>10</span>
 </pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">case</span> <span class="n">GLOAD</span>:
 </span><span class='line'>    <span class="n">addr</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>             <span class="c1">// get pointer address from code ...</span>
-</span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">addr</span><span class="p">];</span>         <span class="c1">// ... load value from memory of the provided addres ...</span>
+</span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">addr</span><span class="p">];</span>         <span class="c1">// ... load value from memory of the provided addres ...</span>
 </span><span class='line'>    <span class="n">PUSH</span><span class="p">(</span><span class="n">vm</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>                <span class="c1">// ... and put that value on top of the stack</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span><span class='line'><span class="k">case</span> <span class="n">GSTORE</span>:
 </span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>                <span class="c1">// get value from top of the stack ...</span>
 </span><span class='line'>    <span class="n">addr</span> <span class="o">=</span> <span class="n">NCODE</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>           <span class="c1">// ... get pointer address from code ...</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>         <span class="c1">// ... and store value at address received</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>         <span class="c1">// ... and store value at address received</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
 <h3>Manipulate local scope memory</h3>
 
-<p>This is similar to previously defined <code>GLOAD</code> and <code>GSTORE</code> instruction. However there is a one significant difference &ndash; instead of taking an heap address directly from provided value, we compute it relatively to current frame pointer.</p>
+<p>This is similar to previously defined <code>GLOAD</code> and <code>GSTORE</code> instruction. However there is a one significant difference &ndash; instead of taking an locals address directly from provided value, we compute it relatively to current frame pointer.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -578,7 +993,7 @@
 </span><span class='line'><span class="k">case</span> <span class="n">STORE</span>:                 <span class="c1">// store local value or function arg</span>
 </span><span class='line'>    <span class="n">v</span> <span class="o">=</span> <span class="n">POP</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>            <span class="c1">// get value from top of the stack ...</span>
 </span><span class='line'>    <span class="n">offset</span> <span class="o">=</span> <span class="n">NCODE</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>     <span class="c1">// ... get the relative pointer address from code ...</span>
-</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">heap</span><span class="p">[</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span><span class="o">+</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>  <span class="c1">// ... and store value at address received relatively to frame pointer</span>
+</span><span class='line'>    <span class="n">vm</span><span class="o">-&gt;</span><span class="n">locals</span><span class="p">[</span><span class="n">vm</span><span class="o">-&gt;</span><span class="n">fp</span><span class="o">+</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>  <span class="c1">// ... and store value at address received relatively to frame pointer</span>
 </span><span class='line'>    <span class="k">break</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure>
 
@@ -721,7 +1136,7 @@
 </span><span class='line'><span class="c1">// initialize virtual machine</span>
 </span><span class='line'><span class="n">VM</span><span class="o">*</span> <span class="n">vm</span> <span class="o">=</span> <span class="n">newVM</span><span class="p">(</span><span class="n">program</span><span class="p">,</span>   <span class="c1">// program to execute</span>
 </span><span class='line'>                   <span class="mi">38</span><span class="p">,</span>    <span class="c1">// start address of main function</span>
-</span><span class='line'>                   <span class="mi">0</span><span class="p">);</span>    <span class="c1">// heap to be reserved, fib doesn&#39;t require heap</span>
+</span><span class='line'>                   <span class="mi">0</span><span class="p">);</span>    <span class="c1">// locals to be reserved, fib doesn&#39;t require them</span>
 </span><span class='line'><span class="n">run</span><span class="p">(</span><span class="n">vm</span><span class="p">);</span>
 </span></code></pre></td></tr></table></div></figure>
 
@@ -1544,147 +1959,6 @@
 <p>Postanowiłem, że wraz z pozostałymi zmianami zmienię nieco samą ideę bloga. O ile przeniosłem większość starych wpisów, o tyle <strong>chciałem aby wszystkie kolejne posty były umieszczane po angielsku</strong>. Jest to decyzja ze względów praktycznych &ndash; większość programistów (w tym ja), kiedy napotyka jakiś problem, nie traci czasu na informacji w polskiej blogosferze, zamiast tego od razu sięgając do anglojęzycznych źródeł. Dodatkowo jest to dla mnie pewnego rodzaju wyzwanie oraz szansa na popracowanie nad językiem. Co do pozostałych problemów (statystyki, komentarze, itp.), wiele rzeczy wciąż czeka na dokończenie i może minąć nieco czasu, żeby postawić wszystko na nogi.</p>
 
 <p>Podsumowując, witam na moim odświeżonym blogu w nowej formule.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-20T09:49:00+02:00" data-updated="true" itemprop="datePublished">Oct 20<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/asp/'>asp</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/10/20/o-pomykach-i-wnioskach-z-pracy-w-aspnet/" itemprop="url">O Pomyłkach I Wnioskach Z Pracy W ASP.NET MVC</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>O wzorcach projektowych w ASP.NET MVC słyszał chyba każdy. Większość z nas przynajmniej raz widziała jakiś filmik instruktażowy bądź wideokonferencję promującą stosowanie właściwych wzorców na tej platformie. Jednakże po opanowaniu teorii przychodzi wreszcie pora na to, aby wcielić ją w życie. Co się wtedy okazuje? Bardzo często wychodzi na jaw, że zastosowanie poznanych praktyk w prawdziwym życiu sprawia problem, a kolejne miesiące programowania w myśl jakiejś metodyki prowadzą do ostatecznej refleksji będącej zgubą programistów: <em>zrobię cokolwiek byle zadziałało</em>.</p>
-
-<p>W tym poście spróbuję opisać najczęstsze błędy, z którymi przyszło mi się zmierzyć &ndash; również te wynikające z ograniczeń technologii, ale przede wszystkim będące skutkiem niewłaściwego podejścia do problemu.</p>
-
-<h2>Twoja encja ≠ Twój model</h2>
-
-<p>Zasadniczym błędem (lub raczej skrótem myślowym) jest założenie, że każda klasa mapowana przez ORM na tabele może służyć jako model przekazywany bezpośrednio do widoku. Nie znaczy to, że jest to nie możliwe, jednak opcja ta jest z reguły nadużywana. Wynika to poniekąd ze stylu programowania wyuczonego z tutoriali z cyklu &ldquo;wyklep CRUDa w 5 min.&rdquo;. Piękne i proste, jednak nie mające wiele wspólnego z problemami dnia codziennego. Z drugiej strony jest to wina samego lenistwa programistów oraz przeświadczenia, że faza projektowania z rozpiską architektury chociażby na kartce papieru jest tylko dla kobiet i leszczy ;)</p>
-
-<p>Pytanie brzmi: kiedy należałoby porzucić modelowanie z encji na rzecz dedykowanych klas POCO? Prawda jest taka, że zależy to od przypadku i wymaga odrobiny doświadczenia.</p>
-
-<ul>
-<li>Jedną z podpowiedzi może być poziom zagłębienia zależności. Im jest on głębszy, tym bardziej wykorzystywana przez nas klasa odbiega strukturą od modelu wymaganego przez widok. Przykładowo już 2 poziom zagłębienia np. <code>Model.Products.SelectMany(p => p.Orders)</code> może świadczyć o tym, że dana encja nie jest właściwym kandydatem i powinna zostać zmapowana na dedykowaną do tego celu klasę.</li>
-<li>Innym przykładem może być sytuacja, w której nasz model wykazuje pewien związek z regułami biznesowymi. Przykładowo częstym sposobem reprezentacji okresu czasu powiązanego z danym obiektem jest dodanie do modelu dwóch pól określających granice czasowe. W tym momencie pojawia się jednak pewien dysonans między definicją biznesową (okres czasu jest pojedynczym obiektem) a rzeczywistą implementacją (okres czasu to dwa generyczne pola dat). Jeżeli logika biznesowa silnie bazuje na danej definicji np. przedział czasowy często pojawia się w kontekście wykonywanych operacji, wtedy możliwe, że lepiej byłoby wyodrębnić ją do osobnej klasy.</li>
-<li>Jak powszechnie wiadomo, we współczesnym świecie aplikacji WWW wymagania klientów są jednymi z najbardziej zmiennych elementów systemu. Możliwość oddzielenia modeli od encji wspiera ten trend, ponieważ o ile encje są powiązane ze schematem bazy danych (przez co są znacznie mniej podatne na zmiany ze względu na konieczność utrzymania spójności z istniejącymi danymi), o tyle modele wykorzystywane przez nas w aplikacji mogą być swobodnie modelowane do naszych potrzeb.</li>
-</ul>
-
-
-<h2>Twój ViewData = Twój Model</h2>
-
-<p>W przypadku niektórych frameworków model jest zdefiniowany w sposób jasny i jednoznaczny. W przypadku ASP.NET MVC nie jest jednak tak łatwo, ponieważ otrzymujemy tutaj więcej niż jeden sposób dostarczenia danych do widoku. Mowa tu oczywiście o ViewData. Wg. mnie obiekt ten, jakkolwiek przydatny, jest podstawowym złamaniem wzorca MVC w ASP.NET MVC. Dlaczego? Ponieważ &nbsp;prawda wygląda tak, że niezależnie od zdefiniowanych przez ciebie klas, prawdziwy model ma zawsze tylko jeden typ: <a href="http://msdn.microsoft.com/en-us/library/system.web.mvc.viewdatadictionary(v=vs.108">ViewDataDictionary</a>.aspx).</p>
-
-<p>Czy to źle? Niekoniecznie, zależy od przyjętego podejścia. Co z tego wynika? W przypadku modeli zwracanych przez formularze zazwyczaj przyjmuje się, że generyczny model powinien zawierać tylko te dane, które zostały wprowadzone przez użytkownika. Tzn. że informacje takie jak opcja wybrana przez użytkownika z listy powinna być częścią modelu podczas gdy sama lista dostępnych opcji powinna być przekazywana za pośrednictwem ViewBag/ViewData. Naturalnie w przypadku, gdy parsujemy model do postaci JSON przekazywanej do klienta, ta zasada nie dotyczy.</p>
-
-<h2>Nic nie znaczące Error Messages</h2>
-
-<p>Jednymi ze gorszych chwil w życiu programisty, są sytuacje, kiedy trzeba obsłużyć zgłoszenie o błędzie w aplikacji. Zdarza się, że zaglądamy wtedy do logów (o ile taką informację zalogowaliśmy ;) ), aby odnaleźć jakieś przydatne informacje, które pozwolą nam zidentyfikować naturę problemu. Jakże wielkie jest rozczarowanie, gdy jedynym hintem jaki wtedy otrzymujemy jest: <code>Object reference not set to an instance of an object.</code> Bardzo rzeczowa i jednoznaczna informacja wśród kilkuset linii kodu wymagających zbadania.</p>
-
-<p>Innym ciężkim przypadkiem jest logowanie niewystarczającej ilości informacji. Przykład (blok try-catch jest czysto poglądowy):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">try</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="p">...</span>
-</span><span class='line'>  <span class="kt">var</span> <span class="n">product</span> <span class="p">=</span> <span class="n">productRepository</span><span class="p">.</span><span class="n">GetById</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
-</span><span class='line'>  <span class="k">if</span><span class="p">(</span><span class="n">product</span><span class="p">.</span><span class="n">Status</span> <span class="p">!=</span> <span class="n">ProductStatus</span><span class="p">.</span><span class="n">Finished</span><span class="p">)</span>
-</span><span class='line'>      <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidStatusException</span><span class="p">(</span><span class="s">&quot;Provided product has invalid status&quot;</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">...</span>
-</span><span class='line'><span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="n">logger</span><span class="p">.</span><span class="n">Log</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">Message</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Co jest złego w tym przypadku? Wyobraźmy sobie, że dostajemy zgłoszenienie, o błędzie a w logach jedyną informacją jest: <code>Provided product has invalid status</code>. Czy wiemy o jakim statusie mowa? Czy wiemy o jaki produkt chodzi? Nie mamy żadnych informacji pozwalających zidentyfikować dany przypadek, mimo że wszystko co potrzebne mamy 2 linijki wyżej w kodzie źródłowym naszej aplikacji.</p>
-
-<p>Stąd mój apel: nie bądź leniwcem, minuta pracy teraz pozwoli ci zaoszczędzić godziny problemów później.</p>
-
-<h2>Too thin controllers, too fat services</h2>
-
-<p><em>Fat models, thin controllers</em> jest zwrotem często używanym w świecie MVC. Często jednak wynikiem utrzymania tej reguły jest zjawisko, które sam określam jako papierowe kontrolery. Weźmy na przykład następującą akcję MVC:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="na">[HttpPost]</span>
-</span><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">ToggleUserBan</span><span class="p">(</span><span class="kt">bool</span> <span class="n">activate</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="n">userService</span><span class="p">.</span><span class="n">ToggleUserBan</span><span class="p">(</span><span class="n">activate</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Na czym polega błąd? Prawdopodobnie metoda ToggleUserBan w serwisie jest przypadkiem zbyt szczegółowym. Daje to podstawy do przypuszczenia, że architektura aplikacji w którymś momencie się posypała. Zajrzyjmy więc do naszego hipotetycznego IUserService:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">interface</span> <span class="n">IUserService</span> <span class="p">{</span>
-</span><span class='line'>  <span class="k">void</span> <span class="nf">ToggleUserBan</span><span class="p">(</span><span class="kt">bool</span> <span class="n">flag</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetAllUsers</span><span class="p">();</span>
-</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetActiveUsers</span><span class="p">();</span>
-</span><span class='line'>  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetBannedUsers</span><span class="p">();</span>
-</span><span class='line'>  <span class="c1">// ...kolejne 70 metod</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do czynienia to nic innego, jak zwykłe zamiatanie brudu pod dywan. Pseudorozwiązanie polegające na przeniesieniu proceduralnego makaronu w miejsce, w które rzadziej się zagląda. Jest to częsty rezultat braku rewizji kodu i testów jednostkowych, oraz samowoli programistów.</p>
-
-<h2>Garść innych porad</h2>
-
-<ul>
-<li>unikaj static classes &ndash; utrudniają one modularyzację systemu i wprowadzają twarde powiązania, z których bardzo ciężko jest potem zrezygnować. Extension methods są w zasadzie jedynym zastosowaniem dla statycznych klas, dla jakich sam znajduję użytek.</li>
-<li>unikaj partial classes &ndash; dopuszczalne tylko w wypadku, gdy rozszerzasz klasę generowaną przez zewnętrzne narzędzia (co swoją drogą samo w sobie jest złym pomysłem ale o tym może kiedy indziej ;) )</li>
-<li>w przypadku zmiennych używaj nazw, które pozwalają określić ich typ i przeznaczenie &ndash; różnego rodzaju skróty oszczędzają dosłownie kilka sekund podczas pisania tylko po to, aby w przyszłości przedłużyć rozszyfrowywanie kodu przez kogoś innego o kilka minut. Pamiętaj, że w życiu programisty kod czyta się częściej niż pisze.</li>
-<li>podczas zwracania kolekcji zwracaj najmniejszy interface, który umożliwia wykonanie zadania &ndash; nie ma sensu wymagać aby argument był listą, jeżeli jedynym wykonywanym na nim działaniem jest foreach</li>
-<li>jeżeli zwracasz string lub kolekcje nigdy nie zwracaj nulli &ndash; zawsze używaj string.Empty lub Enumerable.Empty&lt;></li>
-<li>nie sprawdzaj czy enumerator jest pusty przy pomocy Count() &ndash; używaj Any(). W przypadkach kiedy potrzebujesz porównać ilość argumentów w enumeratorze z konkretną liczbą np. list.Count() > 3, warto zastanowić się nad użyciem wzorca <a href="http://twistedoakstudios.com/blog/Post4425_counting-iterators-lazily">LazyCounter</a></li>
-</ul>
-
 
 		
 		

@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Jan 7th, 2012 javascript, programowanie Comments [Javascript] Konwersja String - Liczba? Wydawać by się mogło, że to proste zagadnienie. Praktyka &hellip;">
+	<meta name="description" content="May 26th, 2012 .net, programowanie Comments LINQ - Sortowanie Po Nazwie Właściwości LINQ to potężne narzędzie, które odpowiednio używane, może &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,100 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-05-26T14:57:00+02:00" data-updated="true" itemprop="datePublished">May 26<span>th</span>, 2012</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2012/05/26/linq-sortowanie-po-nazwie-wasciwosci/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2012/05/26/linq-sortowanie-po-nazwie-wasciwosci/" itemprop="url">LINQ - Sortowanie Po Nazwie Właściwości</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>LINQ to potężne narzędzie, które odpowiednio używane, może zaoszczędzić wiele czasu w pracy z różnymi typami kolekcji czy podczas generowania zapytań. Czasami jednak okazuje się, że potrzebujemy nieco rozszerzyć jego możliwości. Jednym z takich przypadków może okazać się sortowanie.</p>
+
+<p>Owszem można powiedzieć, że w Linq dysponujemy metodami OrderBy oraz OrderByDescending, ale ograniczenie tych metod tkwi w fakcie, że wymagają przekazania parametru sortowania w postaci wyrażenia lamba. Co zrobić w momencie, gdy nie dysponujemy takim wyrażeniem (np. sortujemy według parametrów przekazanych po HTTP)?</p>
+
+<p>Rozwiązaniem takiego przypadku jest konstrukcja własnego rozszerzenia interfejsu IQueryable, które może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">OrderByName</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">data</span><span class="p">,</span> <span class="kt">string</span> <span class="n">propertyName</span><span class="p">,</span> <span class="kt">bool</span> <span class="k">descending</span> <span class="p">=</span> <span class="k">false</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">res</span> <span class="p">=</span> <span class="n">data</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">orderName</span> <span class="p">=</span> <span class="k">descending</span> <span class="p">?</span> <span class="s">&quot;OrderByDescending&quot;</span> <span class="p">:</span> <span class="s">&quot;OrderBy&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">typeSrc</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">parameter</span> <span class="p">=</span> <span class="n">Expression</span><span class="p">.</span><span class="n">Parameter</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="s">&quot;x&quot;</span><span class="p">);</span> <span class="c1">// (x)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">orderByProperty</span> <span class="p">=</span> <span class="n">Expression</span><span class="p">.</span><span class="n">Property</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">propertyName</span><span class="p">);</span>   <span class="c1">// (x.property)</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">typeDst</span> <span class="p">=</span> <span class="n">orderByProperty</span><span class="p">.</span><span class="n">Type</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">funcType</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;,&gt;).</span><span class="n">MakeGenericType</span><span class="p">(</span><span class="n">typeSrc</span><span class="p">,</span> <span class="n">typeDst</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">lambda</span> <span class="p">=</span> <span class="n">Expression</span><span class="p">.</span><span class="n">Lambda</span><span class="p">(</span><span class="n">funcType</span><span class="p">,</span> <span class="n">orderByProperty</span><span class="p">,</span> <span class="n">parameter</span><span class="p">);</span>   <span class="c1">// (x=&gt;x.property)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Queryable</span><span class="p">).</span><span class="n">GetMethods</span><span class="p">().</span><span class="n">First</span><span class="p">(</span><span class="n">m</span> <span class="p">=&gt;</span>
+</span><span class='line'>      <span class="n">m</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="n">orderName</span>
+</span><span class='line'>      <span class="c1">// musimy usunąć wersję OrderBy pobierającą element IComparer</span>
+</span><span class='line'>      <span class="p">&amp;&amp;</span> <span class="n">m</span><span class="p">.</span><span class="n">GetParameters</span><span class="p">().</span><span class="n">Length</span> <span class="p">==</span> <span class="m">2</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">.</span><span class="n">MakeGenericMethod</span><span class="p">(</span><span class="n">typeSrc</span><span class="p">,</span> <span class="n">typeDst</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">res</span> <span class="p">=</span> <span class="p">(</span><span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;)</span><span class="n">result</span><span class="p">.</span><span class="n">Invoke</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span> <span class="n">data</span><span class="p">,</span> <span class="n">lambda</span> <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Powyższy kod umożlwia sortowanie po właściwości przekazanej w postaci nazwy oraz jednocześnie ustawienie kierunku sortowania.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1542,146 +1636,6 @@ Zalety:</li>
 </pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">ControllerBuilder</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">SetControllerFactory</span><span class="p">(</span><span class="k">new</span> <span class="n">NinjectControllerFactory</span><span class="p">());</span>
 </span></code></pre></td></tr></table></div></figure>
 
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-07-13T15:47:00+02:00" data-updated="true" itemprop="datePublished">Jul 13<span>th</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/bazy-danych/'>bazy danych</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/07/13/mssql-date-range-na-tablicach/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/07/13/mssql-date-range-na-tablicach/" itemprop="url">[MSSQL] Date Range Na Tablicach Rekurencyjnych</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Ostatnimi czasy dostałem do napisania zadanie związane z koniecznością stworzenia zapytania SQL (na potrzeby projektu budowanego w MSSQL Server 2008), którego jedną z charakterystycznych cech była konieczność sprawdzenia warunku dla wszystkich dat z podanego zakresu. Z początku proste, zadanie to miało jednak kilka dodatkowych warunków:</p>
-
-<ol>
-<li>Nie wolno mi było tworzyć w systemie tablic pomocniczych (żadnych poleceń CREATE TABLE ani ALTER TABLE) &ndash; zapytanie miało być w domyśle wykorzystywane w wielu miejscach jednocześnie, a wcześniejsze stworzenie tablicy z danymi uznane było za nadmiarowość danych.</li>
-<li>Zapytanie miało zachowywać się właściwie, gdy jeden z parametrów (data końcowa) był NULLem &ndash; w takim przypadku pobieramy datę bieżącą.</li>
-<li>Zapytanie miało mieć parametr decydujący o tym, czy sprawdzane daty znajdują się w odstępach dziennych, tygodniowych czy miesięcznych.</li>
-<li>Całość miała być skonstruowana tak, aby zapytania można było użyć podczas generowania raportów RDL.</li>
-</ol>
-
-
-<p>Mając do tej pory małe doświadczenia z samym SQL-em zacząłem szybko zgłębiać temat. Ostatecznie powziąłem decyzję o wykorzystaniu ciekawego wynalazku &ndash; tablic rekurencyjnych. Ponieważ było to rozwiązanie dopuszczalne z punktu widzenia wymagań, postanowiłem stworzyć pomocniczą funkcję.</p>
-
-<p>Oto przykładowa implementacja rozwiązania:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">CREATE</span> <span class="k">FUNCTION</span> <span class="n">dbo</span><span class="p">.</span><span class="n">DateRange</span>
-</span><span class='line'><span class="p">(</span><span class="o">@</span><span class="n">start_date</span> <span class="n">datetime</span><span class="p">,</span>
-</span><span class='line'> <span class="o">@</span><span class="n">end_date</span> <span class="n">datetime</span><span class="p">,</span>
-</span><span class='line'> <span class="o">@</span><span class="n">unit</span> <span class="n">nvarchar</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
-</span><span class='line'><span class="k">RETURNS</span>
-</span><span class='line'> <span class="o">@</span><span class="n">Dates</span> <span class="k">TABLE</span><span class="p">(</span><span class="k">data</span> <span class="n">datetime</span><span class="p">)</span>
-</span><span class='line'><span class="k">AS</span>
-</span><span class='line'><span class="k">BEGIN</span>
-</span><span class='line'>  <span class="k">WITH</span> <span class="n">cte</span> <span class="k">AS</span>
-</span><span class='line'>  <span class="p">(</span>
-</span><span class='line'>      <span class="k">SELECT</span> <span class="mi">1</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="k">AS</span> <span class="k">data</span>
-</span><span class='line'>      <span class="k">UNION</span> <span class="k">ALL</span>
-</span><span class='line'>      <span class="k">SELECT</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="k">CASE</span> <span class="o">@</span><span class="n">unit</span>
-</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;day&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
-</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;week&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
-</span><span class='line'>      <span class="k">WHEN</span> <span class="s1">&#39;month&#39;</span> <span class="k">THEN</span> <span class="n">DATEADD</span><span class="p">(</span> <span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span>
-</span><span class='line'>      <span class="k">END</span>
-</span><span class='line'>      <span class="k">FROM</span> <span class="n">cte</span>
-</span><span class='line'>      <span class="k">WHERE</span>
-</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;day&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
-</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
-</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="k">day</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span> <span class="k">OR</span>
-</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;week&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
-</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
-</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="n">week</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span> <span class="k">OR</span>
-</span><span class='line'>      <span class="p">(</span><span class="o">@</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;month&#39;</span> <span class="k">AND</span> <span class="p">((</span><span class="o">@</span><span class="n">end_date</span> <span class="k">IS</span> <span class="k">NULL</span> <span class="k">AND</span>
-</span><span class='line'>      <span class="n">DATEADD</span><span class="p">(</span><span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GETDATE</span><span class="p">())</span> <span class="k">OR</span>
-</span><span class='line'>          <span class="p">(</span><span class="n">DATEADD</span><span class="p">(</span> <span class="k">month</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">@</span><span class="n">start_date</span> <span class="p">)</span> <span class="o">&lt;=</span> <span class="o">@</span><span class="n">end_date</span><span class="p">)))</span>
-</span><span class='line'>  <span class="p">)</span>
-</span><span class='line'>  <span class="k">INSERT</span> <span class="k">INTO</span> <span class="o">@</span><span class="n">Dates</span> <span class="p">(</span><span class="k">data</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">SELECT</span> <span class="k">data</span> <span class="k">FROM</span> <span class="n">cte</span>
-</span><span class='line'>  <span class="k">OPTION</span> <span class="p">(</span><span class="n">MAXRECURSION</span> <span class="mi">32000</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">RETURN</span><span class="p">;</span>
-</span><span class='line'><span class="k">END</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widać, funkcja przyjmuje 3 parametry:</p>
-
-<ul>
-<li>datę początkową &ndash; w przypadku funkcji jest wymagana, lecz w samym zapytaniu można ją dostosować do swoich potrzeb.</li>
-<li>datę końcową &ndash; możliwe jest tu podanie wartości NULL, dla takiego przypadku pobieramy bieżącą datę.</li>
-<li>jednostkę &ndash; mowa tutaj o typie jednostek w jakich mierzymy przedziały (codziennie, w tygodniach, w miesiącach)</li>
-</ul>
-
-
-<p>Przykładowe wywołanie funkcji:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">SELECT</span> <span class="k">data</span>
-</span><span class='line'><span class="k">FROM</span> <span class="n">dbo</span><span class="p">.</span><span class="n">DateRange</span><span class="p">(</span><span class="s1">&#39;2011-01-01&#39;</span><span class="p">,</span> <span class="k">NULL</span><span class="p">,</span> <span class="s1">&#39;month&#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Dodatkowo warto zwrócić uwagę na opcję określającą maksymalny poziom rekurencji w generowanej tabeli. Nie jest do element obowiązkowy, niemniej warto się w ten sposób zabezpieczyć.</p>
 
 		
 		
