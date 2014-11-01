@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-11-01T16:27:27+01:00</updated>
+  <updated>2014-11-01T16:30:23+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Hipsterize your backend for The Greather Good with Akka.NET, F# and some DDD flavor]]></title>
+    <title type="html"><![CDATA[Hipsterize your backend for The Greater Good with Akka.NET, F# and some DDD flavor]]></title>
     <link href="http://bartoszsypytkowski.com/blog/2014/10/26/akka-fsharp-ddd/"/>
     <updated>2014-10-26T22:54:00+01:00</updated>
     <id>http://bartoszsypytkowski.com/blog/2014/10/26/akka-fsharp-ddd</id>
