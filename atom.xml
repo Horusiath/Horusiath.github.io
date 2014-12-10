@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-11-19T19:18:04+01:00</updated>
+  <updated>2014-12-10T19:49:39+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -289,9 +289,9 @@
 </span><span class='line'>
 </span><span class='line'><span class="k">let</span> <span class="k">inline</span> <span class="n">flip</span> <span class="n">f</span> <span class="n">x</span> <span class="n">y</span> <span class="o">=</span> <span class="n">f</span> <span class="n">y</span> <span class="n">x</span>
 </span><span class='line'><span class="k">let</span> <span class="n">findInUserStore</span> <span class="n">email</span> <span class="o">(</span><span class="n">store</span> <span class="o">:</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span> <span class="nc">User</span><span class="o">&gt;)</span> <span class="o">=</span>
-</span><span class='line'>    <span class="k">let</span> <span class="k">mutable</span> <span class="n">user</span> <span class="o">:</span> <span class="nc">User</span> <span class="o">=</span> <span class="nn">User</span><span class="p">.</span><span class="n">empty</span>
-</span><span class='line'>    <span class="k">if</span> <span class="n">store</span><span class="o">.</span><span class="nc">TryGetValue</span><span class="o">(</span><span class="n">email</span><span class="o">,</span> <span class="o">&amp;</span><span class="n">user</span><span class="o">)</span> <span class="k">then</span> <span class="nc">Some</span> <span class="n">user</span>
-</span><span class='line'>    <span class="k">else</span> <span class="nc">None</span>
+</span><span class='line'>    <span class="k">match</span> <span class="n">store</span><span class="o">.</span><span class="nc">TryGetValue</span> <span class="n">email</span> <span class="k">with</span>
+</span><span class='line'>    <span class="o">|</span> <span class="o">(</span><span class="bp">false</span><span class="o">,</span> <span class="o">_)</span> <span class="o">-&gt;</span> <span class="nc">None</span>
+</span><span class='line'>    <span class="o">|</span> <span class="o">(</span><span class="bp">true</span><span class="o">,</span> <span class="n">user</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="nc">Some</span> <span class="n">user</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">let</span> <span class="n">saveInUserStore</span> <span class="n">user</span> <span class="o">(</span><span class="n">store</span> <span class="o">:</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span> <span class="nc">User</span><span class="o">&gt;)</span> <span class="o">=</span>
 </span><span class='line'>    <span class="n">store</span><span class="o">.</span><span class="nc">AddOrUpdate</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="o">,</span> <span class="n">user</span><span class="o">,</span> <span class="nn">System</span><span class="p">.</span><span class="nc">Func</span><span class="o">&lt;_,</span> <span class="o">_,</span> <span class="o">_&gt;(</span><span class="k">fun</span> <span class="n">key</span> <span class="n">old</span> <span class="o">-&gt;</span> <span class="n">user</span><span class="o">))</span> <span class="o">|&gt;</span> <span class="n">ignore</span>
