@@ -4,7 +4,7 @@
   <title><![CDATA[Category: fsharp | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/fsharp/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-12-10T19:49:39+01:00</updated>
+  <updated>2014-12-14T14:41:33+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,249 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Akka.NET remote deployment with F#]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/12/14/fsharp-akka-remote-deploy/"/>
+    <updated>2014-12-14T13:43:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/12/14/fsharp-akka-remote-deploy</id>
+    <content type="html"><![CDATA[<p>Today I want to present how Akka.NET can be used to leverage distributed computing and discuss some of the changes in the latest F# package (Akka.FSharp 0.7.1). If you are not interested in explanation of how Akka.NET internals actually allow us to create distributed actor-based application, just skip the next part and dive directly into examples.</p>
+
+<h3>How Akka.NET remote deployment works</h3>
+
+<p>When a new actor should be created, it&rsquo;s actor system deployer have to figure out if deployment should occur on local machine or on the remote node. Second option requires a network connection to be established between local/remote nodes participating in the communication. To be able to do so, each participating node needs to know a localization of the others. In Akka, this is done by using actor paths.</p>
+
+<p>Actor path allows us to identify actors in scope of their systems actor hierarhies as well as localize them over the network. There are two formats of actor paths, both of them uses standard URI convention:</p>
+
+<ol>
+<li>Local paths (eg. <code>akka://local-system/user/parent/child</code>) may be used to identify actors deployed (remotely or not) by our local actor system, we are referring to. In provided example actor path refers to actor with name <code>child</code>, which parent/supervisor actor is called <code>parent</code>, which resides under <code>user</code> guardian (which is a specialized actor supervisor existing inside actor system kernel). All of them exists in actor system named <code>local-system</code>.</li>
+<li>Remote paths (eg. <code>akka.tcp://remote-system@localhost:9001/</code>) are similar to local ones, but a few differences occur. First we need to rename <code>akka</code> protocol to either <code>akka.tcp</code> or <code>akka.udp</code> to show what kind of underlying network connection we want to target. Second we have to suffix actor system name with it&rsquo;s localization. This is done by providing address and port, remote node is expected to listening on.</li>
+</ol>
+
+
+<p>Image below shows how actually actors refer to each other in remote deployment scenario.</p>
+
+<p><img src="http://i61.tinypic.com/vpknkh.png" width=840 style="display: block; margin-left: auto; margin-right: auto" /></p>
+
+<p>When an actor is deployed remotely, a remote node is responsible for creating it&rsquo;s instances, but we still refer to it using it&rsquo;s actor reference and our local system context. Local/remote coordination is done by remote daemon &ndash; specialized system actor, which resides directly under <code>/remote</code> path of the system root. With example above we may refer to remotely deployed child using <code>akka.tcp://sys@A:2552/user/parent/child</code> address, while it&rsquo;s true hierarchy lays under <code>akka.tcp://sys@B:2552/remote/sys@A:2552/user/parent/child</code> path. This allows us to preserve location transparency, hiding true underlying actor. References returned this way all almost indistinguishable from their local counterparts, allowing use of features such as monitoring, supervising and so on.</p>
+
+<h3>Remote deployment</h3>
+
+<h4>Hocon configuration</h4>
+
+<p>To start playing with remote deployment, we should configure both endpoints to be able to maintain network communication. This is achievable through the <a href="https://github.com/typesafehub/config/blob/master/HOCON.md">HOCON</a> configuration, which is the default format for both JVM and .NET Akka implementations. While you may be a little irritated by need of learning new format only to use Akka, remember:</p>
+
+<ol>
+<li>It&rsquo;s actually very easy to learn</li>
+<li>It&rsquo;s not XML ;)</li>
+</ol>
+
+
+<p>Before continue, I encourage you to get yourself familiar with it.</p>
+
+<p>To enable remote deployment feature, this would be a minimal Akka.NET configuration setup:
+```
+akka {</p>
+
+<pre><code>actor {
+    provider = "Akka.Remote.RemoteActorRefProvider, Akka.Remote"
+}
+remote.helios.tcp {
+    port = 9001
+    hostname = localhost
+}
+</code></pre>
+
+<p>}
+<code>``
+First, every configuration node resides under common root called</code>akka<code>. Since remoting is not default feature of Akka.NET, we have to inform our actor system how to couple remotely deployed actors with our local actor system. This setup is done through</code>RemoteActorRefProvider<code>defined under</code>akka.actor.provider` config node. It will allow us to associate references to spawned actors on both local and remote systems.</p>
+
+<p>Next one is <code>remote</code> node which defines configuration specific to remoting feature. There, we need to inform how our system will communicate with others. At the present moment it&rsquo;s achievable using <a href="https://github.com/Aaronontheweb/helios">Helios</a> server by default, which is lightweight and highly-concurrent TCP/UDP server developed by Aaron Stannard, one of the Akka.NET core developers &ndash; don&rsquo;t confuse it with Microsoft Helios, which is totally different project. Akka.Remote will use it automatically under the hood &ndash; the only thing we have to define is address and port, under which it will listen for incoming messages. If you want port to be resolved automatically, just set 0 as the port number.</p>
+
+<p>Excluding differences in system nodes localization, this configuration string may be shared by both local and remote node. You may use this configuration simply by parsing it using <code>Configuration.parse</code> function.</p>
+
+<h3>Let&rsquo;s get to the point</h3>
+
+<p>Unlike the C#, F# API is able to construct actors using expressions compiled directly at the runtime (while still providing type safety, F# programmers are used to have). It&rsquo;s achievable by leveraging <a href="http://msdn.microsoft.com/en-us/library/dd233212.aspx">F# quotations</a>, which can be serialized and compiled on demand on other machine.</p>
+
+<p>For the sample we don&rsquo;t need to have two separate machines, instead we may mock them by running two Akka applications. What is necessary for the most basic example, is that both of them have to share at least Akka.FSharp and Akka.Remote assemblies as well as all of their dependencies.
+<code>powershell
+install-package Akka.FSharp -version 0.7.1
+install-package Akka.Remote -version 0.7.1
+</code></p>
+
+<h4>Remote node</h4>
+
+<p>The only job of the remote system is to listen for incoming actor deployment requests and execute them. Therefore implementation is very simplistic:
+```fsharp
+let config =</p>
+
+<pre><code>Configuration.parse 
+    @"akka {
+        actor.provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
+        remote.helios.tcp {
+            hostname = localhost
+            port = 9001
+        }
+    }"
+</code></pre>
+
+<p>[<EntryPoint>]
+let main args =</p>
+
+<pre><code>use system = System.create "remote-system" config
+System.Console.ReadLine()
+0
+</code></pre>
+
+<p>```
+After running it our remote system should be listening on localhost on port 9001 and be ready to instantiate remotely deployed actors.</p>
+
+<h4>Local actor system instance</h4>
+
+<p>Second application will be used for defining actors and sending deployment requests to remote node. To do so it has to know it&rsquo;s address.</p>
+
+<p>To deploy our actors remotely, lets build some helper functions. To begin with, write some logic to inform our local system, that deployment should occur on the remote machine. Remember that we need to provide full address to the remote system including it&rsquo;s network localization and protocol type used for communication.
+<code>fsharp
+open Akka.Actor
+// return Deploy instance able to operate in remote scope
+let deployRemotely address = Deploy(RemoteScope (Address.Parse address))
+</code>
+Remote deployment in Akka F# is done through <code>spawne</code> function and it requires deployed code to be wrapped into F# quotation.
+```fsharp
+let spawnRemote systemOrContext remoteSystemAddress actorName expr =</p>
+
+<pre><code>spawne systemOrContext actorName expr [SpawnOption.Deploy (deployRemotely remoteSystemAddress)]
+</code></pre>
+
+<p>```
+Quotations give us a few nice features, but also have some limitations:</p>
+
+<ol>
+<li>Unlike the C# approach, here we don&rsquo;t define actors in shared libraries, which have to be bound to both endpoints. Actor logic is compiled in the runtime, while remote actor system is operating. That means, there is no need to stop your remote nodes to reload shared actor assemblies when updated.</li>
+<li>Code embedded inside quotation must use only functions, types and variables known to both endpoints. There are limited ways to define functions inside quotation expression (and no way to define types), but generally speaking in most cases it&rsquo;s better to define them in separate library and share between nodes.</li>
+</ol>
+
+
+<p>Last line of the <code>spawne</code> function is list of options used to configure actor. We used <code>SpawnOption.Deploy</code> to specify what deployment specifics are meant to occur. Other options may describe specifics such as message mailboxes, actor routers or failure handling strategies.</p>
+
+<p>Because Akka actor system is required to negotiate deployment specifics with external nodes, it&rsquo;s local instance has to be provided even thou we want to deploy our actors on the remote machines.</p>
+
+<p>Finally when everything is set, we can run our example (remember that remote node must be up and running):
+```fsharp
+let system = System.create &ldquo;local-system&rdquo; config
+let aref =</p>
+
+<pre><code>spawnRemote system "akka.tcp://remote-system@localhost:9001/" "hello" 
+    // actorOf wraps custom handling function with message receiver logic
+    &lt;@ actorOf (fun msg -&gt; printfn "received '%s'" msg) @&gt;
+</code></pre>
+
+<p>// send example message to remotely deployed actor
+aref &lt;! &ldquo;Hello world&rdquo;</p>
+
+<p>// thanks to location transparency, we can select
+// remote actors as if they where existing on local node
+let sref = select &ldquo;akka://local-system/user/hello&rdquo; system
+sref &lt;! &ldquo;Hello again&rdquo;</p>
+
+<p>// we can still create actors in local system context
+let lref = spawn system &ldquo;local&rdquo; (actorOf (fun msg &ndash;> printfn &ldquo;local &lsquo;%s&rsquo;&rdquo; msg))
+// this message should be printed in local application console
+lref &lt;! &ldquo;Hello locally&rdquo;
+```
+As a result, you should receive two messages printed in <strong>remote application console</strong> and one locally. See?</p>
+
+<p><img src="http://www.reactiongifs.com/r/mgc.gif" style="display: block; margin-left: auto; margin-right: auto" /></p>
+
+<h3>Final thoughts</h3>
+
+<p>Remember that Akka.NET is still in beta and all of the F# API functions are subject to change. If you have some concepts or interesting ideas, or want to help and become part of the family, you may share them on <a href="https://groups.google.com/forum/?utm_medium=email&amp;utm_source=footer#!forum/akkadotnet-user-list">Akka.NET discussion group</a> or directly on <a href="https://github.com/akkadotnet/akka.net">Github</a>.</p>
+
+<h3>Appendix A: set your configuration string in application config file</h3>
+
+<p>While you may define configuration strings in code, the better idea is to actually store them in .config files. To be able to do so, we must simply extend configuration file with custom Akka config section:
+```xml
+<configSections></p>
+
+<pre><code>&lt;section name="akka" type="Akka.Configuration.Hocon.AkkaConfigurationSection, Akka" /&gt;
+</code></pre>
+
+<p></configSections>
+<code>
+Next, we can embed our Hocon-formated configuration string directly into configuration file by using `&lt;![CDATA[]]&gt;` marker (directly under main `&lt;configuration&gt;` root node):
+</code>xml
+<akka></p>
+
+<pre><code>&lt;hocon&gt;
+  &lt;![CDATA[
+    ... paste your config string here
+  ]]&gt;
+&lt;/hocon&gt;
+</code></pre>
+
+<p></akka>
+<code>
+At the present moment there is no built-in function to load config directly from configuration file, but this simple code should do the trick:
+</code>fsharp
+let loadConfig() =</p>
+
+<pre><code>let section = (System.Configuration.ConfigurationManager.GetSection "akka") 
+let config = section:?&gt; (Akka.Configuration.Hocon.AkkaConfigurationSection)
+config.AkkaConfig
+</code></pre>
+
+<p>```</p>
+
+<h3>Appendix B: Share-nothing</h3>
+
+<p>Since keeping actual assemblies in sync over all of the remote nodes may feel cumbersome for some people, I decided to show a little trick, which may be used to replace some of the complex data structures in your F# code. Lets look how data structure problem may be simply solved in Akka predecessor, Erlang:
+```erlang
+go() &ndash;></p>
+
+<pre><code>Pid = spawn(RemoteNode, loop),
+Pid ! {hello, "world"},
+Pid ! {hi}.
+</code></pre>
+
+<p>loop() &ndash;></p>
+
+<pre><code>receive
+    {hello, Msg} -&gt; 
+        io:fwrite("hello ~p~n", [Msg]),
+        loop();
+    {hi} -&gt;
+        io:fwrite("hi~n"),
+        loop()
+end.
+</code></pre>
+
+<p><code>``
+I think, that based on your knowledge about functional programming, most of it should be at least familiar if not self-explanatory. Crux is the</code>{hello, Msg}<code>and</code>{hi}` syntax &ndash; these are actually instances of tuples (nested into pattern matched message receiver construct). Standard Erlang convention precises them as so called tagged tuples, which first argument is an <strong>atom</strong> &ndash; also known as symbol in other languages. Since Erlang is a dynamic language, this way we may differentiate tuples of the same size from each other.</p>
+
+<p>Example below shows how usage of the Erlang&rsquo;s tagged tuples could be moved into F#. The big difference is that F# has no Erlang <strong>atom</strong> equivalent. Therefore they has been replaced by F# literal integers, which gives us an advantage of human readable tags, while still counted as integers inside quotation expressions.
+```fsharp
+[<Literal>]let Hello = 1
+[<Literal>]let Hi = 2</p>
+
+<p>let pid = spawne system &ldquo;remote&rdquo; (&lt;@ fun mailbox &ndash;></p>
+
+<pre><code>    let rec loop() : Cont&lt;obj, obj&gt; = actor {
+        let! msg = mailbox.Receive()
+        match msg with
+        | (Hello, str) -&gt; printfn "hello %A" str
+        | (Hi) -&gt; print "hi\n"
+        | _ -&gt; mailbox.Unhandled()
+        return! loop()
+    }
+    loop() @&gt;) [SpawnOption.Deploy Deploy(RemoteScope(Address.Parse remoteAddr))]
+</code></pre>
+
+<p>pid &lt;! (Hello, &ldquo;world&rdquo;)
+pid &lt;! (Hi)
+```</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Hipsterize your backend for The Greater Good with Akka.NET, F# and some DDD flavor]]></title>
@@ -195,24 +438,6 @@ let handle clock findUser saveUser =</p>
 
 <p>```</p>
 
-<h3>Step 5: bind your business logic to Akka.NET</h3>
-
-<p>If you&rsquo;re interested in integrating Akka.NET with your F# logic, I can recommend you more posts in this blog written earlier this year. Therefore I assume, that you&rsquo;re aware how F# actors based on recursive loops work. Because loop creation is often a generic behavior, again I&rsquo;ll expose it in form of function wrapper.
-```fsharp
-let actAs fn (mailbox : Actor&lt;&lsquo;a>) =</p>
-
-<pre><code>let rec loop'() = 
-    actor { 
-        let! msg = mailbox.Receive()
-        fn msg
-        return! loop'()
-    }
-loop'()
-</code></pre>
-
-<p>```
-NOTE: At the present moment Akka.NET API for F# language is still lacks some features. This post applies mostly to API in version 0.7 of the framework, so you may expect some changes in the future.</p>
-
 <h4>Mock database access</h4>
 
 <p>As I&rsquo;ve said in the introduction, I won&rsquo;t use any real-life database provider, mocking it with concurrent dictionary instead. However if you want to use a normal database, nothing stands in your way.
@@ -286,14 +511,14 @@ handle
 </code></pre>
 
 <p>let subscriber = subscribe system &lt;| printf &ldquo;User event: %A\n&rdquo;
-let userActor = spawn system &ldquo;users&rdquo; &lt;| actAs (userHandler >=> (publish system.EventStream) >> handleErrors)</p>
+let userActor = spawn system &ldquo;users&rdquo; &lt;| actorOf (userHandler >=> (publish system.EventStream) >> handleErrors)</p>
 
-<p>userActor &lt;! RegisterUser(&ldquo;<a href="&#109;&#97;&#105;&#108;&#x74;&#111;&#x3a;&#x6a;&#x2e;&#100;&#111;&#101;&#x40;&#116;&#101;&#115;&#116;&#x6d;&#x61;&#105;&#108;&#46;&#99;&#x6f;">&#106;&#x2e;&#100;&#x6f;&#x65;&#64;&#x74;&#x65;&#115;&#x74;&#109;&#x61;&#x69;&#x6c;&#46;&#x63;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)
-userActor &lt;! RegisterUser(&ldquo;<a href="&#x6d;&#x61;&#x69;&#x6c;&#x74;&#x6f;&#58;&#106;&#46;&#100;&#111;&#101;&#64;&#x74;&#x65;&#x73;&#116;&#109;&#97;&#105;&#x6c;&#x2e;&#99;&#111;">&#x6a;&#46;&#100;&#x6f;&#101;&#x40;&#x74;&#x65;&#115;&#116;&#x6d;&#x61;&#105;&#x6c;&#x2e;&#99;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)  // UserAlreadyExists error
+<p>userActor &lt;! RegisterUser(&ldquo;<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#106;&#x2e;&#100;&#x6f;&#x65;&#64;&#x74;&#101;&#115;&#116;&#109;&#97;&#105;&#108;&#x2e;&#99;&#x6f;">&#x6a;&#46;&#x64;&#x6f;&#101;&#64;&#x74;&#101;&#115;&#x74;&#x6d;&#x61;&#x69;&#x6c;&#x2e;&#99;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)
+userActor &lt;! RegisterUser(&ldquo;<a href="&#x6d;&#97;&#x69;&#108;&#116;&#x6f;&#x3a;&#106;&#46;&#x64;&#111;&#x65;&#x40;&#x74;&#x65;&#x73;&#116;&#109;&#x61;&#x69;&#x6c;&#46;&#x63;&#111;">&#x6a;&#46;&#100;&#111;&#101;&#64;&#116;&#x65;&#115;&#x74;&#x6d;&#97;&#x69;&#108;&#46;&#x63;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)  // UserAlreadyExists error
 System.Threading.Thread.Sleep 100</p>
 
-<p>userActor &lt;! LoginUser(&ldquo;<a href="&#x6d;&#x61;&#x69;&#x6c;&#116;&#111;&#x3a;&#106;&#46;&#x64;&#x6f;&#x65;&#x40;&#x74;&#x65;&#x73;&#x74;&#109;&#97;&#105;&#x6c;&#x2e;&#99;&#x6f;">&#106;&#x2e;&#x64;&#x6f;&#101;&#64;&#116;&#101;&#x73;&#x74;&#x6d;&#x61;&#x69;&#108;&#x2e;&#x63;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)
-userActor &lt;! LoginUser(&ldquo;<a href="&#109;&#x61;&#105;&#x6c;&#116;&#111;&#x3a;&#106;&#46;&#x64;&#x6f;&#x65;&#64;&#116;&#101;&#x73;&#116;&#x6d;&#97;&#105;&#108;&#46;&#x63;&#x6f;">&#x6a;&#46;&#x64;&#x6f;&#x65;&#64;&#116;&#x65;&#x73;&#116;&#109;&#x61;&#105;&#x6c;&#x2e;&#99;&#x6f;</a>&rdquo;, &ldquo;fails&rdquo;)     // WrongPassword error</p>
+<p>userActor &lt;! LoginUser(&ldquo;<a href="&#109;&#97;&#x69;&#108;&#x74;&#111;&#58;&#x6a;&#46;&#x64;&#111;&#101;&#x40;&#x74;&#x65;&#x73;&#x74;&#x6d;&#x61;&#x69;&#x6c;&#46;&#99;&#x6f;">&#106;&#46;&#100;&#111;&#x65;&#x40;&#116;&#x65;&#x73;&#x74;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)
+userActor &lt;! LoginUser(&ldquo;<a href="&#x6d;&#x61;&#105;&#108;&#116;&#111;&#x3a;&#106;&#x2e;&#100;&#x6f;&#101;&#64;&#116;&#101;&#x73;&#116;&#109;&#97;&#x69;&#108;&#x2e;&#x63;&#x6f;">&#x6a;&#46;&#x64;&#x6f;&#101;&#64;&#116;&#x65;&#115;&#x74;&#x6d;&#97;&#x69;&#108;&#46;&#99;&#x6f;</a>&rdquo;, &ldquo;fails&rdquo;)     // WrongPassword error</p>
 
 <p>System.Threading.Thread.Sleep 100
 system.Shutdown()
@@ -319,31 +544,36 @@ system.Shutdown()
 <p>To give a better description of the new features, lets see an example:</p>
 
 <p>```fsharp
- let supervisor =</p>
+let strategy =</p>
 
-<pre><code>    spawns system "master"
-    // below we define OneForOneStrategy to handle specific exceptions incoming from child actors
-    &lt;| (Strategy.oneForOne &lt;| fun e -&gt; 
-        match e with
-        | :? ArithmeticException -&gt; Directive.Resume
-        | :? ArgumentException   -&gt; Directive.Stop
-        | _                      -&gt; Directive.Escalate)
-    &lt;| fun mailbox -&gt;
-        // by using mailbox.spawn we may create a child actors without exiting a F# functional API
-        let worker = mailbox.spawn "worker" &lt;| workerFun
-        let rec loop() = actor {
+<pre><code>Strategy.oneForOne (fun e -&gt; 
+    match e with
+    | :? ArithmeticException -&gt; Directive.Resume
+    | :? ArgumentException -&gt; Directive.Stop
+    | _ -&gt; Directive.Escalate)
+</code></pre>
+
+<p>let supervisor =</p>
+
+<pre><code>spawnOpt system "master" (fun mailbox -&gt; 
+    // by using spawn we may create a child actors without exiting a F# functional API
+    let worker = spawn mailbox "worker" workerFun
+
+    let rec loop() = 
+        actor { 
             let! msg = mailbox.Receive()
-            match msg :&gt; obj with
-            | :? Respond -&gt; worker.Tell(msg, mailbox.Sender())
-            | _          -&gt; worker &lt;! msg
-            return! loop() }
-        loop()
+            match msg with
+            | Respond -&gt; worker.Tell(msg, mailbox.Sender())
+            | _ -&gt; worker &lt;! msg
+            return! loop()
+        }
+    loop()) [ SupervisorStrategy(strategy) ]
 </code></pre>
 
 <p>```
 A <a href="https://github.com/akkadotnet/akka.net/blob/dev/src/examples/FSharp.Api/Supervisioning.fs">whole example</a> is available inside Akka.NET project source code, along with other examples.</p>
 
-<p>Unlike standard <code>spawn</code>, <code>spawns</code> function could take a SupervisorStrategy object as an argument. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
+<p>Unlike standard <code>spawn</code>, <code>spawnOpt</code> function could take a list of options used to configure spawned actor internals. SupervisorStrategy is one of them. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
 
 <ol>
 <li><code>Strategy.oneForOne</code> &ndash; strategy will affect only an exception thrower.</li>
@@ -351,9 +581,7 @@ A <a href="https://github.com/akkadotnet/akka.net/blob/dev/src/examples/FSharp.A
 </ol>
 
 
-<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne'</code> and <code>Strategy.allForOne'</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
-
-<p>Second change, is the new <code>mailbox.spawn</code> method, which works just like it&rsquo;s standard <code>spawn</code> equivalent with only one difference &ndash; it sets a <code>mailbox</code> Actor instance as current parent/supervisor of created actor. Both of those features combined could be used to bring a full supervision support in classic functional manner.</p>
+<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne2</code> and <code>Strategy.allForOne2</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
 ]]></content>
   </entry>
   
@@ -393,18 +621,7 @@ type MRMsg =</p>
 
 <p>```</p>
 
-<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define, I&rsquo;ve created a simple function factory, which will wrap all varying logic for us.
-``` fsharp
-let actorFor func = fun (mailbox:Actor<MRMsg>) &ndash;></p>
-
-<pre><code>let rec loop() = actor {
-    let! msg = mailbox.Receive()
-    func mailbox msg            // this line is actor-specific
-    return! loop() }
-loop()
-</code></pre>
-
-<p>```</p>
+<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define we can wrap actor behavior using <code>actorOf</code> and <code>actorOf2</code> functions.</p>
 
 <p>Lets start to defining a map-reduce logic into our application. Firstly we need to create a <strong>map actor</strong>. In this example, all what it needs to do, is to chop provided string into single words, and create from them a simple bag of words with their repetition. However we won&rsquo;t sum them now &ndash; this is the job for reducer actors.
 ``` fsharp
@@ -452,9 +669,9 @@ let master mapper (reducer:InternalActorRef) (mailbox:Actor<MRMsg>) = function</
 <code>fsharp
 let system = System.create "MapReduceSystem" &lt;| ConfigurationFactory.Default()
 let dict = ConcurrentDictionary&lt;string,int&gt;()
-let reducer = spawn system "reduce" &lt;| actorFor (reduce dict)
-let mapper = spawn system "map" &lt;| actorFor (map reducer)
-let master = spawn system "master" &lt;| actorFor (master mapper reducer)
+let reducer = spawn system "reduce" &lt;| actorOf2 (reduce dict)
+let mapper = spawn system "map" &lt;| actorOf2 (map reducer)
+let master = spawn system "master" &lt;| actorOf2 (master mapper reducer)
 </code></p>
 
 <p>To finalize, we can pass some data to our system to see, if it returns an expected results. Until now, we&rsquo;ve only used send operator <code>&lt;!</code> to delegate fire-and-forget messages for specific actors, but we&rsquo;ve actually never used any two way request-response mechanism. To do so, we&rsquo;ll use Ask method (shortcut operator <code>&lt;?</code>) to send a request message and receive a handler to be used when a response will be returned in asynchronous manner.
@@ -467,7 +684,7 @@ master &lt;! Map &ldquo;cherry apple orange&rdquo;</p>
 <p>// read the result
 async {</p>
 
-<pre><code>let! res = master.Ask(Collect) |&gt; Async.AwaitTask   
+<pre><code>let! res = master &lt;? Collect
 for (k, v) in res :?&gt; (string*int) seq do
     printfn "%s\t%d" k v
 system.Shutdown()
@@ -530,55 +747,6 @@ greeter &lt;! Hi
 
 
 <p>As you can see, this piece of code is not directly translatable to C# or even Scala API equivalent. It&rsquo;s much more Erlangish. We don&rsquo;t have to define any classes and method overrides. Instead, we have a tail-recursive function. For me this seems more natural approach for F#, since it&rsquo;s more functional-first language, while it&rsquo;s syntax for object oriented programming is very verbose and ugly.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Value absence - why Scala/F# approach is bad?]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values/"/>
-    <updated>2014-07-03T00:05:00+02:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2014/07/03/fsharp-and-scala-absent-values</id>
-    <content type="html"><![CDATA[<p>Handling an absent values is one of the most common problems in programming languages. Why we consider this so important? It&rsquo;s because data processing is essential task of every program ever made. And one of the main reasons of systems errors and undefined behaviors are values not present in the system. Most of the modern programming languages tries to aim programmers with solution to handle those cases. Lets look at the most common way of dealing with them:</p>
-
-<ol>
-<li><strong>Null pointer reference</strong> &ndash; also called a &ldquo;billion-dollar mistake&rdquo;, introduced by Tony Hoare. It allows to represent an absence of the heap allocated values (objects) in form of pointer referring to not a valid instance of represented type. In most of the mainstream programming languages all heap objects are nullable by default &ndash; no matter if you want it or not.</li>
-<li><strong>Option/Maybe type</strong> &ndash; this approach is characteristic for most of the functional languages. Instead of creating null pointer, it defines a special generic type (eg. Option), represented by either one of it&rsquo;s subtypes (Some as wrapper for existing underlying value, or None if value is not present).</li>
-</ol>
-
-
-<p>So why we consider a dedicated Option type a better solution? Because it&rsquo;s explicit, propagates type information about value nullability and &ndash; most of all &ndash; it&rsquo;s non-default. By the most of the time, we expect to have a meaningful references to our data. Their absence is not a desired and certainly should not be an expected behavior. Problem in nullable references is that literally any instance in our code could represent a non-existing value. Analogously to functional approach, all of our objects always represent an Option type.</p>
-
-<p>Currently, after decades on living in shadows, functional paradigm is gaining more and more ground of the field of mainstream programming languages. This also reflects in two of the most popular programming environments, JVM and .NET. Their functional representatives, Scala and F#, claims to combine best of both programming paradigms. This way they also introduced and popularized an Option types among object oriented approach.</p>
-
-<p>But something has been missed along the way, and (in my opinion) both Scala and F# had failed in face of the problem of value absence. Why? Because of their dualism. Since they are functional languages, both of them allows you to create an Option types with full support expected from a functional language. But while they also are object oriented and built on top of object oriented VMs, they allow you to use and create a nullable references. This leads to false sense of security, when using Option types. Lets look at the following example (F#):
-<code>fsharp
-let value: String option = Some doSmthAndReturnString()
-</code></p>
-
-<p>How can you be sure that function <code>doSmthAndReturnString</code> won&rsquo;t return a null? Actually you can&rsquo;t until you perform an explicit null check. From the runtime perspective <code>Some null</code> is a perfectly valid record. Does it sound rational? No. So why is this even possible?</p>
-
-<h2>How to combine functional and object oriented worlds?</h2>
-
-<p>From my perspective, the best solution of that problem came with <a href="http://ceylon-lang.org/">Ceylon</a> language. It&rsquo;s based on the concept of <a href="http://ceylon-lang.org/documentation/1.0/tour/types/#union_types">Union Types</a>, one of the key features of Ceylon. For <strong>tl;dr</strong> people &ndash; union type of <code>X|Y</code> is a supertype of both types <code>X</code> and <code>Y</code>. How does it correspond to null/options?</p>
-
-<p>In Ceylon <code>null</code> have it&rsquo;s own unique type <code>Null</code> (just like in Scala). By default all reference types are non-nullable (similarly to functional languages). However they may be nulled if referenced as union type of <code>T|Null</code> (or <code>T?</code> using some syntax suggar). This concept is basically &ndash; however not entirely &ndash; equivalent of Scala <code>Either[T,Null]</code> but without verbose requirement for object wrapping. Moreover, Ceylon compiler is able to optimize this away to standard JVM null references, without any overhead.
-```
-// Scala &ndash; Either
-var m: Either[String, Null] = Left(&ldquo;hello&rdquo;)
-var n: Either[String, Null] = Right(null)<br/>
-var m: Either[String, Null] = Left(null)    // still valid</p>
-
-<p>// Scala &ndash; Option type
-var m: Option[String] = Some(&ldquo;hello&rdquo;)
-var n: Option[String] = None <br/>
-var m: Option[String] = Some(null)          // still valid</p>
-
-<p>// Ceylon
-String|Null m = &ldquo;hello&rdquo;;    // no need for value wrapping
-String? n = null;           // Integer? &ndash;> Integer|Null
-String f = null;            // compile time error, references are not nullable by default
-```
-As you can see on the example above, this way we combined advantages of safe, explicitly nullable types with verbosity and performance of null referenced types. In my opinion this is a proper, yet still not widespread, solution of one of the most common problem in languages theory.</p>
 ]]></content>
   </entry>
   

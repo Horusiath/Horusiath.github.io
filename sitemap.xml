@@ -246,7 +246,7 @@
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/blog/2014/07/09/fsharp-akka-map-reduce/</loc>
-        <lastmod>2014-07-09T00:04:33+02:00</lastmod>
+        <lastmod>2014-12-14T14:02:15+01:00</lastmod>
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/blog/2014/08/02/simple-vm/</loc>
@@ -254,11 +254,15 @@
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/blog/2014/08/06/fsharp-akkadotnet-supervisors/</loc>
-        <lastmod>2014-08-06T18:57:52+02:00</lastmod>
+        <lastmod>2014-12-14T14:08:04+01:00</lastmod>
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/blog/2014/10/26/akka-fsharp-ddd/</loc>
-        <lastmod>2014-12-10T19:43:35+01:00</lastmod>
+        <lastmod>2014-12-14T13:59:19+01:00</lastmod>
+    </url>
+    <url>
+        <loc>http://bartoszsypytkowski.com/blog/2014/12/14/fsharp-akka-remote-deploy/</loc>
+        <lastmod>2014-12-14T14:40:42+01:00</lastmod>
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/robots.txt</loc>
@@ -266,7 +270,7 @@
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/</loc>
-        <lastmod>2014-12-10T19:43:35+01:00</lastmod>
+        <lastmod>2014-12-14T14:40:42+01:00</lastmod>
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/second-page/</loc>
@@ -274,7 +278,7 @@
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/blog/archives/</loc>
-        <lastmod>2014-12-10T19:43:35+01:00</lastmod>
+        <lastmod>2014-12-14T14:40:42+01:00</lastmod>
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/blog/categories/</loc>

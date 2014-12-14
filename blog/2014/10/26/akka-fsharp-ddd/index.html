@@ -349,31 +349,6 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h3>Step 5: bind your business logic to Akka.NET</h3>
-
-<p>If you&rsquo;re interested in integrating Akka.NET with your F# logic, I can recommend you more posts in this blog written earlier this year. Therefore I assume, that you&rsquo;re aware how F# actors based on recursive loops work. Because loop creation is often a generic behavior, again I&rsquo;ll expose it in form of function wrapper.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">actAs</span> <span class="n">fn</span> <span class="o">(</span><span class="n">mailbox</span> <span class="o">:</span> <span class="nc">Actor</span><span class="o">&lt;</span><span class="k">&#39;</span><span class="n">a</span><span class="o">&gt;)</span> <span class="o">=</span>
-</span><span class='line'>    <span class="k">let</span> <span class="k">rec</span> <span class="n">loop&#39;</span><span class="bp">()</span> <span class="o">=</span>
-</span><span class='line'>        <span class="n">actor</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
-</span><span class='line'>            <span class="n">fn</span> <span class="n">msg</span>
-</span><span class='line'>            <span class="k">return</span><span class="o">!</span> <span class="n">loop&#39;</span><span class="bp">()</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>    <span class="n">loop&#39;</span><span class="bp">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>NOTE: At the present moment Akka.NET API for F# language is still lacks some features. This post applies mostly to API in version 0.7 of the framework, so you may expect some changes in the future.</p>
-
 <h4>Mock database access</h4>
 
 <p>As I&rsquo;ve said in the introduction, I won&rsquo;t use any real-life database provider, mocking it with concurrent dictionary instead. However if you want to use a normal database, nothing stands in your way.</p>
@@ -483,7 +458,7 @@
 </span><span class='line'>    <span class="o">&lt;|</span> <span class="n">flip</span> <span class="n">findInUserStore</span> <span class="n">userStore</span>
 </span><span class='line'>    <span class="o">&lt;|</span> <span class="n">flip</span> <span class="n">saveInUserStore</span> <span class="n">userStore</span>
 </span><span class='line'><span class="k">let</span> <span class="n">subscriber</span> <span class="o">=</span> <span class="n">subscribe</span> <span class="n">system</span> <span class="o">&lt;|</span> <span class="n">printf</span> <span class="s2">&quot;User event: %A</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span class='line'><span class="k">let</span> <span class="n">userActor</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;users&quot;</span> <span class="o">&lt;|</span> <span class="n">actAs</span> <span class="o">(</span><span class="n">userHandler</span> <span class="o">&gt;=&gt;</span> <span class="o">(</span><span class="n">publish</span> <span class="n">system</span><span class="o">.</span><span class="nc">EventStream</span><span class="o">)</span> <span class="o">&gt;&gt;</span> <span class="n">handleErrors</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">userActor</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;users&quot;</span> <span class="o">&lt;|</span> <span class="n">actorOf</span> <span class="o">(</span><span class="n">userHandler</span> <span class="o">&gt;=&gt;</span> <span class="o">(</span><span class="n">publish</span> <span class="n">system</span><span class="o">.</span><span class="nc">EventStream</span><span class="o">)</span> <span class="o">&gt;&gt;</span> <span class="n">handleErrors</span><span class="o">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>
 </span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>  <span class="c1">// UserAlreadyExists error</span>

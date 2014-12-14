@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Mar 9th, 2013 javascript, programowanie Comments Knockout.js - Spostrzeżenia Ponieważ z knockout.js mam do czynienia od dłuższego czasu (dokładnie &hellip;">
+	<meta name="description" content="Mar 16th, 2013 kontrola wersji Comments Ustrukturyzowane Repozytorium - Git Flow O tym czym jest Git, wie chyba każdy programista. O konwencjach i &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,81 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-16T08:29:00+01:00" data-updated="true" itemprop="datePublished">Mar 16<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/kontrola-wersji/'>kontrola wersji</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow/" itemprop="url">Ustrukturyzowane Repozytorium - Git Flow</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>O tym czym jest Git, wie chyba każdy programista. O konwencjach i wzorcach stosowanych podczas produkcji do rozwoju repozytorium słyszało jednak zdecydowanie mniej osób, zaś jeszcze mniej stosowało je w praktyce. W tym poście postaram się poruszyć ten temat w kontekście <strong>git flow</strong> &ndash; narzędzia do integracji systemu kontroli wersji ze strategią procesu tworzenia oprogramowania.</p>
+
+<p>Jakiś czas temu Maciej Aniserowicz <a href="http://www.maciejaniserowicz.com/2012/12/10/sztuka-commitowania-pracy/">opisał na swoim blogu</a> kilka własnych przemyśleń na temat konwencji stosowanych w celu poprawy pracy z systemem kontroli wersji. Mniej więcej wtedy zaczął mi świtać pomysł podzielenia się swoimi spostrzeżeniami na temat git flow &ndash; narzędzia, które miałem okazję poznać wcześniej podczas moich przygód jako programisty RoR. Teraz po długich miesiącach nareszcie zebrałem się w sobie aby podzielić się swoimi doświadczeniami.</p>
+
+<h2>Czym jest git flow?</h2>
+
+<p>W skrócie jest to nakładka do gita rozszerzająca go o zbiór nowych komend umożliwiających nadanie temu systemowi kontroli wersji struktury zgodniej z workflowem wytwarzania oprogramowania. Pytanie: tylko jak wygląda ten workflow? Jego głównym założeniem jest podział repozytorium na kilka ściśle powiązanych ze sobą płaszczyzn-gałęzi:</p>
+
+<ul>
+<li>gałąź developerska (domyślnie: <em>develop</em>) &ndash; na niej nanoszone są bieżące zmiany commitowane przez programistów pomiędzy wypuszczaniem kolejnych wersji programu.</li>
+<li>gałąź produkcyjna (domyślnie: <em>master</em>) &ndash; zawiera bieżącą, najnowszą wersję programu.</li>
+<li>gałęzie z wersjami (domyślnie: <em>release-&lt;numer_wersji></em>) &ndash; po jednej na każdą wydaną wersję programu. Zmiany stąd trafiają później bezpośrednio na gałąź produkcyjną.</li>
+<li>gałęzie z nowymi funkcjonalnościami (domyślnie: <em>feature-<nazwa></em>) &ndash; za każdym razem kiedy tworzymy nowy moduł/funkcjonalność do projektu, tworzymy dla niego automatycznie jego własną gałąź. Po zakończeniu prac jest ona mergowana z branchem developerskim.</li>
+<li>gałęzie z poprawkami (domyślnie: <em>hotfix-<nazwa></em>) &ndash; poprawki mogą być wykonywane zarówno z gałęzi produkcyjnej jak i developerskiej i tworzone są dla nich własne odnogi. Po zacommitowaniu poprawki trafia ona do obu branchów (<em>master </em>oraz <em>develop</em>).</li>
+<li>gałęzie wsparcia (domyślnie: <em>support-&lt;numer_wersji></em>) &ndash; wprowadzona niedawno. Tutaj wykonywane są poprawki i zmiany na potrzeby klientów wykorzystujących starsze wersje programu.</li>
+</ul>
+
+
+<p>Całość została dokładniej &ndash; wraz z przykładami &ndash; przedstawiona <a href="http://vimeo.com/16018419">tutaj</a>. Na oficjalnym wiki projektu na githubie można z kolei znaleźć <a href="https://github.com/nvie/gitflow/wiki/Command-Line-Arguments">pełną listę nowych komend</a>. Pozwalają one zautomatyzować proces zarządzania commitami/zadaniami na każdej z gałęzi.</p>
+
+<h2>Jak zainstalować git flow na Windows?</h2>
+
+<p>Jest to w sumie dobre pytanie, ponieważ domyślnie narzędzie to było tworzone na potrzeby społeczności Linuxa. Instalacja na systemie Windows jest odrobinę bardziej skomplikowana, jednak w Internecie dostępne są poradniki poruszające to zagadnienie &ndash; ja korzystałem z <a href="http://xinyustudio.wordpress.com/2012/03/26/installing-git-flow-in-windows/">tego</a> (z niewielkimi zmianami). Poniżej opiszę listę kroków jaką wykonałem, aby rozruszać git flow u siebie.</p>
+
+<p>Zakładając, że mamy już zainstalowanego Gita i znamy ścieżkę do niego, należy:</p>
+
+<ul>
+<li>Pobrać <em>util-linux-ng</em> dla Windowsa. Można to zrobić z <a href="http://gnuwin32.sourceforge.net/packages/util-linux-ng.htm">tej strony</a>. Wystarczy jednak, że z działu Downloads pobierzemy tylko foldery <strong>Bin </strong>oraz <strong>Dependencies</strong>.</li>
+<li>Skopiować zawartość paczki <strong>Bin/bin</strong><strong> </strong>oraz <strong>Dependecies/bin/libintl3.dll</strong> do katalogu bin w ścieżce, w której mamy zainstalowanego Gita.</li>
+<li>Klonujemy repozytorium git flowa: <code>git clone –-recursive git://github.com/nvie/gitflow.git</code></li>
+<li>Na koniec musimy w zwykłej systemowej konsoli wejść do nowo sklonowanego folderu <strong>gitflow/contrib</strong> i wywołać komendę: <code>msysgit-install.cmd &ldquo;&lt;ścieżka do Gita>&rdquo;</code></li>
+</ul>
+
+
+<p>Po wykonaniu tych kroków wszystkie komendy git flowa powinny być dostępne.</p>
+
+<h2>Bonus dla ciekawskich</h2>
+
+<p>Dla części z czytelników może być to nowość, ale git umożliwia nam definiowanie własnych komend. Aby to wykonać, należy utworzyć własny plik .exe, który będzie definiował naszą komendę. Nazwa pliku jednocześnie określa jego sposób wywołania, przkładowo plik <em>git-&lt;moja_komenda>.exe</em> będzie można wywołać za pomocą polecenia <code>git &lt;moja_komenda></code>. Zgodnie z przyjętą zasadą konstrukcji skryptów bashowych pierwsza linijka pliku powinna zawierać polecenie <code>#!/bin/sh</code>. Kolejne linie definiują polecenia, które chcemy zawrzeć. Na koniec, aby plik był widziany z poziomu konsoli gita, należy go umieścić w ścieżce <em>&lt;katalog_git>/libexec/git-core</em> &ndash; tam też możemy zobaczyć definicje wszystkich dotychczas dostępnych komend.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -2287,80 +2362,6 @@
 
 
 <p>Ostatnia rzecz warta odnotowania, to w zasadzie rada dla developerów. Niestety, aby sprawdzić działanie strumienia w praktyce, musimy uruchomić naszą aplikację na rzeczywistym serwerze IIS (można to ustawić we właściwościach projektu), ponieważ standardowy serwer developerski ASP nie udostępnia tej opcji.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-06-30T22:32:00+02:00" data-updated="true" itemprop="datePublished">Jun 30<span>th</span>, 2012</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2012/06/30/api-servery-i-mvc-po-stronie-klienta/" itemprop="url">API Servery I MVC Po Stronie Klienta</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Ostatnio zainteresował mnie trend coraz częściej widoczny w środowiskach web developerów, aby coraz większą część aplikacji webowych przenosić w stronę klienta. Sprawę potęguje fakt, że coraz więcej powstaje narzędzi ułatwiających te czynności, zaś duże firmy, takie jak Google, Twitter czy Facebook, promują przenoszenie kolejnych funkcjonalności do przeglądarki.</p>
-
-<p>Zacznijmy od tego, jak wygląda &ldquo;tradycyjny&rdquo; model działania aplikacji WWW.</p>
-
-<p>Serwer odbiera żądanie. Aby na nie odpowiedzieć, wykonuje wiele operacji takich jak mapowanie routingu, uwierzytelnianie, czy pobranie elementów z bazy. Po ich wykonaniu nadchodzi czas na proces przygotowania odpowiedzi. W obecnych czasach serwery nie serwują praktycznie żadnych statycznych stron HTML, zawartość jest przeważnie generowana dynamicznie i wypełniana na podstawie danych dla każdego żądania. Warto zauważyć, że tak wygenerowana strona może mieć dość spory rozmiar. W przypadku kolejnych żądań serwer powtarza wszystkie kroki, w wyniku zwracając kolejną stronę HTML, w większości przypadków bardzo podobną do poprzedniej (za sprawą wspólnego Layoutu oraz dołączanych skryptów i stylów).</p>
-
-<p>To tradycyjne podejście ma kilka zalet:</p>
-
-<ul>
-<li>Ponieważ większość logiki związanej z prezentacją generowana jest w postaci HTML po stronie serwera, maszyna klienta nie musi borykać się z ciężkimi skryptami. Jest to pewien plus w przypadku słabych maszyn czy starych przeglądarek, źle radzących sobie z javascriptem.</li>
-<li>Nie ma co ukrywać, że utrzymywanie kodu JS jest znacznie bardziej wymagające niż odpowiadającego mu kodu w innych językach wykorzystywanych po stronie serwera.</li>
-<li>Niektóre roboty internetowe ignorują pewne fragmenty adresów url lub nie wykrywają tych adresów w miejscach innych niż linki. Dodatkowo indeksery mogą mieć problemy z przetwarzaniem treści innych niż strony HTML. Z tego powodu tradycyjnie serwowane strony są łatwe do rozpoznawania i indeksowania.</li>
-</ul>
-
-
-<p>Na czym więc polega w skrócie budowa oparta o &ldquo;ciężkiego&rdquo; klienta i serwer API. Chodzi mianowicie o zrzucenie z serwera odpowiedzialności za generowanie stron HTML (które mogą być w rzeczywistości ładowane dynamicznie). Ma on odpowiadać jedynie za przesyłanie szablonów stron HTML, skryptów czy stylów oraz (co najważniejsze) udostępniać API pozwalające sterować logiką za pomocą żądań HTTP i zwracające surowe informacje (przekazywane przeważnie w formacie JSON), których prezentacją zajmą się skrypty po stronie klienta.</p>
-
-<p>Jakie zalety ma takie podejście?</p>
-
-<ul>
-<li>Zmniejszenie obciążenia serwera &ndash; jeżeli jesteśmy w stanie przesyłać niezbędne elementy prezentacji w postaci statycznych szablonów HTML, nasze serwery nie muszą ich generować w czasie rzeczywistym.</li>
-<li>Zmniejszenie rozmiaru przesyłanych danych &ndash; od kiedy nie musimy za każdym razem serwować widoku całej strony, a jedynie skupić się na prostych szablonach oraz danych w formacie JSON (który powoduje znacząco mniejszy narzut niż HTML), wykorzystywane przez nas pasmo jest znacznie mniejsze. Jest to dobra wiadomość zarówno dla hosta, jak i dla wielu użytkowników, którzy coraz częściej przeglądają internet poza domem korzystając ze swoich smartfonów.</li>
-<li>Dobra integracja z innymi usługami &ndash; od kiedy nasz serwer udostępnia informacje w formie API opartego o otwarte standardy, zarówno my jak i inni programiści możemy oprzeć na nim usługi inne niż standardowe strony WWW (jest to dobra wiadomość zwłaszcza dla twórców aplikacji na urządzenia mobilne).</li>
-<li>Single Page Application jako aplikacja desktopowa &ndash; dzięki możliwościom najnowszych przeglądarek jesteśmy w stanie szybko wzbogacić naszą aplikację o możliwość pracy offline, nawet kiedy użytkownik nie ma dostępu do Internetu.</li>
-</ul>
-
-
-<p>Oczywiście nie każdemu odpowiadają te rozwiązania i często można słyszeć głosy sprzeciwu. Ale ponieważ Internet udostępnia pole do otwartej dyskusji, postaram się wysunąć kilka kontrargumentów na najczęściej spotykane zarzuty.</p>
-
-<ul>
-<li>Co ze starszymi przeglądarkami? &ndash; częste pytanie, głównie ze względu na to, że wiele bajerów dostępnych w nowych przeglądarkach może słabo lub wcale nie działać na starszych. Oczywiście takie rzeczy jak wolno działający javascript można optymalizować, jednakże kiedy dochodzi się do granic, może pojawić się potrzeba dodania popupa <em>&ldquo;Przestań przeglądać Internet za pomocą kartofla&rdquo;</em> dla tych kilku użytkowników, którzy jeszcze nie wiedzą, że istnieją przeglądarki inne niż IE.</li>
-<li>Co ze słabszym sprzętem? &ndash; w dzisiejszych czasach praktycznie każdego stać na sprzęt spełniający wymagania większości stron działających na wydajnych przeglądarkach. Ta teza dotyczy również urządzeń mobilnych &ndash; większość smartfonów niewiele odstaje osiągami od desktopów sprzed kilku lat.</li>
-<li>A co, jeżeli ktoś ma wyłączoną obsługę JavaScriptu? &ndash; zdziwiłem się, gdy zobaczyłem to jako dość częsty argument w dyskusjach. Dla osób które nie widzą w tu nic absurdalnego, proponuję jednak przeczytać znowu to pytanie ze zrozumieniem, aż do skutku.</li>
-<li><em>&ldquo;It&rsquo;s fucking JavaScript&rdquo;</em> &ndash; tak, utrzymywanie dużej ilości kodu JS jest trudne, po przekroczeniu pewnego progu jestem w stanie przyznać, że to zadanie prawie niemożliwe. Na szczęście społeczność programistów JS jest dość pomysłowa i można znaleźć multum ułatwień pozwalających zachować prosty, czytelny i działający kod &ndash; począwszy od różnego typu platform, przez języki kompilowane do Javascriptu, a kończąc na frameworkach umożliwiających testy jednostkowe po stronie przeglądarki.</li>
-</ul>
-
-
-<p>Podsumowując, nowe podejście oparte na budowaniu aplikacji na zasadzie konstrukcji bogatych stron klienckich wspieranych przez serwery API może okazać się ciekawym i obiecującym rozwiązaniem. Zarówno dla twórców, poprzez zmniejszenie kosztów za pomocą odciążenia logiki serwerowej, jak i dla użytkowników, wzbogacając ich doświadczenia w korzystaniu ze stron oraz usprawniając pracę poza domem.</p>
 
 		
 		

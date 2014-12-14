@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Feb 5th, 2011 .net, programowanie Comments Immutable String - Czy Na Pewno? Na wstępie zacznę od przedstawienia łańcuchów znakowych w językach &hellip;">
+	<meta name="description" content="Feb 9th, 2011 .net, programowanie Comments Typy Anonimowe a Metody Witam, w dzisiejszym poście postaram się streścić ideę pomysłu, który jakiś czas &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,108 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-09T20:17:00+01:00" data-updated="true" itemprop="datePublished">Feb 9<span>th</span>, 2011</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2011/02/09/typy-anonimowe-metody/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2011/02/09/typy-anonimowe-metody/" itemprop="url">Typy Anonimowe a Metody</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Witam, w dzisiejszym poście postaram się streścić ideę pomysłu, który jakiś czas temu przyszedł mi do głowy. Rozpatrzmy następujący przypadek:</p>
+
+<p>Załóżmy, że mamy zaimplementowaną relacyjną bazę danych i odwołujemy się do niej wykorzystując mapowania O\R oraz Linq do wydobywania rezultatów zapytań. W środowisku .Net jest to sytuacja dość częsta, okazuje się jednak, że nieraz nie chcemy pobierać wszystkich informacji zawartych w tabelach. W tym celu w zapytaniach Linq często stosuje się tzw. typy anonimowe. Umożliwiają one stworzenie listy obiektów, nie definiując uprzednio typu klasy, jakiego mają być dane obiekty. Jest to bardzo wygodne rozwiązanie, zawiera jednak 2 zasadnicze wady:</p>
+
+<ol>
+<li>pola\właściwości zainicjalizowane w ten sposób zawsze są typu readonly</li>
+<li>wewnątrz typów anonimowych nie można definiować metod</li>
+</ol>
+
+
+<p>Jak widać jest to spory ubytek w stosunku do np. popularnych klas anonimowych, jakie można spotkać w Javie. W dzisiejszym poście opiszę sposób na okrężne rozwiązanie 2 punktu.</p>
+
+<p>Niech za przykład posłuży nam tabela <strong>users</strong> wypełniona obiektami klasy <strong>Osoba</strong> zawierająca różne pola np.: identyfikator, imie, nazwisko, adres itp. W naszym problemie chcemy jednak ograniczyć się do wyboru 2 pól &ndash; imienia i nazwiska. W tym celu stosujemy typ anonimowy. Cała sytuacja jest opisana poniżej:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">items</span> <span class="p">=</span> <span class="p">(</span><span class="k">from</span> <span class="n">x</span> <span class="k">in</span> <span class="n">users</span>
+</span><span class='line'>      <span class="k">select</span> <span class="k">new</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">Name</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span>
+</span><span class='line'>          <span class="n">Surname</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span>
+</span><span class='line'>      <span class="p">}).</span><span class="n">ToList</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Rozwińmy jednak problem. Załóżmy, że chcemy mieć dostęp do metody, która w typ przypadku będzie zwracała stringa wypisującego imię i nazwisko danego użytkownika. Tutaj właśnie dochodzimy do sedna rozwiązania. Ponieważ w typach anonimowych można definiować wyłącznie obiekty. Obejściem jest&hellip; delegat! Wpierw zadeklarujemy delegata (możemy też wykorzystać któregoś z wbudowanych o ile będzie odpowiedni do potrzeb naszej funkcji):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="kt">string</span> <span class="nf">StringDelegate</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Teraz wystarczy już tylko dodać całość do wywołania obiektu typu anonimowego i przekazać np. za pomocą wyrażenia lambda ciało metody do wykonania:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">new</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Name</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span>
+</span><span class='line'>  <span class="n">Surname</span> <span class="p">=</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span><span class="p">,</span>
+</span><span class='line'>  <span class="n">FullName</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StringDelegate</span><span class="p">(()=&gt;{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Format</span><span class="p">(</span><span class="s">&quot;{0} {1}&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">FirstName</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">LastName</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Całość okazała się prosta do zaimplementowania. Teraz aby wywołać naszą metodę, wystarczy napisać (posługując się kodem napisanym poprzednio) <code>items[0].FullName()</code> :) .</p>
+
+<p>Na koniec rozpatrzmy kilka uwag:</p>
+
+<ul>
+<li><p>Należy pamiętać, że mimo wszystko wciąż mamy do czynienia z delegatem, zatem wywołując <i><b>FullName()</b></i> w rzeczywistości dochodzi do wywołania metody <i><b>FullName.Invoke()</b></i>. Nie myślcie więc, że w ten sposób można np. przeciążyć w typie anonimowym metodę ToString(). To rozwiązanie ma na celu przede wszystkim wygodę programisty.</p></li>
+<li><p>Jak widzimy na przykładzie, pobranie parametrów w metodzie jest wykonywane z obiektu x. Jest tak ponieważ definiując ciało wyrażenia lambda kompilator nie jest jeszcze w stanie rozpoznać składowych typu anonimowego. Wyrażenie jawne za pomocą this również nie jest możliwe. Możnaby się spytać, co się zatem stanie, gdybyśmy próbowali zmienic zawartość którejś ze składowych typu anonimowego. Odpowiedź jest prosta: nie skompilujemy takiego projektu, ponieważ składowe typów anonimowych są zawsze typu readonly i po zainicjowaniu nie można ich zmieniać :) .</p></li>
+</ul>
+
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">

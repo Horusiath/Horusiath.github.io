@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-12-10T19:49:39+01:00</updated>
+  <updated>2014-12-14T14:41:33+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,333 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Akka.NET remote deployment with F#]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2014/12/14/fsharp-akka-remote-deploy/"/>
+    <updated>2014-12-14T13:43:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2014/12/14/fsharp-akka-remote-deploy</id>
+    <content type="html"><![CDATA[<p>Today I want to present how Akka.NET can be used to leverage distributed computing and discuss some of the changes in the latest F# package (Akka.FSharp 0.7.1). If you are not interested in explanation of how Akka.NET internals actually allow us to create distributed actor-based application, just skip the next part and dive directly into examples.</p>
+
+<h3>How Akka.NET remote deployment works</h3>
+
+<p>When a new actor should be created, it&rsquo;s actor system deployer have to figure out if deployment should occur on local machine or on the remote node. Second option requires a network connection to be established between local/remote nodes participating in the communication. To be able to do so, each participating node needs to know a localization of the others. In Akka, this is done by using actor paths.</p>
+
+<p>Actor path allows us to identify actors in scope of their systems actor hierarhies as well as localize them over the network. There are two formats of actor paths, both of them uses standard URI convention:</p>
+
+<ol>
+<li>Local paths (eg. <code>akka://local-system/user/parent/child</code>) may be used to identify actors deployed (remotely or not) by our local actor system, we are referring to. In provided example actor path refers to actor with name <code>child</code>, which parent/supervisor actor is called <code>parent</code>, which resides under <code>user</code> guardian (which is a specialized actor supervisor existing inside actor system kernel). All of them exists in actor system named <code>local-system</code>.</li>
+<li>Remote paths (eg. <code>akka.tcp://remote-system@localhost:9001/</code>) are similar to local ones, but a few differences occur. First we need to rename <code>akka</code> protocol to either <code>akka.tcp</code> or <code>akka.udp</code> to show what kind of underlying network connection we want to target. Second we have to suffix actor system name with it&rsquo;s localization. This is done by providing address and port, remote node is expected to listening on.</li>
+</ol>
+
+
+<p>Image below shows how actually actors refer to each other in remote deployment scenario.</p>
+
+<p><img src="http://i61.tinypic.com/vpknkh.png" width=840 style="display: block; margin-left: auto; margin-right: auto" /></p>
+
+<p>When an actor is deployed remotely, a remote node is responsible for creating it&rsquo;s instances, but we still refer to it using it&rsquo;s actor reference and our local system context. Local/remote coordination is done by remote daemon &ndash; specialized system actor, which resides directly under <code>/remote</code> path of the system root. With example above we may refer to remotely deployed child using <code>akka.tcp://sys@A:2552/user/parent/child</code> address, while it&rsquo;s true hierarchy lays under <code>akka.tcp://sys@B:2552/remote/sys@A:2552/user/parent/child</code> path. This allows us to preserve location transparency, hiding true underlying actor. References returned this way all almost indistinguishable from their local counterparts, allowing use of features such as monitoring, supervising and so on.</p>
+
+<h3>Remote deployment</h3>
+
+<h4>Hocon configuration</h4>
+
+<p>To start playing with remote deployment, we should configure both endpoints to be able to maintain network communication. This is achievable through the <a href="https://github.com/typesafehub/config/blob/master/HOCON.md">HOCON</a> configuration, which is the default format for both JVM and .NET Akka implementations. While you may be a little irritated by need of learning new format only to use Akka, remember:</p>
+
+<ol>
+<li>It&rsquo;s actually very easy to learn</li>
+<li>It&rsquo;s not XML ;)</li>
+</ol>
+
+
+<p>Before continue, I encourage you to get yourself familiar with it.</p>
+
+<p>To enable remote deployment feature, this would be a minimal Akka.NET configuration setup:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>akka {  
+</span><span class='line'>    actor {
+</span><span class='line'>        provider = "Akka.Remote.RemoteActorRefProvider, Akka.Remote"
+</span><span class='line'>    }
+</span><span class='line'>    remote.helios.tcp {
+</span><span class='line'>      port = 9001
+</span><span class='line'>      hostname = localhost
+</span><span class='line'>    }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>First, every configuration node resides under common root called <code>akka</code>. Since remoting is not default feature of Akka.NET, we have to inform our actor system how to couple remotely deployed actors with our local actor system. This setup is done through <code>RemoteActorRefProvider</code> defined under <code>akka.actor.provider</code> config node. It will allow us to associate references to spawned actors on both local and remote systems.</p>
+
+<p>Next one is <code>remote</code> node which defines configuration specific to remoting feature. There, we need to inform how our system will communicate with others. At the present moment it&rsquo;s achievable using <a href="https://github.com/Aaronontheweb/helios">Helios</a> server by default, which is lightweight and highly-concurrent TCP/UDP server developed by Aaron Stannard, one of the Akka.NET core developers &ndash; don&rsquo;t confuse it with Microsoft Helios, which is totally different project. Akka.Remote will use it automatically under the hood &ndash; the only thing we have to define is address and port, under which it will listen for incoming messages. If you want port to be resolved automatically, just set 0 as the port number.</p>
+
+<p>Excluding differences in system nodes localization, this configuration string may be shared by both local and remote node. You may use this configuration simply by parsing it using <code>Configuration.parse</code> function.</p>
+
+<h3>Let&rsquo;s get to the point</h3>
+
+<p>Unlike the C#, F# API is able to construct actors using expressions compiled directly at the runtime (while still providing type safety, F# programmers are used to have). It&rsquo;s achievable by leveraging <a href="http://msdn.microsoft.com/en-us/library/dd233212.aspx">F# quotations</a>, which can be serialized and compiled on demand on other machine.</p>
+
+<p>For the sample we don&rsquo;t need to have two separate machines, instead we may mock them by running two Akka applications. What is necessary for the most basic example, is that both of them have to share at least Akka.FSharp and Akka.Remote assemblies as well as all of their dependencies.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">install-package</span> <span class="n">Akka</span><span class="p">.</span><span class="n">FSharp</span> <span class="n">-version</span> <span class="n">0</span><span class="p">.</span><span class="n">7</span><span class="p">.</span><span class="n">1</span>
+</span><span class='line'><span class="n">install-package</span> <span class="n">Akka</span><span class="p">.</span><span class="n">Remote</span> <span class="n">-version</span> <span class="n">0</span><span class="p">.</span><span class="n">7</span><span class="p">.</span><span class="n">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Remote node</h4>
+
+<p>The only job of the remote system is to listen for incoming actor deployment requests and execute them. Therefore implementation is very simplistic:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">config</span> <span class="o">=</span>
+</span><span class='line'>    <span class="nn">Configuration</span><span class="p">.</span><span class="n">parse</span>
+</span><span class='line'>        <span class="o">@</span><span class="s2">&quot;akka {</span>
+</span><span class='line'><span class="s2">            actor.provider = &quot;&quot;Akka.Remote.RemoteActorRefProvider, Akka.Remote&quot;&quot;</span>
+</span><span class='line'><span class="s2">            remote.helios.tcp {</span>
+</span><span class='line'><span class="s2">                hostname = localhost</span>
+</span><span class='line'><span class="s2">                port = 9001</span>
+</span><span class='line'><span class="s2">            }</span>
+</span><span class='line'><span class="s2">        }&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">[&lt;</span><span class="nc">EntryPoint</span><span class="o">&gt;]</span>
+</span><span class='line'><span class="k">let</span> <span class="n">main</span> <span class="n">args</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">use</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;remote-system&quot;</span> <span class="n">config</span>
+</span><span class='line'>    <span class="nn">System</span><span class="p">.</span><span class="nn">Console</span><span class="p">.</span><span class="nc">ReadLine</span><span class="bp">()</span>
+</span><span class='line'>    <span class="mi">0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After running it our remote system should be listening on localhost on port 9001 and be ready to instantiate remotely deployed actors.</p>
+
+<h4>Local actor system instance</h4>
+
+<p>Second application will be used for defining actors and sending deployment requests to remote node. To do so it has to know it&rsquo;s address.</p>
+
+<p>To deploy our actors remotely, lets build some helper functions. To begin with, write some logic to inform our local system, that deployment should occur on the remote machine. Remember that we need to provide full address to the remote system including it&rsquo;s network localization and protocol type used for communication.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">open</span> <span class="nn">Akka</span><span class="p">.</span><span class="nc">Actor</span>
+</span><span class='line'><span class="c1">// return Deploy instance able to operate in remote scope</span>
+</span><span class='line'><span class="k">let</span> <span class="n">deployRemotely</span> <span class="n">address</span> <span class="o">=</span> <span class="nc">Deploy</span><span class="o">(</span><span class="nc">RemoteScope</span> <span class="o">(</span><span class="nn">Address</span><span class="p">.</span><span class="nc">Parse</span> <span class="n">address</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Remote deployment in Akka F# is done through <code>spawne</code> function and it requires deployed code to be wrapped into F# quotation.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">spawnRemote</span> <span class="n">systemOrContext</span> <span class="n">remoteSystemAddress</span> <span class="n">actorName</span> <span class="n">expr</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">spawne</span> <span class="n">systemOrContext</span> <span class="n">actorName</span> <span class="n">expr</span> <span class="o">[</span><span class="nn">SpawnOption</span><span class="p">.</span><span class="nc">Deploy</span> <span class="o">(</span><span class="n">deployRemotely</span> <span class="n">remoteSystemAddress</span><span class="o">)]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Quotations give us a few nice features, but also have some limitations:</p>
+
+<ol>
+<li>Unlike the C# approach, here we don&rsquo;t define actors in shared libraries, which have to be bound to both endpoints. Actor logic is compiled in the runtime, while remote actor system is operating. That means, there is no need to stop your remote nodes to reload shared actor assemblies when updated.</li>
+<li>Code embedded inside quotation must use only functions, types and variables known to both endpoints. There are limited ways to define functions inside quotation expression (and no way to define types), but generally speaking in most cases it&rsquo;s better to define them in separate library and share between nodes.</li>
+</ol>
+
+
+<p>Last line of the <code>spawne</code> function is list of options used to configure actor. We used <code>SpawnOption.Deploy</code> to specify what deployment specifics are meant to occur. Other options may describe specifics such as message mailboxes, actor routers or failure handling strategies.</p>
+
+<p>Because Akka actor system is required to negotiate deployment specifics with external nodes, it&rsquo;s local instance has to be provided even thou we want to deploy our actors on the remote machines.</p>
+
+<p>Finally when everything is set, we can run our example (remember that remote node must be up and running):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;local-system&quot;</span> <span class="n">config</span>
+</span><span class='line'><span class="k">let</span> <span class="n">aref</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">spawnRemote</span> <span class="n">system</span> <span class="s2">&quot;akka.tcp://remote-system@localhost:9001/&quot;</span> <span class="s2">&quot;hello&quot;</span>
+</span><span class='line'>      <span class="c1">// actorOf wraps custom handling function with message receiver logic</span>
+</span><span class='line'>      <span class="o">&lt;@</span> <span class="n">actorOf</span> <span class="o">(</span><span class="k">fun</span> <span class="n">msg</span> <span class="o">-&gt;</span> <span class="n">printfn</span> <span class="s2">&quot;received &#39;%s&#39;&quot;</span> <span class="n">msg</span><span class="o">)</span> <span class="o">@&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// send example message to remotely deployed actor</span>
+</span><span class='line'><span class="n">aref</span> <span class="o">&lt;!</span> <span class="s2">&quot;Hello world&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// thanks to location transparency, we can select </span>
+</span><span class='line'><span class="c1">// remote actors as if they where existing on local node</span>
+</span><span class='line'><span class="k">let</span> <span class="n">sref</span> <span class="o">=</span> <span class="n">select</span> <span class="s2">&quot;akka://local-system/user/hello&quot;</span> <span class="n">system</span>
+</span><span class='line'><span class="n">sref</span> <span class="o">&lt;!</span> <span class="s2">&quot;Hello again&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// we can still create actors in local system context</span>
+</span><span class='line'><span class="k">let</span> <span class="n">lref</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;local&quot;</span> <span class="o">(</span><span class="n">actorOf</span> <span class="o">(</span><span class="k">fun</span> <span class="n">msg</span> <span class="o">-&gt;</span> <span class="n">printfn</span> <span class="s2">&quot;local &#39;%s&#39;&quot;</span> <span class="n">msg</span><span class="o">))</span>
+</span><span class='line'><span class="c1">// this message should be printed in local application console</span>
+</span><span class='line'><span class="n">lref</span> <span class="o">&lt;!</span> <span class="s2">&quot;Hello locally&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As a result, you should receive two messages printed in <strong>remote application console</strong> and one locally. See?</p>
+
+<p><img src="http://www.reactiongifs.com/r/mgc.gif" style="display: block; margin-left: auto; margin-right: auto" /></p>
+
+<h3>Final thoughts</h3>
+
+<p>Remember that Akka.NET is still in beta and all of the F# API functions are subject to change. If you have some concepts or interesting ideas, or want to help and become part of the family, you may share them on <a href="https://groups.google.com/forum/?utm_medium=email&amp;utm_source=footer#!forum/akkadotnet-user-list">Akka.NET discussion group</a> or directly on <a href="https://github.com/akkadotnet/akka.net">Github</a>.</p>
+
+<h3>Appendix A: set your configuration string in application config file</h3>
+
+<p>While you may define configuration strings in code, the better idea is to actually store them in .config files. To be able to do so, we must simply extend configuration file with custom Akka config section:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;configSections&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;section</span> <span class="na">name=</span><span class="s">&quot;akka&quot;</span> <span class="na">type=</span><span class="s">&quot;Akka.Configuration.Hocon.AkkaConfigurationSection, Akka&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/configSections&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next, we can embed our Hocon-formated configuration string directly into configuration file by using <code>&lt;![CDATA[]]&gt;</code> marker (directly under main <code>&lt;configuration&gt;</code> root node):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;akka&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;hocon&gt;</span>
+</span><span class='line'>      <span class="cp">&lt;![CDATA[</span>
+</span><span class='line'><span class="cp">        ... paste your config string here</span>
+</span><span class='line'><span class="cp">      ]]&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/hocon&gt;</span>
+</span><span class='line'><span class="nt">&lt;/akka&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At the present moment there is no built-in function to load config directly from configuration file, but this simple code should do the trick:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">loadConfig</span><span class="bp">()</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">section</span> <span class="o">=</span> <span class="o">(</span><span class="nn">System</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">ConfigurationManager</span><span class="p">.</span><span class="nc">GetSection</span> <span class="s2">&quot;akka&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">config</span> <span class="o">=</span> <span class="n">section</span><span class="o">:?&gt;</span> <span class="o">(</span><span class="nn">Akka</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">Hocon</span><span class="p">.</span><span class="nc">AkkaConfigurationSection</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="nc">AkkaConfig</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Appendix B: Share-nothing</h3>
+
+<p>Since keeping actual assemblies in sync over all of the remote nodes may feel cumbersome for some people, I decided to show a little trick, which may be used to replace some of the complex data structures in your F# code. Lets look how data structure problem may be simply solved in Akka predecessor, Erlang:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="nf">go</span><span class="p">()</span> <span class="o">-&gt;</span>
+</span><span class='line'>  <span class="nv">Pid</span> <span class="o">=</span> <span class="nb">spawn</span><span class="p">(</span><span class="nv">RemoteNode</span><span class="p">,</span> <span class="n">loop</span><span class="p">),</span>
+</span><span class='line'>  <span class="nv">Pid</span> <span class="o">!</span> <span class="p">{</span><span class="n">hello</span><span class="p">,</span> <span class="s">&quot;world&quot;</span><span class="p">},</span>
+</span><span class='line'>  <span class="nv">Pid</span> <span class="o">!</span> <span class="p">{</span><span class="n">hi</span><span class="p">}.</span>
+</span><span class='line'>
+</span><span class='line'><span class="nf">loop</span><span class="p">()</span> <span class="o">-&gt;</span>
+</span><span class='line'>  <span class="k">receive</span>
+</span><span class='line'>      <span class="p">{</span><span class="n">hello</span><span class="p">,</span> <span class="nv">Msg</span><span class="p">}</span> <span class="o">-&gt;</span>
+</span><span class='line'>          <span class="nn">io</span><span class="p">:</span><span class="nf">fwrite</span><span class="p">(</span><span class="s">&quot;hello </span><span class="si">~p~n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nv">Msg</span><span class="p">]),</span>
+</span><span class='line'>          <span class="n">loop</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">{</span><span class="n">hi</span><span class="p">}</span> <span class="o">-&gt;</span>
+</span><span class='line'>          <span class="nn">io</span><span class="p">:</span><span class="nf">fwrite</span><span class="p">(</span><span class="s">&quot;hi</span><span class="si">~n</span><span class="s">&quot;</span><span class="p">),</span>
+</span><span class='line'>          <span class="n">loop</span><span class="p">()</span>
+</span><span class='line'>  <span class="k">end</span><span class="p">.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I think, that based on your knowledge about functional programming, most of it should be at least familiar if not self-explanatory. Crux is the <code>{hello, Msg}</code> and <code>{hi}</code> syntax &ndash; these are actually instances of tuples (nested into pattern matched message receiver construct). Standard Erlang convention precises them as so called tagged tuples, which first argument is an <strong>atom</strong> &ndash; also known as symbol in other languages. Since Erlang is a dynamic language, this way we may differentiate tuples of the same size from each other.</p>
+
+<p>Example below shows how usage of the Erlang&rsquo;s tagged tuples could be moved into F#. The big difference is that F# has no Erlang <strong>atom</strong> equivalent. Therefore they has been replaced by F# literal integers, which gives us an advantage of human readable tags, while still counted as integers inside quotation expressions.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="o">[&lt;</span><span class="nc">Literal</span><span class="o">&gt;]</span><span class="k">let</span> <span class="nc">Hello</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span class='line'><span class="o">[&lt;</span><span class="nc">Literal</span><span class="o">&gt;]</span><span class="k">let</span> <span class="nc">Hi</span> <span class="o">=</span> <span class="mi">2</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">spawne</span> <span class="n">system</span> <span class="s2">&quot;remote&quot;</span> <span class="o">(&lt;@</span> <span class="k">fun</span> <span class="n">mailbox</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">:</span> <span class="nc">Cont</span><span class="o">&lt;</span><span class="n">obj</span><span class="o">,</span> <span class="n">obj</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
+</span><span class='line'>            <span class="k">match</span> <span class="n">msg</span> <span class="k">with</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">(</span><span class="nc">Hello</span><span class="o">,</span> <span class="n">str</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">printfn</span> <span class="s2">&quot;hello %A&quot;</span> <span class="n">str</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">(</span><span class="nc">Hi</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">print</span> <span class="s2">&quot;hi</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Unhandled</span><span class="bp">()</span>
+</span><span class='line'>            <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="n">loop</span><span class="bp">()</span> <span class="o">@&gt;)</span> <span class="o">[</span><span class="nn">SpawnOption</span><span class="p">.</span><span class="nc">Deploy</span> <span class="nc">Deploy</span><span class="o">(</span><span class="nc">RemoteScope</span><span class="o">(</span><span class="nn">Address</span><span class="p">.</span><span class="nc">Parse</span> <span class="n">remoteAddr</span><span class="o">))]</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">pid</span> <span class="o">&lt;!</span> <span class="o">(</span><span class="nc">Hello</span><span class="o">,</span> <span class="s2">&quot;world&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="n">pid</span> <span class="o">&lt;!</span> <span class="o">(</span><span class="nc">Hi</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Hipsterize your backend for The Greater Good with Akka.NET, F# and some DDD flavor]]></title>
@@ -246,31 +573,6 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h3>Step 5: bind your business logic to Akka.NET</h3>
-
-<p>If you&rsquo;re interested in integrating Akka.NET with your F# logic, I can recommend you more posts in this blog written earlier this year. Therefore I assume, that you&rsquo;re aware how F# actors based on recursive loops work. Because loop creation is often a generic behavior, again I&rsquo;ll expose it in form of function wrapper.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">actAs</span> <span class="n">fn</span> <span class="o">(</span><span class="n">mailbox</span> <span class="o">:</span> <span class="nc">Actor</span><span class="o">&lt;</span><span class="k">&#39;</span><span class="n">a</span><span class="o">&gt;)</span> <span class="o">=</span>
-</span><span class='line'>    <span class="k">let</span> <span class="k">rec</span> <span class="n">loop&#39;</span><span class="bp">()</span> <span class="o">=</span>
-</span><span class='line'>        <span class="n">actor</span> <span class="o">{</span>
-</span><span class='line'>            <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
-</span><span class='line'>            <span class="n">fn</span> <span class="n">msg</span>
-</span><span class='line'>            <span class="k">return</span><span class="o">!</span> <span class="n">loop&#39;</span><span class="bp">()</span>
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>    <span class="n">loop&#39;</span><span class="bp">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>NOTE: At the present moment Akka.NET API for F# language is still lacks some features. This post applies mostly to API in version 0.7 of the framework, so you may expect some changes in the future.</p>
-
 <h4>Mock database access</h4>
 
 <p>As I&rsquo;ve said in the introduction, I won&rsquo;t use any real-life database provider, mocking it with concurrent dictionary instead. However if you want to use a normal database, nothing stands in your way.</p>
@@ -380,7 +682,7 @@
 </span><span class='line'>    <span class="o">&lt;|</span> <span class="n">flip</span> <span class="n">findInUserStore</span> <span class="n">userStore</span>
 </span><span class='line'>    <span class="o">&lt;|</span> <span class="n">flip</span> <span class="n">saveInUserStore</span> <span class="n">userStore</span>
 </span><span class='line'><span class="k">let</span> <span class="n">subscriber</span> <span class="o">=</span> <span class="n">subscribe</span> <span class="n">system</span> <span class="o">&lt;|</span> <span class="n">printf</span> <span class="s2">&quot;User event: %A</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span class='line'><span class="k">let</span> <span class="n">userActor</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;users&quot;</span> <span class="o">&lt;|</span> <span class="n">actAs</span> <span class="o">(</span><span class="n">userHandler</span> <span class="o">&gt;=&gt;</span> <span class="o">(</span><span class="n">publish</span> <span class="n">system</span><span class="o">.</span><span class="nc">EventStream</span><span class="o">)</span> <span class="o">&gt;&gt;</span> <span class="n">handleErrors</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">userActor</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;users&quot;</span> <span class="o">&lt;|</span> <span class="n">actorOf</span> <span class="o">(</span><span class="n">userHandler</span> <span class="o">&gt;=&gt;</span> <span class="o">(</span><span class="n">publish</span> <span class="n">system</span><span class="o">.</span><span class="nc">EventStream</span><span class="o">)</span> <span class="o">&gt;&gt;</span> <span class="n">handleErrors</span><span class="o">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>
 </span><span class='line'><span class="n">userActor</span> <span class="o">&lt;!</span> <span class="nc">RegisterUser</span><span class="o">(</span><span class="s2">&quot;j.doe@testmail.co&quot;</span><span class="o">,</span> <span class="s2">&quot;pass&quot;</span><span class="o">)</span>  <span class="c1">// UserAlreadyExists error</span>
@@ -431,30 +733,36 @@
 <span class='line-number'>16</span>
 <span class='line-number'>17</span>
 <span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='fsharp'><span class='line'> <span class="k">let</span> <span class="n">supervisor</span> <span class="o">=</span>
-</span><span class='line'>        <span class="n">spawns</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span>
-</span><span class='line'>        <span class="c1">// below we define OneForOneStrategy to handle specific exceptions incoming from child actors</span>
-</span><span class='line'>        <span class="o">&lt;|</span> <span class="o">(</span><span class="nn">Strategy</span><span class="p">.</span><span class="n">oneForOne</span> <span class="o">&lt;|</span> <span class="k">fun</span> <span class="n">e</span> <span class="o">-&gt;</span>
-</span><span class='line'>            <span class="k">match</span> <span class="n">e</span> <span class="k">with</span>
-</span><span class='line'>            <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArithmeticException</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Resume</span>
-</span><span class='line'>            <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArgumentException</span>   <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Stop</span>
-</span><span class='line'>            <span class="o">|</span> <span class="o">_</span>                      <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Escalate</span><span class="o">)</span>
-</span><span class='line'>        <span class="o">&lt;|</span> <span class="k">fun</span> <span class="n">mailbox</span> <span class="o">-&gt;</span>
-</span><span class='line'>            <span class="c1">// by using mailbox.spawn we may create a child actors without exiting a F# functional API</span>
-</span><span class='line'>            <span class="k">let</span> <span class="n">worker</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="n">spawn</span> <span class="s2">&quot;worker&quot;</span> <span class="o">&lt;|</span> <span class="n">workerFun</span>
-</span><span class='line'>            <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">strategy</span> <span class="o">=</span>
+</span><span class='line'>    <span class="nn">Strategy</span><span class="p">.</span><span class="n">oneForOne</span> <span class="o">(</span><span class="k">fun</span> <span class="n">e</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="k">match</span> <span class="n">e</span> <span class="k">with</span>
+</span><span class='line'>        <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArithmeticException</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Resume</span>
+</span><span class='line'>        <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArgumentException</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Stop</span>
+</span><span class='line'>        <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Escalate</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">supervisor</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">spawnOpt</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span> <span class="o">(</span><span class="k">fun</span> <span class="n">mailbox</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="c1">// by using spawn we may create a child actors without exiting a F# functional API</span>
+</span><span class='line'>        <span class="k">let</span> <span class="n">worker</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">mailbox</span> <span class="s2">&quot;worker&quot;</span> <span class="n">workerFun</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span>
+</span><span class='line'>            <span class="n">actor</span> <span class="o">{</span>
 </span><span class='line'>                <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
-</span><span class='line'>                <span class="k">match</span> <span class="n">msg</span> <span class="o">:&gt;</span> <span class="n">obj</span> <span class="k">with</span>
-</span><span class='line'>                <span class="o">|</span> <span class="o">:?</span> <span class="nc">Respond</span> <span class="o">-&gt;</span> <span class="n">worker</span><span class="o">.</span><span class="nc">Tell</span><span class="o">(</span><span class="n">msg</span><span class="o">,</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span><span class="o">)</span>
-</span><span class='line'>                <span class="o">|</span> <span class="o">_</span>          <span class="o">-&gt;</span> <span class="n">worker</span> <span class="o">&lt;!</span> <span class="n">msg</span>
-</span><span class='line'>                <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">}</span>
-</span><span class='line'>            <span class="n">loop</span><span class="bp">()</span>
+</span><span class='line'>                <span class="k">match</span> <span class="n">msg</span> <span class="k">with</span>
+</span><span class='line'>                <span class="o">|</span> <span class="nc">Respond</span> <span class="o">-&gt;</span> <span class="n">worker</span><span class="o">.</span><span class="nc">Tell</span><span class="o">(</span><span class="n">msg</span><span class="o">,</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="n">worker</span> <span class="o">&lt;!</span> <span class="n">msg</span>
+</span><span class='line'>                <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="n">loop</span><span class="bp">()</span><span class="o">)</span> <span class="o">[</span> <span class="nc">SupervisorStrategy</span><span class="o">(</span><span class="n">strategy</span><span class="o">)</span> <span class="o">]</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
 <p>A <a href="https://github.com/akkadotnet/akka.net/blob/dev/src/examples/FSharp.Api/Supervisioning.fs">whole example</a> is available inside Akka.NET project source code, along with other examples.</p>
 
-<p>Unlike standard <code>spawn</code>, <code>spawns</code> function could take a SupervisorStrategy object as an argument. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
+<p>Unlike standard <code>spawn</code>, <code>spawnOpt</code> function could take a list of options used to configure spawned actor internals. SupervisorStrategy is one of them. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
 
 <ol>
 <li><code>Strategy.oneForOne</code> &ndash; strategy will affect only an exception thrower.</li>
@@ -462,9 +770,7 @@
 </ol>
 
 
-<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne'</code> and <code>Strategy.allForOne'</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
-
-<p>Second change, is the new <code>mailbox.spawn</code> method, which works just like it&rsquo;s standard <code>spawn</code> equivalent with only one difference &ndash; it sets a <code>mailbox</code> Actor instance as current parent/supervisor of created actor. Both of those features combined could be used to bring a full supervision support in classic functional manner.</p>
+<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne2</code> and <code>Strategy.allForOne2</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
 ]]></content>
   </entry>
   
@@ -1008,22 +1314,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define, I&rsquo;ve created a simple function factory, which will wrap all varying logic for us.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">actorFor</span> <span class="n">func</span> <span class="o">=</span> <span class="k">fun</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">-&gt;</span>
-</span><span class='line'>    <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
-</span><span class='line'>        <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
-</span><span class='line'>        <span class="n">func</span> <span class="n">mailbox</span> <span class="n">msg</span>            <span class="c1">// this line is actor-specific</span>
-</span><span class='line'>        <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">}</span>
-</span><span class='line'>    <span class="n">loop</span><span class="bp">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
+<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define we can wrap actor behavior using <code>actorOf</code> and <code>actorOf2</code> functions.</p>
 
 <p>Lets start to defining a map-reduce logic into our application. Firstly we need to create a <strong>map actor</strong>. In this example, all what it needs to do, is to chop provided string into single words, and create from them a simple bag of words with their repetition. However we won&rsquo;t sum them now &ndash; this is the job for reducer actors.</p>
 
@@ -1087,9 +1378,9 @@
 <span class='line-number'>5</span>
 </pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;MapReduceSystem&quot;</span> <span class="o">&lt;|</span> <span class="nn">ConfigurationFactory</span><span class="p">.</span><span class="nc">Default</span><span class="bp">()</span>
 </span><span class='line'><span class="k">let</span> <span class="n">dict</span> <span class="o">=</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span><span class="kt">int</span><span class="o">&gt;</span><span class="bp">()</span>
-</span><span class='line'><span class="k">let</span> <span class="n">reducer</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;reduce&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">reduce</span> <span class="n">dict</span><span class="o">)</span>
-</span><span class='line'><span class="k">let</span> <span class="n">mapper</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;map&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">map</span> <span class="n">reducer</span><span class="o">)</span>
-</span><span class='line'><span class="k">let</span> <span class="n">master</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">master</span> <span class="n">mapper</span> <span class="n">reducer</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">reducer</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;reduce&quot;</span> <span class="o">&lt;|</span> <span class="n">actorOf2</span> <span class="o">(</span><span class="n">reduce</span> <span class="n">dict</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">mapper</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;map&quot;</span> <span class="o">&lt;|</span> <span class="n">actorOf2</span> <span class="o">(</span><span class="n">map</span> <span class="n">reducer</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">master</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span> <span class="o">&lt;|</span> <span class="n">actorOf2</span> <span class="o">(</span><span class="n">master</span> <span class="n">mapper</span> <span class="n">reducer</span><span class="o">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -1114,7 +1405,7 @@
 </span><span class='line'>
 </span><span class='line'><span class="c1">// read the result</span>
 </span><span class='line'><span class="n">async</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">let</span><span class="o">!</span> <span class="n">res</span> <span class="o">=</span> <span class="n">master</span><span class="o">.</span><span class="nc">Ask</span><span class="o">(</span><span class="nc">Collect</span><span class="o">)</span> <span class="o">|&gt;</span> <span class="nn">Async</span><span class="p">.</span><span class="nc">AwaitTask</span>
+</span><span class='line'>    <span class="k">let</span><span class="o">!</span> <span class="n">res</span> <span class="o">=</span> <span class="n">master</span> <span class="o">&lt;?</span> <span class="nc">Collect</span>
 </span><span class='line'>    <span class="k">for</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">v</span><span class="o">)</span> <span class="k">in</span> <span class="n">res</span> <span class="o">:?&gt;</span> <span class="o">(</span><span class="kt">string</span><span class="o">*</span><span class="kt">int</span><span class="o">)</span> <span class="n">seq</span> <span class="k">do</span>
 </span><span class='line'>        <span class="n">printfn</span> <span class="s2">&quot;%s</span><span class="se">\t</span><span class="s2">%d&quot;</span> <span class="n">k</span> <span class="n">v</span>
 </span><span class='line'>    <span class="n">system</span><span class="o">.</span><span class="nc">Shutdown</span><span class="bp">()</span>
@@ -2628,53 +2919,6 @@
 
 
 <p>Rozwiązania zostały już wykorzystane na najnowszych VMach JavaScriptu. Niestety Ruby i Python wciąż czekają na swoją kolej.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Ustrukturyzowane repozytorium - Git Flow]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow/"/>
-    <updated>2013-03-16T08:29:00+01:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2013/03/16/ustrukturyzowane-repozytorium-git-flow</id>
-    <content type="html"><![CDATA[<p>O tym czym jest Git, wie chyba każdy programista. O konwencjach i wzorcach stosowanych podczas produkcji do rozwoju repozytorium słyszało jednak zdecydowanie mniej osób, zaś jeszcze mniej stosowało je w praktyce. W tym poście postaram się poruszyć ten temat w kontekście <strong>git flow</strong> &ndash; narzędzia do integracji systemu kontroli wersji ze strategią procesu tworzenia oprogramowania.</p>
-
-<p>Jakiś czas temu Maciej Aniserowicz <a href="http://www.maciejaniserowicz.com/2012/12/10/sztuka-commitowania-pracy/">opisał na swoim blogu</a> kilka własnych przemyśleń na temat konwencji stosowanych w celu poprawy pracy z systemem kontroli wersji. Mniej więcej wtedy zaczął mi świtać pomysł podzielenia się swoimi spostrzeżeniami na temat git flow &ndash; narzędzia, które miałem okazję poznać wcześniej podczas moich przygód jako programisty RoR. Teraz po długich miesiącach nareszcie zebrałem się w sobie aby podzielić się swoimi doświadczeniami.</p>
-
-<h2>Czym jest git flow?</h2>
-
-<p>W skrócie jest to nakładka do gita rozszerzająca go o zbiór nowych komend umożliwiających nadanie temu systemowi kontroli wersji struktury zgodniej z workflowem wytwarzania oprogramowania. Pytanie: tylko jak wygląda ten workflow? Jego głównym założeniem jest podział repozytorium na kilka ściśle powiązanych ze sobą płaszczyzn-gałęzi:</p>
-
-<ul>
-<li>gałąź developerska (domyślnie: <em>develop</em>) &ndash; na niej nanoszone są bieżące zmiany commitowane przez programistów pomiędzy wypuszczaniem kolejnych wersji programu.</li>
-<li>gałąź produkcyjna (domyślnie: <em>master</em>) &ndash; zawiera bieżącą, najnowszą wersję programu.</li>
-<li>gałęzie z wersjami (domyślnie: <em>release-&lt;numer_wersji></em>) &ndash; po jednej na każdą wydaną wersję programu. Zmiany stąd trafiają później bezpośrednio na gałąź produkcyjną.</li>
-<li>gałęzie z nowymi funkcjonalnościami (domyślnie: <em>feature-<nazwa></em>) &ndash; za każdym razem kiedy tworzymy nowy moduł/funkcjonalność do projektu, tworzymy dla niego automatycznie jego własną gałąź. Po zakończeniu prac jest ona mergowana z branchem developerskim.</li>
-<li>gałęzie z poprawkami (domyślnie: <em>hotfix-<nazwa></em>) &ndash; poprawki mogą być wykonywane zarówno z gałęzi produkcyjnej jak i developerskiej i tworzone są dla nich własne odnogi. Po zacommitowaniu poprawki trafia ona do obu branchów (<em>master </em>oraz <em>develop</em>).</li>
-<li>gałęzie wsparcia (domyślnie: <em>support-&lt;numer_wersji></em>) &ndash; wprowadzona niedawno. Tutaj wykonywane są poprawki i zmiany na potrzeby klientów wykorzystujących starsze wersje programu.</li>
-</ul>
-
-
-<p>Całość została dokładniej &ndash; wraz z przykładami &ndash; przedstawiona <a href="http://vimeo.com/16018419">tutaj</a>. Na oficjalnym wiki projektu na githubie można z kolei znaleźć <a href="https://github.com/nvie/gitflow/wiki/Command-Line-Arguments">pełną listę nowych komend</a>. Pozwalają one zautomatyzować proces zarządzania commitami/zadaniami na każdej z gałęzi.</p>
-
-<h2>Jak zainstalować git flow na Windows?</h2>
-
-<p>Jest to w sumie dobre pytanie, ponieważ domyślnie narzędzie to było tworzone na potrzeby społeczności Linuxa. Instalacja na systemie Windows jest odrobinę bardziej skomplikowana, jednak w Internecie dostępne są poradniki poruszające to zagadnienie &ndash; ja korzystałem z <a href="http://xinyustudio.wordpress.com/2012/03/26/installing-git-flow-in-windows/">tego</a> (z niewielkimi zmianami). Poniżej opiszę listę kroków jaką wykonałem, aby rozruszać git flow u siebie.</p>
-
-<p>Zakładając, że mamy już zainstalowanego Gita i znamy ścieżkę do niego, należy:</p>
-
-<ul>
-<li>Pobrać <em>util-linux-ng</em> dla Windowsa. Można to zrobić z <a href="http://gnuwin32.sourceforge.net/packages/util-linux-ng.htm">tej strony</a>. Wystarczy jednak, że z działu Downloads pobierzemy tylko foldery <strong>Bin </strong>oraz <strong>Dependencies</strong>.</li>
-<li>Skopiować zawartość paczki <strong>Bin/bin</strong><strong> </strong>oraz <strong>Dependecies/bin/libintl3.dll</strong> do katalogu bin w ścieżce, w której mamy zainstalowanego Gita.</li>
-<li>Klonujemy repozytorium git flowa: <code>git clone –-recursive git://github.com/nvie/gitflow.git</code></li>
-<li>Na koniec musimy w zwykłej systemowej konsoli wejść do nowo sklonowanego folderu <strong>gitflow/contrib</strong> i wywołać komendę: <code>msysgit-install.cmd &ldquo;&lt;ścieżka do Gita>&rdquo;</code></li>
-</ul>
-
-
-<p>Po wykonaniu tych kroków wszystkie komendy git flowa powinny być dostępne.</p>
-
-<h2>Bonus dla ciekawskich</h2>
-
-<p>Dla części z czytelników może być to nowość, ale git umożliwia nam definiowanie własnych komend. Aby to wykonać, należy utworzyć własny plik .exe, który będzie definiował naszą komendę. Nazwa pliku jednocześnie określa jego sposób wywołania, przkładowo plik <em>git-&lt;moja_komenda>.exe</em> będzie można wywołać za pomocą polecenia <code>git &lt;moja_komenda></code>. Zgodnie z przyjętą zasadą konstrukcji skryptów bashowych pierwsza linijka pliku powinna zawierać polecenie <code>#!/bin/sh</code>. Kolejne linie definiują polecenia, które chcemy zawrzeć. Na koniec, aby plik był widziany z poziomu konsoli gita, należy go umieścić w ścieżce <em>&lt;katalog_git>/libexec/git-core</em> &ndash; tam też możemy zobaczyć definicje wszystkich dotychczas dostępnych komend.</p>
 ]]></content>
   </entry>
   

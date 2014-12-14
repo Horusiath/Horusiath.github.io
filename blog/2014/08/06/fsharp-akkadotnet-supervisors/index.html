@@ -147,30 +147,36 @@
 <span class='line-number'>16</span>
 <span class='line-number'>17</span>
 <span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='fsharp'><span class='line'> <span class="k">let</span> <span class="n">supervisor</span> <span class="o">=</span>
-</span><span class='line'>        <span class="n">spawns</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span>
-</span><span class='line'>        <span class="c1">// below we define OneForOneStrategy to handle specific exceptions incoming from child actors</span>
-</span><span class='line'>        <span class="o">&lt;|</span> <span class="o">(</span><span class="nn">Strategy</span><span class="p">.</span><span class="n">oneForOne</span> <span class="o">&lt;|</span> <span class="k">fun</span> <span class="n">e</span> <span class="o">-&gt;</span>
-</span><span class='line'>            <span class="k">match</span> <span class="n">e</span> <span class="k">with</span>
-</span><span class='line'>            <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArithmeticException</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Resume</span>
-</span><span class='line'>            <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArgumentException</span>   <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Stop</span>
-</span><span class='line'>            <span class="o">|</span> <span class="o">_</span>                      <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Escalate</span><span class="o">)</span>
-</span><span class='line'>        <span class="o">&lt;|</span> <span class="k">fun</span> <span class="n">mailbox</span> <span class="o">-&gt;</span>
-</span><span class='line'>            <span class="c1">// by using mailbox.spawn we may create a child actors without exiting a F# functional API</span>
-</span><span class='line'>            <span class="k">let</span> <span class="n">worker</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="n">spawn</span> <span class="s2">&quot;worker&quot;</span> <span class="o">&lt;|</span> <span class="n">workerFun</span>
-</span><span class='line'>            <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">strategy</span> <span class="o">=</span>
+</span><span class='line'>    <span class="nn">Strategy</span><span class="p">.</span><span class="n">oneForOne</span> <span class="o">(</span><span class="k">fun</span> <span class="n">e</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="k">match</span> <span class="n">e</span> <span class="k">with</span>
+</span><span class='line'>        <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArithmeticException</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Resume</span>
+</span><span class='line'>        <span class="o">|</span> <span class="o">:?</span> <span class="nc">ArgumentException</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Stop</span>
+</span><span class='line'>        <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="nn">Directive</span><span class="p">.</span><span class="nc">Escalate</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">supervisor</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">spawnOpt</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span> <span class="o">(</span><span class="k">fun</span> <span class="n">mailbox</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="c1">// by using spawn we may create a child actors without exiting a F# functional API</span>
+</span><span class='line'>        <span class="k">let</span> <span class="n">worker</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">mailbox</span> <span class="s2">&quot;worker&quot;</span> <span class="n">workerFun</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span>
+</span><span class='line'>            <span class="n">actor</span> <span class="o">{</span>
 </span><span class='line'>                <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
-</span><span class='line'>                <span class="k">match</span> <span class="n">msg</span> <span class="o">:&gt;</span> <span class="n">obj</span> <span class="k">with</span>
-</span><span class='line'>                <span class="o">|</span> <span class="o">:?</span> <span class="nc">Respond</span> <span class="o">-&gt;</span> <span class="n">worker</span><span class="o">.</span><span class="nc">Tell</span><span class="o">(</span><span class="n">msg</span><span class="o">,</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span><span class="o">)</span>
-</span><span class='line'>                <span class="o">|</span> <span class="o">_</span>          <span class="o">-&gt;</span> <span class="n">worker</span> <span class="o">&lt;!</span> <span class="n">msg</span>
-</span><span class='line'>                <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">}</span>
-</span><span class='line'>            <span class="n">loop</span><span class="bp">()</span>
+</span><span class='line'>                <span class="k">match</span> <span class="n">msg</span> <span class="k">with</span>
+</span><span class='line'>                <span class="o">|</span> <span class="nc">Respond</span> <span class="o">-&gt;</span> <span class="n">worker</span><span class="o">.</span><span class="nc">Tell</span><span class="o">(</span><span class="n">msg</span><span class="o">,</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Sender</span><span class="bp">()</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="n">worker</span> <span class="o">&lt;!</span> <span class="n">msg</span>
+</span><span class='line'>                <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="n">loop</span><span class="bp">()</span><span class="o">)</span> <span class="o">[</span> <span class="nc">SupervisorStrategy</span><span class="o">(</span><span class="n">strategy</span><span class="o">)</span> <span class="o">]</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
 <p>A <a href="https://github.com/akkadotnet/akka.net/blob/dev/src/examples/FSharp.Api/Supervisioning.fs">whole example</a> is available inside Akka.NET project source code, along with other examples.</p>
 
-<p>Unlike standard <code>spawn</code>, <code>spawns</code> function could take a SupervisorStrategy object as an argument. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
+<p>Unlike standard <code>spawn</code>, <code>spawnOpt</code> function could take a list of options used to configure spawned actor internals. SupervisorStrategy is one of them. By using F# API you are able to use <code>Strategy</code> module to quickly create a corresponding strategy instance. It supports two types of strategy creators:</p>
 
 <ol>
 <li><code>Strategy.oneForOne</code> &ndash; strategy will affect only an exception thrower.</li>
@@ -178,9 +184,7 @@
 </ol>
 
 
-<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne'</code> and <code>Strategy.allForOne'</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
-
-<p>Second change, is the new <code>mailbox.spawn</code> method, which works just like it&rsquo;s standard <code>spawn</code> equivalent with only one difference &ndash; it sets a <code>mailbox</code> Actor instance as current parent/supervisor of created actor. Both of those features combined could be used to bring a full supervision support in classic functional manner.</p>
+<p>Both functions come in two variants. First one takes only one argument &ndash; <em>decider</em> function, which determines an expected behavior based upon type of exception thrown. Second one (<code>Strategy.oneForOne2</code> and <code>Strategy.allForOne2</code>) precedes decider argument with a timeout and number of possible behavior retries. All of them corresponds directly to standard Akka strategy API, but are wrapped to fit F# functional approach instead of method overrides.</p>
 </div>
 
 </article>

@@ -154,22 +154,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define, I&rsquo;ve created a simple function factory, which will wrap all varying logic for us.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">actorFor</span> <span class="n">func</span> <span class="o">=</span> <span class="k">fun</span> <span class="o">(</span><span class="n">mailbox</span><span class="o">:</span><span class="nc">Actor</span><span class="o">&lt;</span><span class="nc">MRMsg</span><span class="o">&gt;)</span> <span class="o">-&gt;</span>
-</span><span class='line'>    <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
-</span><span class='line'>        <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
-</span><span class='line'>        <span class="n">func</span> <span class="n">mailbox</span> <span class="n">msg</span>            <span class="c1">// this line is actor-specific</span>
-</span><span class='line'>        <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">}</span>
-</span><span class='line'>    <span class="n">loop</span><span class="bp">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
+<p>As you may have seen previously, instead of C#/Scala objective approach, I&rsquo;ve used tail-recursive function to define an actor processing routine. Since a lot of it&rsquo;s code would be repetitive among all of the actor types we want to define we can wrap actor behavior using <code>actorOf</code> and <code>actorOf2</code> functions.</p>
 
 <p>Lets start to defining a map-reduce logic into our application. Firstly we need to create a <strong>map actor</strong>. In this example, all what it needs to do, is to chop provided string into single words, and create from them a simple bag of words with their repetition. However we won&rsquo;t sum them now &ndash; this is the job for reducer actors.</p>
 
@@ -233,9 +218,9 @@
 <span class='line-number'>5</span>
 </pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;MapReduceSystem&quot;</span> <span class="o">&lt;|</span> <span class="nn">ConfigurationFactory</span><span class="p">.</span><span class="nc">Default</span><span class="bp">()</span>
 </span><span class='line'><span class="k">let</span> <span class="n">dict</span> <span class="o">=</span> <span class="nc">ConcurrentDictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">,</span><span class="kt">int</span><span class="o">&gt;</span><span class="bp">()</span>
-</span><span class='line'><span class="k">let</span> <span class="n">reducer</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;reduce&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">reduce</span> <span class="n">dict</span><span class="o">)</span>
-</span><span class='line'><span class="k">let</span> <span class="n">mapper</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;map&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">map</span> <span class="n">reducer</span><span class="o">)</span>
-</span><span class='line'><span class="k">let</span> <span class="n">master</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span> <span class="o">&lt;|</span> <span class="n">actorFor</span> <span class="o">(</span><span class="n">master</span> <span class="n">mapper</span> <span class="n">reducer</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">reducer</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;reduce&quot;</span> <span class="o">&lt;|</span> <span class="n">actorOf2</span> <span class="o">(</span><span class="n">reduce</span> <span class="n">dict</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">mapper</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;map&quot;</span> <span class="o">&lt;|</span> <span class="n">actorOf2</span> <span class="o">(</span><span class="n">map</span> <span class="n">reducer</span><span class="o">)</span>
+</span><span class='line'><span class="k">let</span> <span class="n">master</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;master&quot;</span> <span class="o">&lt;|</span> <span class="n">actorOf2</span> <span class="o">(</span><span class="n">master</span> <span class="n">mapper</span> <span class="n">reducer</span><span class="o">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -260,7 +245,7 @@
 </span><span class='line'>
 </span><span class='line'><span class="c1">// read the result</span>
 </span><span class='line'><span class="n">async</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">let</span><span class="o">!</span> <span class="n">res</span> <span class="o">=</span> <span class="n">master</span><span class="o">.</span><span class="nc">Ask</span><span class="o">(</span><span class="nc">Collect</span><span class="o">)</span> <span class="o">|&gt;</span> <span class="nn">Async</span><span class="p">.</span><span class="nc">AwaitTask</span>
+</span><span class='line'>    <span class="k">let</span><span class="o">!</span> <span class="n">res</span> <span class="o">=</span> <span class="n">master</span> <span class="o">&lt;?</span> <span class="nc">Collect</span>
 </span><span class='line'>    <span class="k">for</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">v</span><span class="o">)</span> <span class="k">in</span> <span class="n">res</span> <span class="o">:?&gt;</span> <span class="o">(</span><span class="kt">string</span><span class="o">*</span><span class="kt">int</span><span class="o">)</span> <span class="n">seq</span> <span class="k">do</span>
 </span><span class='line'>        <span class="n">printfn</span> <span class="s2">&quot;%s</span><span class="se">\t</span><span class="s2">%d&quot;</span> <span class="n">k</span> <span class="n">v</span>
 </span><span class='line'>    <span class="n">system</span><span class="o">.</span><span class="nc">Shutdown</span><span class="bp">()</span>

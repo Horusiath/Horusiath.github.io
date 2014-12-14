@@ -1,0 +1,481 @@
+
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Akka.NET remote deployment with F# - Simple Solutions</title>
+	<meta name="author" content="Bartosz Sypytkowski">
+
+	
+	<meta name="description" content="Akka.NET Remote Deployment With F# Today I want to present how Akka.NET can be used to leverage distributed computing and discuss some of the &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://bartoszsypytkowski.com/blog/2014/12/14/fsharp-akka-remote-deploy/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<link href="/stylesheets/font-awesome.min.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+
+<script type="text/javascript">
+      var disqus_shortname = 'bartoszsypytkowski';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://bartoszsypytkowski.com/blog/2014/12/14/fsharp-akka-remote-deploy/';
+        var disqus_url = 'http://bartoszsypytkowski.com/blog/2014/12/14/fsharp-akka-remote-deploy/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+  
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-47294845-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><h1 id="profile-name"><a href="/">Bartosz Sypytkowski</a></h1>
+<div class="profilepic">
+	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("b.sypytkowski@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+	
+</div>
+
+<nav id="main-nav"><ul class="main">
+    <li><a href="/">Blog</a></li>
+    <li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+			<a class="email" href="mailto:b.sypytkowski@gmail.com" title="Email">Email</a>
+		
+		
+		
+			<a class="google" href="https://plus.google.com/b.sypytkowski@gmail.com" rel="author" title="Google+">Google+</a>
+		
+		
+			<a class="twitter" href="http://twitter.com/horusiath" title="Twitter">Twitter</a>
+		
+		
+			<a class="github" href="https://github.com/horusiath" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+			<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Akka.NET Remote Deployment With F#</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Today I want to present how Akka.NET can be used to leverage distributed computing and discuss some of the changes in the latest F# package (Akka.FSharp 0.7.1). If you are not interested in explanation of how Akka.NET internals actually allow us to create distributed actor-based application, just skip the next part and dive directly into examples.</p>
+
+<h3>How Akka.NET remote deployment works</h3>
+
+<p>When a new actor should be created, it&rsquo;s actor system deployer have to figure out if deployment should occur on local machine or on the remote node. Second option requires a network connection to be established between local/remote nodes participating in the communication. To be able to do so, each participating node needs to know a localization of the others. In Akka, this is done by using actor paths.</p>
+
+<p>Actor path allows us to identify actors in scope of their systems actor hierarhies as well as localize them over the network. There are two formats of actor paths, both of them uses standard URI convention:</p>
+
+<ol>
+<li>Local paths (eg. <code>akka://local-system/user/parent/child</code>) may be used to identify actors deployed (remotely or not) by our local actor system, we are referring to. In provided example actor path refers to actor with name <code>child</code>, which parent/supervisor actor is called <code>parent</code>, which resides under <code>user</code> guardian (which is a specialized actor supervisor existing inside actor system kernel). All of them exists in actor system named <code>local-system</code>.</li>
+<li>Remote paths (eg. <code>akka.tcp://remote-system@localhost:9001/</code>) are similar to local ones, but a few differences occur. First we need to rename <code>akka</code> protocol to either <code>akka.tcp</code> or <code>akka.udp</code> to show what kind of underlying network connection we want to target. Second we have to suffix actor system name with it&rsquo;s localization. This is done by providing address and port, remote node is expected to listening on.</li>
+</ol>
+
+
+<p>Image below shows how actually actors refer to each other in remote deployment scenario.</p>
+
+<p><img src="http://i61.tinypic.com/vpknkh.png" width=840 style="display: block; margin-left: auto; margin-right: auto" /></p>
+
+<p>When an actor is deployed remotely, a remote node is responsible for creating it&rsquo;s instances, but we still refer to it using it&rsquo;s actor reference and our local system context. Local/remote coordination is done by remote daemon &ndash; specialized system actor, which resides directly under <code>/remote</code> path of the system root. With example above we may refer to remotely deployed child using <code>akka.tcp://sys@A:2552/user/parent/child</code> address, while it&rsquo;s true hierarchy lays under <code>akka.tcp://sys@B:2552/remote/sys@A:2552/user/parent/child</code> path. This allows us to preserve location transparency, hiding true underlying actor. References returned this way all almost indistinguishable from their local counterparts, allowing use of features such as monitoring, supervising and so on.</p>
+
+<h3>Remote deployment</h3>
+
+<h4>Hocon configuration</h4>
+
+<p>To start playing with remote deployment, we should configure both endpoints to be able to maintain network communication. This is achievable through the <a href="https://github.com/typesafehub/config/blob/master/HOCON.md">HOCON</a> configuration, which is the default format for both JVM and .NET Akka implementations. While you may be a little irritated by need of learning new format only to use Akka, remember:</p>
+
+<ol>
+<li>It&rsquo;s actually very easy to learn</li>
+<li>It&rsquo;s not XML ;)</li>
+</ol>
+
+
+<p>Before continue, I encourage you to get yourself familiar with it.</p>
+
+<p>To enable remote deployment feature, this would be a minimal Akka.NET configuration setup:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>akka {  
+</span><span class='line'>    actor {
+</span><span class='line'>        provider = "Akka.Remote.RemoteActorRefProvider, Akka.Remote"
+</span><span class='line'>    }
+</span><span class='line'>    remote.helios.tcp {
+</span><span class='line'>      port = 9001
+</span><span class='line'>      hostname = localhost
+</span><span class='line'>    }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>First, every configuration node resides under common root called <code>akka</code>. Since remoting is not default feature of Akka.NET, we have to inform our actor system how to couple remotely deployed actors with our local actor system. This setup is done through <code>RemoteActorRefProvider</code> defined under <code>akka.actor.provider</code> config node. It will allow us to associate references to spawned actors on both local and remote systems.</p>
+
+<p>Next one is <code>remote</code> node which defines configuration specific to remoting feature. There, we need to inform how our system will communicate with others. At the present moment it&rsquo;s achievable using <a href="https://github.com/Aaronontheweb/helios">Helios</a> server by default, which is lightweight and highly-concurrent TCP/UDP server developed by Aaron Stannard, one of the Akka.NET core developers &ndash; don&rsquo;t confuse it with Microsoft Helios, which is totally different project. Akka.Remote will use it automatically under the hood &ndash; the only thing we have to define is address and port, under which it will listen for incoming messages. If you want port to be resolved automatically, just set 0 as the port number.</p>
+
+<p>Excluding differences in system nodes localization, this configuration string may be shared by both local and remote node. You may use this configuration simply by parsing it using <code>Configuration.parse</code> function.</p>
+
+<h3>Let&rsquo;s get to the point</h3>
+
+<p>Unlike the C#, F# API is able to construct actors using expressions compiled directly at the runtime (while still providing type safety, F# programmers are used to have). It&rsquo;s achievable by leveraging <a href="http://msdn.microsoft.com/en-us/library/dd233212.aspx">F# quotations</a>, which can be serialized and compiled on demand on other machine.</p>
+
+<p>For the sample we don&rsquo;t need to have two separate machines, instead we may mock them by running two Akka applications. What is necessary for the most basic example, is that both of them have to share at least Akka.FSharp and Akka.Remote assemblies as well as all of their dependencies.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">install-package</span> <span class="n">Akka</span><span class="p">.</span><span class="n">FSharp</span> <span class="n">-version</span> <span class="n">0</span><span class="p">.</span><span class="n">7</span><span class="p">.</span><span class="n">1</span>
+</span><span class='line'><span class="n">install-package</span> <span class="n">Akka</span><span class="p">.</span><span class="n">Remote</span> <span class="n">-version</span> <span class="n">0</span><span class="p">.</span><span class="n">7</span><span class="p">.</span><span class="n">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Remote node</h4>
+
+<p>The only job of the remote system is to listen for incoming actor deployment requests and execute them. Therefore implementation is very simplistic:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">config</span> <span class="o">=</span>
+</span><span class='line'>    <span class="nn">Configuration</span><span class="p">.</span><span class="n">parse</span>
+</span><span class='line'>        <span class="o">@</span><span class="s2">&quot;akka {</span>
+</span><span class='line'><span class="s2">            actor.provider = &quot;&quot;Akka.Remote.RemoteActorRefProvider, Akka.Remote&quot;&quot;</span>
+</span><span class='line'><span class="s2">            remote.helios.tcp {</span>
+</span><span class='line'><span class="s2">                hostname = localhost</span>
+</span><span class='line'><span class="s2">                port = 9001</span>
+</span><span class='line'><span class="s2">            }</span>
+</span><span class='line'><span class="s2">        }&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">[&lt;</span><span class="nc">EntryPoint</span><span class="o">&gt;]</span>
+</span><span class='line'><span class="k">let</span> <span class="n">main</span> <span class="n">args</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">use</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;remote-system&quot;</span> <span class="n">config</span>
+</span><span class='line'>    <span class="nn">System</span><span class="p">.</span><span class="nn">Console</span><span class="p">.</span><span class="nc">ReadLine</span><span class="bp">()</span>
+</span><span class='line'>    <span class="mi">0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After running it our remote system should be listening on localhost on port 9001 and be ready to instantiate remotely deployed actors.</p>
+
+<h4>Local actor system instance</h4>
+
+<p>Second application will be used for defining actors and sending deployment requests to remote node. To do so it has to know it&rsquo;s address.</p>
+
+<p>To deploy our actors remotely, lets build some helper functions. To begin with, write some logic to inform our local system, that deployment should occur on the remote machine. Remember that we need to provide full address to the remote system including it&rsquo;s network localization and protocol type used for communication.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">open</span> <span class="nn">Akka</span><span class="p">.</span><span class="nc">Actor</span>
+</span><span class='line'><span class="c1">// return Deploy instance able to operate in remote scope</span>
+</span><span class='line'><span class="k">let</span> <span class="n">deployRemotely</span> <span class="n">address</span> <span class="o">=</span> <span class="nc">Deploy</span><span class="o">(</span><span class="nc">RemoteScope</span> <span class="o">(</span><span class="nn">Address</span><span class="p">.</span><span class="nc">Parse</span> <span class="n">address</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Remote deployment in Akka F# is done through <code>spawne</code> function and it requires deployed code to be wrapped into F# quotation.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">spawnRemote</span> <span class="n">systemOrContext</span> <span class="n">remoteSystemAddress</span> <span class="n">actorName</span> <span class="n">expr</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">spawne</span> <span class="n">systemOrContext</span> <span class="n">actorName</span> <span class="n">expr</span> <span class="o">[</span><span class="nn">SpawnOption</span><span class="p">.</span><span class="nc">Deploy</span> <span class="o">(</span><span class="n">deployRemotely</span> <span class="n">remoteSystemAddress</span><span class="o">)]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Quotations give us a few nice features, but also have some limitations:</p>
+
+<ol>
+<li>Unlike the C# approach, here we don&rsquo;t define actors in shared libraries, which have to be bound to both endpoints. Actor logic is compiled in the runtime, while remote actor system is operating. That means, there is no need to stop your remote nodes to reload shared actor assemblies when updated.</li>
+<li>Code embedded inside quotation must use only functions, types and variables known to both endpoints. There are limited ways to define functions inside quotation expression (and no way to define types), but generally speaking in most cases it&rsquo;s better to define them in separate library and share between nodes.</li>
+</ol>
+
+
+<p>Last line of the <code>spawne</code> function is list of options used to configure actor. We used <code>SpawnOption.Deploy</code> to specify what deployment specifics are meant to occur. Other options may describe specifics such as message mailboxes, actor routers or failure handling strategies.</p>
+
+<p>Because Akka actor system is required to negotiate deployment specifics with external nodes, it&rsquo;s local instance has to be provided even thou we want to deploy our actors on the remote machines.</p>
+
+<p>Finally when everything is set, we can run our example (remember that remote node must be up and running):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">system</span> <span class="o">=</span> <span class="nn">System</span><span class="p">.</span><span class="n">create</span> <span class="s2">&quot;local-system&quot;</span> <span class="n">config</span>
+</span><span class='line'><span class="k">let</span> <span class="n">aref</span> <span class="o">=</span>
+</span><span class='line'>    <span class="n">spawnRemote</span> <span class="n">system</span> <span class="s2">&quot;akka.tcp://remote-system@localhost:9001/&quot;</span> <span class="s2">&quot;hello&quot;</span>
+</span><span class='line'>      <span class="c1">// actorOf wraps custom handling function with message receiver logic</span>
+</span><span class='line'>      <span class="o">&lt;@</span> <span class="n">actorOf</span> <span class="o">(</span><span class="k">fun</span> <span class="n">msg</span> <span class="o">-&gt;</span> <span class="n">printfn</span> <span class="s2">&quot;received &#39;%s&#39;&quot;</span> <span class="n">msg</span><span class="o">)</span> <span class="o">@&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// send example message to remotely deployed actor</span>
+</span><span class='line'><span class="n">aref</span> <span class="o">&lt;!</span> <span class="s2">&quot;Hello world&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// thanks to location transparency, we can select </span>
+</span><span class='line'><span class="c1">// remote actors as if they where existing on local node</span>
+</span><span class='line'><span class="k">let</span> <span class="n">sref</span> <span class="o">=</span> <span class="n">select</span> <span class="s2">&quot;akka://local-system/user/hello&quot;</span> <span class="n">system</span>
+</span><span class='line'><span class="n">sref</span> <span class="o">&lt;!</span> <span class="s2">&quot;Hello again&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// we can still create actors in local system context</span>
+</span><span class='line'><span class="k">let</span> <span class="n">lref</span> <span class="o">=</span> <span class="n">spawn</span> <span class="n">system</span> <span class="s2">&quot;local&quot;</span> <span class="o">(</span><span class="n">actorOf</span> <span class="o">(</span><span class="k">fun</span> <span class="n">msg</span> <span class="o">-&gt;</span> <span class="n">printfn</span> <span class="s2">&quot;local &#39;%s&#39;&quot;</span> <span class="n">msg</span><span class="o">))</span>
+</span><span class='line'><span class="c1">// this message should be printed in local application console</span>
+</span><span class='line'><span class="n">lref</span> <span class="o">&lt;!</span> <span class="s2">&quot;Hello locally&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As a result, you should receive two messages printed in <strong>remote application console</strong> and one locally. See?</p>
+
+<p><img src="http://www.reactiongifs.com/r/mgc.gif" style="display: block; margin-left: auto; margin-right: auto" /></p>
+
+<h3>Final thoughts</h3>
+
+<p>Remember that Akka.NET is still in beta and all of the F# API functions are subject to change. If you have some concepts or interesting ideas, or want to help and become part of the family, you may share them on <a href="https://groups.google.com/forum/?utm_medium=email&amp;utm_source=footer#!forum/akkadotnet-user-list">Akka.NET discussion group</a> or directly on <a href="https://github.com/akkadotnet/akka.net">Github</a>.</p>
+
+<h3>Appendix A: set your configuration string in application config file</h3>
+
+<p>While you may define configuration strings in code, the better idea is to actually store them in .config files. To be able to do so, we must simply extend configuration file with custom Akka config section:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;configSections&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;section</span> <span class="na">name=</span><span class="s">&quot;akka&quot;</span> <span class="na">type=</span><span class="s">&quot;Akka.Configuration.Hocon.AkkaConfigurationSection, Akka&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/configSections&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next, we can embed our Hocon-formated configuration string directly into configuration file by using <code>&lt;![CDATA[]]&gt;</code> marker (directly under main <code>&lt;configuration&gt;</code> root node):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;akka&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;hocon&gt;</span>
+</span><span class='line'>      <span class="cp">&lt;![CDATA[</span>
+</span><span class='line'><span class="cp">        ... paste your config string here</span>
+</span><span class='line'><span class="cp">      ]]&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/hocon&gt;</span>
+</span><span class='line'><span class="nt">&lt;/akka&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At the present moment there is no built-in function to load config directly from configuration file, but this simple code should do the trick:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">loadConfig</span><span class="bp">()</span> <span class="o">=</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">section</span> <span class="o">=</span> <span class="o">(</span><span class="nn">System</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">ConfigurationManager</span><span class="p">.</span><span class="nc">GetSection</span> <span class="s2">&quot;akka&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">config</span> <span class="o">=</span> <span class="n">section</span><span class="o">:?&gt;</span> <span class="o">(</span><span class="nn">Akka</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">Hocon</span><span class="p">.</span><span class="nc">AkkaConfigurationSection</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="nc">AkkaConfig</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Appendix B: Share-nothing</h3>
+
+<p>Since keeping actual assemblies in sync over all of the remote nodes may feel cumbersome for some people, I decided to show a little trick, which may be used to replace some of the complex data structures in your F# code. Lets look how data structure problem may be simply solved in Akka predecessor, Erlang:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="nf">go</span><span class="p">()</span> <span class="o">-&gt;</span>
+</span><span class='line'>  <span class="nv">Pid</span> <span class="o">=</span> <span class="nb">spawn</span><span class="p">(</span><span class="nv">RemoteNode</span><span class="p">,</span> <span class="n">loop</span><span class="p">),</span>
+</span><span class='line'>  <span class="nv">Pid</span> <span class="o">!</span> <span class="p">{</span><span class="n">hello</span><span class="p">,</span> <span class="s">&quot;world&quot;</span><span class="p">},</span>
+</span><span class='line'>  <span class="nv">Pid</span> <span class="o">!</span> <span class="p">{</span><span class="n">hi</span><span class="p">}.</span>
+</span><span class='line'>
+</span><span class='line'><span class="nf">loop</span><span class="p">()</span> <span class="o">-&gt;</span>
+</span><span class='line'>  <span class="k">receive</span>
+</span><span class='line'>      <span class="p">{</span><span class="n">hello</span><span class="p">,</span> <span class="nv">Msg</span><span class="p">}</span> <span class="o">-&gt;</span>
+</span><span class='line'>          <span class="nn">io</span><span class="p">:</span><span class="nf">fwrite</span><span class="p">(</span><span class="s">&quot;hello </span><span class="si">~p~n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nv">Msg</span><span class="p">]),</span>
+</span><span class='line'>          <span class="n">loop</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">{</span><span class="n">hi</span><span class="p">}</span> <span class="o">-&gt;</span>
+</span><span class='line'>          <span class="nn">io</span><span class="p">:</span><span class="nf">fwrite</span><span class="p">(</span><span class="s">&quot;hi</span><span class="si">~n</span><span class="s">&quot;</span><span class="p">),</span>
+</span><span class='line'>          <span class="n">loop</span><span class="p">()</span>
+</span><span class='line'>  <span class="k">end</span><span class="p">.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I think, that based on your knowledge about functional programming, most of it should be at least familiar if not self-explanatory. Crux is the <code>{hello, Msg}</code> and <code>{hi}</code> syntax &ndash; these are actually instances of tuples (nested into pattern matched message receiver construct). Standard Erlang convention precises them as so called tagged tuples, which first argument is an <strong>atom</strong> &ndash; also known as symbol in other languages. Since Erlang is a dynamic language, this way we may differentiate tuples of the same size from each other.</p>
+
+<p>Example below shows how usage of the Erlang&rsquo;s tagged tuples could be moved into F#. The big difference is that F# has no Erlang <strong>atom</strong> equivalent. Therefore they has been replaced by F# literal integers, which gives us an advantage of human readable tags, while still counted as integers inside quotation expressions.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="o">[&lt;</span><span class="nc">Literal</span><span class="o">&gt;]</span><span class="k">let</span> <span class="nc">Hello</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span class='line'><span class="o">[&lt;</span><span class="nc">Literal</span><span class="o">&gt;]</span><span class="k">let</span> <span class="nc">Hi</span> <span class="o">=</span> <span class="mi">2</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">spawne</span> <span class="n">system</span> <span class="s2">&quot;remote&quot;</span> <span class="o">(&lt;@</span> <span class="k">fun</span> <span class="n">mailbox</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="k">let</span> <span class="k">rec</span> <span class="n">loop</span><span class="bp">()</span> <span class="o">:</span> <span class="nc">Cont</span><span class="o">&lt;</span><span class="n">obj</span><span class="o">,</span> <span class="n">obj</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">actor</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">let</span><span class="o">!</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Receive</span><span class="bp">()</span>
+</span><span class='line'>            <span class="k">match</span> <span class="n">msg</span> <span class="k">with</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">(</span><span class="nc">Hello</span><span class="o">,</span> <span class="n">str</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">printfn</span> <span class="s2">&quot;hello %A&quot;</span> <span class="n">str</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">(</span><span class="nc">Hi</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">print</span> <span class="s2">&quot;hi</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span class='line'>            <span class="o">|</span> <span class="o">_</span> <span class="o">-&gt;</span> <span class="n">mailbox</span><span class="o">.</span><span class="nc">Unhandled</span><span class="bp">()</span>
+</span><span class='line'>            <span class="k">return</span><span class="o">!</span> <span class="n">loop</span><span class="bp">()</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="n">loop</span><span class="bp">()</span> <span class="o">@&gt;)</span> <span class="o">[</span><span class="nn">SpawnOption</span><span class="p">.</span><span class="nc">Deploy</span> <span class="nc">Deploy</span><span class="o">(</span><span class="nc">RemoteScope</span><span class="o">(</span><span class="nn">Address</span><span class="p">.</span><span class="nc">Parse</span> <span class="n">remoteAddr</span><span class="o">))]</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">pid</span> <span class="o">&lt;!</span> <span class="o">(</span><span class="nc">Hello</span><span class="o">,</span> <span class="s2">&quot;world&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="n">pid</span> <span class="o">&lt;!</span> <span class="o">(</span><span class="nc">Hi</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner">Copyright &copy; 2014
+
+    Bartosz Sypytkowski
+
+
+Design based on: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+		</div>
+	</div>
+</body>
+</html>
