@@ -4,7 +4,7 @@
   <title><![CDATA[Category: fsharp | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/fsharp/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2014-12-14T14:41:33+01:00</updated>
+  <updated>2015-02-03T22:07:35+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -194,17 +194,8 @@ Next, we can embed our Hocon-formated configuration string directly into configu
 </code></pre>
 
 <p></akka>
-<code>
-At the present moment there is no built-in function to load config directly from configuration file, but this simple code should do the trick:
-</code>fsharp
-let loadConfig() =</p>
-
-<pre><code>let section = (System.Configuration.ConfigurationManager.GetSection "akka") 
-let config = section:?&gt; (Akka.Configuration.Hocon.AkkaConfigurationSection)
-config.AkkaConfig
-</code></pre>
-
-<p>```</p>
+<code>``
+To load the configuration, simply call</code>Akka.Configuration.ConfigurationFactory.Load()` method.</p>
 
 <h3>Appendix B: Share-nothing</h3>
 
@@ -513,12 +504,12 @@ handle
 <p>let subscriber = subscribe system &lt;| printf &ldquo;User event: %A\n&rdquo;
 let userActor = spawn system &ldquo;users&rdquo; &lt;| actorOf (userHandler >=> (publish system.EventStream) >> handleErrors)</p>
 
-<p>userActor &lt;! RegisterUser(&ldquo;<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#106;&#x2e;&#100;&#x6f;&#x65;&#64;&#x74;&#101;&#115;&#116;&#109;&#97;&#105;&#108;&#x2e;&#99;&#x6f;">&#x6a;&#46;&#x64;&#x6f;&#101;&#64;&#x74;&#101;&#115;&#x74;&#x6d;&#x61;&#x69;&#x6c;&#x2e;&#99;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)
-userActor &lt;! RegisterUser(&ldquo;<a href="&#x6d;&#97;&#x69;&#108;&#116;&#x6f;&#x3a;&#106;&#46;&#x64;&#111;&#x65;&#x40;&#x74;&#x65;&#x73;&#116;&#109;&#x61;&#x69;&#x6c;&#46;&#x63;&#111;">&#x6a;&#46;&#100;&#111;&#101;&#64;&#116;&#x65;&#115;&#x74;&#x6d;&#97;&#x69;&#108;&#46;&#x63;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)  // UserAlreadyExists error
+<p>userActor &lt;! RegisterUser(&ldquo;<a href="&#x6d;&#97;&#105;&#108;&#x74;&#111;&#58;&#106;&#x2e;&#100;&#x6f;&#101;&#64;&#x74;&#101;&#x73;&#x74;&#109;&#97;&#105;&#108;&#46;&#99;&#x6f;">&#106;&#x2e;&#100;&#111;&#101;&#64;&#116;&#x65;&#115;&#116;&#109;&#x61;&#105;&#108;&#46;&#x63;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)
+userActor &lt;! RegisterUser(&ldquo;<a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#58;&#106;&#46;&#100;&#111;&#101;&#64;&#116;&#101;&#x73;&#116;&#x6d;&#x61;&#105;&#x6c;&#x2e;&#99;&#x6f;">&#x6a;&#46;&#x64;&#x6f;&#101;&#64;&#116;&#x65;&#x73;&#x74;&#109;&#x61;&#x69;&#108;&#46;&#x63;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)  // UserAlreadyExists error
 System.Threading.Thread.Sleep 100</p>
 
-<p>userActor &lt;! LoginUser(&ldquo;<a href="&#109;&#97;&#x69;&#108;&#x74;&#111;&#58;&#x6a;&#46;&#x64;&#111;&#101;&#x40;&#x74;&#x65;&#x73;&#x74;&#x6d;&#x61;&#x69;&#x6c;&#46;&#99;&#x6f;">&#106;&#46;&#100;&#111;&#x65;&#x40;&#116;&#x65;&#x73;&#x74;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)
-userActor &lt;! LoginUser(&ldquo;<a href="&#x6d;&#x61;&#105;&#108;&#116;&#111;&#x3a;&#106;&#x2e;&#100;&#x6f;&#101;&#64;&#116;&#101;&#x73;&#116;&#109;&#97;&#x69;&#108;&#x2e;&#x63;&#x6f;">&#x6a;&#46;&#x64;&#x6f;&#101;&#64;&#116;&#x65;&#115;&#x74;&#x6d;&#97;&#x69;&#108;&#46;&#99;&#x6f;</a>&rdquo;, &ldquo;fails&rdquo;)     // WrongPassword error</p>
+<p>userActor &lt;! LoginUser(&ldquo;<a href="&#109;&#x61;&#105;&#108;&#x74;&#x6f;&#x3a;&#106;&#46;&#x64;&#x6f;&#x65;&#64;&#116;&#101;&#115;&#x74;&#109;&#97;&#x69;&#108;&#x2e;&#x63;&#x6f;">&#x6a;&#46;&#100;&#x6f;&#101;&#x40;&#x74;&#x65;&#115;&#x74;&#x6d;&#x61;&#105;&#108;&#46;&#x63;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)
+userActor &lt;! LoginUser(&ldquo;<a href="&#x6d;&#97;&#105;&#108;&#x74;&#111;&#x3a;&#x6a;&#46;&#x64;&#x6f;&#x65;&#64;&#116;&#x65;&#115;&#116;&#109;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;">&#x6a;&#46;&#100;&#111;&#101;&#x40;&#116;&#101;&#x73;&#116;&#109;&#97;&#105;&#x6c;&#x2e;&#99;&#111;</a>&rdquo;, &ldquo;fails&rdquo;)     // WrongPassword error</p>
 
 <p>System.Threading.Thread.Sleep 100
 system.Shutdown()
@@ -742,7 +733,7 @@ greeter &lt;! Hi
 <li>The next step is to create an <code>ActorSystem</code>, analogously to C# and original Scala versions.</li>
 <li>We need to define and instantiate an <code>Actor</code>. However unlike the object approach &ndash; which required a custom actor type inheriting from one of the Akka actor classes and defining it&rsquo;s own receiving method &ndash; here we define a tail recursive function, which uses an <code>actor { ... }</code> computation expression instead of actor type declaration.</li>
 <li>We pass that function through the lambda to <code>spawn</code> method, which attaches that behavior to our system and returns an <code>ActorRef</code> (not to be confused with Actor instance), assigned to our <code>greeter</code> variable. This way we may refer to actors, and pass messages to them, even if they&rsquo;re not present on our local machine (which is also one of the Akka use cases).</li>
-<li>Last two lines are about sending messages to actor references using send operator <code>&lt;!</code>.</li>
+<li>In the last to lines we simply send two messages to actor reference using tell operator <code>&lt;!</code>.</li>
 </ul>
 
 

@@ -352,18 +352,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>At the present moment there is no built-in function to load config directly from configuration file, but this simple code should do the trick:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">loadConfig</span><span class="bp">()</span> <span class="o">=</span>
-</span><span class='line'>    <span class="k">let</span> <span class="n">section</span> <span class="o">=</span> <span class="o">(</span><span class="nn">System</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">ConfigurationManager</span><span class="p">.</span><span class="nc">GetSection</span> <span class="s2">&quot;akka&quot;</span><span class="o">)</span>
-</span><span class='line'>    <span class="k">let</span> <span class="n">config</span> <span class="o">=</span> <span class="n">section</span><span class="o">:?&gt;</span> <span class="o">(</span><span class="nn">Akka</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">Hocon</span><span class="p">.</span><span class="nc">AkkaConfigurationSection</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="nc">AkkaConfig</span>
-</span></code></pre></td></tr></table></div></figure>
-
+<p>To load the configuration, simply call <code>Akka.Configuration.ConfigurationFactory.Load()</code> method.</p>
 
 <h3>Appendix B: Share-nothing</h3>
 
@@ -469,7 +458,7 @@
 </section>
 </div>
 			</div>
-			<footer id="footer" class="inner">Copyright &copy; 2014
+			<footer id="footer" class="inner">Copyright &copy; 2015
 
     Bartosz Sypytkowski
 

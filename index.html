@@ -379,18 +379,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>At the present moment there is no built-in function to load config directly from configuration file, but this simple code should do the trick:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='fsharp'><span class='line'><span class="k">let</span> <span class="n">loadConfig</span><span class="bp">()</span> <span class="o">=</span>
-</span><span class='line'>    <span class="k">let</span> <span class="n">section</span> <span class="o">=</span> <span class="o">(</span><span class="nn">System</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">ConfigurationManager</span><span class="p">.</span><span class="nc">GetSection</span> <span class="s2">&quot;akka&quot;</span><span class="o">)</span>
-</span><span class='line'>    <span class="k">let</span> <span class="n">config</span> <span class="o">=</span> <span class="n">section</span><span class="o">:?&gt;</span> <span class="o">(</span><span class="nn">Akka</span><span class="p">.</span><span class="nn">Configuration</span><span class="p">.</span><span class="nn">Hocon</span><span class="p">.</span><span class="nc">AkkaConfigurationSection</span><span class="o">)</span>
-</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="nc">AkkaConfig</span>
-</span></code></pre></td></tr></table></div></figure>
-
+<p>To load the configuration, simply call <code>Akka.Configuration.ConfigurationFactory.Load()</code> method.</p>
 
 <h3>Appendix B: Share-nothing</h3>
 
@@ -1746,7 +1735,7 @@
 <li>The next step is to create an <code>ActorSystem</code>, analogously to C# and original Scala versions.</li>
 <li>We need to define and instantiate an <code>Actor</code>. However unlike the object approach &ndash; which required a custom actor type inheriting from one of the Akka actor classes and defining it&rsquo;s own receiving method &ndash; here we define a tail recursive function, which uses an <code>actor { ... }</code> computation expression instead of actor type declaration.</li>
 <li>We pass that function through the lambda to <code>spawn</code> method, which attaches that behavior to our system and returns an <code>ActorRef</code> (not to be confused with Actor instance), assigned to our <code>greeter</code> variable. This way we may refer to actors, and pass messages to them, even if they&rsquo;re not present on our local machine (which is also one of the Akka use cases).</li>
-<li>Last two lines are about sending messages to actor references using send operator <code>&lt;!</code>.</li>
+<li>In the last to lines we simply send two messages to actor reference using tell operator <code>&lt;!</code>.</li>
 </ul>
 
 
@@ -2246,7 +2235,7 @@
     <div class="center"><a href="/blog/archives">Blog Archives</a></div>
 </nav></div>
 			</div>
-			<footer id="footer" class="inner">Copyright &copy; 2014
+			<footer id="footer" class="inner">Copyright &copy; 2015
 
     Bartosz Sypytkowski
 

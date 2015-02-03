@@ -177,7 +177,7 @@
 <li>The next step is to create an <code>ActorSystem</code>, analogously to C# and original Scala versions.</li>
 <li>We need to define and instantiate an <code>Actor</code>. However unlike the object approach &ndash; which required a custom actor type inheriting from one of the Akka actor classes and defining it&rsquo;s own receiving method &ndash; here we define a tail recursive function, which uses an <code>actor { ... }</code> computation expression instead of actor type declaration.</li>
 <li>We pass that function through the lambda to <code>spawn</code> method, which attaches that behavior to our system and returns an <code>ActorRef</code> (not to be confused with Actor instance), assigned to our <code>greeter</code> variable. This way we may refer to actors, and pass messages to them, even if they&rsquo;re not present on our local machine (which is also one of the Akka use cases).</li>
-<li>Last two lines are about sending messages to actor references using send operator <code>&lt;!</code>.</li>
+<li>In the last to lines we simply send two messages to actor reference using tell operator <code>&lt;!</code>.</li>
 </ul>
 
 
@@ -211,7 +211,7 @@
 </section>
 </div>
 			</div>
-			<footer id="footer" class="inner">Copyright &copy; 2014
+			<footer id="footer" class="inner">Copyright &copy; 2015
 
     Bartosz Sypytkowski
 
