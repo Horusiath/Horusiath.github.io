@@ -265,12 +265,16 @@
         <lastmod>2015-02-03T22:00:25+01:00</lastmod>
     </url>
     <url>
+        <loc>http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp/</loc>
+        <lastmod>2015-02-23T00:23:15+01:00</lastmod>
+    </url>
+    <url>
         <loc>http://bartoszsypytkowski.com/robots.txt</loc>
         <lastmod>2013-11-20T21:03:26+01:00</lastmod>
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/</loc>
-        <lastmod>2015-02-03T22:06:03+01:00</lastmod>
+        <lastmod>2015-02-23T00:23:15+01:00</lastmod>
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/second-page/</loc>
@@ -278,7 +282,7 @@
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/blog/archives/</loc>
-        <lastmod>2015-02-03T22:06:03+01:00</lastmod>
+        <lastmod>2015-02-23T00:23:15+01:00</lastmod>
     </url>
     <url>
         <loc>http://bartoszsypytkowski.com/blog/categories/</loc>

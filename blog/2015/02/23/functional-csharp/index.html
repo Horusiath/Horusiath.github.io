@@ -1,0 +1,728 @@
+
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>[C#] A different look at service design - Simple Solutions</title>
+	<meta name="author" content="Bartosz Sypytkowski">
+
+	
+	<meta name="description" content="[C#] a Different Look at Service Design Today I want to present a different point of view on C# applications design. If you are programming in that &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="Simple Solutions" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<link href="/stylesheets/font-awesome.min.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+
+<script type="text/javascript">
+      var disqus_shortname = 'bartoszsypytkowski';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp/';
+        var disqus_url = 'http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+  
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-47294845-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><h1 id="profile-name"><a href="/">Bartosz Sypytkowski</a></h1>
+<div class="profilepic">
+	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("b.sypytkowski@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+	
+</div>
+
+<nav id="main-nav"><ul class="main">
+    <li><a href="/">Blog</a></li>
+    <li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+			<a class="email" href="mailto:b.sypytkowski@gmail.com" title="Email">Email</a>
+		
+		
+		
+			<a class="google" href="https://plus.google.com/b.sypytkowski@gmail.com" rel="author" title="Google+">Google+</a>
+		
+		
+			<a class="twitter" href="http://twitter.com/horusiath" title="Twitter">Twitter</a>
+		
+		
+			<a class="github" href="https://github.com/horusiath" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+			<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">[C#] a Different Look at Service Design</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Today I want to present a different point of view on C# applications design. If you are programming in that language most of the time, it&rsquo;s probably not, what you&rsquo;re used to. However I found it interesting, because it allows to achieve few goals:</p>
+
+<ul>
+<li>Decompose various, complex interfaces into few simpler, well build components.</li>
+<li>Seriously reduce risk of common OO anti-patterns in your application i.e. <a href="http://en.wikipedia.org/wiki/God_object">God Object</a>.</li>
+<li>Make your code shorter and methods simpler.</li>
+<li>Replace a lot of external assembly dependencies in your code with some simple design patterns.</li>
+</ul>
+
+
+<p>If you&rsquo;re ready, prepare to step down to the Wonderland. Let the Catepillar be our guide.</p>
+
+<h3>The basics</h3>
+
+<h4>Step 1 &ndash; define an interface</h4>
+
+<p>Lets start with twisting our mindsets a little bit. Take the following example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IAuthService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignUp</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignIn</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span> <span class="nf">ResetPassword</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is our new trendy-looking, non-blocking service interface. What&rsquo;s also important here, it follows a <a href="http://en.wikipedia.org/wiki/Single_responsibility_principle">Single Responsibility Principle</a>.</p>
+
+<h4>Step 2 &ndash; separate responsibilities</h4>
+
+<p>Since SRP has no well-defined bounds and it is a matter of a personal taste, we could stretch it a little further:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">ISignInService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">Handle</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">ISingUpService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">Handle</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IResetPasswordService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span> <span class="nf">Handle</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now instead of one service responsible for three possible operations, we have a three atomic services, each one having only one operation to take care off. If you&rsquo;re thinking, it&rsquo;s overly complicated, you&rsquo;re probably right. But right now we&rsquo;re still in Objective Oriented world and the Wonderland awaits ahead.</p>
+
+<h4>Step 3 &ndash; more simplification</h4>
+
+<p>Now, when we have a three single-member services, take a look into the mirror. If you do, you&rsquo;ll notice an important characteristic &ndash; interface with single method is almost indistinguishable from a delegate. It looks better now, see?:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignUpService</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignInService</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span> <span class="nf">ResetPasswordService</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At this point you may want to turn back. This design is problematic. For example, it isn&rsquo;t as easily composable with Dependency Injection frameworks as interfaces. Don&rsquo;t worry. We will cover this up later. Now step in.</p>
+
+<h4>Step 4 &ndash; final generalization</h4>
+
+<p>Our service signatures are now almost ready. But to reach behind the mirror, we must apply two more rules:</p>
+
+<ul>
+<li>Each service takes no more than one parameter.</li>
+<li>Each service should always return a value.</li>
+</ul>
+
+
+<p>Why does it matter? If each service will satisfy one input / one output rule, we may compose them together with ease.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignUpService</span><span class="p">(</span><span class="n">SignUpRequest</span> <span class="n">request</span><span class="p">);</span>
+</span><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignInService</span><span class="p">(</span><span class="n">SignInRequest</span> <span class="n">request</span><span class="p">);</span>
+</span><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span> <span class="n">ResetPasswordService</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, all of our delegates could be abstracted away to a single generic definition:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">TRep</span><span class="p">&gt;</span> <span class="n">Service</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;(</span><span class="n">TReq</span> <span class="n">request</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>where:</p>
+
+<ul>
+<li><code>TReq</code> is type of request object passed to service.</li>
+<li><code>TRep</code> is type of service reply.</li>
+</ul>
+
+
+<p>What we end up with is a highly abstracted &ndash; in Wonderland things looks different &ndash; and universal service signature.</p>
+
+<h3>Dependency Injection vs partial application</h3>
+
+<p>Walking down the object oriented road, often you could passed a view similar to this one:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">TransportationService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ILocalizationService</span> <span class="n">_localizationService</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IOrdersRepository</span> <span class="n">_ordersRepository</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ICustomersRepository</span> <span class="n">_customersRepository</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IConfigurationProvider</span> <span class="n">_configuration</span><span class="p">;</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="k">public</span> <span class="nf">TransportationService</span> <span class="p">(</span>
+</span><span class='line'>      <span class="n">ILocalizationService</span> <span class="n">localizationService</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">IOrdersRepository</span> <span class="n">ordersRepository</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">ICustomersRepository</span> <span class="n">customersRepository</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">IConfigurationProvider</span> <span class="n">configuration</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">_localizationService</span> <span class="p">=</span> <span class="n">localizationService</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">_ordersRepository</span> <span class="p">=</span> <span class="n">ordersRepository</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">_customersRepository</span> <span class="p">=</span> <span class="n">customersRepository</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">_configuration</span> <span class="p">=</span> <span class="n">configuration</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">TransportationDetails</span><span class="p">&gt;</span> <span class="n">PrepareTransportation</span><span class="p">(</span><span class="kt">int</span> <span class="n">orderId</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="p">...</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But now when you&rsquo;re on the other side of the mirror, it looks more like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">TransportationServices</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">TransportationDetails</span><span class="p">&gt;</span> <span class="n">PrepareTransportationService</span> <span class="p">(</span>
+</span><span class='line'>      <span class="n">ILocalizationService</span> <span class="n">localizationService</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">IOrdersRepository</span> <span class="n">ordersRepository</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">ICustomersRepository</span> <span class="n">customersRepository</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">IConfigurationProvider</span> <span class="n">configuration</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="k">return</span> <span class="k">async</span> <span class="n">orderId</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">...</span> <span class="p">};</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here we simply return an asynchronous lambda. And because it&rsquo;s nested inside, it can use all of the provided parameters directly in it&rsquo;s scope.</p>
+
+<p>Of course, there is still a matter of lifetime scopes. In case of singleton scopes, we simply may pass shared instance directly. But when more universal lifetimes are required, we can slide down the road along with the delegates to reach even higher abstractions &ndash; it&rsquo;s twisted, but we&rsquo;re in Wonderland, remember?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">LocalizationRequest</span><span class="p">,</span> <span class="n">LocalizationReply</span><span class="p">&gt;</span> <span class="n">LocalizationService</span><span class="p">()</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">MyRequest</span><span class="p">,</span> <span class="n">MyReply</span><span class="p">&gt;</span> <span class="n">MyService</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Service</span><span class="p">&lt;</span><span class="n">LocalizationRequest</span><span class="p">,</span> <span class="n">LocalizationReply</span><span class="p">&gt;&gt;</span> <span class="n">localizationServiceProvider</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// transient scope</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">myService</span> <span class="p">=</span> <span class="n">MyService</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">LocalizationService</span><span class="p">());</span>
+</span><span class='line'><span class="c1">// or even shorter</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">myService2</span> <span class="p">=</span> <span class="n">MyService</span><span class="p">(</span><span class="n">LocalizationService</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// singleton scope</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">localizator</span> <span class="p">=</span> <span class="n">LocalizationService</span><span class="p">();</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">myService</span> <span class="p">=</span> <span class="n">MyService</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">localizator</span><span class="p">);</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">myService2</span> <span class="p">=</span> <span class="n">MyService</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">localizator</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There is a one simple but powerful idea visible on the example above &ndash; an input parameter type has been changed from interface to another delegate. Now it&rsquo;s delegates all the way down. This way we may start from the most atomic services and combine them into more complex ones without limitations.</p>
+
+<p>Instead of complex, reflection-based DI frameworks we have one simple universal abstraction. You may find this more verbose, but it&rsquo;s actually simpler, faster and more error-proof solution than any of IoC libraries. You don&rsquo;t need to learn next DI framework or use StackOverflow guide to travel through the Wonderland.</p>
+
+<p>There are other problems solved automatically:</p>
+
+<ul>
+<li>No need to worry about cyclic references.</li>
+<li>There is no risk, that our DI framework won&rsquo;t know how to bind parameters to construct object. You&rsquo;ll never get a runtime errors when walking this way.</li>
+<li>Your application won&rsquo;t inject bad interface implementation by mistake.</li>
+</ul>
+
+
+<h3>Repositories and testing</h3>
+
+<p>Another popular OO desing pattern is a repository and it&rsquo;s most corrupted (and misunderstood) version &ndash; generic repository.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IGenericRepository</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">GetAll</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">GetById</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Create</span><span class="p">(</span><span class="n">T</span> <span class="n">entity</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Update</span><span class="p">(</span><span class="n">T</span> <span class="n">entity</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="kt">bool</span><span class="p">&gt;</span> <span class="n">Delete</span><span class="p">(</span><span class="n">T</span> <span class="n">entity</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IUserRepository</span> <span class="p">:</span> <span class="n">IGenericRepository</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetByEmail</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Lets be honest &ndash; you&rsquo;ll probably never use all of those methods at once. If you think it&rsquo;s good abstraction, it&rsquo;s not. It isn&rsquo;t a good SRP example either. After we had stepped into the mirror, we&rsquo;ve surely taken something from our world with us. So lets take a one of the things we&rsquo;ve hidden in the pocket &ndash; changing user password.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">UserService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IUserRepository</span> <span class="n">_userRepository</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">public</span> <span class="nf">UserService</span><span class="p">(</span><span class="n">IUserRepository</span> <span class="n">userRepository</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">_userRepository</span> <span class="p">=</span> <span class="n">userRepository</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">PasswordChanged</span><span class="p">&gt;</span> <span class="n">ChangePassword</span><span class="p">(</span><span class="n">ChangePassword</span> <span class="n">request</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">user</span> <span class="p">=</span> <span class="k">await</span> <span class="n">_userRepository</span><span class="p">.</span><span class="n">FindByEmail</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">Email</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="n">IsValid</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">OldPassword</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">user</span><span class="p">.</span><span class="n">PasswordHash</span> <span class="p">=</span> <span class="n">ComputePasswordHash</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">NewPassword</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">await</span> <span class="nf">userUpdater</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">return</span> <span class="k">new</span> <span class="nf">PasswordChanged</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">UnauthorizedException</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="k">private</span> <span class="kt">byte</span><span class="p">[]</span> <span class="nf">ComputePasswordHash</span><span class="p">(</span><span class="kt">string</span> <span class="n">password</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">private</span> <span class="kt">bool</span> <span class="nf">IsValid</span><span class="p">(</span><span class="n">User</span> <span class="n">user</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Basically changing password would require only two out of six methods provided by <code>IUserRepository</code> &ndash; matching user and saving his/her state after changing. Now smoke the Catepillar&rsquo;s hookah and take a look again:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">ChangePassword</span><span class="p">,</span> <span class="n">PasswordChanged</span><span class="p">&gt;</span> <span class="n">ChangePasswordService</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Service</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;&gt;</span> <span class="n">userFinderProvider</span><span class="p">,</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Service</span><span class="p">&lt;</span><span class="n">User</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;&gt;</span> <span class="n">userUpdaterProvider</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">userFinder</span> <span class="p">=</span> <span class="n">userFinderProvider</span><span class="p">();</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">userUpdater</span> <span class="p">=</span> <span class="n">userUpdaterProvider</span><span class="p">();</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="k">return</span> <span class="k">async</span> <span class="n">request</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">user</span> <span class="p">=</span> <span class="k">await</span> <span class="n">userFinder</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">Email</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">IsValid</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">OldPassword</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">user</span><span class="p">.</span><span class="n">PasswordHash</span> <span class="p">=</span> <span class="n">ComputePasswordHash</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">NewPassword</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">await</span> <span class="nf">userUpdater</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">return</span> <span class="k">new</span> <span class="nf">PasswordChanged</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">UnauthorizedException</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="kt">byte</span><span class="p">[]</span> <span class="nf">ComputePasswordHash</span><span class="p">(</span><span class="kt">string</span> <span class="n">password</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsValid</span><span class="p">(</span><span class="n">User</span> <span class="n">user</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We totally dealt with repository interface, introducing two service providers presented before.</p>
+
+<p>Hint:</p>
+
+<blockquote><p>You can turn <code>ComputePasswordHash</code> (or even <code>IsValid</code>) into service on it&rsquo;s own. All hail the modularity!</p></blockquote>
+
+<h4>From testing perspective &hellip;</h4>
+
+<p>In traditional OO world, to test this feature, you&rsquo;d probably include some mocking library, mock repository&rsquo;s interface and check if correct method was called with correct arguments. You may also mock underlying database directly with something like <a href="http://effort.codeplex.com/">Effort</a>.</p>
+
+<p>In Wonderland mocklibs are quite rare creatures. They are even harder to catch. We must find another way. Can we simply test it without <strong>any</strong> mocking library? Lets see:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="c1">// Arrange:</span>
+</span><span class='line'><span class="c1">// if you abstracted ComputePasswordHash earlier, it&#39;ll be easier at this point</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">testUser</span> <span class="p">=</span> <span class="k">new</span> <span class="n">User</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">passwordHash</span><span class="p">);</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">db</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;</span> <span class="p">{</span> <span class="p">{</span> <span class="n">testUser</span><span class="p">.</span><span class="n">Email</span><span class="p">,</span> <span class="n">testUser</span> <span class="p">}</span> <span class="p">};</span>
+</span><span class='line'><span class="n">Service</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;</span> <span class="n">userFinder</span> <span class="p">=</span> <span class="k">async</span> <span class="n">email</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">User</span> <span class="n">user</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">db</span><span class="p">.</span><span class="n">TryGetValue</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="k">out</span> <span class="n">user</span><span class="p">)</span> <span class="p">?</span> <span class="n">user</span> <span class="p">:</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="n">Service</span><span class="p">&lt;</span><span class="n">User</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;</span> <span class="n">userUpdater</span> <span class="p">=</span> <span class="k">async</span> <span class="n">user</span> <span class="p">=&gt;</span> <span class="n">user</span><span class="p">;</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">changePasswordService</span> <span class="p">=</span> <span class="n">ChangePasswordService</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">userFinder</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="n">userUpdater</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Act:</span>
+</span><span class='line'><span class="k">await</span> <span class="nf">changePasswordService</span><span class="p">(</span><span class="k">new</span> <span class="n">ChangePassword</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">oldPassword</span><span class="p">,</span> <span class="n">newPassword</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Assert:</span>
+</span><span class='line'><span class="n">Assert</span><span class="p">.</span><span class="n">NotEqual</span><span class="p">(</span><span class="n">passwordHash</span><span class="p">,</span> <span class="n">testUser</span><span class="p">.</span><span class="n">PasswordHash</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Actually, that&rsquo;s all. Including mock initialization and result verification. No mocklib was harmed in the making of this test.</p>
+
+<h3>Aspect Oriented Programming vs lambda combinators</h3>
+
+<p>If you&rsquo;re still interested in miracles of the Wonderland, we can go further. Next question: how can we bend reflection-based Aspect Oriented Programming to our will? There are possibly many ways, but I&rsquo;ll focus only on the one.</p>
+
+<p>Just like we used services to replace all of our interfaces, we replace aspects / attributes with filters:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">TOut</span><span class="p">&gt;</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">TIn</span><span class="p">,</span> <span class="n">TOut</span><span class="p">,</span> <span class="k">out</span> <span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;(</span><span class="n">TIn</span> <span class="n">request</span><span class="p">,</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;</span> <span class="n">service</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>where:</p>
+
+<ul>
+<li><code>TIn</code> is filter&rsquo;s input type.</li>
+<li><code>TOut</code> is filter&rsquo;s output type.</li>
+</ul>
+
+
+<p>Filter is actually a wrapper around specific service, which may apply additional code before or after it, modify it&rsquo;s input or output or even decide not to call it at all. In case when filter don&rsquo;t change service&rsquo;s in / out parameters, it&rsquo;s signature is basically equal to <code>public delegate Task&lt;TRep&gt; Filter&lt;TReq, TRep&gt;(TReq request, Service&lt;TReq, TRep&gt; service);</code>.</p>
+
+<p>Now, having those two types defines, lets create some utility methods, which can make our travel easier. Lets start with filter composer.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TIn</span><span class="p">,</span> <span class="n">TOut</span><span class="p">,</span> <span class="n">TReq2</span><span class="p">,</span> <span class="n">TRep2</span><span class="p">&gt;</span> <span class="n">Then</span><span class="p">&lt;</span><span class="n">TIn</span><span class="p">,</span> <span class="n">TOut</span><span class="p">,</span> <span class="n">TReq1</span><span class="p">,</span> <span class="n">TRep1</span><span class="p">,</span> <span class="n">TReq2</span><span class="p">,</span> <span class="n">TRep2</span><span class="p">&gt;(</span>
+</span><span class='line'>    <span class="k">this</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TIn</span><span class="p">,</span> <span class="n">TOut</span><span class="p">,</span> <span class="n">TReq1</span><span class="p">,</span> <span class="n">TRep1</span><span class="p">&gt;</span> <span class="n">self</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TReq1</span><span class="p">,</span> <span class="n">TRep1</span><span class="p">,</span> <span class="n">TReq2</span><span class="p">,</span> <span class="n">TRep2</span><span class="p">&gt;</span> <span class="n">next</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">self</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">req</span> <span class="p">=&gt;</span> <span class="n">next</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">service</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If we omit the method signature, this method is a pretty straightforward one liner which combines two filters together and gives another filter in return. As you can guess, with this trick we can join a whole chains of filters into one piece.</p>
+
+<p>There is a second part of the puzzle missing. We still don&rsquo;t have a well defined methods to work with both filters and services. This is the one:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">TReqIn</span><span class="p">,</span> <span class="n">TRepOut</span><span class="p">&gt;</span> <span class="n">ApplyTo</span><span class="p">&lt;</span><span class="n">TReqIn</span><span class="p">,</span> <span class="n">TRepOut</span><span class="p">,</span> <span class="n">TReqOut</span><span class="p">,</span> <span class="n">TRepIn</span><span class="p">&gt;(</span>
+</span><span class='line'>    <span class="k">this</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TReqIn</span><span class="p">,</span> <span class="n">TRepOut</span><span class="p">,</span> <span class="n">TReqOut</span><span class="p">,</span> <span class="n">TRepIn</span><span class="p">&gt;</span> <span class="n">filter</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Service</span><span class="p">&lt;</span><span class="n">TReqOut</span><span class="p">,</span> <span class="n">TRepIn</span><span class="p">&gt;</span> <span class="n">service</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">request</span> <span class="p">=&gt;</span> <span class="n">filter</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Just like we were combining filters, now we combine a filter with a service to get service in return.</p>
+
+<p>With this two methods (and basically two lines of code!) we can easily interop between filters and services. How will this weapon examine against aspects?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="c1">// logging example</span>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">,</span> <span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;</span> <span class="n">LogFilter</span><span class="p">&lt;</span><span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;(</span><span class="n">Action</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">logger</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">async</span> <span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">)</span> <span class="p">=&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">logger</span><span class="p">(</span><span class="s">&quot;Log before: &quot;</span> <span class="p">+</span> <span class="n">request</span><span class="p">);</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">reply</span> <span class="p">=</span> <span class="k">await</span> <span class="n">service</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">logger</span><span class="p">(</span><span class="s">&quot;Log after: &quot;</span> <span class="p">+</span> <span class="n">reply</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">reply</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// authorization example</span>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">UnauthorizedRequest</span><span class="p">,</span> <span class="n">TReply</span><span class="p">,</span> <span class="n">AuthorizedRequest</span><span class="p">,</span> <span class="n">TReply</span><span class="p">&gt;</span> <span class="n">AuthorizeFilter</span><span class="p">&lt;</span><span class="n">TReply</span><span class="p">&gt;(</span>
+</span><span class='line'>    <span class="n">Func</span><span class="p">&lt;</span><span class="n">Service</span><span class="p">&lt;</span><span class="n">UnauthorizedRequest</span><span class="p">,</span> <span class="n">Identity</span><span class="p">&gt;&gt;</span> <span class="n">authorizationServiceProvider</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">async</span> <span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">)</span> <span class="p">=&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">authService</span> <span class="p">=</span> <span class="n">authorizationServiceProvider</span><span class="p">();</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">authorizedIdentity</span> <span class="p">=</span> <span class="k">await</span> <span class="n">authService</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">authorizedIdentity</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="k">await</span> <span class="nf">service</span><span class="p">(</span><span class="k">new</span> <span class="n">AuthorizedRequest</span><span class="p">(</span><span class="n">authorizedIdentity</span><span class="p">,</span> <span class="n">request</span><span class="p">));</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">else</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">UnauthorizedAccessException</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// combine various filters together</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">filters</span> <span class="p">=</span> <span class="n">AuthorizeFilter</span><span class="p">(</span><span class="n">AuthorizationService</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">.</span><span class="n">Then</span><span class="p">(</span><span class="n">LogFilter</span><span class="p">(</span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">.</span><span class="n">Then</span><span class="p">(</span><span class="n">MonitorFilter</span><span class="p">(</span><span class="n">MonitorService</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">.</span><span class="n">Then</span><span class="p">(</span><span class="n">UnitOfWorkFilter</span><span class="p">());</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// apply all filters at once to the service</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">enchancedService</span> <span class="p">=</span> <span class="n">filters</span><span class="p">.</span><span class="n">ApplyTo</span><span class="p">(</span><span class="n">myService</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Again, thankfully to the power of composability we can join multiple filters into one and apply them to any number of services we wish to. Basically two simple types and two lines of code compiled upfront!</p>
+
+<p>We ripped off (or seriously reduced) any runtime uncertainties, AOP, DI and mock libraries out of our code, as well as whole bunch of interfaces and abstraction layers. Did you enjoy the travel? Welcome in the Wonderland. Land of functional programming.</p>
+
+<p><strong>PS</strong>: presented concept is heavily inspired by <a href="http://twitter.github.io/finagle/guide/">Finagle</a> library, originally written in Scala on a Twitter&rsquo;s purposes.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner">Copyright &copy; 2015
+
+    Bartosz Sypytkowski
+
+
+Design based on: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+		</div>
+	</div>
+</body>
+</html>

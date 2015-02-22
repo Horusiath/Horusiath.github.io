@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2015-02-03T22:07:35+01:00</updated>
+  <updated>2015-02-23T00:24:16+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,580 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[C#] A different look at service design]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp/"/>
+    <updated>2015-02-23T00:13:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp</id>
+    <content type="html"><![CDATA[<p>Today I want to present a different point of view on C# applications design. If you are programming in that language most of the time, it&rsquo;s probably not, what you&rsquo;re used to. However I found it interesting, because it allows to achieve few goals:</p>
+
+<ul>
+<li>Decompose various, complex interfaces into few simpler, well build components.</li>
+<li>Seriously reduce risk of common OO anti-patterns in your application i.e. <a href="http://en.wikipedia.org/wiki/God_object">God Object</a>.</li>
+<li>Make your code shorter and methods simpler.</li>
+<li>Replace a lot of external assembly dependencies in your code with some simple design patterns.</li>
+</ul>
+
+
+<p>If you&rsquo;re ready, prepare to step down to the Wonderland. Let the Catepillar be our guide.</p>
+
+<h3>The basics</h3>
+
+<h4>Step 1 &ndash; define an interface</h4>
+
+<p>Lets start with twisting our mindsets a little bit. Take the following example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IAuthService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignUp</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignIn</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span> <span class="nf">ResetPassword</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is our new trendy-looking, non-blocking service interface. What&rsquo;s also important here, it follows a <a href="http://en.wikipedia.org/wiki/Single_responsibility_principle">Single Responsibility Principle</a>.</p>
+
+<h4>Step 2 &ndash; separate responsibilities</h4>
+
+<p>Since SRP has no well-defined bounds and it is a matter of a personal taste, we could stretch it a little further:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">ISignInService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">Handle</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">ISingUpService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">Handle</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IResetPasswordService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span> <span class="nf">Handle</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now instead of one service responsible for three possible operations, we have a three atomic services, each one having only one operation to take care off. If you&rsquo;re thinking, it&rsquo;s overly complicated, you&rsquo;re probably right. But right now we&rsquo;re still in Objective Oriented world and the Wonderland awaits ahead.</p>
+
+<h4>Step 3 &ndash; more simplification</h4>
+
+<p>Now, when we have a three single-member services, take a look into the mirror. If you do, you&rsquo;ll notice an important characteristic &ndash; interface with single method is almost indistinguishable from a delegate. It looks better now, see?:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignUpService</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignInService</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">);</span>
+</span><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span> <span class="nf">ResetPasswordService</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At this point you may want to turn back. This design is problematic. For example, it isn&rsquo;t as easily composable with Dependency Injection frameworks as interfaces. Don&rsquo;t worry. We will cover this up later. Now step in.</p>
+
+<h4>Step 4 &ndash; final generalization</h4>
+
+<p>Our service signatures are now almost ready. But to reach behind the mirror, we must apply two more rules:</p>
+
+<ul>
+<li>Each service takes no more than one parameter.</li>
+<li>Each service should always return a value.</li>
+</ul>
+
+
+<p>Why does it matter? If each service will satisfy one input / one output rule, we may compose them together with ease.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignUpService</span><span class="p">(</span><span class="n">SignUpRequest</span> <span class="n">request</span><span class="p">);</span>
+</span><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">SignInService</span><span class="p">(</span><span class="n">SignInRequest</span> <span class="n">request</span><span class="p">);</span>
+</span><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span> <span class="n">ResetPasswordService</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, all of our delegates could be abstracted away to a single generic definition:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">TRep</span><span class="p">&gt;</span> <span class="n">Service</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;(</span><span class="n">TReq</span> <span class="n">request</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>where:</p>
+
+<ul>
+<li><code>TReq</code> is type of request object passed to service.</li>
+<li><code>TRep</code> is type of service reply.</li>
+</ul>
+
+
+<p>What we end up with is a highly abstracted &ndash; in Wonderland things looks different &ndash; and universal service signature.</p>
+
+<h3>Dependency Injection vs partial application</h3>
+
+<p>Walking down the object oriented road, often you could passed a view similar to this one:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">TransportationService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ILocalizationService</span> <span class="n">_localizationService</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IOrdersRepository</span> <span class="n">_ordersRepository</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ICustomersRepository</span> <span class="n">_customersRepository</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IConfigurationProvider</span> <span class="n">_configuration</span><span class="p">;</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="k">public</span> <span class="nf">TransportationService</span> <span class="p">(</span>
+</span><span class='line'>      <span class="n">ILocalizationService</span> <span class="n">localizationService</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">IOrdersRepository</span> <span class="n">ordersRepository</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">ICustomersRepository</span> <span class="n">customersRepository</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">IConfigurationProvider</span> <span class="n">configuration</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">_localizationService</span> <span class="p">=</span> <span class="n">localizationService</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">_ordersRepository</span> <span class="p">=</span> <span class="n">ordersRepository</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">_customersRepository</span> <span class="p">=</span> <span class="n">customersRepository</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">_configuration</span> <span class="p">=</span> <span class="n">configuration</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">TransportationDetails</span><span class="p">&gt;</span> <span class="n">PrepareTransportation</span><span class="p">(</span><span class="kt">int</span> <span class="n">orderId</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="p">...</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But now when you&rsquo;re on the other side of the mirror, it looks more like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">TransportationServices</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">TransportationDetails</span><span class="p">&gt;</span> <span class="n">PrepareTransportationService</span> <span class="p">(</span>
+</span><span class='line'>      <span class="n">ILocalizationService</span> <span class="n">localizationService</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">IOrdersRepository</span> <span class="n">ordersRepository</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">ICustomersRepository</span> <span class="n">customersRepository</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">IConfigurationProvider</span> <span class="n">configuration</span><span class="p">)</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="k">return</span> <span class="k">async</span> <span class="n">orderId</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">...</span> <span class="p">};</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here we simply return an asynchronous lambda. And because it&rsquo;s nested inside, it can use all of the provided parameters directly in it&rsquo;s scope.</p>
+
+<p>Of course, there is still a matter of lifetime scopes. In case of singleton scopes, we simply may pass shared instance directly. But when more universal lifetimes are required, we can slide down the road along with the delegates to reach even higher abstractions &ndash; it&rsquo;s twisted, but we&rsquo;re in Wonderland, remember?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">LocalizationRequest</span><span class="p">,</span> <span class="n">LocalizationReply</span><span class="p">&gt;</span> <span class="n">LocalizationService</span><span class="p">()</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">MyRequest</span><span class="p">,</span> <span class="n">MyReply</span><span class="p">&gt;</span> <span class="n">MyService</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Service</span><span class="p">&lt;</span><span class="n">LocalizationRequest</span><span class="p">,</span> <span class="n">LocalizationReply</span><span class="p">&gt;&gt;</span> <span class="n">localizationServiceProvider</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// transient scope</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">myService</span> <span class="p">=</span> <span class="n">MyService</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">LocalizationService</span><span class="p">());</span>
+</span><span class='line'><span class="c1">// or even shorter</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">myService2</span> <span class="p">=</span> <span class="n">MyService</span><span class="p">(</span><span class="n">LocalizationService</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// singleton scope</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">localizator</span> <span class="p">=</span> <span class="n">LocalizationService</span><span class="p">();</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">myService</span> <span class="p">=</span> <span class="n">MyService</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">localizator</span><span class="p">);</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">myService2</span> <span class="p">=</span> <span class="n">MyService</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">localizator</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There is a one simple but powerful idea visible on the example above &ndash; an input parameter type has been changed from interface to another delegate. Now it&rsquo;s delegates all the way down. This way we may start from the most atomic services and combine them into more complex ones without limitations.</p>
+
+<p>Instead of complex, reflection-based DI frameworks we have one simple universal abstraction. You may find this more verbose, but it&rsquo;s actually simpler, faster and more error-proof solution than any of IoC libraries. You don&rsquo;t need to learn next DI framework or use StackOverflow guide to travel through the Wonderland.</p>
+
+<p>There are other problems solved automatically:</p>
+
+<ul>
+<li>No need to worry about cyclic references.</li>
+<li>There is no risk, that our DI framework won&rsquo;t know how to bind parameters to construct object. You&rsquo;ll never get a runtime errors when walking this way.</li>
+<li>Your application won&rsquo;t inject bad interface implementation by mistake.</li>
+</ul>
+
+
+<h3>Repositories and testing</h3>
+
+<p>Another popular OO desing pattern is a repository and it&rsquo;s most corrupted (and misunderstood) version &ndash; generic repository.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IGenericRepository</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;&gt;</span> <span class="n">GetAll</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">GetById</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Create</span><span class="p">(</span><span class="n">T</span> <span class="n">entity</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">Update</span><span class="p">(</span><span class="n">T</span> <span class="n">entity</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="kt">bool</span><span class="p">&gt;</span> <span class="n">Delete</span><span class="p">(</span><span class="n">T</span> <span class="n">entity</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IUserRepository</span> <span class="p">:</span> <span class="n">IGenericRepository</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Task</span><span class="p">&lt;</span><span class="n">User</span><span class="p">&gt;</span> <span class="n">GetByEmail</span><span class="p">(</span><span class="kt">string</span> <span class="n">email</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Lets be honest &ndash; you&rsquo;ll probably never use all of those methods at once. If you think it&rsquo;s good abstraction, it&rsquo;s not. It isn&rsquo;t a good SRP example either. After we had stepped into the mirror, we&rsquo;ve surely taken something from our world with us. So lets take a one of the things we&rsquo;ve hidden in the pocket &ndash; changing user password.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">UserService</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IUserRepository</span> <span class="n">_userRepository</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">public</span> <span class="nf">UserService</span><span class="p">(</span><span class="n">IUserRepository</span> <span class="n">userRepository</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">_userRepository</span> <span class="p">=</span> <span class="n">userRepository</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">PasswordChanged</span><span class="p">&gt;</span> <span class="n">ChangePassword</span><span class="p">(</span><span class="n">ChangePassword</span> <span class="n">request</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">user</span> <span class="p">=</span> <span class="k">await</span> <span class="n">_userRepository</span><span class="p">.</span><span class="n">FindByEmail</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">Email</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="n">IsValid</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">OldPassword</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">user</span><span class="p">.</span><span class="n">PasswordHash</span> <span class="p">=</span> <span class="n">ComputePasswordHash</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">NewPassword</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">await</span> <span class="nf">userUpdater</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">return</span> <span class="k">new</span> <span class="nf">PasswordChanged</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">UnauthorizedException</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="k">private</span> <span class="kt">byte</span><span class="p">[]</span> <span class="nf">ComputePasswordHash</span><span class="p">(</span><span class="kt">string</span> <span class="n">password</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">private</span> <span class="kt">bool</span> <span class="nf">IsValid</span><span class="p">(</span><span class="n">User</span> <span class="n">user</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Basically changing password would require only two out of six methods provided by <code>IUserRepository</code> &ndash; matching user and saving his/her state after changing. Now smoke the Catepillar&rsquo;s hookah and take a look again:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">ChangePassword</span><span class="p">,</span> <span class="n">PasswordChanged</span><span class="p">&gt;</span> <span class="n">ChangePasswordService</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">Service</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;&gt;</span> <span class="n">userFinderProvider</span><span class="p">,</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">Service</span><span class="p">&lt;</span><span class="n">User</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;&gt;</span> <span class="n">userUpdaterProvider</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">userFinder</span> <span class="p">=</span> <span class="n">userFinderProvider</span><span class="p">();</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">userUpdater</span> <span class="p">=</span> <span class="n">userUpdaterProvider</span><span class="p">();</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="k">return</span> <span class="k">async</span> <span class="n">request</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">user</span> <span class="p">=</span> <span class="k">await</span> <span class="n">userFinder</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">Email</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">IsValid</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">OldPassword</span><span class="p">))</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">user</span><span class="p">.</span><span class="n">PasswordHash</span> <span class="p">=</span> <span class="n">ComputePasswordHash</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">NewPassword</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">await</span> <span class="nf">userUpdater</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">return</span> <span class="k">new</span> <span class="nf">PasswordChanged</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">UnauthorizedException</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="kt">byte</span><span class="p">[]</span> <span class="nf">ComputePasswordHash</span><span class="p">(</span><span class="kt">string</span> <span class="n">password</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsValid</span><span class="p">(</span><span class="n">User</span> <span class="n">user</span><span class="p">,</span> <span class="kt">string</span> <span class="n">password</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We totally dealt with repository interface, introducing two service providers presented before.</p>
+
+<p>Hint:</p>
+
+<blockquote><p>You can turn <code>ComputePasswordHash</code> (or even <code>IsValid</code>) into service on it&rsquo;s own. All hail the modularity!</p></blockquote>
+
+<h4>From testing perspective &hellip;</h4>
+
+<p>In traditional OO world, to test this feature, you&rsquo;d probably include some mocking library, mock repository&rsquo;s interface and check if correct method was called with correct arguments. You may also mock underlying database directly with something like <a href="http://effort.codeplex.com/">Effort</a>.</p>
+
+<p>In Wonderland mocklibs are quite rare creatures. They are even harder to catch. We must find another way. Can we simply test it without <strong>any</strong> mocking library? Lets see:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="c1">// Arrange:</span>
+</span><span class='line'><span class="c1">// if you abstracted ComputePasswordHash earlier, it&#39;ll be easier at this point</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">testUser</span> <span class="p">=</span> <span class="k">new</span> <span class="n">User</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">passwordHash</span><span class="p">);</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">db</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;</span> <span class="p">{</span> <span class="p">{</span> <span class="n">testUser</span><span class="p">.</span><span class="n">Email</span><span class="p">,</span> <span class="n">testUser</span> <span class="p">}</span> <span class="p">};</span>
+</span><span class='line'><span class="n">Service</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;</span> <span class="n">userFinder</span> <span class="p">=</span> <span class="k">async</span> <span class="n">email</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">User</span> <span class="n">user</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">db</span><span class="p">.</span><span class="n">TryGetValue</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="k">out</span> <span class="n">user</span><span class="p">)</span> <span class="p">?</span> <span class="n">user</span> <span class="p">:</span> <span class="k">null</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="n">Service</span><span class="p">&lt;</span><span class="n">User</span><span class="p">,</span> <span class="n">User</span><span class="p">&gt;</span> <span class="n">userUpdater</span> <span class="p">=</span> <span class="k">async</span> <span class="n">user</span> <span class="p">=&gt;</span> <span class="n">user</span><span class="p">;</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">changePasswordService</span> <span class="p">=</span> <span class="n">ChangePasswordService</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">userFinder</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="n">userUpdater</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Act:</span>
+</span><span class='line'><span class="k">await</span> <span class="nf">changePasswordService</span><span class="p">(</span><span class="k">new</span> <span class="n">ChangePassword</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">oldPassword</span><span class="p">,</span> <span class="n">newPassword</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Assert:</span>
+</span><span class='line'><span class="n">Assert</span><span class="p">.</span><span class="n">NotEqual</span><span class="p">(</span><span class="n">passwordHash</span><span class="p">,</span> <span class="n">testUser</span><span class="p">.</span><span class="n">PasswordHash</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Actually, that&rsquo;s all. Including mock initialization and result verification. No mocklib was harmed in the making of this test.</p>
+
+<h3>Aspect Oriented Programming vs lambda combinators</h3>
+
+<p>If you&rsquo;re still interested in miracles of the Wonderland, we can go further. Next question: how can we bend reflection-based Aspect Oriented Programming to our will? There are possibly many ways, but I&rsquo;ll focus only on the one.</p>
+
+<p>Just like we used services to replace all of our interfaces, we replace aspects / attributes with filters:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">delegate</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">TOut</span><span class="p">&gt;</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="k">in</span> <span class="n">TIn</span><span class="p">,</span> <span class="n">TOut</span><span class="p">,</span> <span class="k">out</span> <span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;(</span><span class="n">TIn</span> <span class="n">request</span><span class="p">,</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;</span> <span class="n">service</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>where:</p>
+
+<ul>
+<li><code>TIn</code> is filter&rsquo;s input type.</li>
+<li><code>TOut</code> is filter&rsquo;s output type.</li>
+</ul>
+
+
+<p>Filter is actually a wrapper around specific service, which may apply additional code before or after it, modify it&rsquo;s input or output or even decide not to call it at all. In case when filter don&rsquo;t change service&rsquo;s in / out parameters, it&rsquo;s signature is basically equal to <code>public delegate Task&lt;TRep&gt; Filter&lt;TReq, TRep&gt;(TReq request, Service&lt;TReq, TRep&gt; service);</code>.</p>
+
+<p>Now, having those two types defines, lets create some utility methods, which can make our travel easier. Lets start with filter composer.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TIn</span><span class="p">,</span> <span class="n">TOut</span><span class="p">,</span> <span class="n">TReq2</span><span class="p">,</span> <span class="n">TRep2</span><span class="p">&gt;</span> <span class="n">Then</span><span class="p">&lt;</span><span class="n">TIn</span><span class="p">,</span> <span class="n">TOut</span><span class="p">,</span> <span class="n">TReq1</span><span class="p">,</span> <span class="n">TRep1</span><span class="p">,</span> <span class="n">TReq2</span><span class="p">,</span> <span class="n">TRep2</span><span class="p">&gt;(</span>
+</span><span class='line'>    <span class="k">this</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TIn</span><span class="p">,</span> <span class="n">TOut</span><span class="p">,</span> <span class="n">TReq1</span><span class="p">,</span> <span class="n">TRep1</span><span class="p">&gt;</span> <span class="n">self</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TReq1</span><span class="p">,</span> <span class="n">TRep1</span><span class="p">,</span> <span class="n">TReq2</span><span class="p">,</span> <span class="n">TRep2</span><span class="p">&gt;</span> <span class="n">next</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">self</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">req</span> <span class="p">=&gt;</span> <span class="n">next</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">service</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If we omit the method signature, this method is a pretty straightforward one liner which combines two filters together and gives another filter in return. As you can guess, with this trick we can join a whole chains of filters into one piece.</p>
+
+<p>There is a second part of the puzzle missing. We still don&rsquo;t have a well defined methods to work with both filters and services. This is the one:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Service</span><span class="p">&lt;</span><span class="n">TReqIn</span><span class="p">,</span> <span class="n">TRepOut</span><span class="p">&gt;</span> <span class="n">ApplyTo</span><span class="p">&lt;</span><span class="n">TReqIn</span><span class="p">,</span> <span class="n">TRepOut</span><span class="p">,</span> <span class="n">TReqOut</span><span class="p">,</span> <span class="n">TRepIn</span><span class="p">&gt;(</span>
+</span><span class='line'>    <span class="k">this</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TReqIn</span><span class="p">,</span> <span class="n">TRepOut</span><span class="p">,</span> <span class="n">TReqOut</span><span class="p">,</span> <span class="n">TRepIn</span><span class="p">&gt;</span> <span class="n">filter</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Service</span><span class="p">&lt;</span><span class="n">TReqOut</span><span class="p">,</span> <span class="n">TRepIn</span><span class="p">&gt;</span> <span class="n">service</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">request</span> <span class="p">=&gt;</span> <span class="n">filter</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Just like we were combining filters, now we combine a filter with a service to get service in return.</p>
+
+<p>With this two methods (and basically two lines of code!) we can easily interop between filters and services. How will this weapon examine against aspects?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="c1">// logging example</span>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">,</span> <span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;</span> <span class="n">LogFilter</span><span class="p">&lt;</span><span class="n">TReq</span><span class="p">,</span> <span class="n">TRep</span><span class="p">&gt;(</span><span class="n">Action</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">logger</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">async</span> <span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">)</span> <span class="p">=&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">logger</span><span class="p">(</span><span class="s">&quot;Log before: &quot;</span> <span class="p">+</span> <span class="n">request</span><span class="p">);</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">reply</span> <span class="p">=</span> <span class="k">await</span> <span class="n">service</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">logger</span><span class="p">(</span><span class="s">&quot;Log after: &quot;</span> <span class="p">+</span> <span class="n">reply</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">reply</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// authorization example</span>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Filter</span><span class="p">&lt;</span><span class="n">UnauthorizedRequest</span><span class="p">,</span> <span class="n">TReply</span><span class="p">,</span> <span class="n">AuthorizedRequest</span><span class="p">,</span> <span class="n">TReply</span><span class="p">&gt;</span> <span class="n">AuthorizeFilter</span><span class="p">&lt;</span><span class="n">TReply</span><span class="p">&gt;(</span>
+</span><span class='line'>    <span class="n">Func</span><span class="p">&lt;</span><span class="n">Service</span><span class="p">&lt;</span><span class="n">UnauthorizedRequest</span><span class="p">,</span> <span class="n">Identity</span><span class="p">&gt;&gt;</span> <span class="n">authorizationServiceProvider</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">async</span> <span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">)</span> <span class="p">=&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">authService</span> <span class="p">=</span> <span class="n">authorizationServiceProvider</span><span class="p">();</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">authorizedIdentity</span> <span class="p">=</span> <span class="k">await</span> <span class="n">authService</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">authorizedIdentity</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="k">await</span> <span class="nf">service</span><span class="p">(</span><span class="k">new</span> <span class="n">AuthorizedRequest</span><span class="p">(</span><span class="n">authorizedIdentity</span><span class="p">,</span> <span class="n">request</span><span class="p">));</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">else</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">UnauthorizedAccessException</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// combine various filters together</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">filters</span> <span class="p">=</span> <span class="n">AuthorizeFilter</span><span class="p">(</span><span class="n">AuthorizationService</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">.</span><span class="n">Then</span><span class="p">(</span><span class="n">LogFilter</span><span class="p">(</span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">.</span><span class="n">Then</span><span class="p">(</span><span class="n">MonitorFilter</span><span class="p">(</span><span class="n">MonitorService</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">.</span><span class="n">Then</span><span class="p">(</span><span class="n">UnitOfWorkFilter</span><span class="p">());</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// apply all filters at once to the service</span>
+</span><span class='line'><span class="kt">var</span> <span class="n">enchancedService</span> <span class="p">=</span> <span class="n">filters</span><span class="p">.</span><span class="n">ApplyTo</span><span class="p">(</span><span class="n">myService</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Again, thankfully to the power of composability we can join multiple filters into one and apply them to any number of services we wish to. Basically two simple types and two lines of code compiled upfront!</p>
+
+<p>We ripped off (or seriously reduced) any runtime uncertainties, AOP, DI and mock libraries out of our code, as well as whole bunch of interfaces and abstraction layers. Did you enjoy the travel? Welcome in the Wonderland. Land of functional programming.</p>
+
+<p><strong>PS</strong>: presented concept is heavily inspired by <a href="http://twitter.github.io/finagle/guide/">Finagle</a> library, originally written in Scala on a Twitter&rsquo;s purposes.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Akka.NET remote deployment with F#]]></title>
@@ -2807,107 +3381,6 @@
 
 
 <p>Jaki wynik osiągacie na swojej stronie? ;) Powiem szczerze, że wykorzystywanie około 40% dołączonych reguł można uznać za wysoki wynik.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Niska wydajność Ruby'ego - studium porównawcze]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2013/03/20/niska-wydajnosc-rubyego-studium/"/>
-    <updated>2013-03-20T23:42:00+01:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2013/03/20/niska-wydajnosc-rubyego-studium</id>
-    <content type="html"><![CDATA[<p>We współczesnym świecie aplikacji webowych Ruby oraz jego główna (często utożsamiana z nim) platforma, Ruby on Rails, są przykładem świetnego dopasowania języka do zbioru metodyk i stosu technologicznego nastawionego na maksymalizację wydajności pracy programisty. Stanowią one &ldquo;wylęgarnię&rdquo; nowatorskich praktyk, które nieraz przenikają dalej i zostają zaadaptowane przez inne środowiska. Wystarczy podać kilka przykładów ze środowiska .NET: migracje w najnowszym EF4.3+, kierunek w jakim zmierza cały ASP.NET MVC czy dynamizacja języka C# &ndash; myśleliście, że idea stojąca za LINQ to nowatorski pomysł? ;) .</p>
-
-<p>Niestety za każym razem, kiedy mowa o Rubym, powracają kwestie jego wydajności. Jest to pięta achillesowa tego języka, powtarzana jak mantra w kolejnych dyskusjach programistów. Na czym jednak polegają te problemy? W tym postcie postaram się je opisać (w odniesieniu do najpopularniejszego kompilatora Ruby&#8217;ego &ndash; MRI) oraz opowiedzieć o rozwiązaniach, jakie zostały zaadaptowane w innych językach. Ponieważ moje obserwacje będę porównywał do innych implementacji, w tym Javy, C#, Pythona i różnych wirtualnych maszyn JavaScriptu, liczę że każdy będzie mógł wynieść z tego jakąś przydatną wiedzę.</p>
-
-<h2>Garbage Collector</h2>
-
-<p>Ten wątek musiał się tu pojawić, dlatego też postanowiłem zacząć właśnie od niego. Rozdział ten będzie dość trudny do przełknięcia dla osób, które z teorią stojącą za językami programowania nigdy nie miały do czynienia. Zanim przejdą one dalej, proponuję zaznajomić się z <a href="http://en.wikipedia.org/wiki/Garbage_collection_(computer_science">tym wpisem</a>) na Wikipedii.</p>
-
-<p>W dużym skrócie, Garbage collector w MRI wykorzystuje (podobnie jak wszystkie najpopularniejsze współcześnie maszyny wirtualne) algorytm <em>mark and sweep</em>. Jest to jednak pojęcie bardzo szerokie. Zagłębiając się w detale, dochodzimy do pewnych różnic.</p>
-
-<h3>Podział zarządzanego stosu</h3>
-
-<p>Większość programistów Javy i .NET zapewne kojarzy, że zarządzana sterta występująca w tych językach nie jest strukturą jednolitą, lecz jest podzielona na wiele przestrzeni (mowa tu o generacjach, ale nie tylko). I tak w przypadku .NET &ndash; na przykładzie SGena używanego w Mono, a świetnie opisanego <a href="http://www.mono-project.com/Generational_GC">tutaj</a> mamy do czynienia z podziałem sterty na kilka zbiorów:</p>
-
-<ul>
-<li><strong>Generacje</strong> &ndash; Zazwyczaj istnieją dwie lub więcej. Pierwszą jest <strong>żłobek</strong> (<em>nursery</em>). Ten zbiór jest relatywnie mały (domyślnie 4MB dla SGena, &frac12; pamięci cache L2 dla Pythona made by PyPy) i często czyszczony. Jest sprawny głównie ze względu na fakt, że większość obiektów przechowywanych na stercie ma stosunkowo krótki czas istnienia (np. zmienne lokalne funkcji/metod, które są niepotrzebne poza zakresem danej metody). Obiekty bardziej długowieczne przenoszone są na sterty kolejnych generacji. W rezultacie pamięć jest czyszczona częściej, jednak liczy się tutaj rozmiar przeszukiwanej pamięci (żłobek jest mały, przez co jego znakowanie i czyszczenie trwa bardzo krótko).</li>
-<li><strong>Przestrzeń dużych obiektów</strong> &ndash; ponieważ naprawdę duże obiekty są dość ciężkie do alokacji (znalezienie na stercie jednolitego bloku pamięci nie zajętego przez inne obiekty może być wyzwaniem), są one rozpatrywane osobno, zarówno na wirtualnych maszynach Javy jak i .NETu (tak w przypadku Mono jak i M$).</li>
-<li><strong>Łańcuchy znaków (string)</strong> &ndash; tekst jest również traktowany w specjalny sposób. Przykładowo wpisując w dwóch różnych miejscach w kodzie <em>&ldquo;ala ma kota&rdquo;</em> w praktyce definiujemy ten łańcuch znaków tylko raz, tworząc do niego dwie referencje. Ta zasada dotyczy zarówno Javy, .NETu, Pythona oraz najnowszych silników JavaScriptu. Ruby nie implementuje tej funkcjonalności &ndash; moim zdaniem na przeszkodzie stoi tutaj natura stringów w tym języku, które zgodnie ze specyfikacją mogą być mutowalne.</li>
-</ul>
-
-
-<p>Niestety w Rubym brakuje podziału sterty na generacje, przez co jest ona błyskawicznie zapychana obiektami o krótkim czasie życia, zaś &ldquo;sprzątnięcie&rdquo; całej sterty zajmuje sporo czasu. W chwili obecnej nie jest to możliwe, ponieważ GC w MRI nie implementuje przenoszenia obiektów wewnątrz sterty (dlaczego tak jest opowiem dalej).</p>
-
-<h3>Co znajduje się na stosie</h3>
-
-<p>W przypadku <strong>Javy</strong> sprawa podziału alokacji pomiędzy stos i stertę wygląda stosunkowo prosto: typy natywne i referencje na obiekty lądują na stosie, a reszta (obiekty klas) na stertę. W przypadku <strong>C#</strong> jest to trochę bardziej skomplikowane, ponieważ na stosie mogą wylądować również obiekty-struktury (<em>struct</em>) oraz obiekty utworzone za pomocą słowa kluczowego <strong>stackallock</strong>.</p>
-
-<p>Pomiędzy GC Javy (oraz javascriptowym V8) a Mono istnieje dodatkowa różnica: dwa pierwsze stosują tzw. precyzyjne wskaźniki, tzn. podczas przechodzenia po stosie przez marker (uruchamiany przez GC w pierwszej fazie pracy i służący oznaczeniu obiektów, które trzeba sprzątnąć) natrafiając na wartości od razu wie, czy są one wartościami czy referencjami na obiekty znajdujące się na stercie. Przykładowo maszyna wirtualna JavaScriptu z Chroma używa do tego specjalnego bitu określającego czy dana wartość jest referencją (stąd na V8 w wersji 32-bitowej liczby całkowite są wewnętrznie składowane jako wartości <em>31-bitowe</em>). Niestety SGen Mono musi za każdym razem sprawdzić (a w razie wątpliwości założyć z góry), czy taka wartość wskazuje adres na stercie.</p>
-
-<p>W przypadku Ruby&#8217;ego sprawa wygląda częściowo prościej: w tym języku nie istnieją typy wartościowe, zatem wszystkie wartości (w tym liczby oraz flagi logiczne) są reprezentowane przez obiekty składowane na zarządzanej stercie. To sprawia, że czas dostępu do nich jest dłuższy.</p>
-
-<p>Inna niespodzianka, jaką szykuje nam Ruby, sięga jeszcze dalej. Interpreter MRI (do nadejścia wersji 1.9) konstruował kod Ruby&#8217;ego przez pośrednią translację do <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">drzewa AST</a>. Jednakże chcąc zapewnić programistom &ldquo;pełnię władzy&rdquo; nad kodem, tak stworzone drzewo było składowane w postaci struktur Ruby&#8217;ego na jego zarządzanej stercie! Oznacza to, że cały aktualnie wykonywany kod jest reprezentowany przez faktycznie istniejące drzewo obiektów, zajmujące ogromną ilość pamięci.</p>
-
-<h3>Jak zarządzana jest sterta: .NET Mono</h3>
-
-<p>Kolejne zestawienie z Mono. Mówiąc dość ogólnie sterta jest podzielona na tak zwane bloki, one z kolei na sloty. Podczas oznaczania obiektów na stercie dzielimy je na 3 typy:</p>
-
-<ul>
-<li><strong>Root objects</strong> &ndash; są to obiekty, do których znaleziono referencje na stosie i które nie powinny zostać usunięte.</li>
-<li><strong>Garbage </strong>&ndash; a zatem obiekty-śmieci oraz puste przestrzenie, które mogą zostać realokowane pod nowe obiekty.</li>
-<li><strong>Pinned objects</strong> &ndash; specjalny rodzaj tzw. przypiętych obiektów. Są to obszary pamięci wyjęte spoza kontroli zarządzanej sterty, a więc np. struktury z języka C, na które mamy referencje z poziomu P/Invoke oraz obiekty przypięte ręcznie w zakresach <strong>unsafe</strong> (za pomocą słowa kluczowego <strong>fixed</strong>). W Mono do tej listy dochodzą również te adresy, które zostały znalezione na stosie, ale nie koniecznie wskazują na obiekty. Ze względów bezpieczeństwa takich obiektów nie można odśmiecać.</li>
-</ul>
-
-
-<p>Z punktu widzenia Garbage Collectora najbardziej upierdliwe są pinned objects. Dlaczego? Otóż w trakcie odśmiecania pamięci GC zostawia &ldquo;dziury&rdquo; pustych przestrzeni, które mogą posłużyć w przyszłości do zaalokowania nowych obiektów. Niestety te dziury powodują fragmentację pamięci. Co z tego, że mamy 10 luk po 100 bajtów, jeżeli potrzebujemy stworzyć obiekt rozmiaru 200B? Dlatego też GC w Mono został wyposażony w opcję realokacji obiektów &ndash; umożliwia to przesunięcie położenia obiektów w pamięci tak, aby złączyć luki powstałe po odśmiecaniu w 1 ciągły blok w pamięci.</p>
-
-<h3>Jak zarządzana jest sterta: Ruby</h3>
-
-<p>Z punktu widzenia MRI sterta również jest podzielona na komórki, które są reprezentowane w pamięci jako zwykłe struktury C (dokładna nazwa to <em>struct VALUE</em>).</p>
-
-<p>Ciekawostką jest sposób znajdowania pustych fragmentów na stercie służących pod przyszłe alokacje obiektów. Do wersji 2.0 (a więc we wszystkich obecnie używanych) mamy do czynienia ze strukturą przyjmującą postać linked listy. Szukając nieużywanych komórek musieliśmy przeglądać kolejne węzły z listy i sprawdzać ich zajętość &ndash; przeskakiwanie po pamięci oraz znalezienie odpowiednio dużego ciągłego bloku może być czasochłonne, sama lista również ma swój rozmiar. Od wersji 2.0 zamieniono ją inną strukturą &ndash; bitmapą. Od teraz za każdym razem, kiedy tworzona jest zarządzana sterta, część pamięci na jej początku zostaje zarezerwowana na potrzeby bitmapy. Określa ona w prosty sposób (ustawiając lub zerując kolejne bity w pamięci) zajętość kolejnych komórek VALUE. Przeszukiwanie takiej struktury jest o wiele szybsze, zajmuje ona też mniej miejsca w pamięci &ndash; ponieważ bloki RValue mają po 40 bajtów i wymagają 1 bitu do sygnalizacji łatwo wyliczyć, że ostateczna bitmapa zajmuje około 1/(40*8) = 1/320 rozmiaru całej sterty.</p>
-
-<p>Do czego sprowadza się największy (moim zdaniem) problem Ruby&#8217;ego? Otóż GC w MRI nie dysponuje opcją przenoszenia obiektów. Porównując do Mono wszystkie obiekty w Rubym traktowane są jako pinned object. Niesie to szereg następstw m.in. w przypadku konieczności alokacji dużego obiektu na stercie o mocno sfragmentowanej strukturze, może istnieć potrzeba rozszerzenia rozmiaru sterty (a zatem zwiększenia zużycia RAMu w całym programie) pomimo, że istnieje dostateczna ilość miejsca, aby taki obiekt zaalokować.</p>
-
-<p>Czy można zmienić GC w Rubym na taki, który zdolny jest przesuwać obiekty? Nie. Na drodze stoją tu referencje na obiekty, które wewnątrz są w rzeczywistości zwykłymi wskaźnikami na bloki pamięci bezpośrednio na stercie. Przesunięcie obiektu na stercie wiąże się ze zmianą jego adresu, ponieważ jednak nie wiemy ile referencji (których w algorytmie <em>mark&amp;sweep</em> nie zliczamy) należy powiadomić o nowej lokacji obiektu, taka operacja nie jest możliwa. Naturalnie można to zmienić (np. wprowadzić wskaźniki pośrednie), jednakże spowoduje to dysonans między dotychczasowymi implementacjami wtyczek z języka C montowanych do Ruby&#8217;ego i zniszczy jego kompatybilność wstecz. Niestety sądzę, że prędzej czy później ta decyzja musi zostać podjęta.</p>
-
-<h2>Klątwa języków dynamicznych</span></h2>
-
-<p>Kolejnym krokiem w zrozumieniu problemu niskiej wydajności jest poznanie natury &ndash; i ceny &ndash; towarzyszącej językom dynamicznym. Weźmy pod uwagę następujący przykład: załóżmy, że stworzyliśmy klasę w dowolnym języku statycznie typowanym (np. Java lub C#). Jej postać jest następująca:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Point</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">y</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Nie zagłębiając się zanadto w szczegóły jesteśmy w stanie stwierdzić, że wywołanie konstruktora powinno zaowocować stworzeniem w pamięci obiektu zajmującego 8 bajtów (2*sizeof(int)). Jak to wygląda w językach dynamicznie typowanych? Otóż w Rubym MRI, Pythonie oraz JavaScriptcie (w niektórych przypadkach) tworzony obiekt jest de facto nie zwykłym blokiem pamięci lecz strukturą budową bardziej przypominającą hash mapę/słownik, w którym każde pola reprezentowane jest przez string (js), hash (py) lub symbol reprezentowany w globalnej tablicy symboli (rb). Dotyczy to każdego pojedynczego obiektu. Wynika to w naturalny sposób z faktu, że tworząc obiekt danego typu, możemy go w dowolnej chwili rozszerzyć o nowe pola bez zmiany struktury obiektów o tej samej klasie. Czas dostępu do pól w takich obiektach jest bardzo duży, zaś same struktury są o wiele większe niż ich odpowiedniki w językach statycznie typowanych.</p>
-
-<p>Czy da się to ominąć? Tak, rozwiązanie zostało już wynalezione i zaimplementowane w JavaScriptcie na silnikach V8 (Chrome) oraz najnowszym SquirrelFish (Safari). Oba te silniki definiują tzw. <em>hidden classes</em>. Idea która za nimi stoi wynika z prostej przesłanki. Otóż zauważono, że nawet w językach dynamicznych wewnętrzna struktura obiektów przez znaczną większość czasu pozostaje taka sama. Z tego powodu możemy reprezentować obiekty o tej samej budowie przez ukrytą klasę &ndash; jej struktura pamięci jest identyczna z tą w językach statycznie typowanych. W momencie kiedy rozszerzamy dany obiekt o kolejne pola, tworzymy dla niego kolejną ukrytą klasę, o nowej, rozrośniętej budowie, a następnie realokujemy do nowej postaci. Z punktu widzenia wykonywanego programu jest to dość rzadkie zjawisko, natomiast korzyści płynące z tego podejścia są ogromne.</p>
-
-<h2>JIT, Interpreter oraz Tracing</h2>
-
-<p>Ostatnia różnica, na której chcę się skupić dotyczy różnic wynikających z kompilatorów JIT (używanych obecnie niemal we wszystkich najpopularniejszych językach: Javie, C# czy Pythonie na silniku PyPy) w stosunku do tradycyjnych interpreterów (Ruby MRI) oraz możliwości jakich dostarczają.</p>
-
-<p>Podstawowa różnica między tymi dwoma typami polega na tym, że tradycyjny interpreter przetwarza i generuje kod maszynowy na bieżąco w czasie rzeczywistym, interpretując skrypt linijka po linijce. JIT w tym czasie wykonuje małe wyprzedzenie, przetwarzając cały dostępny kod jeszcze przed punktem jego wykonania.</p>
-
-<p>Dodatkową korzyścią płynącą z podejścia kompilacji JIT jest możliwość dynamicznej optymalizacji kodu w trakcie jego działania. Takie podejście stosowane jest przez wszystkie najnowsze maszyny wirtualne. Jedna z takich technik znana jest jako <strong>trace trees</strong> i została opisana <a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/ICS-TR-06-16.pdf">tutaj</a>. W dużym skrócie ideą tego podejścia jest wyłapanie w aplikacji powtarzających się fragmentów kodu oraz zoptymalizowanie ich w taki sposób, aby wykonywały one jak najmniej instrukcji procesora. W jaki sposób jest to osiągane?</p>
-
-<ul>
-<li><strong>Inlining </strong>&ndash; a więc ograniczenie liczby instrukcji call do zewnętrznych funkcji poprzez skopiowanie ich zawartości do wnętrza pętli.</li>
-<li><strong>Wnioskowanie typów</strong> &ndash; przykład: jeżeli w języku dynamicznym dodajemy do siebie w pętli dwie&nbsp;wartości typu int&nbsp;1000 razy, mamy przesłanki aby twierdzić, że operacje wykonane na tej zmiennej zawsze będą dotyczyć obiektu tego samego typu (gdyby nie to, musielibyśmy za każym razem sprawdzać czy operator dodawania nie został np. użyty raz dla <strong>int</strong>ów a inny raz dla <strong>string</strong>ów). Takie wnioski umożliwią nam wygenerowanie kodu maszynowego zoptymalizowanego do tego konkretnego typu &ndash; jest to bardzo przydatne z punktu widzenia Ruby&#8217;ego. Za przykład niech posłuży metoda dodawania 2 liczb całkowitych &ndash; teoretycznie możliwa do wykonania w 1 instrukcji maszynowej, w Rubym jest opakowana w metodę wirtualną, która dodatkowo definiuje sprawdzanie zakresu dla wynikowej liczby i w zależności od wyniku zwraca jedną z dwóch wewnętrznie różnych implementacji obiektu opakowującego dany wynik</li>
-<li><strong>Rekonstrukcja do postaci kodu maszynowego wykonywalnego na GPU</strong> &ndash; wykonywalne, o ile kompilator jest w stanie rozpoznać stosowny kod na podstawie określonych wzorców (z tego co wiem, maszyna wirtualna na FireFoxie potrafi coś takiego).</li>
-</ul>
-
-
-<p>Rozwiązania zostały już wykorzystane na najnowszych VMach JavaScriptu. Niestety Ruby i Python wciąż czekają na swoją kolej.</p>
 ]]></content>
   </entry>
   

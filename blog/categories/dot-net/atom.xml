@@ -4,7 +4,7 @@
   <title><![CDATA[Category: .net | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/dot-net/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2015-02-03T22:07:35+01:00</updated>
+  <updated>2015-02-23T00:24:16+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,435 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[[C#] A different look at service design]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp/"/>
+    <updated>2015-02-23T00:13:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp</id>
+    <content type="html"><![CDATA[<p>Today I want to present a different point of view on C# applications design. If you are programming in that language most of the time, it&rsquo;s probably not, what you&rsquo;re used to. However I found it interesting, because it allows to achieve few goals:</p>
+
+<ul>
+<li>Decompose various, complex interfaces into few simpler, well build components.</li>
+<li>Seriously reduce risk of common OO anti-patterns in your application i.e. <a href="http://en.wikipedia.org/wiki/God_object">God Object</a>.</li>
+<li>Make your code shorter and methods simpler.</li>
+<li>Replace a lot of external assembly dependencies in your code with some simple design patterns.</li>
+</ul>
+
+
+<p>If you&rsquo;re ready, prepare to step down to the Wonderland. Let the Catepillar be our guide.</p>
+
+<h3>The basics</h3>
+
+<h4>Step 1 &ndash; define an interface</h4>
+
+<p>Lets start with twisting our mindsets a little bit. Take the following example:</p>
+
+<p>```csharp
+public interface IAuthService
+{</p>
+
+<pre><code>Task&lt;User&gt; SignUp(string email, string password);
+Task&lt;User&gt; SignIn(string email, string password);
+Task ResetPassword(string email);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>This is our new trendy-looking, non-blocking service interface. What&rsquo;s also important here, it follows a <a href="http://en.wikipedia.org/wiki/Single_responsibility_principle">Single Responsibility Principle</a>.</p>
+
+<h4>Step 2 &ndash; separate responsibilities</h4>
+
+<p>Since SRP has no well-defined bounds and it is a matter of a personal taste, we could stretch it a little further:</p>
+
+<p>```csharp
+public interface ISignInService
+{</p>
+
+<pre><code>Task&lt;User&gt; Handle(string email, string password); 
+</code></pre>
+
+<p>}</p>
+
+<p>public interface ISingUpService
+{</p>
+
+<pre><code>Task&lt;User&gt; Handle(string email, string password); 
+</code></pre>
+
+<p>}</p>
+
+<p>public interface IResetPasswordService
+{</p>
+
+<pre><code>Task Handle(string email); 
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Now instead of one service responsible for three possible operations, we have a three atomic services, each one having only one operation to take care off. If you&rsquo;re thinking, it&rsquo;s overly complicated, you&rsquo;re probably right. But right now we&rsquo;re still in Objective Oriented world and the Wonderland awaits ahead.</p>
+
+<h4>Step 3 &ndash; more simplification</h4>
+
+<p>Now, when we have a three single-member services, take a look into the mirror. If you do, you&rsquo;ll notice an important characteristic &ndash; interface with single method is almost indistinguishable from a delegate. It looks better now, see?:</p>
+
+<p><code>csharp
+public delegate Task&lt;User&gt; SignUpService(string email, string password);
+public delegate Task&lt;User&gt; SignInService(string email, string password);
+public delegate Task ResetPasswordService(string email);
+</code></p>
+
+<p>At this point you may want to turn back. This design is problematic. For example, it isn&rsquo;t as easily composable with Dependency Injection frameworks as interfaces. Don&rsquo;t worry. We will cover this up later. Now step in.</p>
+
+<h4>Step 4 &ndash; final generalization</h4>
+
+<p>Our service signatures are now almost ready. But to reach behind the mirror, we must apply two more rules:</p>
+
+<ul>
+<li>Each service takes no more than one parameter.</li>
+<li>Each service should always return a value.</li>
+</ul>
+
+
+<p>Why does it matter? If each service will satisfy one input / one output rule, we may compose them together with ease.</p>
+
+<p><code>csharp
+public delegate Task&lt;User&gt; SignUpService(SignUpRequest request);
+public delegate Task&lt;User&gt; SignInService(SignInRequest request);
+public delegate Task&lt;object&gt; ResetPasswordService(string email);
+</code></p>
+
+<p>Now, all of our delegates could be abstracted away to a single generic definition:</p>
+
+<p><code>csharp
+public delegate Task&lt;TRep&gt; Service&lt;in TReq, TRep&gt;(TReq request);
+</code></p>
+
+<p>where:</p>
+
+<ul>
+<li><code>TReq</code> is type of request object passed to service.</li>
+<li><code>TRep</code> is type of service reply.</li>
+</ul>
+
+
+<p>What we end up with is a highly abstracted &ndash; in Wonderland things looks different &ndash; and universal service signature.</p>
+
+<h3>Dependency Injection vs partial application</h3>
+
+<p>Walking down the object oriented road, often you could passed a view similar to this one:</p>
+
+<p>```csharp
+public class TransportationService
+{</p>
+
+<pre><code>private readonly ILocalizationService _localizationService;
+private readonly IOrdersRepository _ordersRepository;
+private readonly ICustomersRepository _customersRepository;
+private readonly IConfigurationProvider _configuration;
+
+public TransportationService (
+    ILocalizationService localizationService,
+    IOrdersRepository ordersRepository,
+    ICustomersRepository customersRepository,
+    IConfigurationProvider configuration) 
+{
+    _localizationService = localizationService;
+    _ordersRepository = ordersRepository;
+    _customersRepository = customersRepository;
+    _configuration = configuration;
+}
+
+public async Task&lt;TransportationDetails&gt; PrepareTransportation(int orderId) 
+{
+    ...
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>But now when you&rsquo;re on the other side of the mirror, it looks more like:</p>
+
+<p>```csharp
+public static TransportationServices
+{</p>
+
+<pre><code>public static Service&lt;int, TransportationDetails&gt; PrepareTransportationService (
+    ILocalizationService localizationService,
+    IOrdersRepository ordersRepository,
+    ICustomersRepository customersRepository,
+    IConfigurationProvider configuration)
+    {
+        return async orderId =&gt; { ... };
+    }
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Here we simply return an asynchronous lambda. And because it&rsquo;s nested inside, it can use all of the provided parameters directly in it&rsquo;s scope.</p>
+
+<p>Of course, there is still a matter of lifetime scopes. In case of singleton scopes, we simply may pass shared instance directly. But when more universal lifetimes are required, we can slide down the road along with the delegates to reach even higher abstractions &ndash; it&rsquo;s twisted, but we&rsquo;re in Wonderland, remember?</p>
+
+<p>```csharp
+public static Service&lt;LocalizationRequest, LocalizationReply> LocalizationService() { &hellip; }</p>
+
+<p>public static Service&lt;MyRequest, MyReply> MyService(Func&lt;Service&lt;LocalizationRequest, LocalizationReply>> localizationServiceProvider) { &hellip; }</p>
+
+<p>// transient scope
+var myService = MyService(() => LocalizationService());
+// or even shorter
+var myService2 = MyService(LocalizationService);</p>
+
+<p>// singleton scope
+var localizator = LocalizationService();
+var myService = MyService(() => localizator);
+var myService2 = MyService(() => localizator);
+```
+There is a one simple but powerful idea visible on the example above &ndash; an input parameter type has been changed from interface to another delegate. Now it&rsquo;s delegates all the way down. This way we may start from the most atomic services and combine them into more complex ones without limitations.</p>
+
+<p>Instead of complex, reflection-based DI frameworks we have one simple universal abstraction. You may find this more verbose, but it&rsquo;s actually simpler, faster and more error-proof solution than any of IoC libraries. You don&rsquo;t need to learn next DI framework or use StackOverflow guide to travel through the Wonderland.</p>
+
+<p>There are other problems solved automatically:</p>
+
+<ul>
+<li>No need to worry about cyclic references.</li>
+<li>There is no risk, that our DI framework won&rsquo;t know how to bind parameters to construct object. You&rsquo;ll never get a runtime errors when walking this way.</li>
+<li>Your application won&rsquo;t inject bad interface implementation by mistake.</li>
+</ul>
+
+
+<h3>Repositories and testing</h3>
+
+<p>Another popular OO desing pattern is a repository and it&rsquo;s most corrupted (and misunderstood) version &ndash; generic repository.</p>
+
+<p>```csharp
+public interface IGenericRepository<T>
+{</p>
+
+<pre><code>Task&lt;IEnumerable&lt;T&gt;&gt; GetAll();
+Task&lt;T&gt; GetById(int id);
+Task&lt;T&gt; Create(T entity);
+Task&lt;T&gt; Update(T entity);
+Task&lt;bool&gt; Delete(T entity);
+</code></pre>
+
+<p>}
+public interface IUserRepository : IGenericRepository<User> {</p>
+
+<pre><code>Task&lt;User&gt; GetByEmail(string email);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Lets be honest &ndash; you&rsquo;ll probably never use all of those methods at once. If you think it&rsquo;s good abstraction, it&rsquo;s not. It isn&rsquo;t a good SRP example either. After we had stepped into the mirror, we&rsquo;ve surely taken something from our world with us. So lets take a one of the things we&rsquo;ve hidden in the pocket &ndash; changing user password.
+```csharp
+public class UserService
+{</p>
+
+<pre><code>private readonly IUserRepository _userRepository;
+public UserService(IUserRepository userRepository)
+{
+    _userRepository = userRepository;
+}
+
+public async Task&lt;PasswordChanged&gt; ChangePassword(ChangePassword request)
+{
+    var user = await _userRepository.FindByEmail(request.Email);
+    if(IsValid(user, request.OldPassword))
+    {
+        user.PasswordHash = ComputePasswordHash(request.NewPassword);
+        await userUpdater(user);
+        return new PasswordChanged();
+    }
+    else throw new UnauthorizedException();
+}
+
+private byte[] ComputePasswordHash(string password) { ... }
+private bool IsValid(User user, string password) { ... }
+</code></pre>
+
+<p>}</p>
+
+<p>```</p>
+
+<p>Basically changing password would require only two out of six methods provided by <code>IUserRepository</code> &ndash; matching user and saving his/her state after changing. Now smoke the Catepillar&rsquo;s hookah and take a look again:</p>
+
+<p>```csharp
+public static Service&lt;ChangePassword, PasswordChanged> ChangePasswordService(Func&lt;Service&lt;string, User>> userFinderProvider, Func&lt;Service&lt;User, User>> userUpdaterProvider)
+{</p>
+
+<pre><code>var userFinder = userFinderProvider();
+var userUpdater = userUpdaterProvider();
+
+return async request =&gt; {
+    var user = await userFinder(request.Email);
+    if (IsValid(user, request.OldPassword))
+    {
+        user.PasswordHash = ComputePasswordHash(request.NewPassword);
+        await userUpdater(user);
+        return new PasswordChanged();
+    }
+    else throw new UnauthorizedException();
+};
+</code></pre>
+
+<p>}</p>
+
+<p>private static byte[] ComputePasswordHash(string password) { &hellip; }
+private static bool IsValid(User user, string password) { &hellip; }
+```
+We totally dealt with repository interface, introducing two service providers presented before.</p>
+
+<p>Hint:</p>
+
+<blockquote><p>You can turn <code>ComputePasswordHash</code> (or even <code>IsValid</code>) into service on it&rsquo;s own. All hail the modularity!</p></blockquote>
+
+<h4>From testing perspective &hellip;</h4>
+
+<p>In traditional OO world, to test this feature, you&rsquo;d probably include some mocking library, mock repository&rsquo;s interface and check if correct method was called with correct arguments. You may also mock underlying database directly with something like <a href="http://effort.codeplex.com/">Effort</a>.</p>
+
+<p>In Wonderland mocklibs are quite rare creatures. They are even harder to catch. We must find another way. Can we simply test it without <strong>any</strong> mocking library? Lets see:</p>
+
+<p>```csharp
+// Arrange:
+// if you abstracted ComputePasswordHash earlier, it&rsquo;ll be easier at this point
+var testUser = new User(email, passwordHash);
+var db = new Dictionary&lt;string, User> { { testUser.Email, testUser } };
+Service&lt;string, User> userFinder = async email => {</p>
+
+<pre><code>User user;
+return db.TryGetValue(email, out user) ? user : null;
+</code></pre>
+
+<p>};
+Service&lt;User, User> userUpdater = async user => user;
+var changePasswordService = ChangePasswordService(() => userFinder, () => userUpdater);</p>
+
+<p>// Act:
+await changePasswordService(new ChangePassword(email, oldPassword, newPassword));</p>
+
+<p>// Assert:
+Assert.NotEqual(passwordHash, testUser.PasswordHash);
+```
+Actually, that&rsquo;s all. Including mock initialization and result verification. No mocklib was harmed in the making of this test.</p>
+
+<h3>Aspect Oriented Programming vs lambda combinators</h3>
+
+<p>If you&rsquo;re still interested in miracles of the Wonderland, we can go further. Next question: how can we bend reflection-based Aspect Oriented Programming to our will? There are possibly many ways, but I&rsquo;ll focus only on the one.</p>
+
+<p>Just like we used services to replace all of our interfaces, we replace aspects / attributes with filters:</p>
+
+<p><code>csharp
+public delegate Task&lt;TOut&gt; Filter&lt;in TIn, TOut, out TReq, TRep&gt;(TIn request, Service&lt;TReq, TRep&gt; service);
+</code>
+where:</p>
+
+<ul>
+<li><code>TIn</code> is filter&rsquo;s input type.</li>
+<li><code>TOut</code> is filter&rsquo;s output type.</li>
+</ul>
+
+
+<p>Filter is actually a wrapper around specific service, which may apply additional code before or after it, modify it&rsquo;s input or output or even decide not to call it at all. In case when filter don&rsquo;t change service&rsquo;s in / out parameters, it&rsquo;s signature is basically equal to <code>public delegate Task&lt;TRep&gt; Filter&lt;TReq, TRep&gt;(TReq request, Service&lt;TReq, TRep&gt; service);</code>.</p>
+
+<p>Now, having those two types defines, lets create some utility methods, which can make our travel easier. Lets start with filter composer.
+```csharp
+public static Filter&lt;TIn, TOut, TReq2, TRep2> Then&lt;TIn, TOut, TReq1, TRep1, TReq2, TRep2>(</p>
+
+<pre><code>this Filter&lt;TIn, TOut, TReq1, TRep1&gt; self,
+Filter&lt;TReq1, TRep1, TReq2, TRep2&gt; next)
+</code></pre>
+
+<p>{</p>
+
+<pre><code>return (request, service) =&gt; self(request, req =&gt; next(req, service));
+</code></pre>
+
+<p>}
+```
+If we omit the method signature, this method is a pretty straightforward one liner which combines two filters together and gives another filter in return. As you can guess, with this trick we can join a whole chains of filters into one piece.</p>
+
+<p>There is a second part of the puzzle missing. We still don&rsquo;t have a well defined methods to work with both filters and services. This is the one:
+```csharp
+public static Service&lt;TReqIn, TRepOut> ApplyTo&lt;TReqIn, TRepOut, TReqOut, TRepIn>(</p>
+
+<pre><code>this Filter&lt;TReqIn, TRepOut, TReqOut, TRepIn&gt; filter,
+Service&lt;TReqOut, TRepIn&gt; service)
+</code></pre>
+
+<p>{</p>
+
+<pre><code>return request =&gt; filter(request, service);
+</code></pre>
+
+<p>}
+```
+Just like we were combining filters, now we combine a filter with a service to get service in return.</p>
+
+<p>With this two methods (and basically two lines of code!) we can easily interop between filters and services. How will this weapon examine against aspects?</p>
+
+<p>```csharp
+// logging example
+public static Filter&lt;TReq, TRep, TReq, TRep> LogFilter&lt;TReq, TRep>(Action<string> logger)
+{</p>
+
+<pre><code>return async (request, service) =&gt;
+{
+    logger("Log before: " + request);
+    var reply = await service(request);
+    logger("Log after: " + reply);
+    return reply;
+};
+</code></pre>
+
+<p>}</p>
+
+<p>// authorization example
+public static Filter&lt;UnauthorizedRequest, TReply, AuthorizedRequest, TReply> AuthorizeFilter<TReply>(</p>
+
+<pre><code>Func&lt;Service&lt;UnauthorizedRequest, Identity&gt;&gt; authorizationServiceProvider)
+</code></pre>
+
+<p>{</p>
+
+<pre><code>return async (request, service) =&gt;
+{
+    var authService = authorizationServiceProvider();
+    var authorizedIdentity = await authService(request);
+    if (authorizedIdentity != null)
+    {
+        return await service(new AuthorizedRequest(authorizedIdentity, request));
+    }
+    else throw new UnauthorizedAccessException();
+};
+</code></pre>
+
+<p>}</p>
+
+<p>// combine various filters together
+var filters = AuthorizeFilter(AuthorizationService)</p>
+
+<pre><code>.Then(LogFilter(Console.WriteLine))
+.Then(MonitorFilter(MonitorService)
+.Then(UnitOfWorkFilter());
+</code></pre>
+
+<p>// apply all filters at once to the service
+var enchancedService = filters.ApplyTo(myService);
+```</p>
+
+<p>Again, thankfully to the power of composability we can join multiple filters into one and apply them to any number of services we wish to. Basically two simple types and two lines of code compiled upfront!</p>
+
+<p>We ripped off (or seriously reduced) any runtime uncertainties, AOP, DI and mock libraries out of our code, as well as whole bunch of interfaces and abstraction layers. Did you enjoy the travel? Welcome in the Wonderland. Land of functional programming.</p>
+
+<p><strong>PS</strong>: presented concept is heavily inspired by <a href="http://twitter.github.io/finagle/guide/">Finagle</a> library, originally written in Scala on a Twitter&rsquo;s purposes.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Things you may not know about CSharp value types]]></title>
@@ -257,67 +686,6 @@ Jeżeli widzisz taki interfejs, wiedz że coś się dzieje. To z czym mamy do cz
 <p>To co najbardziej spodobało mi się we współpracy z programistami Ruby, to otwartość na nowinki, chęć wypróbowania innych podejść. Wiąże się z tym pewne ryzyko, ale również określony zysk. Tutaj powstaje pewien problem &ndash; ryzyko w skostniałym świecie aplikacji biznesowych z reguły jest czymś nie do przyjęcia. Dodatkowym hamulcem jest tutaj fakt, że wielu starszych programistów ze środowiska .NET nieprzychylnie patrzy na rozwiązania open source (w końcu kogo wtedy pociągnąć do odpowiedzialności?) oraz ogólnie technologiom spoza kółka Microsoftu.</p>
 
 <p>Nie należy bać się zmian. Nawet jeżeli ryzyko jest nieakceptowalne w aplikacjach dla klientów zewnętrznych, wciąż możemy wprowadzać drobne zmiany dla systemów używanych wewnątrz firmy oraz wypróbowywać tam nowe podejścia. Z jednej strony może to przełożyć się na zysk w przyszłości, z drugiej działa to jak magnes na programistów-pasjonatów, a takich nigdy nie ma za wielu, prawda? ;)</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[O redundancji w wyrażeniach LINQ]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/"/>
-    <updated>2013-04-23T21:35:00+02:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq</id>
-    <content type="html"><![CDATA[<p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
-
-<h2>Przykład</h2>
-
-<p>Weźmy pod uwagę następujący przykład &ndash; otrzymaliśmy dokumentację, w której opisana jest pewna encja. Może ona mieć następującą postać:
-``` c#
-public class Document
-{</p>
-
-<pre><code>public DateTime CreateDate { get; set; }
-public string Type { get; set; }
-</code></pre>
-
-<p>   // .. reszta implementacji
-}
-<code>
-W ramach logiki biznesowej wykonywanej na encjach tej klasy stworzone zostało pojęcie przeterminowania - z dalszej części dokumentacji dowiadujemy się, że za przeterminowane uznajemy te encje, w których data utworzenia jest starsza niż X dni (X może być dowolne np. ustawione w konfiguracji systemu) zaś typ przybiera konkretną wartość. Bez trudu zawężamy więc wyniki za pomocą zapytania:
-</code> c#
-var x = .. pobieramy X
-var documents = DataContext.Documents</p>
-
-<pre><code>    .Where(x =&gt; x.CreateDate.AddDays(x) &lt; DateTime.Now &amp;&amp; x.Type == "M1");
-</code></pre>
-
-<p>```
-Niestety w późniejszym czasie słowo &ldquo;przeterminowany&rdquo; pojawia się w tym kontekscie jeszcze kilka razy w różnych miejsach aplikacji. Co robimy? W większości spotkanych przeze mnie przypadków piszemy klauzulę <code>Where(&hellip;)</code> ponownie. Ale czy na pewno?</p>
-
-<h2>Inne podejście</h2>
-
-<p>Rozwiązaniem powyżej sytuacji może być stary dobry <em>monkey patching</em>, reprezentowany w C# przez mechanizm extension methods. Z jego użyciem moglibyśmy rozwiązać ten problem w następujący sposób:
-``` c#
-public static int X { get {&hellip;} }
-/// <summary>
-/// Słowo komentarza od ojca dyrektora.
-/// </summary>
-public static IQueryable<Document> Expired(this IQueryable<Document> data)
-{</p>
-
-<pre><code>var x = X;
-return data.Where(x =&gt; x.CreateDate.AddDays(x) &lt; DateTime.Now &amp;&amp; x.Type == "M1");
-</code></pre>
-
-<p>}
-<code>
-Przykład wykorzystania:
-</code> c#
-var expiredDocuments = DataContext.Documents.Expired();
-```
-W ten sposób stworzyliśmy stereotyp, który możemy wykorzystywać zawsze w sytuacji kiedy mamy do czynienia z tym konkretnym zachowaniem. Jakie są zalety tego podejścia? Po pierwsze trzymamy się zasady DRY (Don&rsquo;t Repeat Yourself). Po drugie sądzę, że taki zapis jest o wiele bardziej czytelny i ułatwia późniejsze zrozumienie kontekstu, w jakim wykonywane są zapytania.</p>
-
-<p>Innym sposobem na rozwiązanie powyższego problemu jest naturalnie przeniesienie filtru bezpośrednio do kontekstu danych:<code>var data = DataContext.GetExpiredDocuments();</code>. Na czym jednak polega przewaga monkey patchingu? Po pierwsze nie jesteśmy twardo związani ze źródłem danych &ndash; napisany wcześniej stereotyp może być zastosowany dla dowolnej kolekcji, nawet takiej która powstała w wyniku deserializacji żądania HTTP. Po drugie rozwinięcie to można wstawić w dowolnym momencie tworzonego zapytania, z dowolnej encji posiadające odpowiednią relację.</p>
-
-<p>W rezultacie otrzymujemy rozwiązanie bardziej uniwersalne i podatne na zmiany.</p>
 ]]></content>
   </entry>
   

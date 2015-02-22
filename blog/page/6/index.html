@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Feb 9th, 2011 .net, programowanie Comments Typy Anonimowe a Metody Witam, w dzisiejszym poście postaram się streścić ideę pomysłu, który jakiś czas &hellip;">
+	<meta name="description" content="Feb 20th, 2011 .net, programowanie Comments [C#] Class vs. Struct Dzisiejszy post dotyczyć będzie podstawowych cech języka C#. Mówię tutaj o &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,117 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-20T13:26:00+01:00" data-updated="true" itemprop="datePublished">Feb 20<span>th</span>, 2011</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2011/02/20/c-class-vs-struct/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2011/02/20/c-class-vs-struct/" itemprop="url">[C#] Class vs. Struct</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Dzisiejszy post dotyczyć będzie podstawowych cech języka C#. Mówię tutaj o różnicach występujących pomiędzy strukturami a standardowymi klasami. Rzecz była wałkowana już wiele razy, jednak tutaj postaram się zgromadzić i uporządkować tyle informacji, ile znalazłem na ten temat.</p>
+
+<p>Zacznijmy więc od różnic:</p>
+
+<ul>
+<li>Klasy bazowe &ndash; jak powszechnie wiadomo wszystkie klasy w C# dziedziczą po typie <strong>Object</strong>. Dotyczy to również struktur, jednak w sposób niebezpośredni. Każda struktura dziedziczy po typie <strong>ValueType</strong>. Warto jednak wiedzieć, że sam <strong>ValueType również dziedziczy po typie Object</strong>.</li>
+<li>Dziedziczenie &ndash; wszystkie struktury są niejawnie zapieczętowane (<strong>sealed</strong>). Oznacza to, że nie mogą służyć jako klasy bazowe do dziedziczenia. Dodatkowo same nie mogą dziedziczyć po innych typach. Aby to zrozumieć przedstawię zdezasemblowany nagłówek struktury w języku CIL: <code>.class public sealed MyStruct extends [mscorlib]System.ValueType</code>. Możliwy jest również inny skrótowy zapis:<code>.class public sealed value MyStruct</code></li>
+<li>Miejsce w pamięci &ndash; klasy tworzone są na zarządzanej stercie (chociaż można na to wpływać). Struktury tworzone są zawsze na stosie. Wynika stąd, że dostęp do struktur jest szybszy, ale jednocześnie nie powinny one być zbyt duże (stąd jedno z ich określeń jako &ldquo;<em>lekkich klas</em>&rdquo;). Taki stan rzeczy niesie za sobą również inną konsekwencję &ndash; struktury (jak wszystkie typy wartościowe) mają czas życia ograniczony zasięgiem, w którym się zajmują tzn. po wyjściu poza zasięg są one natychmiast usuwane z pamięci (nie trzeba ich odśmiecać).</li>
+<li>Przekazywanie &ndash; dochodzimy do momentu przekazywania obiektów jako np. parametrów funkcji. Klasy zawsze przekazywane są przez referencję (tzn. podawany jest wskaźnik na adres bloku pamięci, który jest zajmowany przez obiekt) &ndash; tak więc wszelkie zmiany dokonane na parametrze będą zachowane po wyjściu z funkcji. Struktury są typami przekazywanymi przez wartość (tzn. parametr funkcji będzie w istocie <em>głęboką kopią</em> przekazanej struktury), co za tym idzie zmiany dokonywane na strukturze przekazanej jako parametr nie będą odzwierciedlone w orginale. Nie jest to zawsze porządane zachowanie, dlatego czasami warto oznaczać takie parametry za pomocą słów kluczowych <strong>out</strong> (kiedy chcemy zainicjalizować daną strukturę) oraz <strong>ref</strong>(kiedy wiemy, że struktura ta jest już zainicjalizowana).</li>
+</ul>
+
+
+<p>Powstaje jeszcze jedno ciekawe pytanie: co się stanie w sytuacji, kiedy struktura zawierająca w sobie typ referencyjny zostanie przekazana? Co się wtedy stanie z klasą wewnątrz niej. Odpowiedź brzmi: skopiowana zostanie jedynie referencja na obiekt, będziemy więc mieli do czynienia z <em>płytką kopią</em> obiektu, mimo, że przekazana struktura będzie <em>głęboką kopią</em>.
+&ndash; Wartość null &ndash; w przeciwieństwie do klas struktury nie mogą przyjmować wartości null. Dlatego dobrym zwyczajem jest stworzenie statycznego getera zwracającego jakiś odpowiednik pustej struktury. Oczywiście wszystkie typy wartościowe mogą zostać opakowane w typie generyczym Nullable<T> i przyjmować jako takie wartość null (w takim wypadku zawartość naszej stuktury znajduje się pod właściwością Value). Czasami jest to rozwiązanie porządane, a na jego korzyść idzie fakt, że typ ten został wyposażony dość przyjazną programiście konstrukcję:&lt;</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">Nullable</span><span class="p">&lt;</span><span class="n">MyStruct</span><span class="p">&gt;</span> <span class="n">p</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyStruct</span><span class="p">();</span>
+</span><span class='line'><span class="c1">//prostszy zapis</span>
+</span><span class='line'><span class="n">MyStruct</span><span class="p">?</span> <span class="n">p</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyStruct</span><span class="p">();</span>
+</span><span class='line'><span class="c1">//lub</span>
+</span><span class='line'><span class="n">MyStruct</span><span class="p">?</span> <span class="n">p</span> <span class="p">=</span> <span class="k">default</span><span class="p">(</span><span class="n">MyStruct</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Konstruktory &ndash; struktury zabraniają programiście nadpisywać konstruktor domyślny. Możliwe jest jedynie ustanawianie konstruktorów z parametrami. Ciekawostką jest fakt, że ze struktur można korzystać bezpośrednio po nazwaniu referencji. Jednak wymogiem, który musi być spełniony jest wcześniejsze jawne zainicjalizowanie wszystkich pól składowych struktury. Przykład:
+Definicja struktury:</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">struct</span> <span class="nc">MyStruct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">public</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">public</span> <span class="k">void</span> <span class="nf">ShowX</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Wykorzystanie:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">MyStruct</span> <span class="n">s</span><span class="p">;</span>
+</span><span class='line'><span class="n">s</span><span class="p">.</span><span class="n">x</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>    <span class="c1">//bez tego dostaniemy błąd kompilatora</span>
+</span><span class='line'><span class="n">s</span><span class="p">.</span><span class="n">ShowX</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Inicjalizacja pól &ndash; struktury nie mogą inicjalizować początkowych wartości swoich pól. Wpisanie wewnątrz struktury definicji pola w poniższej postaci spowoduje wyrzucenie błędu przez kompilator: <code>
+public int y = 1;</code></li>
+<li>Metoda Finalize() &ndash; jak wiadomo klasy wykorzystują tą metodę w momencie, kiedy zachodzi ich odśmiecenie. Każda z nich niebezpośrednio przesłania tą metodę. Jednak nie ma to miejsa w przypadku struktur, gdyż nie są one przechowywane na stercie ani nie podlegają kontroli <strong>Garbage Collectora</strong>.</li>
+</ul>
+
+
+<p>Opowiedzieliśmy już o różnicach, czas na to co jest wspólne dla klas i struktur:
+&ndash; Zarówno klasy jak i struktury mogą deklarować zmienne statyczne, publiczne, prywatne (struktury nie mogą zawierać pól o dostępie <em>protected</em>) i jak i internal.
+&ndash; Klasy i struktury mogą definiować typy generyczne.
+&ndash; Mogą implementować interfejsy (mimo, że struktury nie obsługują dziedziczenia, implementacja interfejsów jest możliwa).
+&ndash; Mogą przeciążać operatory i definiować stałe.
+&ndash; Mogą definiować właściwości i obsługiwać zdarzenia.</p>
+
+<p>Jak widać różnic jest dość sporo, tyle na plus co i na minus. Struktury w C# znacznie się różnią od swoich odpowiedników w C++. Czasami warto się zastanowić nad ich wykorzystaniem w praktyce, gdyż może to poskutkować szybszym działaniem programu. Sądzę, że z tego powodu nie należy ich zawsze spisywać na straty.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
