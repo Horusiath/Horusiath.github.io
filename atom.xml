@@ -4,7 +4,7 @@
   <title><![CDATA[Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2015-02-23T00:24:16+01:00</updated>
+  <updated>2015-02-23T00:26:04+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -18,7 +18,7 @@
     <link href="http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp/"/>
     <updated>2015-02-23T00:13:00+01:00</updated>
     <id>http://bartoszsypytkowski.com/blog/2015/02/23/functional-csharp</id>
-    <content type="html"><![CDATA[<p>Today I want to present a different point of view on C# applications design. If you are programming in that language most of the time, it&rsquo;s probably not, what you&rsquo;re used to. However I found it interesting, because it allows to achieve few goals:</p>
+    <content type="html"><![CDATA[<p>Today I want to present a different point of view on C# applications design. If you are programming in that language most of the time, it&rsquo;s probably not what you&rsquo;re used to see. However I found it interesting, because it allows to achieve a few important goals:</p>
 
 <ul>
 <li>Decompose various, complex interfaces into few simpler, well build components.</li>
