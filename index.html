@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Feb 23rd, 2015 .net, design patterns Comments [C#] a Different Look at Service Design Today I want to present a different point of view on C# &hellip;">
+	<meta name="description" content="Mar 8th, 2015 design patterns Comments Design Patterns: Circuit Breaker Today I want to introduce a CircuitBreaker &ndash; one of the reactive &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,144 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-03-08T16:08:00+01:00" data-updated="true" itemprop="datePublished">Mar 8<span>th</span>, 2015</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/design-patterns/'>design patterns</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2015/03/08/circuit-breaker/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2015/03/08/circuit-breaker/" itemprop="url">Design Patterns: Circuit Breaker</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Today I want to introduce a <code>CircuitBreaker</code> &ndash; one of the reactive design patterns, especially usefull in areas such as web services interop. To get you better understand on it&rsquo;s concepts, lets consider following scenario:</p>
+
+<blockquote><p>You&rsquo;ve built a successful web service, making use of another external services in order to handle user requests. During the big churn of end users requesting your site, one of them became overloaded, starting to respond with increasing delays. Ultimately while trying to satisfy all incomming requests, it has exhausted all resources and gone down, entailing your service with it.</p></blockquote>
+
+<p>I think it&rsquo;s a well-known example and a good one to show a nature of the problem. Because of RPC nature, it&rsquo;s characteristics differ from in-proc calls:</p>
+
+<ul>
+<li>They operate on separate resources pool and might be used by more than one remote caller at the time.</li>
+<li>Their internal state, available resources and performance may be hard to predict. In most cases, they neither can be controlled nor monitored by the caller.</li>
+<li>Their life cycle is not bound to your local host. They may be reset/shut down while your service is still running and serving requests.</li>
+</ul>
+
+
+<p>What reactive applications have to do with that? One of the key principles governing the <a href="http://www.reactivemanifesto.org/#responsive">Reactive Manifesto</a> stands for quick responsiveness of the system, no matter if this response is possitive or not. Nowadays users are impatient. When they take action, they want a response, and they want it now.</p>
+
+<p>This is when Circuit Breakers kicks in. They main role is to act as a decorator around your code to ensure, that you can quickly respond on any reliability problems:</p>
+
+<ul>
+<li>First, Circuit Breaker defines a safe time delay given to the action to respond. Service which won&rsquo;t fit specified timeout is considered to be unresponsive or working incorrectly. It&rsquo;s better to inform your user about possible problems after a reasonable delay than to show him/her a smoke screen and spinner for the next 2 minutes.</li>
+<li>Secondly it&rsquo;s able to cut out the service in any sign of problems and give it a time to self repair. If you already know, that external service is not working properly, what is the point of calling it any way?</li>
+</ul>
+
+
+<p>Most of the circuit breaker are realized as a state machines. Picture below presents a simple one:</p>
+
+<p><img src="http://i57.tinypic.com/wrj3ft.png" width=600 style="display: block; margin-left: auto; margin-right: auto" /></p>
+
+<p>where:</p>
+
+<ul>
+<li><strong>Closed</strong> &ndash; this is initial state. While closed, Circuit Breaker will simply pass any request to underlying function. However it also checks if response will met a specified timeout criteria or ended with failure i.e. due to external service overload or crash. Any of these will trigger Circuit Breaker to come into open state.</li>
+<li><strong>Open</strong> &ndash; while in this state, any request send through Circuit Breaker will follow <em>fail fast</em> semantic. Instead of forwarding request to the underlying function, CB will immediately throw an exception informing that it&rsquo;s closed. Open state is not permanent &ndash; CB should automatically switch to half-open state after a specified time delay.</li>
+<li><strong>HalfOpen</strong> &ndash; this is a kind of the probing state, signing that CB is checking if undrelying function is responsive again. While in it, CB will pass first request call as if it was in <em>Closed</em> state, to eventually get the response. All subsequent calls will fail fast just like in <em>Open</em> state. If request failed again or response didn&rsquo;t came in specified timeout, CB switches back to <em>Open</em> state. If response was successful, CB becomes <em>Closed</em>.</li>
+</ul>
+
+
+<p>I&rsquo;ve created a simplistic implementation of the CircruitBreaker pattern in C# (<a href="https://gist.github.com/Horusiath/a3236c61ed2da8b17a25">source code</a>). It allows to perform multiple asynchronous calls through one CB instance in non-blocking, thread-safe manner. It has also attached a complete test suite describing it&rsquo;s behavior. Feel free to use it and to modify as you wish.</p>
+
+<p>Example usage:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="c1">// this service could be a singleton, and could be called concurrently</span>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">CurrencyExchangeProxy</span> <span class="p">:</span> <span class="n">ICurrencyExchangeProxy</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">CircuitBreaker</span><span class="p">&lt;</span><span class="n">ExchangeCurrencies</span><span class="p">,</span> <span class="n">ExchangeRate</span><span class="p">&gt;</span> <span class="n">exchangeRates</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">public</span> <span class="nf">CurrencyExchangeProxy</span><span class="p">(</span><span class="n">Configuration</span> <span class="n">config</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="n">exchangeRates</span> <span class="p">=</span> <span class="k">new</span> <span class="n">CircuitBreaker</span><span class="p">&lt;</span><span class="n">ExchangeCurrencies</span><span class="p">,</span> <span class="n">ExchangeRate</span><span class="p">&gt;(</span>
+</span><span class='line'>          <span class="k">async</span> <span class="n">req</span> <span class="p">=&gt;</span> <span class="n">HttpGetAsync</span><span class="p">&lt;</span><span class="n">ExchangeRate</span><span class="p">&gt;(</span><span class="n">config</span><span class="p">.</span><span class="n">ExchangeServiceUrl</span><span class="p">,</span> <span class="n">req</span><span class="p">),</span>    <span class="c1">// async function, CB should take care of</span>
+</span><span class='line'>          <span class="n">config</span><span class="p">.</span><span class="n">GetServiceTimeout</span><span class="p">(),</span>         <span class="c1">// time given to function to finish</span>
+</span><span class='line'>          <span class="n">config</span><span class="p">.</span><span class="n">OpenTimeout</span><span class="p">());</span>              <span class="c1">// time given to function dependent component to restore in case of failure</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">ExchangeRate</span><span class="p">&gt;</span> <span class="n">GetExchangeRate</span><span class="p">(</span><span class="n">Currency</span> <span class="k">from</span><span class="p">,</span> <span class="n">Currency</span> <span class="n">to</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="k">await</span> <span class="n">exchangeRates</span><span class="p">.</span><span class="n">Call</span><span class="p">(</span><span class="k">new</span> <span class="n">ExchangeCurrencies</span><span class="p">(</span><span class="k">from</span><span class="p">,</span> <span class="n">to</span><span class="p">));</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">InvoiceController</span> <span class="p">:</span> <span class="n">Controller</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ICurrencyExchangeProxy</span> <span class="n">currencyExchange</span><span class="p">;</span>
+</span><span class='line'><span class="na"> </span>
+</span><span class='line'><span class="na"> [HandleError(ExceptionType=typeof(CircuitBreakerOpenException), View=&quot;UnresponsiveExternalService&quot;)]</span>
+</span><span class='line'>  <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">ActionView</span><span class="p">&gt;</span> <span class="n">DisplayInvoice</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="p">...</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">exchangeRate</span> <span class="p">=</span> <span class="k">await</span> <span class="n">currencyExchange</span><span class="p">.</span><span class="n">GetExchangeRate</span><span class="p">(</span><span class="n">invoice</span><span class="p">.</span><span class="n">Balance</span><span class="p">.</span><span class="n">Currency</span><span class="p">,</span> <span class="n">localization</span><span class="p">.</span><span class="n">Currency</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">...</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -2529,201 +2667,6 @@
 <p>Since struct cannot be null, we don&rsquo;t have to perform null checking. However it&rsquo;s not necessary. Since value types cannot declare or override virtual methods &ndash; struct have fixed inheritance chain &ndash; we don&rsquo;t have to access their VTables. Actually lack of inheritance is so useful, that structure instances don&rsquo;t need to have any pointers to VTable at all. All of these save time necessary to perform a method call.</p>
 
 <p>From that perspective struct method calls are much closer to static methods &ndash; also invoked through <code>call</code> instruction &ndash; than instantiated ones.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2014-02-20T22:47:00+01:00" data-updated="true" itemprop="datePublished">Feb 20<span>th</span>, 2014</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/javascript/'>javascript</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2014/02/20/more-thoughts-on-knockout/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2014/02/20/more-thoughts-on-knockout/" itemprop="url">More Thoughts on Knockout.js and JavaScript MVVM</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Today I want to share with my reflections on using <a href="http://knockoutjs.com/">Knockout.js</a> and client side MVVM pattern. Some of them refer to my previous post on the same <a href="/blog/2013/03/09/knockoutjs-spostrzezenia/">topic</a> (in Polish language). These are my advices to all entusiasts of JavaScipt rich applications, especially to those, who want to try Knockout in production environment.</p>
-
-<h1>Layered structure</h1>
-
-<p>Most of the frontent application logic, I&rsquo;ve got an occasion to look into, was pretty messy. Simple web pages usually are build of chunks of JavaScript code used to bound existing libraries and perform simple logic tasks. Everything is coupled, any kind of logic and DOM manipulations are mixed together. This is the place, where unicorns live and magic happens. But if you&rsquo;re into rich client side applications and frameworks such as Knockout.js, this is not an option. Why?</p>
-
-<p>Knockout.js, AngularJS, Backbone and other MV* frameworks are dedicated to create a web applications. This literaly means, that your client page is an application rather than an ordinary page, rendered only to display the data. There will be probably a <strong>lot</strong> of code and logic bound to HTML on the page. If you will manage your code in unstructurized manner, you&rsquo;ll soon find yourself in spot, where any further changes will the a depressing, time-consuming nightmare.</p>
-
-<p>To be able to manage a large chunks of code, you will need to decouple your JavaScript logic into layers. Beacuse Knockout doesn&rsquo;t provide any application layers off hand, responsibility of creating them lies on you. In rest of the post bellow I want to share my personal experiences developed during many months spent of using Knockout in production environment. Layers described by me can be exactly mapped onto specific patterns/groups of patterns and are described from top to bottom, beginning from layer used for server communication, through data management, HTML page partitioning to core used to bound everything together.</p>
-
-<h2>Gateway</h2>
-
-<p>The main goal of the Gateway object is to abstract server API to look like an ordinary JavaScript function. We would like to call the service in form of <code>usersApi.getUserById(1)</code> rather than cryptic <code>$.post(''api/users', { id: 1 })</code>. In my opinion this is more natural and gives us an easier way for further refactoring. What else can gateways do?</p>
-
-<p>First of all, they should be able to hide necessity of resolution parametrized URLs from view models. They should be able to resolve them or have some helpers attached (think about eqivalent of UrlHelpers, path methods etc.).</p>
-
-<p>In most of the cases I&rsquo;ve met, server communication is done by traditional ajax requests through jQuery ajax or similar calls. Since those functions always returns jQuery promises as a result, you may find that this is not what you want. Maybe you need a more detailed informations or a custom wrapper around promises. Or if you use <a href="https://github.com/Reactive-Extensions/RxJS">RxJS</a>, you probably may want <code>Rx.Observable</code> objects. For all of these cases Gateway is good place to implement.</p>
-
-<p>Gateways could be also used to perform mapping of JSON into fully qualified JavaScript objects you may want to use. This includes things like serializing/deserializing dates, adding additional computed properties, adding/removing recursive dependencies or even changing entire structure of object to beter fit our needs. From Knockout point of view, we can wrap/unwrap objects into ko.observables directly at this layer.</p>
-
-<p>When your data manipulation and mapping logic become more and more complex, consider using a dedicated Factory/Mapper objects to maintain code decoupling.</p>
-
-<h2>Data source</h2>
-
-<p>Data sources (or Data Access Objects) are alternatives to gateways, since they serve similar purpose, but provide much more complex mechanisms. When we speak about data represented on the page, we&rsquo;ll probably see problems associated with incomplete data representation on client side. Paginated tables, autocomplete suggestions, calendar pages, infinite scrolls etc. When used with remote source, all of these use server side requests to get data to be shown to end users. But on large data volumes we never retrieve all of the informations, instead using only those records, which need te be displayed. One of the roles of data sources is to store and manage data received this way, so the next time user goes back to previously displayed page or gets subset of records already provided, we may restore it from the local cache rather than repeating request to the server.</p>
-
-<p>If you want to see a possible ways to implement this pattern, I would recommend you to look at some of the existing implementations, like:</p>
-
-<ul>
-<li><a href="https://github.com/twitter/typeahead.js/blob/master/doc/bloodhound.md">Bloodhound</a> suggestion engine for Twitter&rsquo;s <a href="http://twitter.github.io/typeahead.js/">typeahead.js</a> library</li>
-<li>Kendo UI <a href="http://docs.telerik.com/kendo-ui/api/framework/datasource">DataSource</a> prototype</li>
-<li><a href="http://www.breezejs.com/">Breeze.js</a> framework</li>
-<li><a href="http://pouchdb.com/">PouchDB</a>, which is actually full in-browser database with remote sync option</li>
-</ul>
-
-
-<p>All of them provide interesting point of view of what separated data source managers are capable to.</p>
-
-<p>Among other advantages of data source separation we could mention sharing of common data between view models, which should not reference too each other directly, but also managing data objects lifecycle. Fetching data from the server, and synchronizing changes made localy by the client could be done easily this way.</p>
-
-<p>When it comes to data objects, I&rsquo;ve noticed that for purposes of data manipulation on the client side it&rsquo;s nice to have some kind of universal identifiers to manipulate enities. Those identifiers should uniquely identify single entity among all others on the page &ndash; this means, that database identifiers from the JSON object representing server side entities may not be sufficient, since in many cases the records id&rsquo;s (at least when we speak about relational databases with non-UUID primary keys) are guaranted to be unique only in single table/collection scope.</p>
-
-<p>In my case good solution of this problem seems to be an additional object property &ndash; lets call it <code>$id</code> &ndash; which serves only client side logic (server may ignore that value) and it&rsquo;s combination of unique identifier of the entity type and single entity identifier. Since it&rsquo;s called the same among all data objects in client side application, no matter of their type, we may also definie universal comparison operators and function for fetching and data integration. To do so it&rsquo;s also necessary that <code>$id</code> has to be generated in deterministic way &ndash; no matter how many times we create a JavaScript representation of the same database record, it should allways have the same <code>$id</code> value.</p>
-
-<h2>Partial View Models</h2>
-
-<p>Partial view models are used to separate model-view binding in domains of interests. Instead of unorganized bindings of all observed properties to single God Object, remember to use smaller pieces which actually fits a concrete parts of your page &ndash; menus, navbars, forms, modal windows etc.</p>
-
-<p>Don&rsquo;t ever mix a multiple view models in scope of single view component. The only exception from that rule is when you need to manipulate current view model in it&rsquo;s parent context, but even in that case you shouldn&rsquo;t access higher than direct parrent of current VM. If you do, that usually means, something is wrong.</p>
-
-<p>Avoid referencing between view models, especially when they share the same hierarchy level. View models should be an independent units of work. They don&rsquo;t need to know details of other view models to perform requested operations. Use Knockout contexts or dedicated objects as an inter-communication layer and share them between view models, when some message passing is needed.</p>
-
-<p>Don&rsquo;t create large nested objects inside view models. Inject them through constructors instead. Knockout view models lifetime is much longer than AngularJS controllers, but it&rsquo;s still a better solution to share large objects and &ndash; if they come with a lot of logic &ndash; to decouple them from view model. This also includes objects used to communicate with external world.</p>
-
-<h2>Application root</h2>
-
-<p>Since Knockout allows you to use only one View Model as root for whole page, my advice is to create dedicated view model, which won&rsquo;t be used with any visible parts of the page itself. It&rsquo;s role is to serve as a container for actual view models used to display data on the page and to provide universal features to be used by everyone. For me this option remains true even for small ingerention of Knockout logic into the page, because in the world of changing requirements formally small pages may grow rapidly in very short amount of time.</p>
-
-<p>When comes to integration of partial view models and application root, usually it&rsquo;s sufficient to create <strong>all</strong> partial VMs on root level. View models can be nested in large tree structures, but don&rsquo;t overuse this feature. Try to keep your view models dependency scopes as flat as you can. Application root is a good point to handle inner components creation and lifecycle. That also means, it should be able to access and provide all objects &ndash; gateways, data sources, factories, event buses, AJAX handlers etc. &ndash; directly to view models.</p>
-
-<h2>Appendix: Events and Pub/Sub pattern</h2>
-
-<p>There are few more things I wish to present in this post. One of them is a Publish/Subscribe pattern and event processing. It isn&rsquo;t bound to any specific layer since all of them can get advantage of using it. I also found it the best way of dealing with communication between various Knockout view models.</p>
-
-<p>Below I will show one of the simplest implementation used to handling custom events. If you want to be able to use more advanced techniques, you probably want to look for some dedicated libraries such as <a href="https://github.com/Reactive-Extensions/RxJS">RxJS</a>.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">EventStream</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span> <span class="o">=</span> <span class="p">{};</span>    <span class="c1">// this could be made private</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// subscribe to channel</span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$on</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">callback</span><span class="p">){</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="k">typeof</span> <span class="nx">callback</span> <span class="o">===</span> <span class="s1">&#39;function&#39;</span><span class="p">){</span>
-</span><span class='line'>          <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
-</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">channel</span><span class="p">)</span>
-</span><span class='line'>              <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">]</span> <span class="o">=</span> <span class="p">[];</span>
-</span><span class='line'>          <span class="nx">channel</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">callback</span><span class="p">);</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// unsubscribe from channel</span>
-</span><span class='line'>  <span class="c1">// this is tricky since anonymous functions, once subscribed cannot be removed</span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$off</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">callback</span><span class="p">){</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">],</span> <span class="nx">i</span><span class="p">;</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">channel</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">){</span>
-</span><span class='line'>          <span class="nx">channel</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-</span><span class='line'>          <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">channel</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
-</span><span class='line'>              <span class="k">delete</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1">// publish an event</span>
-</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">$trigger</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">channelName</span><span class="p">,</span> <span class="nx">event</span><span class="p">){</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">channel</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_channels</span><span class="p">[</span><span class="nx">channelName</span><span class="p">];</span>
-</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="nx">channel</span><span class="p">)</span>
-</span><span class='line'>          <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">){</span>
-</span><span class='line'>              <span class="k">try</span> <span class="p">{</span>
-</span><span class='line'>                  <span class="nx">channel</span><span class="p">[</span><span class="nx">i</span><span class="p">](</span><span class="nx">event</span><span class="p">);</span>
-</span><span class='line'>              <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">){</span>
-</span><span class='line'>                  <span class="c1">// an error occurred in subscriber function</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>          <span class="p">}</span>
-</span><span class='line'>  <span class="p">};</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Since we have whole event pub/sub feature in one separate prototype, we can now implement it in any object we wish, either through composition or as a mixin. Additionaly we can use globaly shared instances of <code>EventStream</code> in similar fashion we use an event buses. For Knockout applications there is also an alternative in form of <a href="https://github.com/rniemeyer/knockout-postbox">knockout-postbox</a>.</p>
-
-<h1>Final thoughs</h1>
-
-<p>I want to end with a few short advices:</p>
-
-<ul>
-<li>All of my observations are based on observations of using Knockout and MVVM in non-SPA paradigm. As I&rsquo;ve said in previous posts, I wouldn&rsquo;t recommend Knockout for creating single page applications, because there are a lot of alternative frameworks, which suits better for this purpose.</li>
-<li><a href="https://github.com/Knockout-Contrib/Knockout-Validation">Knockout-validation</a> library &ndash; I&rsquo;ve found it pain in the ass almost everytime, I&rsquo;ve needed to create anything more complex than basic, flat structure validation. There are a lots of problems when it comes to nested objects validation, nullable objects and dealing with validation results caches &ndash; which btw. cannot be accessed via library API. So if you are determined to use it, consider yourself warned.</li>
-<li>Use unit tests any time you can. This not only will allow you to catch more potential errors (which are more likely to exist in language such as JavaScript) but are also a nice way to check if your code blocks are properly separated. And better prepare yourself, because client side logic tests are much more difficult to write than their backend cousins.</li>
-<li>Create a common prefix for properties used as helper fields and methods, but not directly responsible for view model page manipulations. I&rsquo;ve already shown examples such as <code>$id</code> field and event stream methods with <code>$</code> prefix. I&rsquo;ve found them quite usefull, but I don&rsquo;t want refer to them from view <code>data-bind</code> attributes or server side. They should remain transparent for both of these.</li>
-<li>I didn&rsquo;t mention about any kind of Service layer, used for performin business logic. The reason is simple &ndash; unless you&rsquo;re creating SPA with offline editing capabilities, due to reliability and security reasons you probably never wan&rsquo;t to inject a business logic into frontend.</li>
-</ul>
-
-
-<p>And last but not least. There are no universal rules. Form your own point of view, appropriate to your problems.</p>
 
 		
 		

@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Aug 16th, 2011 javascript, programowanie Comments Prosta Scena Do Gry Przy Użyciu Html5 I CoffeeScriptu W dzisiejszym poście postaram się streścić ( &hellip;">
+	<meta name="description" content="Sep 19th, 2011 .net, wydajność Comments Programowanie GPGPU - Microsoft.Accelerator V2 Ostatnimi czasy postanowiłem zapoznać się z technikami &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -118,6 +118,68 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-19T18:09:00+02:00" data-updated="true" itemprop="datePublished">Sep 19<span>th</span>, 2011</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/wydajnosc/'>wydajność</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2011/09/19/programowanie-gpgpu-microsoftaccelerato_12/" itemprop="url">Programowanie GPGPU - Microsoft.Accelerator V2</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Ostatnimi czasy postanowiłem zapoznać się z technikami programowania równoległego pod karty graficzne. Zacząłem poszukiwać rozwiązań, które bez konieczności poświęcania długich godzin na poznawanie nowych technologii pozwoliłyby mi wykorzystać potencjał drzemiący w GPU.</p>
+
+<p>Niestety problemy pojawiły się już na starcie, kiedy okazało się, że moja karta graficzna nosi na sobie ślady epoki poprzedzającej pojawienie się CUDA. Ograniczony do standardowych operacji oferowanych przez OpenGL i DirectX zacząłem szukać bibliotek-nakładek na te środowiska. Wśród opublikowanych rozwiązań natknąłem się na 2 interesujące biblioteki:
+&ndash; <a href="http://sourceforge.net/projects/cloo/">Cloo</a> &ndash; jest to.NET-owa nakładka na popularną w środowisku GPGPU bibliotekę OpenCL, umożliwiającą nam programowanie równoległe poprzez OpenGL.
+&ndash; <a href="http://research.microsoft.com/en-us/projects/accelerator/">Microsoft.Accelerator v. 2</a> &ndash; ta biblioteka z kolei jest odpowiedzią Microsoftu na napływające trendy. Nie jest to jeszcze gotowy produkt, lecz wciąż jest rozwijany i może rokować spore nadzieje.</p>
+
+<p>W tym poście postaram się opisać bibliotekę Microsoftu, pokrótce ją scharakteryzować (dla tych, których zanudzi czytanie dokumentacji na oficjalnej stronie) oraz jak przygotować projekt, aby móc wykorzystać jej potencjał.</p>
+
+<h2>Czym jest Accelerator?</h2>
+
+<p>Accelerator stanowi bibliotekę nałożoną na środowisko DirectX9, pozwalające nam za jego pomocą korzystać z karty graficznej do obliczeń nie związanych z grafiką (od wersji 2 biblioteki możliwe jest również przełączenie się na tradycyjny multiprocessing oferowany przez wielordzeniowe CPU).</p>
+
+<p>W jaki sposób jest to wykonywane? Otóż wyobraźmy sobie, że zasadniczo programując Pixel i Vertex Shadery tworzymy tak naprawdę kod programu, którego celem jest operowanie na przekazanym mu zbiorze zmiennych. Microsoft.Accelerator wykorzystuje ten sposób myślenia o Pixel Shaderach definiując specjalne klasy tablic, które w trakcie przetwarzania są zamieniane przez środowisko do postaci tekstury, która jest poddawana obróbce. Operacje które możemy wykonywać na tych tablicach, są również zdefiniowane (właściwe metody przechowywane są w klasie statycznej <strong>ParallelArrays</strong>), aby następnie składane do postaci <em>pojedynczego</em> pixel shadera (w tym celu Accelerator stosuje znany z języków funkcyjnych mechanizm leniwej ewaluacji wyrażeń, w którym rezultat działania metod jest produkowany dopiero kiedy należy go zwrócić do dalszego przetwarzania, nie zaś kiedy wywołujemy daną metodę).</p>
+
+<p>W odróżnieniu od Cloo udostępniony nam mechanizm gotowych operacji pozwala na skupienie się na osiągnięciu pożądanych wyników, bez ryzyka ugrzęźnięcia w źle napisanym kodzie.</p>
+
+<h2>Jak zainstalować Accelerator w naszym projekcie?</h2>
+
+<ol>
+<li>Ściągamy pakiet ze strony podanej pod <a href="http://research.microsoft.com/en-us/downloads/e45cf1d7-fd3d-4e03-a219-c0f3fca9881e/">tym linkiem</a>, a następnie instalujemy go. Ścieżka instalacji to <code>C:\Program Files (x86)\Microsoft\Accelerator v2 </code>dla systemów 64-bitowych zainstalowanych na partycji C. W stworzonym folderze otrzymamy dokumentację oraz kilka przykładowych programów.</li>
+<li>Jeżeli chcemy dołączyć bibliotekę do naszego projektu, to w otworzonym projekcie w Visual Studio dodajemy referencję do pliku <em>Microsoft.Accelerator.dll</em>, który możemy znaleźć w podfolderze <code>Accelerator v2/bin/Managed</code> .</li>
+<li>Dodatkowo w folderze <em>bin</em> mogliśmy się natknąć na 2 foldery: x64 i x86. Należy dodać plik <em>Accelerator.dll</em> z odpowiedniego folderu (zależnie od naszego sprzętu) do folderu, w którym znajduje się nasza aplikacja. <strong>Uwaga</strong>: jeżeli nie dodamy tego pliku lub dodamy nie właściwą wersję, będziemy w stanie skompilować program, ale podczas jego działania wyrzucony zostanie stosowny wyjątek (<strong>BadImageFormatException</strong> w przypadku skopiowania biblioteki z niewłaściwego folderu lub <strong>DllNotFoundException</strong> w przypadku nie wykrycia biblioteki, którą należało skopiować).</li>
+</ol>
+
+
+<p>Po tym wszystkim możemy już swobodnie pracować. Polecam zapoznać się z przykładami dostępnymi w folderze z zainstalowanym Acceleratorem ;) .</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1320,160 +1382,6 @@
 <p>Powyższy przykład spowoduje zamianę seri znacznika <strong>kryteria</strong> z dziećmi <strong>kryterium</strong> na serię znaczników o nazwie <strong>kryt</strong>_nr gdzie nr będzie aktualnym indeksem danego <strong>kryterium</strong> na liście dzieci węzła <strong>kryteria</strong>. Dodatkowo odejmując 1 spowodujemy, że odliczanie numeru nr zacznie się od 0.</p>
 
 <p>To wszystko na dzisiaj. Mam nadzieję, że te informacje trochę pomogą i skrócą wasz czas nauki narzędzia, jakim jest <strong><strong>XSLT</strong></strong>.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-02-25T11:35:00+01:00" data-updated="true" itemprop="datePublished">Feb 25<span>th</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/algorytmy/'>algorytmy</a>, <a class='category' href='/blog/categories/silverlight/'>silverlight</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/02/25/silverlight-detekcja-krawedzi/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/02/25/silverlight-detekcja-krawedzi/" itemprop="url">Silverlight - Detekcja Krawędzi</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>W dzisiejszym poście postaram się opisać, w jaki sposób zaimplementować filtr obrazu służący do wykrywania krawędzi. W tym celu posłużymy się implementacją filtru Sobela (jest to jeden z najpopularniejszych filtrów służących temu celowi). Ale po kolei. Najpierw ustalmy plan, według którego będziemy przygotowywać obraz do obróbki:</p>
-
-<ul>
-<li>Po pierwsze potrzebna nam będzie klasa umożliwiającą odwołanie się do pojedyńczych pixeli obrazu. W Windows Forms i WPF nie ma z tym większego problemu (możliwe są operacje wskaźnikowe), o tyle tutaj konieczne jest wykorzystanie innej metody. W tym celu posłużymy się klasą <strong>WriteableBitmap</strong>, która jest dostępna od 3 edycji Silverlighta.</li>
-<li>Po drugie, nasz obraz wstępnie przetworzymy na inny widoczny w skali szarości. Uprości do budowę filtru przy możliwych do zaakceptowania stratach informacji.</li>
-</ul>
-
-
-<p>Na wstępie warto wspomieć co nieco o samej klasie <strong>WriteableBitmap</strong>. Wybrałem ją, ponieważ udostępnia ona pełną kolekcję pixeli składających się na obraz w postaci prostej właściwości Pixels, zwracającej tablicę typu int. 4 bajty składające się na pixel to kolejno: BGRA. Dzięki temu możemy szybko iterować po kolejnych pixelach obrazu. Jest to wygodne rozwiązanie.</p>
-
-<p>Podczas pisania filtru Sobela przyjąłem, że każdorazowo przekazywana do niego bitmapa będzie zawierała obraz w skali szarości. Pokażę tutaj krótki przykład pętli zamieniającej zakres kolorów:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelHeight</span> <span class="p">*</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">;</span> <span class="p">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>   <span class="kt">int</span> <span class="n">pix</span> <span class="p">=</span> <span class="n">bmp</span><span class="p">.</span><span class="n">Pixels</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">BitConverter</span><span class="p">.</span><span class="n">GetBytes</span><span class="p">(</span><span class="n">pix</span><span class="p">);</span>
-</span><span class='line'>   <span class="kt">byte</span> <span class="n">p</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)(</span><span class="n">r</span> <span class="p">*</span> <span class="n">t</span><span class="p">[</span><span class="m">2</span><span class="p">]</span> <span class="p">+</span> <span class="n">g</span> <span class="p">*</span> <span class="n">t</span><span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="p">+</span> <span class="n">b</span> <span class="p">*</span> <span class="n">t</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
-</span><span class='line'>   <span class="kt">int</span> <span class="n">pixel</span> <span class="p">=</span> <span class="n">BitConverter</span><span class="p">.</span><span class="n">ToInt32</span><span class="p">(</span><span class="k">new</span> <span class="kt">byte</span><span class="p">[]</span> <span class="p">{</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="m">255</span> <span class="p">},</span> <span class="m">0</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="n">bmp</span><span class="p">.</span><span class="n">Pixels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">pixel</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Zmienne <code>r</code>, <code>g</code> i <code>b</code> prezentują odpowienio wagi, których używamy w każdej składowej przy obliczaniu odcienia szarości. Ich wartości mogą być różne, dlatego też ich tu nie podaję. Chętni sami zapoznają się z tym tematem.</p>
-
-<p>Teraz pola na implementację samego filtru wykrywania krawędzi. Z dokładniejszym opisem jego działania można zapoznać się <a href="http://en.wikipedia.org/wiki/Sobel_operator">tutaj</a>. Ważną częścią filtru są dwie macierze, które będziemy nakładać na każdy pixel oraz jego otoczenie. Oto jak wygląda ich implementacja:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span><span class="p">[,]</span> <span class="n">_xk</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[,]</span>
-</span><span class='line'>                                               <span class="p">{</span>   
-</span><span class='line'>              <span class="p">{</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">1</span> <span class="p">},</span>
-</span><span class='line'>              <span class="p">{</span> <span class="p">-</span><span class="m">2</span><span class="p">,</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">2</span> <span class="p">},</span>
-</span><span class='line'>              <span class="p">{</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">1</span> <span class="p">}</span>
-</span><span class='line'>                                               <span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span><span class="p">[,]</span> <span class="n">_yk</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[,]</span>
-</span><span class='line'>                                               <span class="p">{</span>   
-</span><span class='line'>              <span class="p">{</span>  <span class="m">1</span><span class="p">,</span>  <span class="m">2</span><span class="p">,</span>  <span class="m">1</span> <span class="p">},</span>
-</span><span class='line'>              <span class="p">{</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">0</span><span class="p">,</span>  <span class="m">0</span> <span class="p">},</span>
-</span><span class='line'>              <span class="p">{</span> <span class="p">-</span><span class="m">1</span><span class="p">,</span> <span class="p">-</span><span class="m">2</span><span class="p">,</span> <span class="p">-</span><span class="m">1</span> <span class="p">}</span>
-</span><span class='line'>                                               <span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Mając tak zdefiniowane struktury, wystarczy już tylko stworzyć pętle iterujące po kolumnach i wierszach pixeli. Kod realizujący to zadanie wygląda następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">WriteableBitmap</span> <span class="n">output</span> <span class="p">=</span> <span class="k">new</span> <span class="n">WriteableBitmap</span><span class="p">(</span>
-</span><span class='line'>   <span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">);</span>
-</span><span class='line'><span class="kt">byte</span> <span class="n">g</span><span class="p">;</span>
-</span><span class='line'><span class="kt">double</span> <span class="n">gx</span><span class="p">,</span> <span class="n">gy</span><span class="p">,</span> <span class="n">max</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
-</span><span class='line'><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">-</span><span class="m">1</span><span class="p">;</span> <span class="n">i</span><span class="p">++){</span>
-</span><span class='line'>   <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">j</span> <span class="p">&lt;</span> <span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">-</span><span class="m">1</span><span class="p">;</span> <span class="n">j</span><span class="p">++){</span>
-</span><span class='line'>        <span class="n">gx</span> <span class="p">=</span> <span class="n">gy</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
-</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span> <span class="n">k</span> <span class="p">&lt;</span> <span class="m">2</span><span class="p">;</span> <span class="n">k</span><span class="p">++){</span>
-</span><span class='line'>              <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">l</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span> <span class="n">l</span> <span class="p">&lt;</span> <span class="m">2</span><span class="p">;</span> <span class="n">l</span><span class="p">++){</span>
-</span><span class='line'>                   <span class="kt">double</span> <span class="n">pix</span> <span class="p">=</span>
-</span><span class='line'>                        <span class="n">BitConverter</span><span class="p">.</span><span class="n">GetBytes</span><span class="p">(</span>
-</span><span class='line'>                        <span class="n">bmp</span><span class="p">.</span><span class="n">Pixels</span><span class="p">[(</span><span class="n">i</span><span class="p">+</span><span class="n">k</span><span class="p">)*</span><span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span> <span class="p">+</span> <span class="n">j</span> <span class="p">+</span> <span class="n">l</span><span class="p">])[</span><span class="m">0</span><span class="p">];</span>
-</span><span class='line'>                   <span class="n">gx</span> <span class="p">+=</span> <span class="n">pix</span><span class="p">*</span><span class="n">_xk</span><span class="p">[</span><span class="n">k</span><span class="p">+</span><span class="m">1</span><span class="p">,</span> <span class="n">l</span><span class="p">+</span><span class="m">1</span><span class="p">];</span>
-</span><span class='line'>                   <span class="n">gy</span> <span class="p">+=</span> <span class="n">pix</span><span class="p">*</span><span class="n">_yk</span><span class="p">[</span><span class="n">k</span><span class="p">+</span><span class="m">1</span><span class="p">,</span> <span class="n">l</span><span class="p">+</span><span class="m">1</span><span class="p">];</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>        <span class="n">g</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span><span class="n">Math</span><span class="p">.</span><span class="n">Min</span><span class="p">(</span><span class="n">Math</span><span class="p">.</span><span class="n">Sqrt</span><span class="p">(</span><span class="n">gx</span> <span class="p">*</span> <span class="n">gx</span> <span class="p">+</span> <span class="n">gy</span> <span class="p">*</span> <span class="n">gy</span><span class="p">),</span> <span class="m">255</span><span class="p">);</span>
-</span><span class='line'>        <span class="n">output</span><span class="p">.</span><span class="n">Pixels</span><span class="p">[</span><span class="n">bmp</span><span class="p">.</span><span class="n">PixelWidth</span> <span class="p">*</span> <span class="n">i</span> <span class="p">+</span> <span class="n">j</span><span class="p">]</span> <span class="p">=</span>
-</span><span class='line'>              <span class="n">BitConverter</span><span class="p">.</span><span class="n">ToInt32</span><span class="p">(</span><span class="k">new</span> <span class="kt">byte</span><span class="p">[]</span> <span class="p">{</span><span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="m">255</span><span class="p">},</span> <span class="m">0</span><span class="p">);</span>
-</span><span class='line'>   <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Jak widać nie iterujemy po wszystkich pixelach, lecz pozostawiamy &ldquo;obramowanie&rdquo; grubości 1 pixela wzdłuż wszystkich boków obrazu. Jest to konieczne, gdyż w przeciwnym razie nie moglibyśmy przyłożyć macierzy X i Y do pixeli brzegowych. Z tego samego powodu potrzebne jest rozróżnienie wierszy i kolumn (mimo że właściwość Pixels udostępnia nam tablicę 1-wymiarową).</p>
-
-<p>Dodatkowe słowo wyjaśnienia &ndash; w tym przykładzie posługuję się <strong>BitConverter</strong>em, aby odczytywać wartości konkretnych składowych pixela oraz składać je w pixel. Jest to rozwiązanie czytelne, dlatego warto je tu przedstawić.</p>
-
-<p>PS: nie badałem szybkości działania tego rozwiązania na dużych obrazach. W moim projekcie posługuję się obrazami uzyskiwanymi z kamerki internetowej 1,2Mpx. W takich warunkach szybkość działania jest absolutnie wystarczająca.</p>
 
 		
 		

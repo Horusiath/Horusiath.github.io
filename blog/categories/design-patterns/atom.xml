@@ -4,7 +4,7 @@
   <title><![CDATA[Category: design patterns | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/design-patterns/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2015-02-23T00:26:04+01:00</updated>
+  <updated>2015-03-08T16:34:54+01:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,92 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Design patterns: Circuit Breaker]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2015/03/08/circuit-breaker/"/>
+    <updated>2015-03-08T16:08:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2015/03/08/circuit-breaker</id>
+    <content type="html"><![CDATA[<p>Today I want to introduce a <code>CircuitBreaker</code> &ndash; one of the reactive design patterns, especially usefull in areas such as web services interop. To get you better understand on it&rsquo;s concepts, lets consider following scenario:</p>
+
+<blockquote><p>You&rsquo;ve built a successful web service, making use of another external services in order to handle user requests. During the big churn of end users requesting your site, one of them became overloaded, starting to respond with increasing delays. Ultimately while trying to satisfy all incomming requests, it has exhausted all resources and gone down, entailing your service with it.</p></blockquote>
+
+<p>I think it&rsquo;s a well-known example and a good one to show a nature of the problem. Because of RPC nature, it&rsquo;s characteristics differ from in-proc calls:</p>
+
+<ul>
+<li>They operate on separate resources pool and might be used by more than one remote caller at the time.</li>
+<li>Their internal state, available resources and performance may be hard to predict. In most cases, they neither can be controlled nor monitored by the caller.</li>
+<li>Their life cycle is not bound to your local host. They may be reset/shut down while your service is still running and serving requests.</li>
+</ul>
+
+
+<p>What reactive applications have to do with that? One of the key principles governing the <a href="http://www.reactivemanifesto.org/#responsive">Reactive Manifesto</a> stands for quick responsiveness of the system, no matter if this response is possitive or not. Nowadays users are impatient. When they take action, they want a response, and they want it now.</p>
+
+<p>This is when Circuit Breakers kicks in. They main role is to act as a decorator around your code to ensure, that you can quickly respond on any reliability problems:</p>
+
+<ul>
+<li>First, Circuit Breaker defines a safe time delay given to the action to respond. Service which won&rsquo;t fit specified timeout is considered to be unresponsive or working incorrectly. It&rsquo;s better to inform your user about possible problems after a reasonable delay than to show him/her a smoke screen and spinner for the next 2 minutes.</li>
+<li>Secondly it&rsquo;s able to cut out the service in any sign of problems and give it a time to self repair. If you already know, that external service is not working properly, what is the point of calling it any way?</li>
+</ul>
+
+
+<p>Most of the circuit breaker are realized as a state machines. Picture below presents a simple one:</p>
+
+<p><img src="http://i57.tinypic.com/wrj3ft.png" width=600 style="display: block; margin-left: auto; margin-right: auto" /></p>
+
+<p>where:</p>
+
+<ul>
+<li><strong>Closed</strong> &ndash; this is initial state. While closed, Circuit Breaker will simply pass any request to underlying function. However it also checks if response will met a specified timeout criteria or ended with failure i.e. due to external service overload or crash. Any of these will trigger Circuit Breaker to come into open state.</li>
+<li><strong>Open</strong> &ndash; while in this state, any request send through Circuit Breaker will follow <em>fail fast</em> semantic. Instead of forwarding request to the underlying function, CB will immediately throw an exception informing that it&rsquo;s closed. Open state is not permanent &ndash; CB should automatically switch to half-open state after a specified time delay.</li>
+<li><strong>HalfOpen</strong> &ndash; this is a kind of the probing state, signing that CB is checking if undrelying function is responsive again. While in it, CB will pass first request call as if it was in <em>Closed</em> state, to eventually get the response. All subsequent calls will fail fast just like in <em>Open</em> state. If request failed again or response didn&rsquo;t came in specified timeout, CB switches back to <em>Open</em> state. If response was successful, CB becomes <em>Closed</em>.</li>
+</ul>
+
+
+<p>I&rsquo;ve created a simplistic implementation of the CircruitBreaker pattern in C# (<a href="https://gist.github.com/Horusiath/a3236c61ed2da8b17a25">source code</a>). It allows to perform multiple asynchronous calls through one CB instance in non-blocking, thread-safe manner. It has also attached a complete test suite describing it&rsquo;s behavior. Feel free to use it and to modify as you wish.</p>
+
+<p>Example usage:</p>
+
+<p>```csharp
+// this service could be a singleton, and could be called concurrently
+public class CurrencyExchangeProxy : ICurrencyExchangeProxy
+{</p>
+
+<pre><code>private readonly CircuitBreaker&lt;ExchangeCurrencies, ExchangeRate&gt; exchangeRates;
+
+public CurrencyExchangeProxy(Configuration config)
+{
+    exchangeRates = new CircuitBreaker&lt;ExchangeCurrencies, ExchangeRate&gt;(
+        async req =&gt; HttpGetAsync&lt;ExchangeRate&gt;(config.ExchangeServiceUrl, req),    // async function, CB should take care of
+        config.GetServiceTimeout(),         // time given to function to finish
+        config.OpenTimeout());              // time given to function dependent component to restore in case of failure
+}
+
+public async Task&lt;ExchangeRate&gt; GetExchangeRate(Currency from, Currency to)
+{
+    return await exchangeRates.Call(new ExchangeCurrencies(from, to));
+}
+</code></pre>
+
+<p>}</p>
+
+<p>public class InvoiceController : Controller
+{</p>
+
+<pre><code>private readonly ICurrencyExchangeProxy currencyExchange;
+
+[HandleError(ExceptionType=typeof(CircuitBreakerOpenException), View="UnresponsiveExternalService")]
+public async Task&lt;ActionView&gt; DisplayInvoice(int id) 
+{
+    ...
+    var exchangeRate = await currencyExchange.GetExchangeRate(invoice.Balance.Currency, localization.Currency);
+    ... 
+}
+</code></pre>
+
+<p>```</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[[C#] A different look at service design]]></title>
