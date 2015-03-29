@@ -4,7 +4,7 @@
   <title><![CDATA[Category: akka.net | Simple Solutions]]></title>
   <link href="http://bartoszsypytkowski.com/blog/categories/akka-dot-net/atom.xml" rel="self"/>
   <link href="http://bartoszsypytkowski.com/"/>
-  <updated>2015-03-18T19:17:09+01:00</updated>
+  <updated>2015-03-29T10:28:28+02:00</updated>
   <id>http://bartoszsypytkowski.com/</id>
   <author>
     <name><![CDATA[Bartosz Sypytkowski]]></name>
@@ -12,6 +12,400 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Create your own Akka.NET persistence plugin]]></title>
+    <link href="http://bartoszsypytkowski.com/blog/2015/03/28/custom-akka-persistence-plugin/"/>
+    <updated>2015-03-28T19:18:00+01:00</updated>
+    <id>http://bartoszsypytkowski.com/blog/2015/03/28/custom-akka-persistence-plugin</id>
+    <content type="html"><![CDATA[<p>Subject of this post is one of the Akka.NET plugins, Akka.Persistence. It&rsquo;s major task is to give your actors an ability to store their internal state and recover it from the persistent storage after actor is created or underlying actor system crashes. While the rules driving the whole persistence mechanism deserves a separate article, for purposes of this post I&rsquo;ll cover only topic of event journals and snapshot stores.</p>
+
+<h3>Introduction</h3>
+
+<p>If you&rsquo;re already familiar with the idea of Eventsourcing, you probably know everything what&rsquo;s needed by now. If not, here is a simplified model &ndash; statefull actors don&rsquo;t store their state directly, but in form of the events. Event is a single <strong>immutable</strong> fact informing about a change made in time over actor&rsquo;s state. Later, when any form of the recovery is needed, actor&rsquo;s state is recreated by sending to it a series of persisted events, from which it can rebuild itself. Storage responsible for persisting those events is called <strong>Event Journal</strong> . In Akka.Persistence by default it works only in memory which does not make it a truly persistent one.</p>
+
+<p>Since a possible stream of events to be replayed on actor may require a long time to full recovery, it&rsquo;s internal state may be serialized at any point of time and stored separately. In this case by default actor will first try to get the latest intermediate state (a snapshot) and then recover only from those events, which have been stored from that point in time onward. Store used to persist those snapshots is called a <strong>Snapshot Store</strong> and in Akka.NET by default it uses a local file system as a persistence layer.</p>
+
+<p>Akka.Persistence plugin is designed in modular fashion and allows you to create your own plugins and integrate them with any underlying persistence provider.</p>
+
+<h3>Journal</h3>
+
+<p>Just like most of the other entities in Akka, journals and snapshot stores are actors. To create your own journal, you could derive from either <code>AsyncWriteJournal</code> or <code>SyncWriteJournal</code>. Difference between these two is that first one returns a Task continuation from all of it&rsquo;s operations (reads, writes and deletions &ndash; as said earlier journals don&rsquo;t perform updates), while the second only from reads, expecting writes and deletions to be completed in synchronous manner. For this example I&rsquo;m going to use sync journal implementation.</p>
+
+<p>Lets start from the following state of our class:
+```csharp
+public class MyJournal : SyncWriteJournal
+{</p>
+
+<pre><code>private static readonly object Ack = new object();
+    private readonly ConcurrentDictionary&lt;string, ISet&lt;IPersistentRepresentation&gt;&gt; _eventStreams = 
+        new ConcurrentDictionary&lt;string, ISet&lt;IPersistentRepresentation&gt;&gt;();
+
+Task ReplayMessagesAsync(string pid, long from, long to, long max, Action&lt;IPersistentRepresentation&gt; replay) ...
+Task&lt;long&gt; ReadHighestSequenceNrAsync(string pid, long from) ...
+void WriteMessages(IEnumerable&lt;IPersistentRepresentation&gt; messages) ...
+void DeleteMessagesTo(string pid, long to, bool isPermanent) ...
+</code></pre>
+
+<p>}
+<code>``
+For this example all persistent actors events are stored in memory. Journal is able to recognize, which event stream refers to specific actor thanks to **PersistenceId** - an unique identifier for each</code>PersistentActor` which may identify it&rsquo;s state across many actor incarnations. Each event inside the stream has it&rsquo;s own <strong>Sequence number</strong> &ndash; an unique number in scope of event stream. It&rsquo;s always increasing monotonically for every separate persistent actor.</p>
+
+<p>This is how <code>WriteMessages</code> method may look like:
+```csharp
+protected override void WriteMessages(IEnumerable<IPersistentRepresentation> messages)
+{</p>
+
+<pre><code>foreach (var message in messages)
+{
+    var list = _eventStreams.GetOrAdd(message.PersistenceId,
+        new SortedSet&lt;IPersistentRepresentation&gt;(PersistentComparer.Instance));
+    list.Add(message);
+}
+</code></pre>
+
+<p>}
+<code>``
+This is a straightforward operation of finding an event stream for each message persistence id (or creating a new one if it was not found) and appending a message to it. </code>PersistentComparer<code>is simply a</code>IComparer<code>used to order messages by their sequence number.</code>IPersistentRepresentation` wraps user-defined event and contain all data necessary for the persistence plugin to perform it&rsquo;s magic.</p>
+
+<p>To be able to replay stored messages, now we must define a <code>ReplayMessagesAsync</code> logic:
+```csharp
+public override Task ReplayMessagesAsync(string pid, long from, long to,</p>
+
+<pre><code>long max, Action&lt;IPersistentRepresentation&gt; replay)
+</code></pre>
+
+<p>{</p>
+
+<pre><code>var dispatcher = Context.System.Dispatchers.DefaultGlobalDispatcher;
+var promise = new TaskCompletionSource&lt;object&gt;();
+dispatcher.Schedule(() =&gt;
+{
+    try
+    {
+        Replay(pid, from, to, max, replay);
+        promise.SetResult(Ack);
+    }
+    catch (Exception e)
+    {
+        promise.SetException(e);
+    }        
+});
+
+return promise.Task;
+</code></pre>
+
+<p>}
+<code>``
+Because this method is already prepared to work in asynchronous manner - which is the most probable solution for third party providers integration nowadays - here we delegate this work through our system's dispatcher. Because API of the underlying dispatcher may work in various ways (Akka is not bound to TPL), it's</code>Schedule<code>method doesn't expose any task to be returned. Here I've introduced a little trick using</code>TaskCompletionSource` to create similar behavior.</p>
+
+<p>The <code>Replay</code> method itself is pretty straightforward:
+```csharp
+private void Replay(string pid, long from, long to,</p>
+
+<pre><code>long max, Action&lt;IPersistentRepresentation&gt; replay)
+</code></pre>
+
+<p>{</p>
+
+<pre><code>ISet&lt;IPersistentRepresentation&gt; eventStream;
+if (_eventStreams.TryGetValue(pid, out eventStream))
+{
+    var s = eventStream as IEnumerable&lt;IPersistentRepresentation&gt;;
+
+    if (from &gt; 0) s = s.Where(p =&gt; p.SequenceNr &gt;= from);
+    if (to &lt; int.MaxValue) s = s.Where(p =&gt; p.SequenceNr &lt;= to);
+    if (max &lt; eventStream.Count) s = s.Take((int)max);
+
+    foreach (var persistent in s)
+    {
+        replay(persistent);
+    }
+}
+</code></pre>
+
+<p>}
+```
+What&rsquo;s worth to notice here is that, from/to <strong>sequence number range provided is expected to be inclusive</strong> from both sides.</p>
+
+<p>Next in line is <code>ReadHighestSequenceNrAsync</code> &ndash; it&rsquo;s used to receive the highest sequence number for current event stream associated with a particular persistent actor. While in your solution you may find appropriate to use some async API or dispatcher task delegation described above, I&rsquo;ve used a simple synchronous solution here:</p>
+
+<p>```csharp
+public override Task<long> ReadHighestSequenceNrAsync(string pid, long from)
+{</p>
+
+<pre><code>ISet&lt;IPersistentRepresentation&gt; eventStream;
+if (_eventStreams.TryGetValue(pid, out eventStream))
+{
+    var last = eventStream.LastOrDefault();
+    var seqNr = last == null ? 0L : last.SequenceNr;
+    return Task.FromResult(seqNr);
+}
+
+return Task.FromResult(0L);
+</code></pre>
+
+<p>}
+```
+The last method remaining is message deletion. While this is not a usual way of working i.e. in event sourcing model (it introduces a data loss), it&rsquo;s still a viable option.</p>
+
+<p>Akka.Persistance recognizes two types of deletion:</p>
+
+<ul>
+<li>Logical, when messages are marked as deleted (<code>IPersistentRepresentation.IsDeleted</code> flag) but still resides in event journal.</li>
+<li>Physical, when messages are physically removed from the journal and cannot be restored.</li>
+</ul>
+
+
+<p>```csharp
+protected override void DeleteMessagesTo(string pid, long to, bool isPermanent)
+{</p>
+
+<pre><code>ISet&lt;IPersistentRepresentation&gt; eventStream;
+if (_eventStreams.TryGetValue(pid, out eventStream))
+{
+    foreach (var message in eventStream.ToArray())
+    {
+        if (message.SequenceNr &lt;= to)
+        {
+            eventStream.Remove(message);
+            if(!isPermanent)
+            {
+                // copy message with IsDeleted flag set
+                var copy = message.Update(message.SequenceNr, 
+                    message.PersistenceId, isDeleted: true, sender: message.Sender);
+                eventStream.Add(copy);
+            }
+        }
+        // messages are already stored by their sequence number order
+        else break; 
+    }
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<h4>Test specification fulfillment</h4>
+
+<p>When your custom persistence plugin is ready, it&rsquo;s good to check if it&rsquo;s behavior is a valid one from the Akka.Persistence perspective. In order to do this, you may get an existing test suite in form of a <code>Akka.Persistence.TestKit</code> available as a NuGet package &ndash; it&rsquo;s a set of tests used to check if your custom persistence plugin fulfills expected journal (and snaphot store) behavior. It used Akka.NET TestKit along with xUnit in order to run.</p>
+
+<p>The only thing needed is your own spec class inheriting from <code>JournalSpec</code> with configuration set to use your plugin as a default one. The same configuration set may be used to inject your persistence provider to real working actor system.</p>
+
+<p>```csharp
+public class MyJournalSpec : JournalSpec
+{</p>
+
+<pre><code>private static readonly Config SpecConfig = 
+    ConfigurationFactory.ParseString(@"
+    akka.persistence {
+        publish-plugin-commands = on
+        journal {
+            plugin = ""akka.persistence.journal.my""
+            my {
+                class = ""MyModule.MyJournal, MyModule""
+                plugin-dispatcher = ""akka.actor.default-dispatcher""
+            }
+        }
+    }
+");
+
+public MyJournalSpec() : base(SpecConfig) { }
+</code></pre>
+
+<p>}
+```</p>
+
+<h3>Snapshot store</h3>
+
+<p>Custom snapshot store implementation seems to be an easier task. Here I&rsquo;m going to use again the store based on in-memory snapshots, which still is not a valid persistence layer, but works good for training purposes.</p>
+
+<p>Actor state snapshots are identified by two entities: <code>SnapshotMetadata</code> and <code>Snapshot</code> itself. First covers the data necessary to correctly place snapshot instance in the lifetime of a specific persistent actor, while the second one is a wrapper over actor&rsquo;s state itself.</p>
+
+<p>For purposes of this in-memory plugin, I&rsquo;ll wrap both of them with single object defined like this:
+```csharp
+public class SnapshotBucket
+{</p>
+
+<pre><code>public readonly SnapshotMetadata Metadata;
+public readonly Snapshot Snapshot;
+
+public SnapshotBucket(SnapshotMetadata metadata, Snapshot snapshot)
+{
+    Metadata = metadata;
+    Snapshot = snapshot;
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>This way we may describe the snapshot store in the following manner:</p>
+
+<p>```csharp
+public class MySnapshotStore : SnapshotStore
+{</p>
+
+<pre><code>private static readonly object Ack = new object();
+private readonly LinkedList&lt;SnapshotMetadata&gt; _saving = new LinkedList&lt;SnapshotMetadata&gt;();
+private readonly List&lt;SnapshotBucket&gt; _buckets = new List&lt;SnapshotBucket&gt;();
+
+Task&lt;SelectedSnapshot&gt; LoadAsync(string pid, SnapshotSelectionCriteria criteria) ...
+Task SaveAsync(SnapshotMetadata metadata, object snapshot) ...
+void Saved(SnapshotMetadata metadata) ...
+void Delete(SnapshotMetadata metadata) ...
+void Delete(string pid, SnapshotSelectionCriteria criteria) ...
+</code></pre>
+
+<p>}
+```</p>
+
+<p>To begin with, lets abstract dispatcher behavior described before. Remember, this is only a trick &ndash; nothing stands on your way to simply use <code>Task.Run</code> or delegating work to child actors. In real life scenario you&rsquo;d probably use built in async behavior of underlying provider.</p>
+
+<p>```csharp
+private Task<T> Dispatch<T>(Func<T> fn)
+{</p>
+
+<pre><code>var dispatcher = Context.System.Dispatchers.DefaultGlobalDispatcher;
+var promise = new TaskCompletionSource&lt;T&gt;();
+dispatcher.Schedule(() =&gt;
+{
+    try
+    {
+        var result = fn();
+        promise.SetResult(result);
+    }
+    catch (Exception e)
+    {
+        promise.SetException(e);
+    }
+});
+return promise.Task;
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Next, lets take a saving operation. In case of snapshot stores it&rsquo;s divided into two separate methods:</p>
+
+<ul>
+<li><strong>SaveAsync</strong> asynchronous operation of saving the snapshot, returning the Task continuation.</li>
+<li><strong>Saved</strong> called only after message has been successfully saved.</li>
+</ul>
+
+
+<p>They may be combined to i.e. introduce a log for actually saving, but not yet saved snapshots, as I&rsquo;ve presented below.
+```csharp
+protected override Task SaveAsync(SnapshotMetadata metadata, object snapshot)
+{</p>
+
+<pre><code>return Dispatch(() =&gt;
+{
+    var bucket = new SnapshotBucket(metadata, new Snapshot(snapshot));
+    _saving.AddLast(metadata);
+    _buckets.Add(bucket);
+
+    return Ack;
+});
+</code></pre>
+
+<p>}</p>
+
+<p>protected override void Saved(SnapshotMetadata metadata)
+{</p>
+
+<pre><code>_saving.Remove(metadata);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>When it comes to loading a snapshots, snapshot store is expected to return only one snapshot being the latest one from the provided range. Just like any other range in persistence plugin, this one is expected to have inclusive boundaries.</p>
+
+<p>```csharp
+protected override Task<SelectedSnapshot> LoadAsync(string pid, SnapshotSelectionCriteria criteria)
+{</p>
+
+<pre><code>return Dispatch(() =&gt;
+{
+    var limited = _buckets.Where(bucket =&gt; bucket.Metadata.PersistenceId == pid 
+    &amp;&amp; bucket.Metadata.SequenceNr &lt;= criteria.MaxSequenceNr 
+    &amp;&amp; bucket.Metadata.Timestamp &lt;= criteria.MaxTimeStamp);
+
+    var latest = limited.OrderBy(bucket =&gt; bucket.Metadata.Timestamp).Last();
+
+    return new SelectedSnapshot(latest.Metadata, latest.Snapshot.Data);
+});
+</code></pre>
+
+<p>}
+```</p>
+
+<p>The last behavior is message deletion, represented in this case by two methods &ndash; one used for single snapshot and one able to operate on specific range.</p>
+
+<p>```csharp
+protected override void Delete(SnapshotMetadata metadata)
+{</p>
+
+<pre><code>var found = _buckets.SingleOrDefault(bucket =&gt; bucket.Metadata.Equals(metadata));
+if (found != null)
+{
+    _buckets.Remove(found);
+}
+</code></pre>
+
+<p>}</p>
+
+<p>protected override void Delete(string pid, SnapshotSelectionCriteria criteria)
+{</p>
+
+<pre><code>_buckets.RemoveAll(bucket =&gt; 
+    bucket.Metadata.PersistenceId == pid
+    &amp;&amp; bucket.Metadata.SequenceNr &lt;= criteria.MaxSequenceNr
+    &amp;&amp; bucket.Metadata.Timestamp &lt;= criteria.MaxTimeStamp);
+</code></pre>
+
+<p>}
+```</p>
+
+<h4>Test specification fulfillment</h4>
+
+<p>Just like in the case of journal spec, you may verify your actor behavior simply by creating custom spec. While you may see a minimal configuration string below, nothing stands on your way to extend it with your custom settings.
+```csharp
+public class MySnapshotStoreSpec : SnapshotStoreSpec
+{</p>
+
+<pre><code>private static readonly Config SpecConfig = 
+    ConfigurationFactory.ParseString(@"
+    akka.persistence.snapshot-store {
+        plugin = ""akka.persistence.snapshot-store.my""
+        my {
+            class = ""TestPersistencePlugin.MySnapshotStore, TestPersistencePlugin""
+            plugin-dispatcher = ""akka.persistence.dispatchers.default-plugin-dispatcher""
+        }
+    }
+");
+
+public MySnapshotStoreSpec() : base(SpecConfig)
+{
+    Metadata = WriteSnapshots().ToList();
+}
+</code></pre>
+
+<p>}
+```
+Another difference from event journal spec is that fore most test cases snapshot store spec requires an existing collection of snapshots metadata to work. They are initialized in constructor in the code above.</p>
+
+<h3>Final notes</h3>
+
+<ol>
+<li>Examples, I&rsquo;ve presented, work on predefined constructs &ndash; they derive directly from <code>SnapshotStore</code> and <code>SyncWriteJournal</code>. However it&rsquo;s not necessary, as you may promote any actor type to work as snapshot store or event journal as long as they expose necessary behavior and are able to respond on required set of persistence messages.</li>
+<li>While persistence stores specs may be used to verify your implementations, remember that they don&rsquo;t ensure things such as data races etc.</li>
+<li>Remember that Akka.Persistence is still in <em>Prerelease</em> version. Therefore some breaking changes may occur in incoming versions.</li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Akka.NET remote deployment with F#]]></title>
@@ -504,12 +898,12 @@ handle
 <p>let subscriber = subscribe system &lt;| printf &ldquo;User event: %A\n&rdquo;
 let userActor = spawn system &ldquo;users&rdquo; &lt;| actorOf (userHandler >=> (publish system.EventStream) >> handleErrors)</p>
 
-<p>userActor &lt;! RegisterUser(&ldquo;<a href="&#109;&#97;&#105;&#x6c;&#116;&#x6f;&#x3a;&#106;&#x2e;&#x64;&#111;&#101;&#x40;&#x74;&#x65;&#115;&#116;&#109;&#x61;&#105;&#108;&#46;&#99;&#111;">&#x6a;&#46;&#x64;&#111;&#101;&#x40;&#x74;&#101;&#x73;&#x74;&#109;&#x61;&#x69;&#x6c;&#x2e;&#99;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)
-userActor &lt;! RegisterUser(&ldquo;<a href="&#109;&#97;&#105;&#x6c;&#x74;&#111;&#58;&#106;&#x2e;&#100;&#111;&#x65;&#64;&#116;&#101;&#115;&#x74;&#x6d;&#97;&#105;&#108;&#x2e;&#x63;&#111;">&#x6a;&#46;&#x64;&#111;&#101;&#x40;&#116;&#101;&#x73;&#116;&#x6d;&#97;&#105;&#x6c;&#46;&#x63;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)  // UserAlreadyExists error
+<p>userActor &lt;! RegisterUser(&ldquo;<a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#x3a;&#106;&#46;&#100;&#111;&#101;&#64;&#x74;&#101;&#115;&#116;&#109;&#x61;&#105;&#108;&#x2e;&#99;&#111;">&#x6a;&#46;&#x64;&#111;&#101;&#x40;&#116;&#x65;&#115;&#x74;&#x6d;&#97;&#105;&#x6c;&#46;&#99;&#x6f;</a>&rdquo;, &ldquo;pass&rdquo;)
+userActor &lt;! RegisterUser(&ldquo;<a href="&#109;&#97;&#x69;&#x6c;&#x74;&#111;&#x3a;&#x6a;&#x2e;&#100;&#x6f;&#101;&#64;&#x74;&#101;&#x73;&#x74;&#109;&#x61;&#105;&#x6c;&#46;&#99;&#111;">&#x6a;&#46;&#100;&#111;&#x65;&#x40;&#116;&#x65;&#x73;&#x74;&#x6d;&#97;&#x69;&#108;&#x2e;&#99;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)  // UserAlreadyExists error
 System.Threading.Thread.Sleep 100</p>
 
-<p>userActor &lt;! LoginUser(&ldquo;<a href="&#109;&#x61;&#105;&#108;&#x74;&#x6f;&#58;&#106;&#x2e;&#100;&#x6f;&#101;&#64;&#x74;&#x65;&#115;&#116;&#x6d;&#97;&#x69;&#108;&#46;&#99;&#111;">&#106;&#46;&#x64;&#x6f;&#x65;&#64;&#x74;&#x65;&#x73;&#116;&#109;&#x61;&#x69;&#108;&#x2e;&#99;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)
-userActor &lt;! LoginUser(&ldquo;<a href="&#109;&#x61;&#105;&#x6c;&#116;&#x6f;&#x3a;&#106;&#x2e;&#100;&#111;&#101;&#64;&#116;&#101;&#x73;&#x74;&#x6d;&#97;&#105;&#x6c;&#x2e;&#x63;&#x6f;">&#x6a;&#46;&#100;&#x6f;&#101;&#64;&#116;&#101;&#x73;&#116;&#109;&#97;&#x69;&#x6c;&#46;&#x63;&#111;</a>&rdquo;, &ldquo;fails&rdquo;)     // WrongPassword error</p>
+<p>userActor &lt;! LoginUser(&ldquo;<a href="&#x6d;&#x61;&#x69;&#108;&#x74;&#111;&#x3a;&#x6a;&#x2e;&#x64;&#111;&#x65;&#x40;&#x74;&#101;&#115;&#x74;&#x6d;&#x61;&#105;&#x6c;&#46;&#99;&#111;">&#x6a;&#46;&#100;&#111;&#101;&#64;&#116;&#x65;&#x73;&#x74;&#x6d;&#97;&#x69;&#x6c;&#46;&#99;&#111;</a>&rdquo;, &ldquo;pass&rdquo;)
+userActor &lt;! LoginUser(&ldquo;<a href="&#109;&#x61;&#105;&#x6c;&#116;&#111;&#x3a;&#x6a;&#x2e;&#x64;&#111;&#x65;&#x40;&#116;&#x65;&#115;&#116;&#x6d;&#97;&#x69;&#x6c;&#x2e;&#99;&#x6f;">&#106;&#x2e;&#100;&#x6f;&#x65;&#x40;&#116;&#x65;&#115;&#116;&#x6d;&#97;&#105;&#108;&#x2e;&#x63;&#x6f;</a>&rdquo;, &ldquo;fails&rdquo;)     // WrongPassword error</p>
 
 <p>System.Threading.Thread.Sleep 100
 system.Shutdown()
@@ -683,61 +1077,6 @@ system.Shutdown()
 
 <p>} |> Async.RunSynchronously
 ```</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[FSharp and Akka.net - the functional way]]></title>
-    <link href="http://bartoszsypytkowski.com/blog/2014/07/05/fsharp-akka-net/"/>
-    <updated>2014-07-05T21:42:00+02:00</updated>
-    <id>http://bartoszsypytkowski.com/blog/2014/07/05/fsharp-akka-net</id>
-    <content type="html"><![CDATA[<p>Actor model is one of the most influential paradigms of dealing with highly concurrent environments in present world. Simplifying, it&rsquo;s based on concept of autonomous thread-safe computation units &ndash; surprisingly called actors &ndash; with no way to directly interfere with each others work. There are no locks or semaphores &ndash; instead of accessing shared resources, they are simply passing messages around &ndash; according to the saying <em>Don&rsquo;t communicate by sharing memory; share memory by communicating</em>.</p>
-
-<p>The first most widespread usage of the actor model was the Erlang Virtual Machine in 1986. While it was for many years closed in it&rsquo;s own niche, programming model itself has been lately forwarded and adopted on the Java Virtual Machine through <a href="http://akka.io/">Akka</a> framework. Until present moment there are actually none mature equivalents on .NET platform. While Microsoft is still developing it&rsquo;s own response in form of <a href="http://research.microsoft.com/en-us/projects/orleans/">Project Orleans</a>, a bunch of developers took the initiative of porting Akka on .NET ground.</p>
-
-<p>I&rsquo;ve decided to try out Akka.NET a little. I&rsquo;ve noticed that it&rsquo;s still a far from completion or production-ready phase, but hopefully since it&rsquo;s based on already existing and mature framework, with help of OSS community missing holes could be patched soon.</p>
-
-<h2>Hello Akka</h2>
-
-<p>You can find an original first step into Akka.NET with F# API <a href="https://github.com/akkadotnet/akka.net/wiki/FSharp-API">here</a>. While I found this sample useful, I&rsquo;ve decided to investigate more about Akka.NET source code and it&rsquo;s F# API. Below you may see my example based on more functional-specific concepts:</p>
-
-<p>``` fsharp
-type ActorMsg =</p>
-
-<pre><code>| Greet of string
-| Hi
-</code></pre>
-
-<p>let system = System.create &ldquo;MySystem&rdquo; &lt;| ConfigurationFactory.Default()
-let greeter =</p>
-
-<pre><code>spawn system "Greeter" 
-&lt;| fun mailbox -&gt;
-    let rec loop() = actor {
-        let! msg = mailbox.Receive()
-        match msg with
-        | Greet name -&gt; printfn "Hello %s" name
-        | Hi         -&gt; printfn "Hi"
-        return! loop() }
-    loop()
-</code></pre>
-
-<p>greeter &lt;! Greet &ldquo;Alex&rdquo;
-greeter &lt;! Hi
-```</p>
-
-<p>Here are some explanations:</p>
-
-<ul>
-<li>We defined a discriminated union of messages <code>ActorMsg</code>, we want to respond to.</li>
-<li>The next step is to create an <code>ActorSystem</code>, analogously to C# and original Scala versions.</li>
-<li>We need to define and instantiate an <code>Actor</code>. However unlike the object approach &ndash; which required a custom actor type inheriting from one of the Akka actor classes and defining it&rsquo;s own receiving method &ndash; here we define a tail recursive function, which uses an <code>actor { ... }</code> computation expression instead of actor type declaration.</li>
-<li>We pass that function through the lambda to <code>spawn</code> method, which attaches that behavior to our system and returns an <code>ActorRef</code> (not to be confused with Actor instance), assigned to our <code>greeter</code> variable. This way we may refer to actors, and pass messages to them, even if they&rsquo;re not present on our local machine (which is also one of the Akka use cases).</li>
-<li>In the last to lines we simply send two messages to actor reference using tell operator <code>&lt;!</code>.</li>
-</ul>
-
-
-<p>As you can see, this piece of code is not directly translatable to C# or even Scala API equivalent. It&rsquo;s much more Erlangish. We don&rsquo;t have to define any classes and method overrides. Instead, we have a tail-recursive function. For me this seems more natural approach for F#, since it&rsquo;s more functional-first language, while it&rsquo;s syntax for object oriented programming is very verbose and ugly.</p>
 ]]></content>
   </entry>
   

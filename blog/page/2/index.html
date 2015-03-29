@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Feb 20th, 2014 javascript Comments More Thoughts on Knockout.js and JavaScript MVVM Today I want to share with my reflections on using Knockout.js &hellip;">
+	<meta name="description" content="Mar 24th, 2014 .net Comments Things You May Not Know About CSharp Value Types In this post I&rsquo;ll try to deal with few of the myths lying &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -116,6 +116,98 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-24T22:43:00+01:00" data-updated="true" itemprop="datePublished">Mar 24<span>th</span>, 2014</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dot-net/'>.net</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2014/03/24/things-you-may-not-know-about-csharp-value-types/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/03/24/things-you-may-not-know-about-csharp-value-types/" itemprop="url">Things You May Not Know About CSharp Value Types</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>In this post I&rsquo;ll try to deal with few of the myths lying beneath common understanding of how C# structures works in reality. Many of new .NET acolytes are thought about differences between structs and classes. For easier understanding many of those concepts are simplified and therefore doesn&rsquo;t necessary tell all truth about underlying mechanism.</p>
+
+<p>Here are some of them.</p>
+
+<h1>Structs may not be stack allocated</h1>
+
+<p>Think about following example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='csharp'><span class='line'><span class="k">struct</span> <span class="nc">MyStruct</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">int</span> <span class="n">X</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">Example1</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MyStruct</span> <span class="p">{</span> <span class="n">X</span> <span class="p">=</span> <span class="m">3</span> <span class="p">};</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">()</span> <span class="p">=&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">X</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="p">++</span><span class="n">a</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you remember, one of the well known side effects of stack-allocated values is that they&rsquo;re destroyed automatically, when we leave scope, where they were created. This remains true in .NET environment &ndash; it assures that no more but one value or pointer may be found on top of the stack when returning from method execution.</p>
+
+<p>But what happens, when we execute <code>Example1</code> method and then call lambda returned? <code>a</code> variable as stack allocated structure, should be already destroyed at that moment (it&rsquo;s out of it&rsquo;s creation scope and has not been returned explicitly). But that&rsquo;s not what really happens. Actually .NET environment performs an <strong>escape analysis</strong> to determine if any references to that structure didn&rsquo;t leave it&rsquo;s scope. In that case it would be rather heap allocated in order to prevent premature destruction.</p>
+
+<p>Other known case, when structs become heap allocated values, are allocations of large amounts of memory dedicated to handle values. Since stack memory is very limited (by default it&rsquo;s about 1MB per thread on Windows OS), massive structure allocations would potentially cause a StackOverflowException. What .NET environment does in that case, is fallback to safer heap-based allocations.</p>
+
+<p><em>NOTE</em>: Unfortunatelly at the present moment C# doesn&rsquo;t provide escape analysis to determine if class instances could be stack allocated. Java, even though hasn&rsquo;t got custom value types yet, can provide that feature for specific conditions.</p>
+
+<h1>Struct and class method calls differs significantly</h1>
+
+<p>Next exercise. Think about two types, struct and a class. Both of them have non-static method with identical signature and implementation. When you create instances of both types and call mentioned methods, which call will be faster? If you&rsquo;d thought, that struct method call will be slightly faster, you&rsquo;re right. But why?</p>
+
+<p>Answer lies in low level difference between CIL instructions <code>call</code> and <code>callvirt</code>. Standard class methods use <code>callvirt</code> (name is misleading &ndash; it&rsquo;s used even for non-virtual methods). Since CLR cannot absolutely guarantee, if instance method is overridden or shadowed, it has to perform explicit check by seeking class VTable for function pointer. Actual VTable pointer is one of the internal members of each object. Therefore it requires null check to be performed.</p>
+
+<p>Since struct cannot be null, we don&rsquo;t have to perform null checking. However it&rsquo;s not necessary. Since value types cannot declare or override virtual methods &ndash; struct have fixed inheritance chain &ndash; we don&rsquo;t have to access their VTables. Actually lack of inheritance is so useful, that structure instances don&rsquo;t need to have any pointers to VTable at all. All of these save time necessary to perform a method call.</p>
+
+<p>From that perspective struct method calls are much closer to static methods &ndash; also invoked through <code>call</code> instruction &ndash; than instantiated ones.</p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1407,115 +1499,6 @@
 <p>Przypomina to znane z innych środowisk mechanizmy współpracy pomiędzy kodem wysoko- i niskopoziomowym (w .NET takie &ldquo;nieprzenaszalne&rdquo; obiekty noszą nazwę <em>pinned objects</em>).</p>
 
 <p>Jaki ma to wpływ na wydajność? Dotychczas nie stworzono oficjalnych benchmarków, nieoficjalnie mówi się o kilku procentowej poprawie względem poprzedniego rozwiązania. Należy jednak pamiętać, że prace wciąż trwają i wiele może się jeszcze zmienić.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-04-23T21:35:00+02:00" data-updated="true" itemprop="datePublished">Apr 23<span>rd</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/wzorce-projektowe/'>wzorce projektowe</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/04/23/o-redundancji-w-wyrazeniach-linq/" itemprop="url">O Redundancji W Wyrażeniach LINQ</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>O tym, czym jest redundacja wie chyba każdy programista. Każdy z nas wie również, że jest to zjawisko nieporządane i w większości wypadków lepiej mu zapobiegać. Ten post przeznaczę na opis przykładowego zjawiska powtórzeń w zapytaniach LINQ spotykanego w sytuacjach codziennych oraz prostym i czytelnym ich rozwiązaniu, o którym nieraz zapominamy.</p>
-
-<h2>Przykład</h2>
-
-<p>Weźmy pod uwagę następujący przykład &ndash; otrzymaliśmy dokumentację, w której opisana jest pewna encja. Może ona mieć następującą postać:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">Document</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="k">public</span> <span class="n">DateTime</span> <span class="n">CreateDate</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>  <span class="k">public</span> <span class="kt">string</span> <span class="n">Type</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>   <span class="c1">// .. reszta implementacji</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W ramach logiki biznesowej wykonywanej na encjach tej klasy stworzone zostało pojęcie przeterminowania &ndash; z dalszej części dokumentacji dowiadujemy się, że za przeterminowane uznajemy te encje, w których data utworzenia jest starsza niż X dni (X może być dowolne np. ustawione w konfiguracji systemu) zaś typ przybiera konkretną wartość. Bez trudu zawężamy więc wyniki za pomocą zapytania:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">x</span> <span class="p">=</span> <span class="p">..</span> <span class="n">pobieramy</span> <span class="n">X</span>
-</span><span class='line'><span class="kt">var</span> <span class="n">documents</span> <span class="p">=</span> <span class="n">DataContext</span><span class="p">.</span><span class="n">Documents</span>
-</span><span class='line'>        <span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">CreateDate</span><span class="p">.</span><span class="n">AddDays</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">&lt;</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span> <span class="p">&amp;&amp;</span> <span class="n">x</span><span class="p">.</span><span class="n">Type</span> <span class="p">==</span> <span class="s">&quot;M1&quot;</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Niestety w późniejszym czasie słowo &ldquo;przeterminowany&rdquo; pojawia się w tym kontekscie jeszcze kilka razy w różnych miejsach aplikacji. Co robimy? W większości spotkanych przeze mnie przypadków piszemy klauzulę <code>Where(&hellip;)</code> ponownie. Ale czy na pewno?</p>
-
-<h2>Inne podejście</h2>
-
-<p>Rozwiązaniem powyżej sytuacji może być stary dobry <em>monkey patching</em>, reprezentowany w C# przez mechanizm extension methods. Z jego użyciem moglibyśmy rozwiązać ten problem w następujący sposób:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="n">X</span> <span class="p">{</span> <span class="k">get</span> <span class="p">{...}</span> <span class="p">}</span>
-</span><span class='line'><span class="c1">/// &lt;summary&gt;</span>
-</span><span class='line'><span class="c1">/// Słowo komentarza od ojca dyrektora.</span>
-</span><span class='line'><span class="c1">/// &lt;/summary&gt;</span>
-</span><span class='line'><span class="k">public</span> <span class="k">static</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">Document</span><span class="p">&gt;</span> <span class="n">Expired</span><span class="p">(</span><span class="k">this</span> <span class="n">IQueryable</span><span class="p">&lt;</span><span class="n">Document</span><span class="p">&gt;</span> <span class="n">data</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">x</span> <span class="p">=</span> <span class="n">X</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">data</span><span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">CreateDate</span><span class="p">.</span><span class="n">AddDays</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">&lt;</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span> <span class="p">&amp;&amp;</span> <span class="n">x</span><span class="p">.</span><span class="n">Type</span> <span class="p">==</span> <span class="s">&quot;M1&quot;</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Przykład wykorzystania:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">expiredDocuments</span> <span class="p">=</span> <span class="n">DataContext</span><span class="p">.</span><span class="n">Documents</span><span class="p">.</span><span class="n">Expired</span><span class="p">();</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W ten sposób stworzyliśmy stereotyp, który możemy wykorzystywać zawsze w sytuacji kiedy mamy do czynienia z tym konkretnym zachowaniem. Jakie są zalety tego podejścia? Po pierwsze trzymamy się zasady DRY (Don&rsquo;t Repeat Yourself). Po drugie sądzę, że taki zapis jest o wiele bardziej czytelny i ułatwia późniejsze zrozumienie kontekstu, w jakim wykonywane są zapytania.</p>
-
-<p>Innym sposobem na rozwiązanie powyższego problemu jest naturalnie przeniesienie filtru bezpośrednio do kontekstu danych:<code>var data = DataContext.GetExpiredDocuments();</code>. Na czym jednak polega przewaga monkey patchingu? Po pierwsze nie jesteśmy twardo związani ze źródłem danych &ndash; napisany wcześniej stereotyp może być zastosowany dla dowolnej kolekcji, nawet takiej która powstała w wyniku deserializacji żądania HTTP. Po drugie rozwinięcie to można wstawić w dowolnym momencie tworzonego zapytania, z dowolnej encji posiadające odpowiednią relację.</p>
-
-<p>W rezultacie otrzymujemy rozwiązanie bardziej uniwersalne i podatne na zmiany.</p>
 
 		
 		

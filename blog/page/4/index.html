@@ -9,7 +9,7 @@
 	<meta name="author" content="Bartosz Sypytkowski">
 
 	
-	<meta name="description" content="Jul 12th, 2012 .net, programowanie, wzorce projektowe Comments Jak Wybrać Stos Frameworków Pod Projekt Webowy (.NET) W życiu każdego web developera &hellip;">
+	<meta name="description" content="Aug 24th, 2012 eksploracja danych, programowanie Comments [NLP] Stemming I Lematyzacja Zagłębiając się coraz dalej w NLP (ang. Natural Language &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -116,6 +116,545 @@
 			<div class="mid-col-container">
 				<div id="content" class="inner">
 <div itemscope itemtype="http://schema.org/Blog">
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-24T08:17:00+02:00" data-updated="true" itemprop="datePublished">Aug 24<span>th</span>, 2012</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/eksploracja-danych/'>eksploracja danych</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
+
+
+</div>
+		
+			<span class="comments"><a href="/blog/2012/08/24/nlp-stemming-i-lematyzacja/#disqus_thread">Comments</a></span>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2012/08/24/nlp-stemming-i-lematyzacja/" itemprop="url">[NLP] Stemming I Lematyzacja</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<p>Zagłębiając się coraz dalej w NLP (<em>ang. Natural Language Processing</em>) &ndash; dziedzinę znaną również jako przetwarzanie języka naturalnego &ndash; natrafiłem na dość powszechny problem, którego rozwiązaniem pragnę się podzielić w tym artykule. Zacznijmy jednak od ogólnego przedstawienia problemu: załóżmy, że w życiu każdego programisty zdarzają się chwilę, w których musi on stworzyć aplikację zdolną poradzić sobie z analizą standardowego tekstu tzn. takiego, który domyślnie nie był sformatowany w sposób umożliwiający zastosowanie prostych wzorców w celu wyciągnięcia rzeczowych informacji. O ile dla większości ludzi zadanie to powinno być banalne, gdyż wystarczy nam zwykłe czytanie tekstu ze zrozumieniem, o tyle istniejące programy komputerowe mają niezwykłe problemy z jego rozwiązaniem. To właśnie tutaj z pomocą przychodzą pojęcia takie jak lematyzacja i stemming.</p>
+
+<p><strong>Stemming </strong>&ndash; bazując na definicji z angielskiej wikipedii jest to proces polegający na wydobyciu z wybranego wyrazu tzw. rdzenia, a więc tej jego części, która jest odporna na odmiany przez przyimki, rodzaje itp.</p>
+
+<p><strong>Lematyzacja </strong>&ndash; pojęcie to jest bardzo podobne do powyższego, a oznacza sprowadzenie grupy wyrazów stanowiących odmianę danego zwrotu do wspólnej postaci, umożliwiającej traktowanie ich wszystkich jako te samo słowo.</p>
+
+<p>Ponieważ problem ten jest dość stary i dobrze znany, w ciągu ostatnich dziesięcioleci powstało kilka znanych algorytmów służących jego rozwiązaniu. Dwa z najbardziej znanych to algorytm Portera (1979 r.) oraz algorytm Lancaster (1990 r.). Celem moich rozważań będzie zaimplementowanie drugiego z nich.</p>
+
+<p>Główne działanie algorytmu opiera się na słowniku zawierającym definicje par {zakończenie &ndash; podmieniany ciąg znaków} modyfikowanych wyrazów. Ponieważ słownik taki jest ciężki w skonstruowaniu postanowiłem dodać gotową listę definicji dla języka angielskiego zaczerpniętą z kodu źródłowego biblioteki NLTK (Natural Language Toolkit) napisanej w Pythonie. Listę tą znaleźć można na końcu tego artykułu.</p>
+
+<p>Warto zwrócić uwagę na format zapisu definicji. Są one opisane w postaci pojedynczego słowa. Podciągi występujących w nim znaków stanowią kolejno:</p>
+
+<ol>
+<li>Odwrócony zapis końcówki słowa (obowiązkowy) &ndash; umożliwia określenie, czy dana reguła powinna być stosowana dla modyfikowanego wyrazu.</li>
+<li>Znacznik nienaruszalności (opcjonalny, symbol: &lsquo;<strong>*&rsquo;</strong>) &ndash; oznacza to, że reguła powinna być zastosowana tylko wtedy, kiedy słowo nie zostało zmienione przez jakiekolwiek poprzednie reguły.</li>
+<li>Liczba usuwanych znaków (obowiązkowa) &ndash; określa, ile liter z końca wyrazu powinno zostać usunięte podczas modyfikacji.</li>
+<li>Podstawiany ciąg znaków (opcjonalny) &ndash; nowa końcówka doklejana do słowa po usunięciu poprzedniej.</li>
+<li>Flaga kontynuacji (obowiązkowa, symbol: &lsquo;<strong>></strong>&rsquo; [true] lub &lsquo;<strong>.</strong>&rsquo; [false]) &ndash; określa czy po zastosowaniu tej reguły do wyrazu dopuszczalne są jakiekolwiek dalsze modyfikacje.</li>
+</ol>
+
+
+<p>Aby ułatwić sobie pracę, stwórzmy strukturę przechowującą informację o tak zdefiniownej regule (w mojej implementacji nazwałem ją <strong><em>StemRule</em></strong>). Kolejne punkty opisanej powyżej definicji reprezentowane będą przez następujące pola/właściwości: 1 &ndash; <em>WordEnd </em>(string), 2 &ndash; <em>Intact </em>(bool), 3 &ndash; <em>RemoveTotal </em>(int), 4 &ndash; <em>AppendString </em>(string), 5 &ndash; <em>IsContinous </em>(bool).</p>
+
+<p>Parsowanie, realizowane w konstruktorze klasy, opiera się o wyciągnięcie odpowiednich grup przy pomocy wyrażeń regularnych a następnie wstawieniu ich wartości do odpowiadających pól.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="nf">StemRule</span><span class="p">(</span><span class="kt">string</span> <span class="n">rule</span><span class="p">){</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">RuleValdiator</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Regex</span><span class="p">(</span><span class="s">@&quot;^([a-z]+)(\*?)(\d)([a-z]*)([&gt;\.]?)$&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">match</span> <span class="p">=</span> <span class="n">RuleValdiator</span><span class="p">.</span><span class="n">Match</span><span class="p">(</span><span class="n">rule</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(!</span><span class="n">match</span><span class="p">.</span><span class="n">Success</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentException</span><span class="p">(</span><span class="s">&quot;Provided rule could not be parsed&quot;</span><span class="p">,</span> <span class="n">rule</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">chars</span> <span class="p">=</span> <span class="n">match</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">1</span><span class="p">].</span><span class="n">Value</span><span class="p">.</span><span class="n">ToCharArray</span><span class="p">();</span>
+</span><span class='line'>  <span class="n">Array</span><span class="p">.</span><span class="n">Reverse</span><span class="p">(</span><span class="n">chars</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">WordEnd</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">string</span><span class="p">(</span><span class="n">chars</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">Intact</span> <span class="p">=</span> <span class="p">!</span><span class="kt">string</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">match</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">2</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">RemoveTotal</span> <span class="p">=</span> <span class="kt">int</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">match</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">3</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">AppendString</span> <span class="p">=</span> <span class="n">match</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">4</span><span class="p">].</span><span class="n">Value</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">IsContinous</span> <span class="p">=</span> <span class="p">(</span><span class="n">match</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">5</span><span class="p">].</span><span class="n">Value</span> <span class="p">!=</span> <span class="s">&quot;.&quot;</span><span class="p">)</span> <span class="p">||</span> <span class="p">(</span><span class="n">match</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">5</span><span class="p">].</span><span class="n">Value</span> <span class="p">==</span> <span class="s">&quot;&gt;&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Dysponując tak przygotowanymi regułami możemy przejść do konstrukcji właściwego stemmera. Aby szybciej wydobywać odpowiednie reguły dla danego słowa, umieścimy je w czymś w rodzaju hashmapy, gdzie hashem będzie ostatnia litera końcówki wyszukiwanego słowa, zaś &ldquo;koszyk&rdquo; będzie stanowił listę obiektów <code>StemRule</code> ze stosownymi końcówkami.</p>
+
+<p>Ostatecznie tworzenie słownika wyglądać będzie następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">StemRule</span><span class="p">&gt;&gt;</span> <span class="n">ParseRules</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">rules</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">dictionary</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">StemRule</span><span class="p">&gt;&gt;();</span>
+</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">rules</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">rule</span> <span class="p">=</span> <span class="n">rules</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">firstLetter</span> <span class="p">=</span> <span class="n">rule</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+</span><span class='line'>      <span class="k">if</span><span class="p">(</span><span class="n">dictionary</span><span class="p">.</span><span class="n">ContainsKey</span><span class="p">(</span><span class="n">firstLetter</span><span class="p">))</span>
+</span><span class='line'>          <span class="n">dictionary</span><span class="p">[</span><span class="n">firstLetter</span><span class="p">].</span><span class="n">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">StemRule</span><span class="p">(</span><span class="n">rule</span><span class="p">));</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>          <span class="n">dictionary</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">firstLetter</span><span class="p">,</span>
+</span><span class='line'>              <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">StemRule</span><span class="p">&gt;(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="k">new</span> <span class="n">StemRule</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span> <span class="p">}));</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">dictionary</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Przetwarzaniem zajmować się będzie metoda Stem. Kolejność akcji wykonywanych przez algorytm wyglądać będzie następująco:</p>
+
+<ol>
+<li>Sprowadzamy wszystkie słowa do zapisu lower case.</li>
+<li>W głównej pętli:
+
+<ol>
+<li>Znajdujemy pozycję ostatniej litery w słowie i sprawdzamy czy jest ona jednym z kluczy w naszym słowniku reguł. Jeżeli nie, kończymy pracę algorytmu.</li>
+<li>Pobieramy &ldquo;kubełek&rdquo; z regułami ze słownika na podstawie klucza (ostatniej litery).</li>
+<li>W pętli wewnętrznej dla każdego kubełka:
+
+<ol>
+<li>Sprawdzamy, czy końcówka zapisana w regule znajduje się na końcu modyfikowanego słowa. Jeżeli nie, przechodzimy do kolejnej reguły.</li>
+<li>Sprawdzamy czy reguła miała ustawioną flagę nienaruszalności: jeżeli tak, sprawdzamy czy słowo przez nas przetwarzane nie zostało zmienione przez poprzednie reguły. Jeżeli zostało, pomijamy działanie tej reguły.</li>
+<li>Modyfikujemy słowo na podstawie danych z reguły.</li>
+<li>Oznaczamy słowo jako zmodyfikowane.</li>
+<li>Dodatkowo jeżeli reguła miała ustawioną flagę kontynuacji, wychodzimy z wewnętrznej pętli i kontynuujemy działanie algorytmu.</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+
+
+<p>Implementacja algorytmu może wyglądać następująco:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="kt">string</span> <span class="nf">Stem</span><span class="p">(</span><span class="kt">string</span> <span class="n">token</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">lowered</span> <span class="p">=</span> <span class="n">token</span><span class="p">.</span><span class="n">ToLower</span><span class="p">();</span>
+</span><span class='line'>  <span class="kt">var</span> <span class="n">proceed</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">while</span> <span class="p">(</span><span class="n">proceed</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">{</span>
+</span><span class='line'>      <span class="c1">// find position of last alphabetic letter in stemmed word</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">lastLetterPosition</span> <span class="p">=</span> <span class="n">LastLetterPosition</span><span class="p">(</span><span class="n">lowered</span><span class="p">);</span>
+</span><span class='line'>      <span class="kt">var</span> <span class="n">original</span> <span class="p">=</span> <span class="n">lowered</span> <span class="p">=</span> <span class="n">lowered</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">lastLetterPosition</span> <span class="p">+</span> <span class="m">1</span><span class="p">);</span>
+</span><span class='line'>      <span class="c1">// stemm the word only when it has last letter and it&#39;s matching to any stemm rule</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">lastLetterPosition</span> <span class="p">&lt;</span> <span class="m">0</span>
+</span><span class='line'>          <span class="p">||</span> <span class="p">!</span><span class="n">_ruleDictionary</span><span class="p">.</span><span class="n">ContainsKey</span><span class="p">(</span><span class="n">lowered</span><span class="p">[</span><span class="n">lastLetterPosition</span><span class="p">]))</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="n">proceed</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>          <span class="kt">var</span> <span class="n">applied</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+</span><span class='line'>          <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">rule</span> <span class="k">in</span> <span class="n">_ruleDictionary</span><span class="p">[</span><span class="n">lowered</span><span class="p">[</span><span class="n">lastLetterPosition</span><span class="p">]])</span>
+</span><span class='line'>          <span class="p">{</span>
+</span><span class='line'>              <span class="c1">// proceed if word ends with matched rule&#39;s endingString</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">lowered</span><span class="p">.</span><span class="n">EndsWith</span><span class="p">(</span><span class="n">rule</span><span class="p">.</span><span class="n">WordEnd</span><span class="p">)</span>
+</span><span class='line'>                  <span class="p">&amp;&amp;</span> <span class="n">IsStemmingAcceptable</span><span class="p">(</span><span class="n">lowered</span><span class="p">,</span> <span class="n">rule</span><span class="p">.</span><span class="n">RemoveTotal</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">{</span>
+</span><span class='line'>                  <span class="k">if</span> <span class="p">(!</span><span class="n">rule</span><span class="p">.</span><span class="n">Intact</span> <span class="p">||</span> <span class="n">lowered</span> <span class="p">==</span> <span class="n">original</span><span class="p">)</span>
+</span><span class='line'>                  <span class="p">{</span>
+</span><span class='line'>                      <span class="n">lowered</span> <span class="p">=</span> <span class="n">ApplyRule</span><span class="p">(</span><span class="n">lowered</span><span class="p">,</span> <span class="n">rule</span><span class="p">);</span>
+</span><span class='line'>                      <span class="n">applied</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</span><span class='line'>                      <span class="k">if</span> <span class="p">(!</span><span class="n">rule</span><span class="p">.</span><span class="n">IsContinous</span><span class="p">)</span> <span class="n">proceed</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>                      <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>                  <span class="p">}</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>          <span class="c1">// if no more rules apply, stop stemming</span>
+</span><span class='line'>          <span class="k">if</span> <span class="p">(!</span><span class="n">applied</span><span class="p">)</span> <span class="n">proceed</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">lowered</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Na koniec zestaw kilku metod wykorzystywanych przez powyższą implementację:</p>
+
+<p>Pobieranie pozycji ostatniej litery w ciągu:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="kt">int</span> <span class="nf">LastLetterPosition</span><span class="p">(</span><span class="kt">string</span> <span class="n">word</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="n">word</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&gt;=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span><span class="p">--)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="kt">char</span><span class="p">.</span><span class="n">IsLetter</span><span class="p">(</span><span class="n">word</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+</span><span class='line'>          <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">return</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Sprawdzenie, czy słowo może zostać poddane przetwarzaniu &ndash; metoda ta jest potrzebna od kiedy nie możemy przetwarzać słów jednosylabowych, niezależnie od podanych wcześniej reguł (przykład: bez tego warunku reguła usuwająca końcówkę <em>-ing</em> sprawiłaby, że wyrazy takie jak <em>sing </em>stałyby się całkowicie nieczytelne):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsStemmingAcceptable</span><span class="p">(</span><span class="kt">string</span> <span class="n">word</span><span class="p">,</span> <span class="kt">int</span> <span class="n">removeTotal</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">const</span> <span class="kt">string</span> <span class="n">vowels</span> <span class="p">=</span> <span class="s">&quot;aeiouy&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">// if word start with a vowel, it have to be at least 2 letters long</span>
+</span><span class='line'>  <span class="c1">// else it have to be at least 3 letters and contains at least one vowel</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">vowels</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">word</span><span class="p">[</span><span class="m">0</span><span class="p">])</span>
+</span><span class='line'>             <span class="p">?</span> <span class="n">word</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="n">removeTotal</span> <span class="p">&gt;=</span> <span class="m">2</span>
+</span><span class='line'>             <span class="p">:</span> <span class="n">word</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="n">removeTotal</span> <span class="p">&gt;=</span> <span class="m">3</span>
+</span><span class='line'>               <span class="p">&amp;&amp;</span> <span class="p">(</span><span class="n">vowels</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">word</span><span class="p">[</span><span class="m">1</span><span class="p">])</span> <span class="p">||</span> <span class="n">vowels</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">word</span><span class="p">[</span><span class="m">2</span><span class="p">]));</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Aplikowanie danej reguły do słowa &ndash; dość prosta sprawa, usuwamy z końca słowa liczbę znaków podanych w regule oraz podstawiamy ewentualną końcówkę, jeżeli została ona zdefiniowana w regule:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">ApplyRule</span><span class="p">(</span><span class="kt">string</span> <span class="n">word</span><span class="p">,</span> <span class="n">StemRule</span> <span class="n">rule</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Concat</span><span class="p">(</span>
+</span><span class='line'>      <span class="n">word</span><span class="p">.</span><span class="n">Substring</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">word</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="n">rule</span><span class="p">.</span><span class="n">RemoveTotal</span><span class="p">),</span>
+</span><span class='line'>      <span class="n">rule</span><span class="p">.</span><span class="n">AppendString</span> <span class="p">??</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><details><summary>Lista definicji</summary></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="s">&quot;ai*2.&quot;</span><span class="p">,</span>     <span class="c1">// -ia &gt; - if intact</span>
+</span><span class='line'><span class="s">&quot;a*1.&quot;</span><span class="p">,</span>      <span class="c1">// -a &gt; - if intact</span>
+</span><span class='line'><span class="s">&quot;bb1.&quot;</span><span class="p">,</span>      <span class="c1">// -bb &gt; -b</span>
+</span><span class='line'><span class="s">&quot;city3s.&quot;</span><span class="p">,</span>   <span class="c1">// -ytic &gt; -ys</span>
+</span><span class='line'><span class="s">&quot;ci2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -ic &gt; -</span>
+</span><span class='line'><span class="s">&quot;cn1t&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -nc &gt; -nt</span>
+</span><span class='line'><span class="s">&quot;dd1.&quot;</span><span class="p">,</span>      <span class="c1">// -dd &gt; -d</span>
+</span><span class='line'><span class="s">&quot;dei3y&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -ied &gt; -y</span>
+</span><span class='line'><span class="s">&quot;deec2ss.&quot;</span><span class="p">,</span>  <span class="c1">// -ceed &gt;&quot;, -cess</span>
+</span><span class='line'><span class="s">&quot;dee1.&quot;</span><span class="p">,</span>     <span class="c1">// -eed &gt; -ee</span>
+</span><span class='line'><span class="s">&quot;de2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -ed &gt; -</span>
+</span><span class='line'><span class="s">&quot;dooh4&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -hood &gt; -</span>
+</span><span class='line'><span class="s">&quot;e1&gt;&quot;</span><span class="p">,</span>       <span class="c1">// -e &gt; -</span>
+</span><span class='line'><span class="s">&quot;feil1v.&quot;</span><span class="p">,</span>   <span class="c1">// -lief &gt; -liev</span>
+</span><span class='line'><span class="s">&quot;fi2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -if &gt; -</span>
+</span><span class='line'><span class="s">&quot;gni3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ing &gt; -</span>
+</span><span class='line'><span class="s">&quot;gai3y.&quot;</span><span class="p">,</span>    <span class="c1">// -iag &gt; -y</span>
+</span><span class='line'><span class="s">&quot;ga2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -ag &gt; -</span>
+</span><span class='line'><span class="s">&quot;gg1.&quot;</span><span class="p">,</span>      <span class="c1">// -gg &gt; -g</span>
+</span><span class='line'><span class="s">&quot;ht*2.&quot;</span><span class="p">,</span>     <span class="c1">// -th &gt; -   if intact</span>
+</span><span class='line'><span class="s">&quot;hsiug5ct.&quot;</span><span class="p">,</span> <span class="c1">// -guish &gt; -ct</span>
+</span><span class='line'><span class="s">&quot;hsi3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ish &gt; -</span>
+</span><span class='line'><span class="s">&quot;i*1.&quot;</span><span class="p">,</span>      <span class="c1">// -i &gt; -    if intact</span>
+</span><span class='line'><span class="s">&quot;i1y&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -i &gt; -y</span>
+</span><span class='line'><span class="s">&quot;ji1d.&quot;</span><span class="p">,</span>     <span class="c1">// -ij &gt; -id   --  see nois4j&gt; &amp; vis3j&gt;</span>
+</span><span class='line'><span class="s">&quot;juf1s.&quot;</span><span class="p">,</span>    <span class="c1">// -fuj &gt; -fus</span>
+</span><span class='line'><span class="s">&quot;ju1d.&quot;</span><span class="p">,</span>     <span class="c1">// -uj &gt; -ud</span>
+</span><span class='line'><span class="s">&quot;jo1d.&quot;</span><span class="p">,</span>     <span class="c1">// -oj &gt; -od</span>
+</span><span class='line'><span class="s">&quot;jeh1r.&quot;</span><span class="p">,</span>    <span class="c1">// -hej &gt; -her</span>
+</span><span class='line'><span class="s">&quot;jrev1t.&quot;</span><span class="p">,</span>   <span class="c1">// -verj &gt; -vert</span>
+</span><span class='line'><span class="s">&quot;jsim2t.&quot;</span><span class="p">,</span>   <span class="c1">// -misj &gt; -mit</span>
+</span><span class='line'><span class="s">&quot;jn1d.&quot;</span><span class="p">,</span>     <span class="c1">// -nj &gt; -nd</span>
+</span><span class='line'><span class="s">&quot;j1s.&quot;</span><span class="p">,</span>      <span class="c1">// -j &gt; -s</span>
+</span><span class='line'><span class="s">&quot;lbaifi6.&quot;</span><span class="p">,</span>  <span class="c1">// -ifiabl &gt; -</span>
+</span><span class='line'><span class="s">&quot;lbai4y.&quot;</span><span class="p">,</span>   <span class="c1">// -iabl &gt; -y</span>
+</span><span class='line'><span class="s">&quot;lba3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -abl &gt; -</span>
+</span><span class='line'><span class="s">&quot;lbi3.&quot;</span><span class="p">,</span>     <span class="c1">// -ibl &gt; -</span>
+</span><span class='line'><span class="s">&quot;lib2l&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -bil &gt; -bl</span>
+</span><span class='line'><span class="s">&quot;lc1.&quot;</span><span class="p">,</span>      <span class="c1">// -cl &gt; c</span>
+</span><span class='line'><span class="s">&quot;lufi4y.&quot;</span><span class="p">,</span>   <span class="c1">// -iful &gt; -y</span>
+</span><span class='line'><span class="s">&quot;luf3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ful &gt; -</span>
+</span><span class='line'><span class="s">&quot;lu2.&quot;</span><span class="p">,</span>      <span class="c1">// -ul &gt; -</span>
+</span><span class='line'><span class="s">&quot;lai3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ial &gt; -</span>
+</span><span class='line'><span class="s">&quot;lau3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ual &gt; -</span>
+</span><span class='line'><span class="s">&quot;la2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -al &gt; -</span>
+</span><span class='line'><span class="s">&quot;ll1.&quot;</span><span class="p">,</span>      <span class="c1">// -ll &gt; -l</span>
+</span><span class='line'><span class="s">&quot;mui3.&quot;</span><span class="p">,</span>     <span class="c1">// -ium &gt; -</span>
+</span><span class='line'><span class="s">&quot;mu*2.&quot;</span><span class="p">,</span>     <span class="c1">// -um &gt; -   if intact</span>
+</span><span class='line'><span class="s">&quot;msi3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ism &gt; -</span>
+</span><span class='line'><span class="s">&quot;mm1.&quot;</span><span class="p">,</span>      <span class="c1">// -mm &gt; -m</span>
+</span><span class='line'><span class="s">&quot;nois4j&gt;&quot;</span><span class="p">,</span>   <span class="c1">// -sion &gt; -j</span>
+</span><span class='line'><span class="s">&quot;noix4ct.&quot;</span><span class="p">,</span>  <span class="c1">// -xion &gt; -ct</span>
+</span><span class='line'><span class="s">&quot;noi3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ion &gt; -</span>
+</span><span class='line'><span class="s">&quot;nai3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ian &gt; -</span>
+</span><span class='line'><span class="s">&quot;na2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -an &gt; -</span>
+</span><span class='line'><span class="s">&quot;nee0.&quot;</span><span class="p">,</span>     <span class="c1">// protect  -een</span>
+</span><span class='line'><span class="s">&quot;ne2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -en &gt; -</span>
+</span><span class='line'><span class="s">&quot;nn1.&quot;</span><span class="p">,</span>      <span class="c1">// -nn &gt; -n</span>
+</span><span class='line'><span class="s">&quot;pihs4&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -ship &gt; -</span>
+</span><span class='line'><span class="s">&quot;pp1.&quot;</span><span class="p">,</span>      <span class="c1">// -pp &gt; -p</span>
+</span><span class='line'><span class="s">&quot;re2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -er &gt; -</span>
+</span><span class='line'><span class="s">&quot;rae0.&quot;</span><span class="p">,</span>     <span class="c1">// protect  -ear</span>
+</span><span class='line'><span class="s">&quot;ra2.&quot;</span><span class="p">,</span>      <span class="c1">// -ar &gt; -</span>
+</span><span class='line'><span class="s">&quot;ro2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -or &gt; -</span>
+</span><span class='line'><span class="s">&quot;ru2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -ur &gt; -</span>
+</span><span class='line'><span class="s">&quot;rr1.&quot;</span><span class="p">,</span>      <span class="c1">// -rr &gt; -r</span>
+</span><span class='line'><span class="s">&quot;rt1&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -tr &gt; -t</span>
+</span><span class='line'><span class="s">&quot;rei3y&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -ier &gt; -y</span>
+</span><span class='line'><span class="s">&quot;sei3y&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -ies &gt; -y</span>
+</span><span class='line'><span class="s">&quot;sis2.&quot;</span><span class="p">,</span>     <span class="c1">// -sis &gt; -s</span>
+</span><span class='line'><span class="s">&quot;si2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -is &gt; -</span>
+</span><span class='line'><span class="s">&quot;ssen4&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -ness &gt; -</span>
+</span><span class='line'><span class="s">&quot;ss0.&quot;</span><span class="p">,</span>      <span class="c1">// protect  -ss</span>
+</span><span class='line'><span class="s">&quot;suo3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ous &gt; -</span>
+</span><span class='line'><span class="s">&quot;su*2.&quot;</span><span class="p">,</span>     <span class="c1">// -us &gt; -   if intact</span>
+</span><span class='line'><span class="s">&quot;s*1&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -s &gt; - if intact</span>
+</span><span class='line'><span class="s">&quot;s0.&quot;</span><span class="p">,</span>       <span class="c1">// -s &gt; -s</span>
+</span><span class='line'><span class="s">&quot;tacilp4y.&quot;</span><span class="p">,</span> <span class="c1">// -plicat &gt; -ply</span>
+</span><span class='line'><span class="s">&quot;ta2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -at &gt; -</span>
+</span><span class='line'><span class="s">&quot;tnem4&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -ment &gt; -</span>
+</span><span class='line'><span class="s">&quot;tne3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ent &gt; -</span>
+</span><span class='line'><span class="s">&quot;tna3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ant &gt; -</span>
+</span><span class='line'><span class="s">&quot;tpir2b.&quot;</span><span class="p">,</span>   <span class="c1">// -ript &gt; -rib</span>
+</span><span class='line'><span class="s">&quot;tpro2b.&quot;</span><span class="p">,</span>   <span class="c1">// -orpt &gt; -orb</span>
+</span><span class='line'><span class="s">&quot;tcud1.&quot;</span><span class="p">,</span>    <span class="c1">// -duct &gt; -duc</span>
+</span><span class='line'><span class="s">&quot;tpmus2.&quot;</span><span class="p">,</span>   <span class="c1">// -sumpt &gt; -sum</span>
+</span><span class='line'><span class="s">&quot;tpec2iv.&quot;</span><span class="p">,</span>  <span class="c1">// -cept &gt; -ceiv</span>
+</span><span class='line'><span class="s">&quot;tulo2v.&quot;</span><span class="p">,</span>   <span class="c1">// -olut &gt; -olv</span>
+</span><span class='line'><span class="s">&quot;tsis0.&quot;</span><span class="p">,</span>    <span class="c1">// protect  -sist</span>
+</span><span class='line'><span class="s">&quot;tsi3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ist &gt; -</span>
+</span><span class='line'><span class="s">&quot;tt1.&quot;</span><span class="p">,</span>      <span class="c1">// -tt &gt; -t</span>
+</span><span class='line'><span class="s">&quot;uqi3.&quot;</span><span class="p">,</span>     <span class="c1">// -iqu &gt; -</span>
+</span><span class='line'><span class="s">&quot;ugo1.&quot;</span><span class="p">,</span>     <span class="c1">// -ogu &gt; -og</span>
+</span><span class='line'><span class="s">&quot;vis3j&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -siv &gt; -j</span>
+</span><span class='line'><span class="s">&quot;vie0.&quot;</span><span class="p">,</span>     <span class="c1">// protect  -eiv</span>
+</span><span class='line'><span class="s">&quot;vi2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -iv &gt; -</span>
+</span><span class='line'><span class="s">&quot;ylb1&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -bly &gt; -bl</span>
+</span><span class='line'><span class="s">&quot;yli3y&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -ily &gt; -y</span>
+</span><span class='line'><span class="s">&quot;ylp0.&quot;</span><span class="p">,</span>     <span class="c1">// protect  -ply</span>
+</span><span class='line'><span class="s">&quot;yl2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -ly &gt; -</span>
+</span><span class='line'><span class="s">&quot;ygo1.&quot;</span><span class="p">,</span>     <span class="c1">// -ogy &gt; -og</span>
+</span><span class='line'><span class="s">&quot;yhp1.&quot;</span><span class="p">,</span>     <span class="c1">// -phy &gt; -ph</span>
+</span><span class='line'><span class="s">&quot;ymo1.&quot;</span><span class="p">,</span>     <span class="c1">// -omy &gt; -om</span>
+</span><span class='line'><span class="s">&quot;ypo1.&quot;</span><span class="p">,</span>     <span class="c1">// -opy &gt; -op</span>
+</span><span class='line'><span class="s">&quot;yti3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ity &gt; -</span>
+</span><span class='line'><span class="s">&quot;yte3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ety &gt; -</span>
+</span><span class='line'><span class="s">&quot;ytl2.&quot;</span><span class="p">,</span>     <span class="c1">// -lty &gt; -l</span>
+</span><span class='line'><span class="s">&quot;yrtsi5.&quot;</span><span class="p">,</span>   <span class="c1">// -istry &gt; -</span>
+</span><span class='line'><span class="s">&quot;yra3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ary &gt; -</span>
+</span><span class='line'><span class="s">&quot;yro3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -ory &gt; -</span>
+</span><span class='line'><span class="s">&quot;yfi3.&quot;</span><span class="p">,</span>     <span class="c1">// -ify &gt; -</span>
+</span><span class='line'><span class="s">&quot;ycn2t&gt;&quot;</span><span class="p">,</span>    <span class="c1">// -ncy &gt; -nt</span>
+</span><span class='line'><span class="s">&quot;yca3&gt;&quot;</span><span class="p">,</span>     <span class="c1">// -acy &gt; -</span>
+</span><span class='line'><span class="s">&quot;zi2&gt;&quot;</span><span class="p">,</span>      <span class="c1">// -iz &gt; -</span>
+</span><span class='line'><span class="s">&quot;zy1s.&quot;</span>       <span class="c1">// -yz &gt; -ys</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></details></p>
+
+		
+		
+	</div>
+
+</article>
 
 
     <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
@@ -1324,334 +1863,6 @@ Co znaczą następujące atrybuty?:</p>
 
 
 <p>Rozwiązanie takie oferuje tą zaletę, że wymusza, aby w trakcie wykoniania buildu biblioteki, zostały wprowadzone zmiany do bazy. Jeżeli napisane przez nas migracje są nieprawidłowe lub nie zostały wprowadzone, projekt nie zostanie zbudowany.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-09-19T18:21:00+02:00" data-updated="true" itemprop="datePublished">Sep 19<span>th</span>, 2011</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/dot-net/'>.net</a>, <a class='category' href='/blog/categories/eksploracja-danych/'>eksploracja danych</a>, <a class='category' href='/blog/categories/programowanie/'>programowanie</a>
-
-
-</div>
-		
-			<span class="comments"><a href="/blog/2011/09/19/c-prosta-implementacja-silnika-do/#disqus_thread">Comments</a></span>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2011/09/19/c-prosta-implementacja-silnika-do/" itemprop="url">[C#] Prosta Implementacja Silnika Do Wyszukiwania Pełnotekstowego</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>W dzisiejszym poście postaram się przedstawić jedno z możliwych rozwiązań problemu, jakim jest konieczność odnajdywania plików zawierających w sobie pewne poszukiwane przez nas frazy. Mowa tu oczywiście o problemach związanych z implementacją wyszukiwarki pełnotekstowej. Poniżej przedstawię sposób na jedną z prostszych jej implementacji.</p>
-
-<h2>Wstęp</h2>
-
-<p>Na wstępie warto zwrócić uwagę na podstawowy ciąg czynności, które powinny wystąpić, aby dany plik został zaindeksowany oraz aby późniejsze wyszukiwanie przebiegało szybciej i bardziej dokładnie. Na główne kroki składają się:</p>
-
-<ul>
-<li>Przetworzenie zawartości pliku &ndash; pierwszym krokiem jest zamiana tekstu na postać bardziej sformalizowaną (tzw. termy). W tym momencie następują czynności takie jak:
-
-<ul>
-<li>usunięcie znaków interpunkcyjnych i znaczników</li>
-<li>usunięcie zbędnych słów (np. przyimków)</li>
-<li>zamiana wielkich liter na małe</li>
-<li>usunięcie niepotrzebnych końcówek w odmianach słów</li>
-</ul>
-</li>
-<li>Zamiana sformatowanego tekstu na wektor &ndash; wektory są dobrą metodą reprezentacji słów w danym tekście. Kilka z najpopularniejszych sposobów zapisywania danych w wektorach:
-
-<ul>
-<li><strong>Binarny </strong>&ndash; w tym wypadku wektor zapisuje wartość binarną (prawda/fałsz) dla każdego opisywanego słowa. Słowa występujące w tekście są oznaczane jako prawda. Pozostałe nie występujące w pliku (lecz wciąż mające swoje miejsce w wektorze) oznaczone są jako fałsz. Wady:
-
-<ul>
-<li>mała dokładność informacji (wiemy wyłącznie o tym, czy dane słowo występuje w tekście)
-Zalety:</li>
-<li>szybka możliwość weryfikacji występowania danego słowa w tekście</li>
-<li>taki sposób zapisu zajmuje najmniej miejsca w pamięci</li>
-</ul>
-</li>
-<li><strong>&ldquo;Bag-of-words&rdquo;</strong> &ndash; taki sposób reprezentacji dokumentu (w swojej podstawowej wersji) zlicza ilość (częstotliwość) wystąpień danego słowa w tekście. Zamiast oznaczania słowa w postaci bitu określamy go przez liczbę wyrażającą jego liczność.Wady:
-
-<ul>
-<li>Wymaga zdecydowanie większej ilości pamięci niż zapis binarny przy takiej samej ilości zaindeksowanych dokumentów.
-Zalety:</li>
-<li>Pozwala wydobyć więcej informacji o dokumencie.</li>
-<li>Umożliwia tworzenie podstawowego rankingu najlepiej pasujących dokumentów.</li>
-</ul>
-</li>
-<li><strong>Pozycyjny </strong>&ndash; w takiej postaci zapisujemy nie tylko ilość wystąpień danego termu w dokumencie, ale również zapisujemy pozycje, w których dane termy zostały znalezione.Wady:
-
-<ul>
-<li>Wymaga największej ilości pamięci dla pojedynczego wektora.</li>
-<li>Generowanie odpowiedzi na zapytanie dotyczące wyszukiwania może być czasochłonne.
-Zalety:</li>
-<li>Jest to najbardziej kompletny zapis, zwrócone wyniki mają największą dokładność.</li>
-<li>Na podstawie danych zawartych w wektorze możliwe jest częściowe lub kompletne odtworzenie dokumentu.</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>Zapisanie wektora &ndash; wymagana tutaj jest struktura danych umożliwiająca szybki dostęp oraz będąca w stanie przechowywać duże ilości informacji (np. rozproszone struktury danych oparte o tablice haszujące lub skompresowane drzewa TRIE).</li>
-</ul>
-
-
-<p>Na potrzeby naszej implementacji postanowiłem przyjąć następujące założenia:</p>
-
-<ol>
-<li>Nie przywiązujemy większej uwagi do aspektów optymalizacji &ndash; chodzi tutaj o możliwie maksymalną prostotę wykonanego rozwiązania.</li>
-<li>Skupiamy się na strukturach danych istniejących w bibliotece postawowej.</li>
-<li>Reprezentacja binarna &ndash; powody: możliwość prostej i szybkiej implementacji.</li>
-<li>Operujemy na z góry ustalonej (maksymalnej) liczbie słów.</li>
-</ol>
-
-
-<h2>Implementacja</h2>
-
-<p>Do pierwszej części zadania stworzymy prostą listę przechowującą implementacje interfejsu <em>IFilter</em> (będzie on reprezentować pojedyńczą operację służącą przekształceniu tekstu-termu w kolejny tekst-term). Przetwarzanie tekstu będzie polegało na przekazaniu wyniku działania jednego filtru do następnego. Na nasze potrzeby interfejs będzie implementował tylko 1 metodę: <code>string Apply(string text);</code>. Kilka najprostszych filtrów to:</p>
-
-<ol>
-<li>Filtr redukujący wszystkie wielkie litery w tekście &ndash; tutaj wystarczy na parametrze wywołać metodę <em>ToLower()</em>.</li>
-<li>Filtr usuwający znaki interpunkcyjne z tekstu</li>
-<li>Znaki przeznaczone do usunięcia zostaną zapisane wewnątrz właściwości StopChars (może to być dowolny typ wyliczeniowy <em>char </em>&ndash; taki wymóg spełniają również zwykłe stringi).</li>
-<li>Przykładowa implementacja metody Apply:</li>
-</ol>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="kt">string</span> <span class="nf">Apply</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">text</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">c</span> <span class="k">in</span> <span class="n">StopChars</span><span class="p">)</span>
-</span><span class='line'>      <span class="n">result</span> <span class="p">=</span> <span class="n">result</span><span class="p">.</span><span class="n">Replace</span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="n">ToString</span><span class="p">(),</span>
-</span><span class='line'>                           <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">);</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ol>
-<li>Filtr usuwający zbędne wyrazy:
-
-<ul>
-<li>Wyrazy przeznaczone do usunięcia będą znajdowały się wewnątrz właściwości StopWords (tutaj dowolny typ implementujący <code>IEnumerable<string></code>).</li>
-<li>Przykładowa implementacja metody Apply:</li>
-</ul>
-</li>
-</ol>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="kt">string</span> <span class="nf">Apply</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">text</span>
-</span><span class='line'>        <span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
-</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">.</span><span class="n">ToList</span><span class="p">();</span>
-</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">word</span> <span class="k">in</span> <span class="n">StopWords</span><span class="p">)</span>
-</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">result</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
-</span><span class='line'>            <span class="k">if</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">==</span> <span class="n">word</span><span class="p">)</span>
-</span><span class='line'>                <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Join</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Dla ułatwienia operację filtrowania wydzielimy do osobnej metody. Będzie ona używana zarówno podczas indeksowania plików, jak i ich wyszukiwania. Przykładowa implementacja:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IList</span><span class="p">&lt;</span><span class="n">IFilter</span><span class="p">&gt;</span> <span class="n">Filters</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">private</span> <span class="kt">string</span> <span class="nf">Filter</span><span class="p">(</span><span class="kt">string</span> <span class="n">txt</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">txt</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">filter</span> <span class="k">in</span> <span class="n">Filters</span><span class="p">)</span>
-</span><span class='line'>        <span class="n">result</span> <span class="p">=</span> <span class="n">filter</span><span class="p">.</span><span class="n">Apply</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W dalszej kolejności będziemy potrzebowali metody, która pozwoli nam zamienić tak przetworzony tekst na wektor bitowy. W tym celu utworzymy dwie pomocnicze właściwości:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IDictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;</span> <span class="n">Indexer</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span><span class='line'><span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">Words</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Zadaniem Indexera będzie gromadzenie par nazwa_pliku &ndash; wektor_pliku. Z kolei właściwość <em>Words</em> pozwoli nam przechować numery indeksów, pod którymi znalezione mogą być konkretne słowa. Sama metoda służąca zamianie tekstu na odpowiadający mu wektor może wyglądać następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">private</span> <span class="n">BitArray</span> <span class="nf">CreateVector</span><span class="p">(</span><span class="kt">string</span> <span class="n">filtered</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">vector</span> <span class="p">=</span> <span class="k">new</span> <span class="n">BitArray</span><span class="p">(</span><span class="n">MAX_SIZE</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">splits</span> <span class="p">=</span> <span class="n">filtered</span><span class="p">.</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
-</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">);</span>
-</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">s</span> <span class="k">in</span> <span class="n">splits</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="k">if</span><span class="p">(!</span><span class="n">Words</span><span class="p">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-</span><span class='line'>            <span class="n">Words</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
-</span><span class='line'>        <span class="n">vector</span><span class="p">[</span><span class="n">Words</span><span class="p">.</span><span class="n">IndexOf</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="k">return</span> <span class="n">vector</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>W tym przypadku MAX_SIZE jest zwyczajną stałą typu<em> int</em> określającą maksymalną liczbę obsługiwanych przez nas słów. Całość wygląda następująco:</p>
-
-<ol>
-<li>Dzielimy przekazany tekst na słowa.</li>
-<li>Dla każdego słowa sprawdzamy, czy został mu nadany odpowiedni indeks w liście <em>Words</em>. Jeżeli nie, dodajemy go do listy. Ponieważ nowe elementy dodawane są na koniec listy, nie musimy się obawiać zmiany pozycji dotychczas zaindeksowanych słów.&lt;</li>
-<li>Na koniec ustawiamy bit wystąpienia słowa na pozycji wskazanej przez słowa zaindeskowane w kroku 2.</li>
-</ol>
-
-
-<p>Cały cykl dodawania pliku do indeksu jest bardzo krótki i wygląda następująco:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">void</span> <span class="nf">AddToIndexer</span><span class="p">(</span><span class="kt">string</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">string</span> <span class="n">content</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">filtered</span> <span class="p">=</span> <span class="n">Filter</span><span class="p">(</span><span class="n">content</span><span class="p">);</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">vector</span> <span class="p">=</span> <span class="n">CreateVector</span><span class="p">(</span><span class="n">filtered</span><span class="p">);</span>
-</span><span class='line'>    <span class="n">Indexer</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">vector</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Ostatnią rzeczą, bez której nasza praca nie miałaby sensu, jest implementacja metody odpowiedzialnej za wyszukiwanie zaindeksowanych plików wg. występujących w nich słów-termów. Poniższy kod odpowiada za znalezienie plików, w których występują wszystkie słowa kluczowe przekazane jako parametr (a więc będący odpowiednikiem logicznego AND):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">FindAnd</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">splits</span> <span class="p">=</span> <span class="n">Filter</span><span class="p">(</span><span class="n">text</span><span class="p">).</span><span class="n">Split</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="s">&quot; &quot;</span><span class="p">},</span>
-</span><span class='line'>        <span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">);</span>
-</span><span class='line'>    <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;&gt;</span> <span class="n">result</span> <span class="p">=</span>
-</span><span class='line'>        <span class="k">new</span> <span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">BitArray</span><span class="p">&gt;[</span><span class="m">0</span><span class="p">];</span>
-</span><span class='line'>    <span class="kt">var</span> <span class="n">flag</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">split</span> <span class="k">in</span> <span class="n">splits</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>        <span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="n">Words</span><span class="p">.</span><span class="n">IndexOf</span><span class="p">(</span><span class="n">split</span><span class="p">);</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">==</span> <span class="p">-</span><span class="m">1</span> <span class="p">||</span> <span class="n">i</span> <span class="p">&gt;=</span> <span class="n">MAX_SIZE</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(!</span><span class="n">flag</span><span class="p">)</span>
-</span><span class='line'>        <span class="p">{</span>
-</span><span class='line'>            <span class="n">flag</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
-</span><span class='line'>            <span class="n">result</span> <span class="p">=</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">Indexer</span>
-</span><span class='line'>                     <span class="k">where</span> <span class="n">pair</span><span class="p">.</span><span class="n">Value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-</span><span class='line'>                     <span class="k">select</span> <span class="n">pair</span><span class="p">;</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>        <span class="k">else</span>
-</span><span class='line'>            <span class="n">result</span> <span class="p">=</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">result</span>
-</span><span class='line'>                     <span class="k">where</span> <span class="n">pair</span><span class="p">.</span><span class="n">Value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-</span><span class='line'>                     <span class="k">select</span> <span class="n">pair</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="k">return</span> <span class="k">from</span> <span class="n">pair</span> <span class="k">in</span> <span class="n">result</span> <span class="k">select</span> <span class="n">pair</span><span class="p">.</span><span class="n">Key</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Słowem wyjaśnienia:</p>
-
-<ol>
-<li>Na starcie przepuszczamy poszukiwany ciąg znaków przez nasze filtry, aby zamienić je na ich odpowiedniki w termach. Kolejnym krokiem jest ich podział na pojedyńcze słowa.</li>
-<li>Dla każdego z poszukiwanych słów przechodzimy przez następujące kroki:
-
-<ul>
-<li>Sprawdzamy czy dane słowo zostało zaindeksowane (a więc czy możliwe jest jego znalezienie) &ndash; jeżeli nie przechodzimy do następnego cyklu pętli.</li>
-<li>W przypadku, gdy dane słowo jest pierwszym, wg. którego przeszukujemy nasz indeks, celem przeszukiwań jest zmienna Indexer zawierająca pełną pulę dostępnych wyników. W innym przypadku (pętla wykonuje się dla kolejnych słów), dziedzina poszukiwań obejmuje tylko wyniki zdobyte w poprzedzającym cyklu.</li>
-<li>Na koniec pozbywamy się niepotrzebnych już informacji o wektorach zwracając same nazwy plików.</li>
-</ul>
-</li>
-</ol>
-
-
-<p>Nie będę się zajmował tutaj wprowadzaniem odpowiednika logicznego OR (a więc metody wyszukującej pliki, w których pojawiło się co najmniej jedno z poszukiwanych słów), ponieważ jest to operacja prostsza &ndash; dzięki użyciu linku wystarczy złączyć wyniki dla każdego z pojedyńczych słów, a następnie usunąć powtarzające się wyniki (np. za pomocą metody <em>Distinct()</em>).</div></p>
 
 		
 		
